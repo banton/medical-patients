@@ -15,7 +15,8 @@
 
 ### Tool Usage Patterns:
 
-*   (To be populated as patterns emerge)
+*   **Docker Compose Command:** If `docker-compose` (hyphenated) results in a "command not found" error, use `docker compose` (with a space) instead. This is common for newer Docker versions where Compose is integrated as a plugin.
+*   (To be populated as further patterns emerge)
 
 ### User Preferences & Workflow:
 
