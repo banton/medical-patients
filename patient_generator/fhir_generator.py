@@ -1,23 +1,24 @@
 import uuid
 import datetime
+import weakref
+import json
+from functools import lru_cache
 
 class FHIRBundleGenerator:
-    """Converts Patient objects to HL7 FHIR bundles"""
+    """Converts Patient objects to HL7 FHIR bundles with performance optimizations"""
     
     def __init__(self, demographics_generator=None):
         self.demographics_generator = demographics_generator
+        # Cache for commonly used coding blocks
+        self._coding_cache = {}
         
     def create_fhir_bundles(self, patients):
         """Create FHIR bundles for all patients"""
-        bundles = []
-        
+        # Memory-optimized implementation - avoid storing all bundles at once
+        # Instead, yield bundles one at a time as a generator
         for patient in patients:
-            # Generate a FHIR bundle for this patient
-            bundle = self.create_patient_bundle(patient)
-            bundles.append(bundle)
+            yield self.create_patient_bundle(patient)
             
-        return bundles
-    
     def create_patient_bundle(self, patient):
         """Create a complete FHIR bundle for a single patient"""
         # Generate a unique ID for the bundle
@@ -53,6 +54,18 @@ class FHIRBundleGenerator:
             bundle["entry"].append({"resource": resource})
         
         return bundle
+    
+    @lru_cache(maxsize=32)
+    def _get_cached_coding(self, system, code, display):
+        """Return a cached coding block to reduce memory duplication"""
+        key = f"{system}|{code}|{display}"
+        if key not in self._coding_cache:
+            self._coding_cache[key] = [{
+                "system": system,
+                "code": code,
+                "display": display
+            }]
+        return self._coding_cache[key]
     
     def _create_patient_resource(self, patient):
         """Create a FHIR Patient resource"""
@@ -96,10 +109,11 @@ class FHIRBundleGenerator:
             patient_resource["extension"].append({
                 "url": "http://terminology.hl7.org/CodeSystem/v3-ReligiousAffiliation",
                 "valueCodeableConcept": {
-                    "coding": [{
-                        "system": "http://terminology.hl7.org/CodeSystem/v3-ReligiousAffiliation",
-                        "code": demographics['religion']
-                    }]
+                    "coding": self._get_cached_coding(
+                        "http://terminology.hl7.org/CodeSystem/v3-ReligiousAffiliation",
+                        demographics['religion'],
+                        None
+                    )
                 }
             })
         
@@ -149,7 +163,7 @@ class FHIRBundleGenerator:
                     obs["code"],
                     obs["display"],
                     obs["value"],
-                    obs["unit"],
+                    obs.get("unit"),
                     visit["date"]
                 )
                 resources.append(observation)
@@ -190,25 +204,25 @@ class FHIRBundleGenerator:
             "id": condition_id,
             "subject": {"reference": f"Patient/{patient_id}"},
             "code": {
-                "coding": [{
-                    "system": "http://snomed.info/sct",
-                    "code": code,
-                    "display": display
-                }]
+                "coding": self._get_cached_coding(
+                    "http://snomed.info/sct",
+                    code,
+                    display
+                )
             },
             "clinicalStatus": {
-                "coding": [{
-                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
-                    "code": "active",
-                    "display": "Active"
-                }]
+                "coding": self._get_cached_coding(
+                    "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "active",
+                    "Active"
+                )
             },
             "verificationStatus": {
-                "coding": [{
-                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
-                    "code": "confirmed",
-                    "display": "Confirmed"
-                }]
+                "coding": self._get_cached_coding(
+                    "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "confirmed",
+                    "Confirmed"
+                )
             },
             "onsetDateTime": datetime.datetime.now().isoformat()
         }
@@ -216,11 +230,11 @@ class FHIRBundleGenerator:
         # Add severity if available
         if severity and severity_code:
             condition_resource["severity"] = {
-                "coding": [{
-                    "system": "http://snomed.info/sct",
-                    "code": severity_code,
-                    "display": severity
-                }]
+                "coding": self._get_cached_coding(
+                    "http://snomed.info/sct",
+                    severity_code,
+                    severity
+                )
             }
         
         return condition_resource
@@ -235,11 +249,11 @@ class FHIRBundleGenerator:
             "subject": {"reference": f"Patient/{patient_id}"},
             "status": "completed",
             "code": {
-                "coding": [{
-                    "system": "http://snomed.info/sct",
-                    "code": code,
-                    "display": display
-                }]
+                "coding": self._get_cached_coding(
+                    "http://snomed.info/sct",
+                    code,
+                    display
+                )
             }
         }
         
@@ -263,11 +277,11 @@ class FHIRBundleGenerator:
             "status": "final",
             "subject": {"reference": f"Patient/{patient_id}"},
             "code": {
-                "coding": [{
-                    "system": "http://loinc.org",
-                    "code": code,
-                    "display": display
-                }]
+                "coding": self._get_cached_coding(
+                    "http://loinc.org",
+                    code,
+                    display
+                )
             }
         }
         
@@ -312,18 +326,18 @@ class FHIRBundleGenerator:
             "status": "final",
             "subject": {"reference": f"Patient/{patient_id}"},
             "code": {
-                "coding": [{
-                    "system": "http://loinc.org",
-                    "code": "883-9",
-                    "display": "ABO group"
-                }]
+                "coding": self._get_cached_coding(
+                    "http://loinc.org",
+                    "883-9",
+                    "ABO group"
+                )
             },
             "valueCodeableConcept": {
-                "coding": [{
-                    "system": "http://snomed.info/sct",
-                    "code": code,
-                    "display": f"Blood group {blood_type}"
-                }]
+                "coding": self._get_cached_coding(
+                    "http://snomed.info/sct",
+                    code,
+                    f"Blood group {blood_type}"
+                )
             },
             "effectiveDateTime": datetime.datetime.now().isoformat()
         }
@@ -340,11 +354,11 @@ class FHIRBundleGenerator:
             "status": "final",
             "subject": {"reference": f"Patient/{patient_id}"},
             "code": {
-                "coding": [{
-                    "system": "http://loinc.org",
-                    "code": "29463-7",
-                    "display": "Body weight"
-                }]
+                "coding": self._get_cached_coding(
+                    "http://loinc.org",
+                    "29463-7",
+                    "Body weight"
+                )
             },
             "valueQuantity": {
                 "value": weight,

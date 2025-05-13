@@ -2,6 +2,11 @@ import os
 import json
 import gzip
 import datetime
+import io
+import tempfile
+import atexit
+import shutil
+import logging
 from xml.dom.minidom import parseString
 import dicttoxml
 
@@ -13,7 +18,7 @@ except ImportError:
     CRYPTO_AVAILABLE = False
 
 class OutputFormatter:
-    """Formats FHIR bundles for output"""
+    """Formats FHIR bundles for output with memory optimization for large datasets"""
     
     def __init__(self):
         self.nfc_mime_types = {
@@ -22,24 +27,86 @@ class OutputFormatter:
             "encrypted": "application/x.ips.aes256.v1-0",
             "gzip_encrypted": "application/x.ips.gzip.aes256.v1-0"
         }
-    
-    def format_json(self, bundles):
-        """Format bundles as JSON"""
-        return json.dumps(bundles, indent=2)
-    
-    def format_xml(self, bundles):
-        """Format bundles as XML"""
-        # Use dicttoxml to convert dict to XML
-        xml_data = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
         
-        # Format XML for better readability
+        # Create a temp directory that will be cleaned up when the program exits
+        self.temp_dir = tempfile.mkdtemp(prefix="patient_gen_")
+        
+        # Register cleanup function to ensure temp files are removed
+        atexit.register(self._cleanup_temp_files)
+        
+        # Track all temporary files created
+        self.temp_files = []
+        
+        # Set up logging
+        self.logger = logging.getLogger("OutputFormatter")
+    
+    def _cleanup_temp_files(self):
+        """Clean up all temporary files and the temp directory"""
+        # Remove individual temp files first
+        for temp_file in self.temp_files:
+            if os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                except Exception as e:
+                    self.logger.warning(f"Failed to remove temp file {temp_file}: {e}")
+        
+        # Then remove the temp directory
         try:
-            dom = parseString(xml_data)
-            pretty_xml = dom.toprettyxml()
-            return pretty_xml
+            if os.path.exists(self.temp_dir):
+                shutil.rmtree(self.temp_dir)
         except Exception as e:
-            print(f"Warning: XML pretty formatting failed: {e}")
-            return xml_data.decode('utf-8')
+            self.logger.warning(f"Failed to remove temp directory {self.temp_dir}: {e}")
+    
+    def _create_temp_file(self, suffix=None):
+        """Create a new temporary file and track it for cleanup"""
+        fd, temp_path = tempfile.mkstemp(dir=self.temp_dir, suffix=suffix)
+        os.close(fd)  # Close the file descriptor
+        self.temp_files.append(temp_path)
+        return temp_path
+    
+    def format_json(self, bundles, stream=None):
+        """Format bundles as JSON, optionally writing to a stream for memory efficiency"""
+        if stream:
+            # Memory-efficient streaming for large datasets
+            stream.write('[\n')
+            for i, bundle in enumerate(bundles):
+                if i > 0:
+                    stream.write(',\n')
+                json.dump(bundle, stream)
+            stream.write('\n]')
+            return None
+        else:
+            # Standard in-memory approach for smaller datasets
+            return json.dumps(bundles, indent=2)
+    
+    def format_xml(self, bundles, stream=None):
+        """Format bundles as XML, optionally using a stream for memory efficiency"""
+        if stream:
+            # For large datasets, process bundles one by one
+            root_element = '<?xml version="1.0" encoding="utf-8"?>\n<PatientBundles>\n'
+            stream.write(root_element)
+            
+            for bundle in bundles:
+                # Convert each bundle to XML
+                bundle_xml = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                # Write directly to stream
+                stream.write(bundle_xml.decode('utf-8'))
+                stream.write('\n')
+            
+            stream.write('</PatientBundles>')
+            return None
+        else:
+            # Standard approach for small datasets
+            xml_data = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
+            
+            # Format XML for better readability
+            try:
+                dom = parseString(xml_data)
+                pretty_xml = dom.toprettyxml()
+                return pretty_xml
+            except Exception as e:
+                print(f"Warning: XML pretty formatting failed: {e}")
+                return xml_data.decode('utf-8')
     
     def compress_gzip(self, data):
         """Compress data using gzip"""
@@ -47,6 +114,16 @@ class OutputFormatter:
             data = data.encode('utf-8')
             
         return gzip.compress(data)
+    
+    def compress_stream(self, input_stream, output_stream):
+        """Compress data from one stream to another using gzip"""
+        with gzip.GzipFile(fileobj=output_stream, mode='wb') as gzip_out:
+            chunk_size = 1024 * 1024  # 1MB chunks
+            while True:
+                chunk = input_stream.read(chunk_size)
+                if not chunk:
+                    break
+                gzip_out.write(chunk)
     
     def encrypt_aes(self, data, key):
         """Encrypt data using AES-256-GCM"""
@@ -73,8 +150,23 @@ class OutputFormatter:
         # Get the tag (MAC)
         tag = encryptor.tag
         
-        # Return IV + MAC + ciphertext
+        # Return IV + tag + ciphertext
         return iv + tag + ciphertext
+    
+    def encrypt_stream(self, input_stream, output_stream, key):
+        """Encrypt data from one stream to another using AES-256-GCM"""
+        if not CRYPTO_AVAILABLE:
+            raise ImportError("Cryptography package is required for encryption")
+
+        # Read input data into memory - GCM mode requires entire data
+        # This is a limitation of the GCM mode which doesn't support streaming
+        data = input_stream.read()
+        
+        # Encrypt using regular method
+        encrypted_data = self.encrypt_aes(data, key)
+        
+        # Write to output stream
+        output_stream.write(encrypted_data)
     
     def format_ndef(self, data, format_type="plain"):
         """Format data as NDEF message with appropriate mime type"""
@@ -97,8 +189,9 @@ class OutputFormatter:
         
         return ndef_message
     
-    def create_output_files(self, bundles, output_dir, formats=None, use_compression=True, use_encryption=False, encryption_key=None):
-        """Create all required output files"""
+    def create_output_files(self, bundles, output_dir, formats=None, use_compression=True, 
+                          use_encryption=False, encryption_key=None, is_chunk=False, chunk_index=0):
+        """Create all required output files with streaming options for large datasets"""
         if formats is None:
             formats = ["json", "xml"]
         
@@ -109,72 +202,154 @@ class OutputFormatter:
         
         # JSON format
         if "json" in formats:
-            json_data = self.format_json(bundles)
-            json_path = os.path.join(output_dir, "patients.json")
-            with open(json_path, "w") as f:
-                f.write(json_data)
+            if is_chunk:
+                # For chunks, append to existing file or create new chunk file
+                json_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.json")
+                with open(json_path, "w") as f:
+                    self.format_json(bundles, stream=f)
+            else:
+                # Standard output for complete dataset
+                json_path = os.path.join(output_dir, "patients.json")
+                
+                # Check if the dataset is large enough to warrant streaming
+                if len(bundles) > 1000:
+                    with open(json_path, "w") as f:
+                        self.format_json(bundles, stream=f)
+                else:
+                    # Small dataset, use in-memory processing
+                    json_data = self.format_json(bundles)
+                    with open(json_path, "w") as f:
+                        f.write(json_data)
+                    
             output_files.append(json_path)
             
             # Compressed JSON
             if use_compression:
-                gzip_json_data = self.compress_gzip(json_data)
-                gzip_json_path = os.path.join(output_dir, "patients.json.gz")
-                with open(gzip_json_path, "wb") as f:
-                    f.write(gzip_json_data)
+                if is_chunk:
+                    gzip_json_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.json.gz")
+                else:
+                    gzip_json_path = os.path.join(output_dir, "patients.json.gz")
+                
+                # Use streaming compression for large datasets
+                if len(bundles) > 1000:
+                    with open(json_path, "rb") as f_in, open(gzip_json_path, "wb") as f_out:
+                        self.compress_stream(f_in, f_out)
+                else:
+                    # Small dataset, use in-memory compression
+                    with open(json_path, "rb") as f:
+                        json_data = f.read()
+                    gzip_json_data = self.compress_gzip(json_data)
+                    with open(gzip_json_path, "wb") as f:
+                        f.write(gzip_json_data)
+                
                 output_files.append(gzip_json_path)
             
             # Encrypted JSON
             if use_encryption and encryption_key:
-                encrypted_json_data = self.encrypt_aes(json_data, encryption_key)
-                encrypted_json_path = os.path.join(output_dir, "patients.json.enc")
-                with open(encrypted_json_path, "wb") as f:
-                    f.write(encrypted_json_data)
+                if is_chunk:
+                    encrypted_json_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.json.enc")
+                else:
+                    encrypted_json_path = os.path.join(output_dir, "patients.json.enc")
+                
+                # Use streaming encryption for large datasets
+                with open(json_path, "rb") as f_in, open(encrypted_json_path, "wb") as f_out:
+                    self.encrypt_stream(f_in, f_out, encryption_key)
+                
                 output_files.append(encrypted_json_path)
                 
                 # Compressed and encrypted JSON
                 if use_compression:
-                    gzip_json_data = self.compress_gzip(json_data)
-                    gzip_encrypted_json_data = self.encrypt_aes(gzip_json_data, encryption_key)
-                    gzip_encrypted_json_path = os.path.join(output_dir, "patients.json.gz.enc")
-                    with open(gzip_encrypted_json_path, "wb") as f:
-                        f.write(gzip_encrypted_json_data)
-                    output_files.append(gzip_encrypted_json_path)
+                    if is_chunk:
+                        gzip_encrypted_json_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.json.gz.enc")
+                    else:
+                        gzip_encrypted_json_path = os.path.join(output_dir, "patients.json.gz.enc")
+                    
+                    # Create temporary compressed file
+                    temp_gz_path = self._create_temp_file(suffix=".json.gz")
+                    
+                    try:
+                        # First compress
+                        with open(json_path, "rb") as f_in, open(temp_gz_path, "wb") as f_out:
+                            self.compress_stream(f_in, f_out)
+                        
+                        # Then encrypt
+                        with open(temp_gz_path, "rb") as f_in, open(gzip_encrypted_json_path, "wb") as f_out:
+                            self.encrypt_stream(f_in, f_out, encryption_key)
+                        
+                        output_files.append(gzip_encrypted_json_path)
+                    except Exception as e:
+                        self.logger.error(f"Error creating compressed and encrypted JSON: {e}")
         
-        # XML format
+        # XML format with similar optimizations
         if "xml" in formats:
-            xml_data = self.format_xml(bundles)
-            xml_path = os.path.join(output_dir, "patients.xml")
-            with open(xml_path, "w") as f:
-                f.write(xml_data)
+            if is_chunk:
+                xml_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.xml")
+                with open(xml_path, "w") as f:
+                    self.format_xml(bundles, stream=f)
+            else:
+                xml_path = os.path.join(output_dir, "patients.xml")
+                
+                # Check if the dataset is large enough to warrant streaming
+                if len(bundles) > 1000:
+                    with open(xml_path, "w") as f:
+                        self.format_xml(bundles, stream=f)
+                else:
+                    # Small dataset, use in-memory processing
+                    xml_data = self.format_xml(bundles)
+                    with open(xml_path, "w") as f:
+                        f.write(xml_data)
+                    
             output_files.append(xml_path)
             
-            # Compressed XML
+            # Compressed XML with streaming
             if use_compression:
-                gzip_xml_data = self.compress_gzip(xml_data)
-                gzip_xml_path = os.path.join(output_dir, "patients.xml.gz")
-                with open(gzip_xml_path, "wb") as f:
-                    f.write(gzip_xml_data)
+                if is_chunk:
+                    gzip_xml_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.xml.gz")
+                else:
+                    gzip_xml_path = os.path.join(output_dir, "patients.xml.gz")
+                
+                with open(xml_path, "rb") as f_in, open(gzip_xml_path, "wb") as f_out:
+                    self.compress_stream(f_in, f_out)
+                
                 output_files.append(gzip_xml_path)
             
-            # Encrypted XML
+            # Encrypted XML with streaming
             if use_encryption and encryption_key:
-                encrypted_xml_data = self.encrypt_aes(xml_data, encryption_key)
-                encrypted_xml_path = os.path.join(output_dir, "patients.xml.enc")
-                with open(encrypted_xml_path, "wb") as f:
-                    f.write(encrypted_xml_data)
+                if is_chunk:
+                    encrypted_xml_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.xml.enc")
+                else:
+                    encrypted_xml_path = os.path.join(output_dir, "patients.xml.enc")
+                
+                with open(xml_path, "rb") as f_in, open(encrypted_xml_path, "wb") as f_out:
+                    self.encrypt_stream(f_in, f_out, encryption_key)
+                
                 output_files.append(encrypted_xml_path)
                 
                 # Compressed and encrypted XML
                 if use_compression:
-                    gzip_xml_data = self.compress_gzip(xml_data)
-                    gzip_encrypted_xml_data = self.encrypt_aes(gzip_xml_data, encryption_key)
-                    gzip_encrypted_xml_path = os.path.join(output_dir, "patients.xml.gz.enc")
-                    with open(gzip_encrypted_xml_path, "wb") as f:
-                        f.write(gzip_encrypted_xml_data)
-                    output_files.append(gzip_encrypted_xml_path)
+                    if is_chunk:
+                        gzip_encrypted_xml_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.xml.gz.enc")
+                    else:
+                        gzip_encrypted_xml_path = os.path.join(output_dir, "patients.xml.gz.enc")
+                    
+                    # Create temporary compressed file
+                    temp_gz_path = self._create_temp_file(suffix=".xml.gz")
+                    
+                    try:
+                        # First compress
+                        with open(xml_path, "rb") as f_in, open(temp_gz_path, "wb") as f_out:
+                            self.compress_stream(f_in, f_out)
+                        
+                        # Then encrypt
+                        with open(temp_gz_path, "rb") as f_in, open(gzip_encrypted_xml_path, "wb") as f_out:
+                            self.encrypt_stream(f_in, f_out, encryption_key)
+                        
+                        output_files.append(gzip_encrypted_xml_path)
+                    except Exception as e:
+                        self.logger.error(f"Error creating compressed and encrypted XML: {e}")
         
-        # Create sample NDEF files
-        if bundles:
+        # Create sample NDEF files only for the first chunk, not for appends
+        if not is_chunk and bundles:
             sample_bundle = bundles[0]
             sample_json = json.dumps(sample_bundle)
             

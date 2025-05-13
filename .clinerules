@@ -9,7 +9,7 @@
 1.  **Memory Bank First:** Always read and update the Memory Bank files (`memory-bank/*.md`) at the start of a session and after significant changes. This is crucial for maintaining context.
 2.  **File Structure Awareness:** The project has a Python backend (`app.py`, `patient_generator/`) and a static HTML frontend (`static/index.html`). Be mindful of this separation when making changes.
 3.  **Python Focus:** The core logic resides in Python modules. Pay attention to Python best practices, dependencies (`requirements.txt`), and packaging (`setup.py`).
-4.  **Iterative Documentation:** The Memory Bank files are currently placeholders. They need to be populated with more specific details as the project progresses and functionalities are implemented.
+4.  **Iterative Documentation:** The Memory Bank files are now comprehensive and detailed, reflecting a mature project state. They should continue to be updated iteratively as the project evolves or new insights are gained.
 5.  **User Interaction:** The presence of `static/index.html` implies user interaction. Consider how backend changes might affect the frontend experience.
 6.  **Patient Data Core:** The `patient_generator` module is central. Understand its sub-modules (`demographics.py`, `fhir_generator.py`, etc.) and their roles.
 

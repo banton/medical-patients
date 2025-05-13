@@ -2,21 +2,154 @@ import os
 import random
 import datetime
 import time
-from .flow_simulator import PatientFlowSimulator
-from .demographics import DemographicsGenerator
-from .medical import MedicalConditionGenerator
-from .fhir_generator import FHIRBundleGenerator
-from .formatter import OutputFormatter
+import concurrent.futures
+import tempfile
+import shutil
+import atexit
+import logging
 from collections import Counter
+from tqdm import tqdm
+import multiprocessing
+import psutil
+
+# Use absolute imports instead of relative imports
+try:
+    # Try relative import first (when used as a package)
+    from .flow_simulator import PatientFlowSimulator
+    from .demographics import DemographicsGenerator
+    from .medical import MedicalConditionGenerator
+    from .fhir_generator import FHIRBundleGenerator
+    from .formatter import OutputFormatter
+except ImportError:
+    # Fall back to absolute imports (when run directly)
+    from patient_generator.flow_simulator import PatientFlowSimulator
+    from patient_generator.demographics import DemographicsGenerator
+    from patient_generator.medical import MedicalConditionGenerator
+    from patient_generator.fhir_generator import FHIRBundleGenerator
+    from patient_generator.formatter import OutputFormatter
 
 class PatientGeneratorApp:
-    """Main application class for the patient generator"""
+    """Main application class for the patient generator with performance optimizations"""
     
     def __init__(self, config=None):
         self.config = config or self._default_config()
         self.start_time = None
         self.phase_start_time = None
         self.total_patients = 0
+        
+        # Set up logging
+        self.logger = logging.getLogger("PatientGeneratorApp")
+        
+        # Create a temp directory that will be cleaned up when the program exits
+        self.temp_dir = tempfile.mkdtemp(prefix="patient_gen_app_")
+        
+        # Register cleanup function to ensure temp files are removed
+        atexit.register(self._cleanup_temp_files)
+        
+        # Track all temporary files created
+        self.temp_files = []
+        
+        # Determine optimal number of worker threads based on system resources
+        self.num_workers = self._determine_worker_count()
+        
+        # Determine batch size based on total patients and system memory
+        self.batch_size = self._determine_batch_size()
+        
+        # Shared generators that can be re-used across workers
+        self.demographics_generator = DemographicsGenerator()
+        self.condition_generator = MedicalConditionGenerator()
+        
+        self.logger.info(f"Initialized PatientGeneratorApp with {self.num_workers} workers and batch size {self.batch_size}")
+    
+    def _cleanup_temp_files(self):
+        """Clean up all temporary files and the temp directory"""
+        # Remove individual temp files first
+        for temp_file in self.temp_files:
+            if os.path.exists(temp_file):
+                try:
+                    os.unlink(temp_file)
+                except Exception as e:
+                    self.logger.warning(f"Failed to remove temp file {temp_file}: {e}")
+        
+        # Then remove the temp directory
+        try:
+            if os.path.exists(self.temp_dir):
+                shutil.rmtree(self.temp_dir)
+        except Exception as e:
+            self.logger.warning(f"Failed to remove temp directory {self.temp_dir}: {e}")
+    
+    def _create_temp_file(self, suffix=None):
+        """Create a new temporary file and track it for cleanup"""
+        fd, temp_path = tempfile.mkstemp(dir=self.temp_dir, suffix=suffix)
+        os.close(fd)  # Close the file descriptor
+        self.temp_files.append(temp_path)
+        return temp_path
+    
+    def _determine_worker_count(self):
+        """Determine optimal number of worker threads based on system resources"""
+        # Check if explicitly set in configuration
+        if self.config.get("performance", {}).get("num_workers"):
+            return self.config["performance"]["num_workers"]
+        
+        # Check environment variable
+        env_threads = os.environ.get("PATIENT_GENERATOR_THREADS")
+        if env_threads and env_threads.isdigit():
+            return int(env_threads)
+        
+        # Auto-detect based on CPU count
+        try:
+            cpu_count = multiprocessing.cpu_count()
+            # Use 75% of available CPUs, but at least 2 and at most 8
+            return min(8, max(2, int(cpu_count * 0.75)))
+        except:
+            # Default if detection fails
+            return 4
+    
+    def _determine_batch_size(self):
+        """Determine optimal batch size based on available memory and total patients"""
+        # Check if explicitly set in configuration
+        if self.config.get("performance", {}).get("batch_size"):
+            return self.config["performance"]["batch_size"]
+        
+        total_patients = self.config.get('total_patients', 1440)
+        
+        # Check environment variable for max memory
+        env_max_memory = os.environ.get("PATIENT_GENERATOR_MAX_MEMORY")
+        max_memory_mb = None
+        if env_max_memory and env_max_memory.isdigit():
+            max_memory_mb = int(env_max_memory)
+        elif self.config.get("performance", {}).get("max_memory_mb"):
+            max_memory_mb = self.config["performance"]["max_memory_mb"]
+        
+        # Get available memory in bytes
+        try:
+            # If max memory is set, use that as the limit
+            if max_memory_mb:
+                available_memory = max_memory_mb * 1024 * 1024
+            else:
+                # Otherwise use 50% of available system memory
+                available_memory = psutil.virtual_memory().available * 0.5
+        except:
+            # Default to 1GB if detection fails
+            available_memory = 1024 * 1024 * 1024
+        
+        # Estimate memory per patient (conservative estimate: 50KB per patient)
+        estimated_memory_per_patient = 50 * 1024
+        
+        # Calculate batch size based on available memory
+        memory_based_batch_size = int(available_memory / estimated_memory_per_patient)
+        
+        # Cap batch size to reasonable limits
+        min_batch_size = 50
+        max_batch_size = 500
+        
+        # Use smaller batches for more workers to improve load balancing
+        worker_adjusted_size = max(min_batch_size, int(total_patients / (self.num_workers * 2)))
+        
+        # Final batch size is minimum of memory-based and worker-adjusted size, capped at max_batch_size
+        batch_size = min(memory_based_batch_size, worker_adjusted_size, max_batch_size)
+        
+        return batch_size
     
     def _default_config(self):
         """Create default configuration"""
@@ -83,8 +216,56 @@ class PatientGeneratorApp:
         """Reset the phase timer for a new processing phase"""
         self.phase_start_time = time.time()
     
+    def _process_patient_batch(self, patients, phase):
+        """Process a batch of patients for enhanced demographics and medical conditions"""
+        # Process each patient in the batch
+        for patient in patients:
+            if phase == "demographics":
+                # Generate demographics
+                demographics = self.demographics_generator.generate_person(patient.nationality, patient.gender)
+                patient.set_demographics(demographics)
+            
+            elif phase == "medical":
+                # Generate primary condition
+                primary_condition = self.condition_generator.generate_condition(
+                    patient.injury_type, 
+                    patient.triage_category
+                )
+                patient.primary_condition = primary_condition
+                
+                # Generate additional conditions
+                additional_count = 0
+                if patient.triage_category == "T1":
+                    additional_count = random.randint(1, 2)
+                elif patient.triage_category == "T2":
+                    additional_count = random.randint(0, 1)
+                    
+                patient.additional_conditions = self.condition_generator.generate_additional_conditions(
+                    primary_condition, 
+                    additional_count
+                )
+                
+                # Generate medications
+                conditions = [primary_condition] + patient.additional_conditions
+                medication_count = random.randint(1, 3) if patient.triage_category == "T1" else random.randint(0, 2)
+                patient.medications = self.condition_generator.generate_medications(conditions, medication_count)
+                
+                # Generate allergies (10% chance of having allergies)
+                if random.random() < 0.1:
+                    allergy_count = random.randint(1, 2)
+                    patient.allergies = self.condition_generator.generate_allergies(allergy_count)
+                else:
+                    patient.allergies = []
+        
+        return patients
+    
+    def _create_fhir_bundles_batch(self, patients):
+        """Create FHIR bundles for a batch of patients"""
+        bundle_generator = FHIRBundleGenerator(self.demographics_generator)
+        return [bundle_generator.create_patient_bundle(patient) for patient in patients]
+    
     def run(self, progress_callback=None):
-        """Run the patient generator with optional progress reporting"""
+        """Run the patient generator with parallel processing and performance optimizations"""
         self.start_time = time.time()
         self.phase_start_time = time.time()
         self.total_patients = self.config['total_patients']
@@ -108,14 +289,22 @@ class PatientGeneratorApp:
             cumulative_weight += phase["weight"]
             phase["end_progress"] = cumulative_weight
         
-        # Report initial progress
+        # Report initial progress with system configuration details
         if progress_callback:
+            system_info = {
+                "workers": self.num_workers,
+                "batch_size": self.batch_size,
+                "available_memory": f"{psutil.virtual_memory().available / (1024**3):.2f} GB"
+            }
+            
             progress_info = {
                 "current_phase": phases[0]["name"],
                 "phase_description": phases[0]["description"],
                 "phase_progress": 0,
                 "time_estimates": self._estimate_remaining_time(0),
-                "overall_progress": 0
+                "overall_progress": 0,
+                "system_info": system_info,
+                "total_patients": self.total_patients
             }
             progress_callback(0, progress_info)
         
@@ -138,84 +327,118 @@ class PatientGeneratorApp:
         
         self._update_progress(progress_callback, current_phase, 100, phases)
         
-        # PHASE 3 & 4: Demographics and medical conditions
+        # PHASE 3: Demographics processing with parallelization
         current_phase = 2
         self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases)
+        self._update_progress(progress_callback, current_phase, 0, phases, {"processed_patients": 0})
         
-        # Initialize the demographics generator
-        demographics_generator = DemographicsGenerator()
-        
-        # Initialize the medical condition generator
-        condition_generator = MedicalConditionGenerator()
-        
-        # Enhance patients with detailed demographics
-        for i, patient in enumerate(patients):
-            # Generate demographics
-            demographics = demographics_generator.generate_person(patient.nationality, patient.gender)
-            patient.set_demographics(demographics)
+        # Process patients in batches using multiple threads
+        processed_count = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            # Split patients into batches
+            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
             
-            # Update demographics progress
-            if (i + 1) == len(patients) // 2:
-                self._update_progress(progress_callback, current_phase, 100, phases)
-                current_phase = 3
-                self._start_new_phase()
-                self._update_progress(progress_callback, current_phase, 0, phases)
+            # Submit demographics processing jobs
+            future_to_batch = {
+                executor.submit(self._process_patient_batch, batch, "demographics"): batch 
+                for batch in patient_batches
+            }
             
-            # Generate primary condition
-            primary_condition = condition_generator.generate_condition(
-                patient.injury_type, 
-                patient.triage_category
-            )
-            patient.primary_condition = primary_condition
-            
-            # Generate additional conditions
-            additional_count = 0
-            if patient.triage_category == "T1":
-                additional_count = random.randint(1, 2)
-            elif patient.triage_category == "T2":
-                additional_count = random.randint(0, 1)
-                
-            patient.additional_conditions = condition_generator.generate_additional_conditions(
-                primary_condition, 
-                additional_count
-            )
-            
-            # Generate medications
-            conditions = [primary_condition] + patient.additional_conditions
-            medication_count = random.randint(1, 3) if patient.triage_category == "T1" else random.randint(0, 2)
-            patient.medications = condition_generator.generate_medications(conditions, medication_count)
-            
-            # Generate allergies (10% chance of having allergies)
-            if random.random() < 0.1:
-                allergy_count = random.randint(1, 2)
-                patient.allergies = condition_generator.generate_allergies(allergy_count)
-            else:
-                patient.allergies = []
-            
-            # Report medical progress
-            if current_phase == 3 and i % 100 == 0:
-                phase_progress = min(100, int((i / len(patients)) * 100))
-                self._update_progress(progress_callback, current_phase, phase_progress, phases)
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch = future_to_batch[future]
+                try:
+                    processed_batch = future.result()
+                    # Update progress
+                    processed_count += len(processed_batch)
+                    phase_progress = min(100, int((processed_count / len(patients)) * 100))
+                    self._update_progress(
+                        progress_callback, 
+                        current_phase, 
+                        phase_progress, 
+                        phases,
+                        {"processed_patients": processed_count}
+                    )
+                except Exception as e:
+                    print(f"Demographics generation error: {e}")
         
         self._update_progress(progress_callback, current_phase, 100, phases)
         
-        # PHASE 5: Generate FHIR bundles
+        # PHASE 4: Medical condition processing with parallelization
+        current_phase = 3
+        self._start_new_phase()
+        self._update_progress(progress_callback, current_phase, 0, phases, {"processed_patients": 0})
+        
+        # Process medical conditions in batches
+        processed_count = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            # Split patients into batches
+            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
+            
+            # Submit medical condition processing jobs
+            future_to_batch = {
+                executor.submit(self._process_patient_batch, batch, "medical"): batch 
+                for batch in patient_batches
+            }
+            
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch = future_to_batch[future]
+                try:
+                    processed_batch = future.result()
+                    # Update progress
+                    processed_count += len(processed_batch)
+                    phase_progress = min(100, int((processed_count / len(patients)) * 100))
+                    self._update_progress(
+                        progress_callback, 
+                        current_phase, 
+                        phase_progress, 
+                        phases,
+                        {"processed_patients": processed_count}
+                    )
+                except Exception as e:
+                    print(f"Medical condition generation error: {e}")
+        
+        self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 5: Generate FHIR bundles with parallelization
         current_phase = 4
         self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases)
+        self._update_progress(progress_callback, current_phase, 0, phases, {"processed_patients": 0})
         
-        bundle_generator = FHIRBundleGenerator(demographics_generator)
+        # Process FHIR bundles in batches
         bundles = []
+        processed_count = 0
         
-        for i, patient in enumerate(patients):
-            bundle = bundle_generator.create_patient_bundle(patient)
-            bundles.append(bundle)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            # Split patients into batches
+            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
             
-            # Report progress
-            if i % 50 == 0:
-                phase_progress = min(100, int((i / len(patients)) * 100))
-                self._update_progress(progress_callback, current_phase, phase_progress, phases)
+            # Submit FHIR bundle creation jobs
+            future_to_batch = {
+                executor.submit(self._create_fhir_bundles_batch, batch): batch 
+                for batch in patient_batches
+            }
+            
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch = future_to_batch[future]
+                try:
+                    batch_bundles = future.result()
+                    bundles.extend(batch_bundles)
+                    
+                    # Update progress
+                    processed_count += len(batch)
+                    phase_progress = min(100, int((processed_count / len(patients)) * 100))
+                    self._update_progress(
+                        progress_callback, 
+                        current_phase, 
+                        phase_progress, 
+                        phases,
+                        {"processed_patients": processed_count}
+                    )
+                except Exception as e:
+                    print(f"FHIR bundle creation error: {e}")
         
         self._update_progress(progress_callback, current_phase, 100, phases)
         
@@ -246,14 +469,36 @@ class PatientGeneratorApp:
             self._update_progress(progress_callback, current_phase, 50, phases)
         
         # Create output files (combines formatting, compression, and encryption)
-        output_files = formatter.create_output_files(
-            bundles,
-            self.config["output_directory"],
-            formats=self.config.get("output_formats", ["json", "xml"]),
-            use_compression=self.config.get("use_compression", True),
-            use_encryption=self.config.get("use_encryption", True),
-            encryption_key=self.config.get("encryption_key")
-        )
+        # Use memory-efficient chunked processing for large datasets
+        if len(bundles) > 1000:
+            # Process large datasets in chunks to reduce memory pressure
+            chunk_size = min(500, max(100, len(bundles) // 10))
+            output_files = []
+            
+            # Process chunks 
+            for i in range(0, len(bundles), chunk_size):
+                chunk = bundles[i:i + chunk_size]
+                chunk_files = formatter.create_output_files(
+                    chunk,
+                    self.config["output_directory"],
+                    formats=self.config.get("output_formats", ["json", "xml"]),
+                    use_compression=self.config.get("use_compression", True),
+                    use_encryption=self.config.get("use_encryption", True),
+                    encryption_key=self.config.get("encryption_key"),
+                    is_chunk=(i > 0),  # Flag subsequent chunks
+                    chunk_index=i // chunk_size
+                )
+                output_files.extend(chunk_files)
+        else:
+            # For smaller datasets, process all at once
+            output_files = formatter.create_output_files(
+                bundles,
+                self.config["output_directory"],
+                formats=self.config.get("output_formats", ["json", "xml"]),
+                use_compression=self.config.get("use_compression", True),
+                use_encryption=self.config.get("use_encryption", True),
+                encryption_key=self.config.get("encryption_key")
+            )
         
         if self.config.get("use_encryption", True):
             self._update_progress(progress_callback, current_phase, 100, phases)
@@ -264,6 +509,10 @@ class PatientGeneratorApp:
         injury_counts = Counter([p.injury_type for p in patients])
         status_counts = Counter([p.current_status for p in patients])
         
+        # Calculate performance metrics
+        total_time = time.time() - self.start_time
+        patients_per_second = len(patients) / total_time if total_time > 0 else 0
+        
         summary = {
             "total_patients": len(patients),
             "nationalities": {nat: count for nat, count in nationality_counts.items()},
@@ -272,7 +521,13 @@ class PatientGeneratorApp:
             "final_status": {status: count for status, count in status_counts.items()},
             "kia_count": status_counts.get("KIA", 0),
             "rtd_count": status_counts.get("RTD", 0),
-            "still_in_treatment": sum(status_counts.get(status, 0) for status in ["R1", "R2", "R3", "R4"])
+            "still_in_treatment": sum(status_counts.get(status, 0) for status in ["R1", "R2", "R3", "R4"]),
+            "performance": {
+                "total_time_seconds": round(total_time, 2),
+                "patients_per_second": round(patients_per_second, 2),
+                "thread_count": self.num_workers,
+                "batch_size": self.batch_size
+            }
         }
         
         # Report completion
@@ -282,13 +537,14 @@ class PatientGeneratorApp:
                 "phase_description": "Generation process completed successfully",
                 "phase_progress": 100,
                 "time_estimates": {"total": 0, "phase": 0},
-                "overall_progress": 100
+                "overall_progress": 100,
+                "performance": summary["performance"]
             }
             progress_callback(100, summary, progress_info)
         
         return patients, bundles
     
-    def _update_progress(self, progress_callback, current_phase_index, phase_progress, phases):
+    def _update_progress(self, progress_callback, current_phase_index, phase_progress, phases, extra_info=None):
         """Update progress with detailed information about the current phase"""
         if not progress_callback:
             return
@@ -314,6 +570,10 @@ class PatientGeneratorApp:
         # Add patient count info
         if current_phase_index >= 1:
             progress_info["total_patients"] = self.total_patients
+        
+        # Add any extra information
+        if extra_info:
+            progress_info.update(extra_info)
         
         # Call the progress callback
         progress_callback(overall_progress, progress_info)
@@ -345,7 +605,12 @@ if __name__ == "__main__":
     # Initialize and run the generator
     print(f"Generating {config['total_patients']} patients...")
     generator = PatientGeneratorApp(config)
+    
+    print(f"Using {generator.num_workers} worker threads with batch size of {generator.batch_size}")
+    
+    start_time = time.time()
     patients, bundles = generator.run()
+    end_time = time.time()
     
     # Print summary statistics
     status_counts = Counter([p.current_status for p in patients])
@@ -353,5 +618,13 @@ if __name__ == "__main__":
     print(f"  - Killed in Action (KIA): {status_counts.get('KIA', 0)}")
     print(f"  - Returned to Duty (RTD): {status_counts.get('RTD', 0)}")
     print(f"  - Still in treatment: {sum(status_counts.get(status, 0) for status in ['R1', 'R2', 'R3', 'R4'])}")
+    
+    # Print performance metrics
+    total_time = end_time - start_time
+    print(f"\nPerformance metrics:")
+    print(f"  - Total generation time: {total_time:.2f} seconds")
+    print(f"  - Patients per second: {len(patients) / total_time:.2f}")
+    print(f"  - Worker threads: {generator.num_workers}")
+    print(f"  - Batch size: {generator.batch_size}")
     
     print(f"\nOutput files saved to {config['output_directory']} directory.")

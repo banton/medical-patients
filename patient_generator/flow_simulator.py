@@ -1,9 +1,17 @@
 import random
 import datetime
-from .patient import Patient
+import concurrent.futures
+
+# Use absolute imports instead of relative imports
+try:
+    # Try relative import first (when used as a package)
+    from .patient import Patient
+except ImportError:
+    # Fall back to absolute imports (when run directly)
+    from patient_generator.patient import Patient
 
 class PatientFlowSimulator:
-    """Simulates patient flow through medical treatment facilities"""
+    """Optimized simulator for patient flow through medical treatment facilities"""
     
     def __init__(self, config):
         self.config = config
@@ -49,19 +57,109 @@ class PatientFlowSimulator:
             "NON_BATTLE": 0.33,
             "BATTLE_TRAUMA": 0.15
         })
+        
+        # Pre-calculate facility transition probabilities for efficiency
+        self._transition_probabilities = {
+            "POI": {"KIA": 0.20, "R1": 0.80},
+            "R1": {"KIA": 0.12, "RTD": 0.60, "R2": 0.28},
+            "R2": {"KIA": 0.137, "RTD": 0.55, "R3": 0.313},
+            "R3": {"KIA": 0.121, "RTD": 0.30, "R4": 0.579}
+        }
+        
+        # Pre-calculate triage weights based on injury type
+        self._triage_weights = {
+            "BATTLE_TRAUMA": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
+            "NON_BATTLE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            "DISEASE": {"T1": 0.2, "T2": 0.3, "T3": 0.5}
+        }
+        
+        # Calculate batch size for parallelization
+        self.batch_size = 100  # Default batch size
+        
+        # Detect available CPU cores and adjust batch sizes
+        try:
+            import multiprocessing
+            self.num_workers = max(2, min(multiprocessing.cpu_count(), 8))
+            # Adjust batch size based on total patients and worker count
+            if self.config.get("total_patients", 1440) > 5000:
+                self.batch_size = 250
+        except:
+            self.num_workers = 4  # Default to 4 workers if detection fails
     
     def generate_casualty_flow(self, total_casualties=1440):
         """Generate the initial casualties and their flow through facilities"""
+        # Determine if parallelization should be used
+        use_parallel = total_casualties >= 500 and self.num_workers > 1
+        
+        if use_parallel:
+            # For large datasets, use parallel processing
+            return self._generate_flow_parallel(total_casualties)
+        else:
+            # For smaller datasets, use sequential processing
+            return self._generate_flow_sequential(total_casualties)
+    
+    def _generate_flow_sequential(self, total_casualties):
+        """Generate patient flow sequentially for smaller datasets"""
+        patients = []
         
         # Create patients with initial status
         for i in range(total_casualties):
             patient = self._create_initial_patient(i)
-            self.patients.append(patient)
+            self._simulate_patient_flow_single(patient)
+            patients.append(patient)
             
-        # Simulate flow through medical facilities
-        self._simulate_patient_flow()
+        return patients
+    
+    def _generate_flow_parallel(self, total_casualties):
+        """Generate patient flow using parallel processing for large datasets"""
+        # First create all patients with initial attributes
+        patient_ids = list(range(total_casualties))
         
-        return self.patients
+        # Create patients in parallel batches
+        patients = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            # Split ids into batches
+            id_batches = [patient_ids[i:i + self.batch_size] for i in range(0, len(patient_ids), self.batch_size)]
+            
+            # Submit batch creation jobs
+            future_to_batch = {
+                executor.submit(self._create_patient_batch, batch): batch for batch in id_batches
+            }
+            
+            # Collect created patients
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch_patients = future.result()
+                patients.extend(batch_patients)
+        
+        # Sort patients by ID to maintain consistent order
+        patients.sort(key=lambda p: p.id)
+        
+        # Now simulate patient flow for all patients
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            # Split patients into batches
+            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
+            
+            # Submit batch simulation jobs
+            future_to_batch = {
+                executor.submit(self._simulate_patient_flow_batch, batch): batch for batch in patient_batches
+            }
+            
+            # Wait for all simulations to complete
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch = future_to_batch[future]
+                # No need to collect as patients are modified in-place
+        
+        return patients
+    
+    def _create_patient_batch(self, id_batch):
+        """Create a batch of patients with initial attributes"""
+        return [self._create_initial_patient(i) for i in id_batch]
+    
+    def _simulate_patient_flow_batch(self, patient_batch):
+        """Simulate patient flow for a batch of patients"""
+        for patient in patient_batch:
+            self._simulate_patient_flow_single(patient)
+        return patient_batch
     
     def _create_initial_patient(self, patient_id):
         """Create a new patient with initial casualty state"""
@@ -84,11 +182,8 @@ class PatientFlowSimulator:
         # Assign injury type
         patient.injury_type = self._select_weighted_item(self.injury_distribution)
         
-        # Assign triage category (more severe for battle trauma)
-        if patient.injury_type == "BATTLE_TRAUMA":
-            triage_weights = {"T1": 0.4, "T2": 0.4, "T3": 0.2}
-        else:
-            triage_weights = {"T1": 0.2, "T2": 0.3, "T3": 0.5}
+        # Assign triage category based on injury type
+        triage_weights = self._triage_weights[patient.injury_type]
         patient.triage_category = self._select_weighted_item(triage_weights)
         
         # Record initial POI event
@@ -99,92 +194,60 @@ class PatientFlowSimulator:
         
         return patient
     
-    def _simulate_patient_flow(self):
-        """Simulate the movement of patients through facilities"""
-        for patient in self.patients:
-            current_location = "POI"
+    def _simulate_patient_flow_single(self, patient):
+        """Simulate the movement of a single patient through facilities"""
+        current_location = "POI"
+        
+        # Loop until patient reaches final state (RTD, KIA, or R4)
+        while current_location not in ["RTD", "KIA", "R4"]:
+            # Determine next location based on probabilities
+            next_location = self._determine_next_location(patient, current_location)
             
-            # Loop until patient reaches final state (RTD, KIA, or R4)
-            while current_location not in ["RTD", "KIA", "R4"]:
-                # Determine next location based on probabilities
-                next_location = self._determine_next_location(patient, current_location)
+            # If status changed, add to treatment history
+            if next_location not in ["RTD", "KIA"]:
+                treatment_date = self._get_treatment_date(
+                    patient.day_of_injury, 
+                    current_location, 
+                    next_location
+                )
                 
-                # If status changed, add to treatment history
-                if next_location not in ["RTD", "KIA"]:
-                    treatment_date = self._get_treatment_date(
-                        patient.day_of_injury, 
-                        current_location, 
-                        next_location
-                    )
-                    
-                    treatments = self._generate_treatments(patient, next_location)
-                    observations = self._generate_observations(patient, next_location)
-                    
-                    patient.add_treatment(
-                        facility=next_location,
-                        date=treatment_date,
-                        treatments=treatments,
-                        observations=observations
-                    )
+                treatments = self._generate_treatments(patient, next_location)
+                observations = self._generate_observations(patient, next_location)
                 
-                # Update patient status
-                patient.current_status = next_location
-                current_location = next_location
+                patient.add_treatment(
+                    facility=next_location,
+                    date=treatment_date,
+                    treatments=treatments,
+                    observations=observations
+                )
+            
+            # Update patient status
+            patient.current_status = next_location
+            current_location = next_location
     
     def _determine_next_location(self, patient, current_location):
         """Determine the next location for a patient based on probabilities"""
-        # Get the probabilities from the configuration
-        if current_location == "POI":
-            kia_prob = 0.20  # 20% KIA at POI
-            rtd_prob = 0.0   # No RTD at POI
-            evac_prob = 0.80  # 80% evacuated to R1
+        # Get the transition probabilities for the current location
+        if current_location in self._transition_probabilities:
+            transitions = self._transition_probabilities[current_location]
             
-            if random.random() < kia_prob:
-                return "KIA"
-            else:
-                return "R1"
-        
-        elif current_location == "R1":
-            # Based on the provided table
-            kia_prob = 0.12  # 12% KIA at R1
-            rtd_prob = 0.60  # 60% RTD at R1
-            evac_prob = 0.28  # 28% evacuated to R2
+            # Adjust probabilities based on patient's condition if needed
+            if current_location == "POI" and patient.injury_type == "BATTLE_TRAUMA" and patient.triage_category == "T1":
+                # Higher KIA rate for severe battle trauma
+                transitions = transitions.copy()  # Create a copy to avoid modifying the shared dict
+                transitions["KIA"] = transitions["KIA"] * 1.2  # 20% higher KIA chance
+                transitions["R1"] = 1.0 - transitions["KIA"]  # Adjust R1 probability
             
+            # Generate random number and determine outcome
             rand = random.random()
-            if rand < kia_prob:
-                return "KIA"
-            elif rand < kia_prob + rtd_prob:
-                return "RTD"
-            else:
-                return "R2"
-        
-        elif current_location == "R2":
-            kia_prob = 0.137  # 13.7% KIA at R2
-            rtd_prob = 0.55   # 55% RTD at R2
-            evac_prob = 0.313  # 31.3% evacuated to R3
+            cumulative_prob = 0.0
             
-            rand = random.random()
-            if rand < kia_prob:
-                return "KIA"
-            elif rand < kia_prob + rtd_prob:
-                return "RTD"
-            else:
-                return "R3"
+            for location, probability in transitions.items():
+                cumulative_prob += probability
+                if rand < cumulative_prob:
+                    return location
         
-        elif current_location == "R3":
-            kia_prob = 0.121  # 12.1% KIA at R3
-            rtd_prob = 0.30   # 30% RTD at R3
-            evac_prob = 0.579  # 57.9% evacuated to R4
-            
-            rand = random.random()
-            if rand < kia_prob:
-                return "KIA"
-            elif rand < kia_prob + rtd_prob:
-                return "RTD"
-            else:
-                return "R4"
-        
-        # R4 is terminal state
+        # Default to staying at current location if no transition defined
         return current_location
     
     def _generate_treatments(self, patient, facility):
@@ -305,39 +368,51 @@ class PatientFlowSimulator:
     
     # Helper methods
     def _select_weighted_item(self, weights_dict):
-        """Select an item from a dictionary based on weights"""
-        items = list(weights_dict.keys())
-        weights = list(weights_dict.values())
+        """Select an item from a dictionary based on weights - optimized version"""
+        # Convert to list of (item, weight) tuples for faster processing
+        items = []
+        weights = []
+        
+        for item, weight in weights_dict.items():
+            items.append(item)
+            weights.append(weight)
+        
+        # Use random.choices for more efficient weighted selection
         return random.choices(items, weights=weights, k=1)[0]
     
     def _get_date_for_day(self, day_label):
         """Convert day label to actual date"""
-        base_date_str = self.config.get("base_date", "2025-06-01")
-        base_date = datetime.datetime.strptime(base_date_str, "%Y-%m-%d").date()
+        # Using a cached base date for efficiency
+        if not hasattr(self, '_base_date'):
+            base_date_str = self.config.get("base_date", "2025-06-01")
+            self._base_date = datetime.datetime.strptime(base_date_str, "%Y-%m-%d").date()
+            
+            # Pre-calculate day offsets
+            self._day_offsets = {
+                "Day 1": 0,
+                "Day 2": 1,
+                "Day 4": 3,
+                "Day 8": 7
+            }
         
-        day_offsets = {
-            "Day 1": 0,
-            "Day 2": 1,
-            "Day 4": 3,
-            "Day 8": 7
-        }
-        
-        offset = day_offsets.get(day_label, 0)
-        return base_date + datetime.timedelta(days=offset)
+        offset = self._day_offsets.get(day_label, 0)
+        return self._base_date + datetime.timedelta(days=offset)
     
     def _get_treatment_date(self, injury_day, current_location, next_location):
         """Calculate treatment date based on injury day and facility transit times"""
+        # Get the base date
         base_date = self._get_date_for_day(injury_day)
         
-        # Add hours based on transit between facilities
-        transit_hours = {
-            ("POI", "R1"): 1,
-            ("R1", "R2"): 2,
-            ("R2", "R3"): 4,
-            ("R3", "R4"): 12
-        }
+        # Cached transit times for efficiency
+        if not hasattr(self, '_transit_hours'):
+            self._transit_hours = {
+                ("POI", "R1"): 1,
+                ("R1", "R2"): 2,
+                ("R2", "R3"): 4,
+                ("R3", "R4"): 12
+            }
         
         transit_key = (current_location, next_location)
-        hours_to_add = transit_hours.get(transit_key, 0)
+        hours_to_add = self._transit_hours.get(transit_key, 0)
         
         return datetime.datetime.combine(base_date, datetime.time()) + datetime.timedelta(hours=hours_to_add)
