@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - output_data:/app/output
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+      - HOST=0.0.0.0
+      - PATIENT_GENERATOR_THREADS=4
+      - PATIENT_GENERATOR_MAX_MEMORY=4096
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/config/defaults"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    command: >
+      uvicorn app:app --host 0.0.0.0 
+      --port 8000 
+      --workers 4 
+      --proxy-headers
+
+volumes:
+  output_data:
+    driver: local

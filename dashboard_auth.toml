@@ -1,0 +1,15 @@
+# dashboard_auth.toml
+
+[http.middlewares]
+  [http.middlewares.auth.basicAuth]
+    users = [
+      "admin:$apr1$ruca84Hq$mbjdMZBAG.KWn7vfN/SNK/"  # admin:password (use htpasswd to generate)
+    ]
+
+[http.routers.dashboard]
+  rule = "Host(`traefik.example.com`)"
+  entrypoints = ["websecure"]
+  service = "api@internal"
+  middlewares = ["auth"]
+  [http.routers.dashboard.tls]
+    certResolver = "le"

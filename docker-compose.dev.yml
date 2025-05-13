@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./patient_generator:/app/patient_generator
+      - ./static:/app/static
+      - ./output:/app/output
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+      - HOST=0.0.0.0
+      - PATIENT_GENERATOR_THREADS=4
+      - PATIENT_GENERATOR_MAX_MEMORY=2048
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/config/defaults"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: "on-failure"
+    command: uvicorn app:app --reload --host 0.0.0.0 --port 8000
