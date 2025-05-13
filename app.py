@@ -71,6 +71,12 @@ async def generate_patients(config: GeneratorConfig, background_tasks: Backgroun
         "created_at": datetime.now().isoformat(),
         "output_files": [],
         "progress": 0,
+        "progress_details": {
+            "current_phase": "Queued",
+            "phase_description": "Job is queued for processing",
+            "phase_progress": 0,
+            "time_estimates": {"total": None, "phase": None}
+        },
         "summary": {},
     }
     
@@ -200,33 +206,38 @@ async def run_generator_job(job_id: str, config: GeneratorConfig):
         generator = PatientGeneratorApp(generator_config)
         
         # Update progress callback
-        def progress_callback(percent, patient_data=None):
+        def progress_callback(percent, data=None, progress_info=None):
             jobs[job_id]["progress"] = percent
             
-            # If patient data is provided, update the job summary
-            if patient_data:
-                jobs[job_id]["summary"] = patient_data
+            # Update progress details if provided
+            if progress_info:
+                jobs[job_id]["progress_details"] = progress_info
+            
+            # If summary data is provided, update the job summary
+            if isinstance(data, dict) and "nationalities" in data:
+                jobs[job_id]["summary"] = data
         
         # Run the generator with progress reporting
         patients, bundles = generator.run(progress_callback=progress_callback)
         
-        # Create a summary of the generation
-        nationality_counts = Counter([p.nationality for p in patients])
-        front_counts = Counter([p.front for p in patients])
-        injury_counts = Counter([p.injury_type for p in patients])
-        status_counts = Counter([p.current_status for p in patients])
-        
-        # Update job summary
-        jobs[job_id]["summary"] = {
-            "total_patients": len(patients),
-            "nationalities": {nat: count for nat, count in nationality_counts.items()},
-            "fronts": {front: count for front, count in front_counts.items()},
-            "injury_types": {injury: count for injury, count in injury_counts.items()},
-            "final_status": {status: count for status, count in status_counts.items()},
-            "kia_count": status_counts.get("KIA", 0),
-            "rtd_count": status_counts.get("RTD", 0),
-            "still_in_treatment": sum(status_counts.get(status, 0) for status in ["R1", "R2", "R3", "R4"])
-        }
+        # Create a summary of the generation if not already set
+        if "total_patients" not in jobs[job_id]["summary"]:
+            nationality_counts = Counter([p.nationality for p in patients])
+            front_counts = Counter([p.front for p in patients])
+            injury_counts = Counter([p.injury_type for p in patients])
+            status_counts = Counter([p.current_status for p in patients])
+            
+            # Update job summary
+            jobs[job_id]["summary"] = {
+                "total_patients": len(patients),
+                "nationalities": {nat: count for nat, count in nationality_counts.items()},
+                "fronts": {front: count for front, count in front_counts.items()},
+                "injury_types": {injury: count for injury, count in injury_counts.items()},
+                "final_status": {status: count for status, count in status_counts.items()},
+                "kia_count": status_counts.get("KIA", 0),
+                "rtd_count": status_counts.get("RTD", 0),
+                "still_in_treatment": sum(status_counts.get(status, 0) for status in ["R1", "R2", "R3", "R4"])
+            }
         
         # Update job output files
         output_dir = generator_config["output_directory"]

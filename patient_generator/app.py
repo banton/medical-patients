@@ -1,6 +1,7 @@
 import os
 import random
 import datetime
+import time
 from .flow_simulator import PatientFlowSimulator
 from .demographics import DemographicsGenerator
 from .medical import MedicalConditionGenerator
@@ -13,6 +14,9 @@ class PatientGeneratorApp:
     
     def __init__(self, config=None):
         self.config = config or self._default_config()
+        self.start_time = None
+        self.phase_start_time = None
+        self.total_patients = 0
     
     def _default_config(self):
         """Create default configuration"""
@@ -53,21 +57,91 @@ class PatientGeneratorApp:
             "use_encryption": True
         }
     
+    def _estimate_remaining_time(self, progress_percent, phase_progress=None):
+        """Estimate remaining time for current phase and overall process"""
+        now = time.time()
+        elapsed_total = now - self.start_time
+        
+        if progress_percent <= 0:
+            return {"total": None, "phase": None}
+        
+        # Estimate total remaining time
+        total_remaining = (elapsed_total / progress_percent) * (100 - progress_percent)
+        
+        # Estimate phase remaining time if phase_progress is provided
+        phase_remaining = None
+        if phase_progress is not None and phase_progress > 0:
+            elapsed_phase = now - self.phase_start_time
+            phase_remaining = (elapsed_phase / phase_progress) * (100 - phase_progress)
+            
+        return {
+            "total": int(total_remaining),
+            "phase": int(phase_remaining) if phase_remaining is not None else None
+        }
+    
+    def _start_new_phase(self):
+        """Reset the phase timer for a new processing phase"""
+        self.phase_start_time = time.time()
+    
     def run(self, progress_callback=None):
         """Run the patient generator with optional progress reporting"""
-        total_patients = self.config['total_patients']
+        self.start_time = time.time()
+        self.phase_start_time = time.time()
+        self.total_patients = self.config['total_patients']
+        
+        # Define phases with their relative weights for progress calculation
+        phases = [
+            {"name": "Initializing", "weight": 5, "description": "Setting up simulation environment"},
+            {"name": "Generating Patient Flow", "weight": 15, "description": "Simulating casualty flow through treatment facilities"},
+            {"name": "Creating Demographics", "weight": 20, "description": "Generating patient personal information"},
+            {"name": "Adding Medical Conditions", "weight": 15, "description": "Adding realistic medical conditions and treatments"},
+            {"name": "Creating FHIR Bundles", "weight": 25, "description": "Converting to HL7 FHIR format"},
+            {"name": "Formatting Output", "weight": 10, "description": "Preparing JSON and XML files"},
+            {"name": "Compressing Data", "weight": 5, "description": "Applying compression to output files"},
+            {"name": "Encrypting Data", "weight": 5, "description": "Securing data with AES-256-GCM encryption"}
+        ]
+        
+        # Calculate cumulative weights for progress tracking
+        cumulative_weight = 0
+        for phase in phases:
+            phase["start_progress"] = cumulative_weight
+            cumulative_weight += phase["weight"]
+            phase["end_progress"] = cumulative_weight
         
         # Report initial progress
         if progress_callback:
-            progress_callback(0)
+            progress_info = {
+                "current_phase": phases[0]["name"],
+                "phase_description": phases[0]["description"],
+                "phase_progress": 0,
+                "time_estimates": self._estimate_remaining_time(0),
+                "overall_progress": 0
+            }
+            progress_callback(0, progress_info)
+        
+        # PHASE 1: Initialization
+        current_phase = 0
+        self._update_progress(progress_callback, current_phase, 50, phases)
         
         # Initialize the patient flow simulator
         flow_simulator = PatientFlowSimulator(self.config)
         
-        # Generate patient flow (20% of progress)
-        patients = flow_simulator.generate_casualty_flow(total_patients)
-        if progress_callback:
-            progress_callback(20)
+        self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 2: Generate patient flow
+        current_phase = 1
+        self._start_new_phase()
+        self._update_progress(progress_callback, current_phase, 0, phases)
+        
+        # Generate patient flow
+        patients = flow_simulator.generate_casualty_flow(self.total_patients)
+        
+        self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 3 & 4: Demographics and medical conditions
+        current_phase = 2
+        self._start_new_phase()
+        self._update_progress(progress_callback, current_phase, 0, phases)
         
         # Initialize the demographics generator
         demographics_generator = DemographicsGenerator()
@@ -75,11 +149,18 @@ class PatientGeneratorApp:
         # Initialize the medical condition generator
         condition_generator = MedicalConditionGenerator()
         
-        # Enhance patients with detailed demographics and conditions (30% of progress)
+        # Enhance patients with detailed demographics
         for i, patient in enumerate(patients):
             # Generate demographics
             demographics = demographics_generator.generate_person(patient.nationality, patient.gender)
             patient.set_demographics(demographics)
+            
+            # Update demographics progress
+            if (i + 1) == len(patients) // 2:
+                self._update_progress(progress_callback, current_phase, 100, phases)
+                current_phase = 3
+                self._start_new_phase()
+                self._update_progress(progress_callback, current_phase, 0, phases)
             
             # Generate primary condition
             primary_condition = condition_generator.generate_condition(
@@ -112,28 +193,18 @@ class PatientGeneratorApp:
             else:
                 patient.allergies = []
             
-            # Report progress and patient data summary periodically
-            if progress_callback and i % 100 == 0:
-                progress = 20 + int((i / total_patients) * 30)
-                
-                # Create a summary of current patient data
-                nationality_counts = Counter([p.nationality for p in patients[:i+1]])
-                front_counts = Counter([p.front for p in patients[:i+1]])
-                injury_counts = Counter([p.injury_type for p in patients[:i+1]])
-                status_counts = Counter([p.current_status for p in patients[:i+1]])
-                
-                patient_data = {
-                    "processed_patients": i + 1,
-                    "total_patients": total_patients,
-                    "nationalities": {nat: count for nat, count in nationality_counts.items()},
-                    "fronts": {front: count for front, count in front_counts.items()},
-                    "injury_types": {injury: count for injury, count in injury_counts.items()},
-                    "status": {status: count for status, count in status_counts.items()}
-                }
-                
-                progress_callback(min(50, progress), patient_data)
+            # Report medical progress
+            if current_phase == 3 and i % 100 == 0:
+                phase_progress = min(100, int((i / len(patients)) * 100))
+                self._update_progress(progress_callback, current_phase, phase_progress, phases)
         
-        # Generate FHIR bundles (40% of progress)
+        self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 5: Generate FHIR bundles
+        current_phase = 4
+        self._start_new_phase()
+        self._update_progress(progress_callback, current_phase, 0, phases)
+        
         bundle_generator = FHIRBundleGenerator(demographics_generator)
         bundles = []
         
@@ -142,14 +213,39 @@ class PatientGeneratorApp:
             bundles.append(bundle)
             
             # Report progress
-            if progress_callback and i % 100 == 0:
-                progress = 50 + int((i / total_patients) * 40)
-                progress_callback(min(90, progress))
+            if i % 50 == 0:
+                phase_progress = min(100, int((i / len(patients)) * 100))
+                self._update_progress(progress_callback, current_phase, phase_progress, phases)
         
-        # Format outputs (final 10% of progress)
+        self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 6: Format outputs
+        current_phase = 5
+        self._start_new_phase()
+        self._update_progress(progress_callback, current_phase, 0, phases)
+        
         formatter = OutputFormatter()
         
-        # Create output files
+        # Progress updates for formatting phase
+        self._update_progress(progress_callback, current_phase, 50, phases)
+        self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 7: Compression (if enabled)
+        if self.config.get("use_compression", True):
+            current_phase = 6
+            self._start_new_phase()
+            self._update_progress(progress_callback, current_phase, 0, phases)
+            self._update_progress(progress_callback, current_phase, 50, phases)
+            self._update_progress(progress_callback, current_phase, 100, phases)
+        
+        # PHASE 8: Encryption (if enabled)
+        if self.config.get("use_encryption", True):
+            current_phase = 7
+            self._start_new_phase()
+            self._update_progress(progress_callback, current_phase, 0, phases)
+            self._update_progress(progress_callback, current_phase, 50, phases)
+        
+        # Create output files (combines formatting, compression, and encryption)
         output_files = formatter.create_output_files(
             bundles,
             self.config["output_directory"],
@@ -158,6 +254,9 @@ class PatientGeneratorApp:
             use_encryption=self.config.get("use_encryption", True),
             encryption_key=self.config.get("encryption_key")
         )
+        
+        if self.config.get("use_encryption", True):
+            self._update_progress(progress_callback, current_phase, 100, phases)
         
         # Create final summary
         nationality_counts = Counter([p.nationality for p in patients])
@@ -178,9 +277,46 @@ class PatientGeneratorApp:
         
         # Report completion
         if progress_callback:
-            progress_callback(100, summary)
+            progress_info = {
+                "current_phase": "Complete",
+                "phase_description": "Generation process completed successfully",
+                "phase_progress": 100,
+                "time_estimates": {"total": 0, "phase": 0},
+                "overall_progress": 100
+            }
+            progress_callback(100, summary, progress_info)
         
         return patients, bundles
+    
+    def _update_progress(self, progress_callback, current_phase_index, phase_progress, phases):
+        """Update progress with detailed information about the current phase"""
+        if not progress_callback:
+            return
+            
+        current_phase = phases[current_phase_index]
+        
+        # Calculate overall progress based on phase weights
+        phase_contribution = ((phase_progress / 100) * current_phase["weight"])
+        overall_progress = current_phase["start_progress"] + phase_contribution
+        
+        # Format progress to integer
+        overall_progress = int(overall_progress)
+        
+        # Create progress information dictionary
+        progress_info = {
+            "current_phase": current_phase["name"],
+            "phase_description": current_phase["description"],
+            "phase_progress": phase_progress,
+            "time_estimates": self._estimate_remaining_time(overall_progress, phase_progress),
+            "overall_progress": overall_progress
+        }
+        
+        # Add patient count info
+        if current_phase_index >= 1:
+            progress_info["total_patients"] = self.total_patients
+        
+        # Call the progress callback
+        progress_callback(overall_progress, progress_info)
 
 if __name__ == "__main__":
     # Simple command-line usage example
