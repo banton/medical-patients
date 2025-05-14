@@ -11,10 +11,11 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - Object-oriented design for the generator components
    - Used for all data generation, processing, and API logic
 
-2. **JavaScript**: Frontend interactivity
-   - AJAX for asynchronous communication with backend
-   - DOM manipulation for dynamic UI updates
-   - Chart rendering and form validation
+2. **JavaScript/TypeScript (TSX)**: Frontend interactivity and component development.
+   - `enhanced-visualization-dashboard.tsx` is written in TSX (TypeScript + JSX).
+   - AJAX for asynchronous communication with backend.
+   - DOM manipulation for dynamic UI updates.
+   - Chart rendering and form validation.
 
 3. **HTML/CSS**: Frontend structure and styling
    - Bootstrap 5 framework for responsive design
@@ -57,34 +58,36 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 
 #### Frontend
 
-1. **Bootstrap (5.3.0+)**:
-   - Responsive grid layout
-   - Form components
-   - Card and alert components
-
-2. **Chart.js**:
-   - Interactive data visualizations
-   - Pie charts for data distribution display
-
-3. **FontAwesome (6.4.0+)**:
-   - Icon library for improved UI
+1.  **React (19.1.0+)**: For building the user interface, specifically the enhanced visualization dashboard.
+2.  **Recharts (2.15.3+)**: Used for rendering complex charts in the enhanced visualization dashboard.
+3.  **Lucide-React (0.510.0+)**: For icons within the React components.
+4.  **Bootstrap (5.3.0+)**: Used for overall styling and layout, loaded via CDN in HTML.
+5.  **FontAwesome (6.4.0+)**: Used for iconography, loaded via CDN in HTML.
+6.  **Testing Library (`@testing-library/react`, `@testing-library/jest-dom`)**: For testing React components.
 
 ### Development Environment
 
 1. **Required Tools**:
    - Python 3.8 or higher
    - Pip (Python package installer)
+   - Node.js and npm (for frontend dependencies, testing, and building)
    - Git (for version control)
-   - Virtual environment tool (venv, conda, etc.)
+   - Virtual environment tool for Python (venv, conda, etc.)
+   - `esbuild` (for building the frontend dashboard component)
 
 2. **Setup Process**:
-   - Create and activate virtual environment
-   - Install dependencies from `requirements.txt`
-   - Install package in development mode with `pip install -e .`
+   - **Backend**:
+     - Create and activate Python virtual environment.
+     - Install Python dependencies: `pip install -r requirements.txt`.
+     - Install package in development mode: `pip install -e .` (if applicable).
+   - **Frontend (for enhanced visualization dashboard)**:
+     - Install Node.js dependencies: `npm install`.
+     - Build the dashboard component: `npm run build`.
 
 3. **Testing**:
-   - Python's `unittest` framework
-   - Test modules in `tests.py`
+   - **Backend**: Python's `unittest` framework. Run with `python -m unittest tests.py` (or similar).
+   - **Frontend**: Jest with `ts-jest` for `.tsx` files. Run with `npm test`.
+     - Configuration files: `jest.config.js`, `tsconfig.json`, `setupTests.ts`.
 
 ### Deployment Options
 
@@ -129,35 +132,58 @@ aiofiles==23.1.0
 psutil>=7.0.0
 ```
 
-#### Frontend Dependencies (CDN-loaded)
+#### Frontend Dependencies (npm packages from `package.json`)
 
-```
-bootstrap@5.3.0
-font-awesome@6.4.0
-chart.js (latest)
-```
+Key dependencies for the enhanced visualization dashboard:
+- `react`
+- `react-dom`
+- `recharts`
+- `lucide-react`
+- `@testing-library/react`
+- `@testing-library/jest-dom`
+- `ts-jest` (dev)
+- `jest` (implied by `ts-jest`, often a direct dev dependency)
+- `jest-environment-jsdom` (dev)
+- `@types/react`, `@types/jest` (dev)
+- `esbuild` (dev)
+
+Bootstrap and FontAwesome are still loaded via CDN in `visualizations.html` and `index.html`.
 
 ### File Structure
 
 ```
 military-patient-generator/
-├── app.py                      # Main FastAPI application
-├── requirements.txt            # Python dependencies
-├── setup.py                    # Package setup
-├── tests.py                    # Unit tests
-├── demo.py                     # Demonstration script
-├── static/                     # Static web files
-│   └── index.html              # Single page interface
+├── app.py                                # Main FastAPI application
+├── requirements.txt                    # Python dependencies
+├── package.json                        # Frontend Node.js dependencies & scripts
+├── package-lock.json                 # Frontend dependency lock file
+├── jest.config.js                      # Jest test runner configuration
+├── tsconfig.json                       # TypeScript configuration
+├── setupTests.ts                       # Jest setup file (e.g., for mocks)
+├── enhanced-visualization-dashboard.tsx  # React TSX component for advanced visualizations
+├── enhanced-visualization-dashboard.test.tsx # Jest tests for the TSX component
+├── setup.py                            # Python package setup
+├── tests.py                            # Python unit tests
+├── demo.py                             # Demonstration script
+├── static/                             # Static web files
+│   ├── index.html                    # Main HTML page for generator
+│   ├── visualizations.html           # HTML page for advanced visualizations
+│   └── dist/
+│       └── bundle.js                 # Compiled JavaScript for enhanced dashboard
+│   └── js/
+│       └── visualization-dashboard.js # Older JS dashboard (if still used)
 │
-└── patient_generator/          # Core generation modules
-    ├── __init__.py
-    ├── app.py                  # PatientGeneratorApp
-    ├── patient.py              # Patient class
-    ├── flow_simulator.py       # Patient flow simulator
-    ├── demographics.py         # Demographics generator
-    ├── medical.py              # Medical condition generator
-    ├── fhir_generator.py       # FHIR bundle generator
-    └── formatter.py            # Output formatter
+├── patient_generator/                  # Core Python generation modules
+│   ├── __init__.py
+│   ├── app.py                          # PatientGeneratorApp
+│   ├── patient.py                      # Patient class
+│   ├── flow_simulator.py               # Patient flow simulator
+│   ├── demographics.py                 # Demographics generator
+│   ├── medical.py                      # Medical condition generator
+│   ├── fhir_generator.py               # FHIR bundle generator
+│   └── formatter.py                    # Output formatter
+│
+└── node_modules/                       # Frontend Node.js packages (usually in .gitignore)
 ```
 
 ### Data Standards

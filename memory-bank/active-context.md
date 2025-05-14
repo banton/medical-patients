@@ -6,107 +6,96 @@ Based on the Military Medical Exercise Patient Generator codebase, this document
 
 ### Current Focus
 
-The project appears to be in a mature state with a complete implementation of core functionality. Current focus areas appear to be:
+The project is enhancing its frontend capabilities, particularly for data visualization. Current focus areas include:
 
-1. **User Experience Refinement**: The web interface is well-developed with attention to progress tracking and data visualization.
-
-2. **Data Standards Compliance**: Ensuring generated data meets military medical standards (FHIR, SNOMED CT, etc.).
-
-3. **Output Security Options**: Implementation of compression and encryption for sensitive patient data.
-
-4. **Realistic Patient Flow Simulation**: Modeling patient progression through medical facilities with statistically realistic outcomes.
+1.  **Enhanced Visualization Dashboard**: Implementing and stabilizing the new React/TSX-based advanced visualization dashboard (`enhanced-visualization-dashboard.tsx`). This includes setting up testing, a build process, and ensuring it integrates correctly with the backend.
+2.  **Frontend Testing**: Establishing a robust testing environment for React/TSX components using Jest and React Testing Library.
+3.  **Frontend Build Process**: Implementing a build pipeline (using `esbuild`) for frontend components to ensure they are correctly compiled and bundled for browser use.
+4.  **Backend API Support**: Ensuring backend FastAPI routes correctly serve data required by the new visualization dashboard and are free of errors.
+5.  **User Experience Refinement**: Continued focus on making data visualizations clear and useful.
 
 ### Recent Changes
 
-Based on the codebase, recent development appears to have included:
+Significant recent development has focused on the enhanced visualization dashboard:
 
-1. **Web Interface Implementation**: A complete Bootstrap-based UI with job management and visualization features.
-
-2. **Background Task Processing**: Implementation of asynchronous job handling for patient generation.
-
-3. **Output Formatting Options**: Addition of multiple output formats with security options.
-
-4. **FHIR Bundle Generation**: Implementation of HL7 FHIR R4 bundle creation.
-
-5. **Testing Framework**: 
-   - Development of unit tests for core components.
-   - Added unit tests for the `transform_job_data_for_visualization` function, covering various scenarios including empty data, patient flows, and data distributions.
-   - Identified and fixed a bug in `transform_job_data_for_visualization` where default Sankey nodes were not provided for empty patient lists.
-
-6. **Deployment Documentation**: Created Docker deployment guide (`DOCKER_DEPLOYMENT.md`).
-
-7. **Docker Environment**: Fixed `Dockerfile` and successfully built and tested the development Docker environment (`docker-compose.dev.yml`).
+1.  **Frontend Testing Setup**:
+    *   Configured Jest (with `ts-jest`) to test `.tsx` (React/TypeScript) components.
+    *   Installed necessary dev dependencies: `ts-jest`, `jest-environment-jsdom`, `@types/react-dom`, `@testing-library/react`, `@testing-library/jest-dom`.
+    *   Created `jest.config.js` and `tsconfig.json` to support the testing and TypeScript compilation.
+    *   Updated `setupTests.ts` to include mocks (e.g., `ResizeObserver`) needed for tests involving charting libraries.
+    *   Successfully ran and debugged tests for `enhanced-visualization-dashboard.test.tsx`, resolving `act()` warnings.
+2.  **Frontend Build Process**:
+    *   Installed `esbuild` as a frontend bundler.
+    *   Added a `build` script to `package.json` (`npm run build`) to compile `enhanced-visualization-dashboard.tsx` into `static/dist/bundle.js`.
+    *   Modified `enhanced-visualization-dashboard.tsx` to include its own ReactDOM rendering logic, making it a self-contained application entry point when bundled.
+3.  **HTML Integration**:
+    *   Updated `static/visualizations.html` to load the compiled `bundle.js` instead of attempting in-browser Babel transpilation. Removed CDN links for React, ReactDOM, Recharts, and Lucide-React as they are now part of the bundle.
+4.  **Backend API Fixes for Visualizations**:
+    *   Diagnosed and resolved 404 errors for `/api/visualizations/job-list` by guiding the user on backend server restarts (related to Docker environment).
+    *   Corrected the data format returned by the `/api/visualizations/job-list` endpoint in `app.py` to match frontend expectations.
+    *   Diagnosed and fixed a 500 Internal Server Error for `/api/visualizations/dashboard-data`. The root cause was a `TypeError` in `patient_generator/flow_simulator.py` due to inconsistent `datetime.date` vs `datetime.datetime` objects in `treatment_history`. This was resolved by ensuring all treatment dates are `datetime.datetime` objects.
+5.  **Previous Work (Context)**:
+    *   Development of unit tests for Python core components (e.g., `transform_job_data_for_visualization`).
+    *   Creation of Docker deployment documentation and testing of the dev Docker environment.
 
 ### Next Steps
 
-Likely upcoming development priorities include:
+Building on the recent progress:
 
-1. **Documentation Expansion**: 
-   - Enhancing user guides and API documentation
-   - Creating more examples for different use cases
-   - Developing training materials for new users
-
-2. **Performance Optimization**:
-   - Profiling and optimizing generation for large datasets
-   - Implementing parallel processing options
-   - Memory usage optimization
-
-3. **Deployment Enhancements**:
-   - Docker deployment guide created and development environment tested successfully.
-   - Setting up CI/CD pipelines.
-   - Further refinement and testing of production and other Docker deployment strategies.
-
-4. **Feature Extensions**:
-   - Supporting additional nationalities
-   - Adding more detailed medical condition modeling
-   - Implementing more complex patient flow scenarios
-   - Creating connectors for specific military medical systems
-
-5. **UI Improvements**:
-   - Adding user authentication
-   - Implementing saved configuration profiles
-   - Developing enhanced visualization options
-   - Creating a patient record viewer
+1.  **Enhanced Visualization Dashboard - Further Development & Testing**:
+    *   Thoroughly test all features of the `enhanced-visualization-dashboard`.
+    *   Implement any missing visualizations or refine existing ones.
+    *   Address the `recharts` console warning about chart dimensions in JSDOM if it becomes problematic or if pixel-perfect test rendering is required.
+2.  **Frontend Build Optimization**:
+    *   Evaluate the size of `static/dist/bundle.js` (currently ~2.1MB). If too large for production, configure `esbuild` to treat libraries like React, ReactDOM, and Recharts as external and load them via CDN in `visualizations.html`.
+3.  **Backend API Robustness**:
+    *   Add more comprehensive error handling and logging to visualization-related API endpoints in `app.py`.
+    *   Ensure all data transformations in `patient_generator/visualization_data.py` are robust against potential variations in patient data.
+4.  **Documentation**:
+    *   Update `DOCKER_DEPLOYMENT.md` or create new documentation for building and running the frontend components if the process differs significantly from the main Python app.
+    *   Document the new frontend build and test commands.
+5.  **General Project Goals (from previous state)**:
+    *   Continue documentation expansion (user guides, API docs).
+    *   Performance optimization for large data generation.
+    *   Deployment enhancements (CI/CD, production Docker configs).
+    *   Consider feature extensions (additional nationalities, medical conditions, etc.).
 
 ### Active Decisions
 
-Key architectural and implementation decisions that appear to be active include:
+Key architectural and implementation decisions from recent work:
 
-1. **Modular Generation Pipeline**: The generation process is broken into distinct modules (flow, demographics, medical, FHIR, formatting) allowing for independent development and testing.
-
-2. **Standards-Based Approach**: The system prioritizes compliance with medical data standards to ensure interoperability.
-
-3. **Web + CLI Interfaces**: Maintaining both interfaces to support different user needs and automation scenarios.
-
-4. **In-Memory Processing**: Current implementation processes data in memory rather than using a database, which is suitable for the batch nature of the generation.
-
-5. **Statistically-Driven Simulation**: Patient flow is modeled using statistical distributions rather than fixed pathways, creating more realistic variation.
+1.  **Dedicated Frontend Build**: Adopted `esbuild` for compiling and bundling the TSX-based `enhanced-visualization-dashboard`. This moves away from in-browser transpilation for this component.
+2.  **Component Self-Rendering**: The `enhanced-visualization-dashboard.tsx` now includes logic to render itself into a DOM element, making the bundled output directly usable in an HTML page.
+3.  **Jest for Frontend Testing**: Standardized on Jest with `ts-jest` for testing React/TSX components.
+4.  **Consistent Datetime Objects**: Ensured `datetime.datetime` objects are used consistently for dates in `treatment_history` within the Python backend to prevent comparison errors.
+5.  **Bundling Core Frontend Libraries**: Currently, React, ReactDOM, Recharts, and Lucide-React are bundled into `bundle.js`. This simplifies deployment but results in a larger bundle file. (Future decision: externalize these to CDNs if needed).
 
 ### Current Challenges
 
-Based on the codebase, these challenges are likely being addressed:
-
-1. **Memory Management**: Generating large numbers of patients with comprehensive FHIR data could strain memory resources.
-
-2. **Performance vs. Realism**: Balancing generation speed with the level of detail in patient simulations.
-
-3. **Security Requirements**: Ensuring appropriate handling of synthetic but potentially sensitive medical data.
-
-4. **Cross-Browser Compatibility**: Ensuring the web interface works consistently across different browsers and devices.
-
-5. **Configurability vs. Simplicity**: Providing enough customization options while maintaining a user-friendly interface.
+1.  **Frontend Bundle Size**: The current `bundle.js` for the enhanced dashboard is ~2.1MB. This may need optimization for production environments.
+2.  **Development Workflow**: Managing a hybrid Python backend and a Node.js/TypeScript frontend environment (build, test, dependencies) requires careful coordination.
+3.  **Data Consistency**: Ensuring data generated by the Python backend (e.g., patient objects, job summaries) consistently matches the structures expected by both the Python-based data transformation functions (like `transform_job_data_for_visualization`) and the frontend components.
+4.  **Dockerized Development**: Ensuring that changes to backend code are promptly reflected in the running Docker container, and that developers understand how to manage this (rebuilds, reloads).
+5.  **Memory Management (Ongoing)**: Generating large numbers of patients with comprehensive FHIR data could still strain memory resources.
+6.  **Performance vs. Realism (Ongoing)**: Balancing generation speed with the level of detail in patient simulations.
 
 ### Working Environment
 
-The project appears to be developed using:
+The project is developed using:
 
-1. **Python 3.8+**: Modern Python with type hints and object-oriented design.
-
-2. **FastAPI**: Asynchronous web framework for the backend API.
-
-3. **Bootstrap 5**: Frontend framework for responsive design.
-
-4. **Standard Development Tools**: Virtual environments, package management via pip, unit testing.
+1.  **Python 3.8+**: For the backend, using FastAPI.
+2.  **Node.js & npm**: For frontend dependency management, testing (Jest), and building (esbuild).
+3.  **TypeScript/TSX**: For the `enhanced-visualization-dashboard` React component.
+4.  **React**: Frontend library for the enhanced dashboard.
+5.  **Recharts, Lucide-React**: Charting and icon libraries for the React dashboard.
+6.  **FastAPI**: Asynchronous web framework for the backend API.
+7.  **Bootstrap 5 & FontAwesome**: For general UI styling (loaded via CDN for HTML pages).
+8.  **Standard Development Tools**:
+    *   Python: Virtual environments, pip.
+    *   Frontend: `package.json` for scripts and dependencies.
+    *   Testing: `unittest` (Python), Jest (`ts-jest`) (Frontend).
+    *   Version Control: Git.
+    *   Containerization: Docker (as implied by user and project files like `Dockerfile`).
 
 ### Collaboration Context
 
