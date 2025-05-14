@@ -2,7 +2,7 @@ import os
 import json
 import uuid
 import uvicorn
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, APIRouter
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,7 @@ from collections import Counter
 
 # Import our patient generator modules
 from patient_generator.app import PatientGeneratorApp
+from patient_generator.visualization_data import transform_job_data_for_visualization
 
 app = FastAPI(title="Military Medical Exercise Patient Generator")
 
@@ -31,6 +32,11 @@ app.add_middleware(
 
 # Serve static files (our single-page application)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Visualization router (will be defined later and included)
+# Forward declaration for clarity, actual definition below other routes
+# visualization_router = APIRouter(prefix="/api/visualizations") 
+# app.include_router(visualization_router) # Will be moved to after router definition
 
 # Store job states
 jobs = {}
@@ -58,6 +64,11 @@ class GeneratorConfig(BaseModel):
 async def get_index():
     """Serve the main HTML page"""
     return FileResponse("static/index.html")
+
+@app.get("/visualizations")
+async def get_visualizations_page():
+    """Serve the visualizations HTML page"""
+    return FileResponse("static/visualizations.html")
 
 @app.post("/api/generate")
 async def generate_patients(config: GeneratorConfig, background_tasks: BackgroundTasks):
@@ -134,6 +145,162 @@ async def download_job_output(job_id: str):
 async def get_default_config():
     """Get default configuration values"""
     return GeneratorConfig().dict()
+
+# Visualization API Endpoints
+visualization_router = APIRouter(prefix="/api/visualizations")
+
+@visualization_router.get("/dashboard-data")
+async def get_dashboard_data(job_id: str = None):
+    """Get data for the visualization dashboard"""
+    target_job_data = None
+    if job_id:
+        if job_id in jobs and jobs[job_id]["status"] == "completed":
+            target_job_data = jobs[job_id]
+        else:
+            # If job_id is provided but not found or not completed, it's an error
+            raise HTTPException(status_code=404, detail=f"Completed job {job_id} not found or not completed.")
+    else:
+        # Find the most recent completed job if no job_id is specified
+        completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
+        if completed_jobs_list:
+            target_job_data = max(completed_jobs_list, key=lambda j: j["completed_at"])
+        else:
+            # No job_id provided and no completed jobs exist
+            raise HTTPException(status_code=404, detail="No completed jobs available for visualization.")
+
+    if not target_job_data:
+        # This case should be covered, but as a fallback
+        raise HTTPException(status_code=404, detail="No suitable job data found for visualization.")
+    
+    try:
+        # The transform_job_data_for_visualization function expects the full job dictionary
+        dashboard_data = transform_job_data_for_visualization(target_job_data)
+        return dashboard_data
+    except Exception as e:
+        print(f"Error transforming data for job {target_job_data.get('job_id', 'unknown')}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to transform data for visualization.")
+
+@visualization_router.get("/job-list")
+async def get_visualization_job_list():
+    """Get a list of jobs that can be used for visualization"""
+    job_list = []
+    # Sort jobs by creation time (which is part of job_id or use created_at), most recent first
+    sorted_job_ids = sorted(jobs.keys(), key=lambda jid: jobs[jid].get("created_at", ""), reverse=True)
+
+    for job_id_key in sorted_job_ids:
+        job = jobs[job_id_key]
+        if job["status"] == "completed" and job.get("completed_at"):
+            # Create a user-friendly description for the dropdown
+            # Using completed_at for the description as per the frontend example's display preference
+            # Ensure the job has summary and config, and created_at
+            total_patients = job.get("summary", {}).get("total_patients")
+            if total_patients is None: # Fallback to config if summary not detailed
+                total_patients = job.get("config", {}).get("total_patients", 0)
+            
+            created_at_iso = job.get("created_at", "")
+
+            job_list.append({
+                "job_id": job_id_key,
+                "total_patients": total_patients,
+                "created_at": created_at_iso 
+                # Frontend's JobSummary interface expects job_id, total_patients, created_at
+                # The dropdown in frontend formats created_at using new Date().toLocaleDateString()
+            })
+    return job_list
+
+@visualization_router.get("/patient-detail/{patient_id}")
+async def get_patient_detail(patient_id: str, job_id: str = None):
+    """Get detailed data for a specific patient"""
+    target_job = None
+    if job_id and job_id in jobs and jobs[job_id]["status"] == "completed":
+        target_job = jobs[job_id]
+    else:
+        completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
+        if completed_jobs_list:
+            target_job = max(completed_jobs_list, key=lambda j: j["completed_at"])
+    
+    if not target_job:
+        raise HTTPException(status_code=404, detail="No completed jobs found to retrieve patient data from.")
+    
+    # In a real implementation, you would extract the specific patient from the target_job data.
+    # For now, return a mock patient as per the guide
+    patient_data = {
+        "id": patient_id,
+        "nationality": "POL",
+        "front": "Polish",
+        "age": 28,
+        "gender": "male",
+        "day_of_injury": "Day 2",
+        "injury_type": "BATTLE_TRAUMA",
+        "triage_category": "T2",
+        "current_status": "RTD",
+        "demographics": {
+            "given_name": "Jakub",
+            "family_name": "Kowalski",
+            "gender": "male",
+            "birthdate": "1997-03-15",
+            "id_number": "97031512345",
+            "blood_type": "A",
+            "weight": 82.4
+        },
+        "primary_condition": {
+            "code": "125689001",
+            "display": "Shrapnel injury",
+            "severity": "Moderate",
+            "severity_code": "371924009"
+        },
+        "additional_conditions": [
+            {
+                "code": "125605004",
+                "display": "Traumatic shock",
+                "severity": "Mild to moderate",
+                "severity_code": "371923003"
+            }
+        ],
+        "treatment_history": [
+            {
+                "facility": "POI",
+                "date": "2025-06-02T08:30:00Z",
+                "treatments": [],
+                "observations": []
+            },
+            {
+                "facility": "R1",
+                "date": "2025-06-02T09:15:00Z",
+                "treatments": [
+                    {"code": "225317000", "display": "Initial dressing of wound"}
+                ],
+                "observations": [
+                    {"code": "8310-5", "display": "Body temperature", "value": 36.8, "unit": "Cel"},
+                    {"code": "8867-4", "display": "Heart rate", "value": 102, "unit": "/min"},
+                    {"code": "8480-6", "display": "Systolic blood pressure", "value": 115, "unit": "mm[Hg]"}
+                ]
+            },
+            {
+                "facility": "R2",
+                "date": "2025-06-02T11:45:00Z",
+                "treatments": [
+                    {"code": "225358003", "display": "Wound care"},
+                    {"code": "385968004", "display": "Fluid management"}
+                ],
+                "observations": [
+                    {"code": "8310-5", "display": "Body temperature", "value": 37.1, "unit": "Cel"},
+                    {"code": "8867-4", "display": "Heart rate", "value": 88, "unit": "/min"},
+                    {"code": "8480-6", "display": "Systolic blood pressure", "value": 125, "unit": "mm[Hg]"},
+                    {"code": "718-7", "display": "Hemoglobin", "value": 13.5, "unit": "g/dL"}
+                ]
+            },
+            {
+                "facility": "RTD",
+                "date": "2025-06-03T14:20:00Z",
+                "treatments": [],
+                "observations": []
+            }
+        ]
+    }
+    return patient_data
+
+app.include_router(visualization_router)
 
 @app.on_event("startup")
 async def startup_event():
@@ -220,6 +387,11 @@ async def run_generator_job(job_id: str, config: GeneratorConfig):
         # Run the generator with progress reporting
         patients, bundles = generator.run(progress_callback=progress_callback)
         
+        # Store the generated patient objects for potential later use (e.g., detailed visualization)
+        # Note: This can consume memory. For very large jobs or many concurrent jobs,
+        # consider serializing this data to disk and loading on demand.
+        jobs[job_id]["patients_data"] = patients
+
         # Create a summary of the generation if not already set
         if "total_patients" not in jobs[job_id]["summary"]:
             nationality_counts = Counter([p.nationality for p in patients])

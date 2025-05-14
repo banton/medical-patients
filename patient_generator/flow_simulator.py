@@ -396,7 +396,8 @@ class PatientFlowSimulator:
             }
         
         offset = self._day_offsets.get(day_label, 0)
-        return self._base_date + datetime.timedelta(days=offset)
+        event_date = self._base_date + datetime.timedelta(days=offset)
+        return datetime.datetime.combine(event_date, datetime.time.min) # Ensure datetime object
     
     def _get_treatment_date(self, injury_day, current_location, next_location):
         """Calculate treatment date based on injury day and facility transit times"""

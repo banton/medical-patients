@@ -30,8 +30,10 @@ The Military Medical Exercise Patient Generator appears to be a well-structured 
    - Configuration via JSON
 
 5. **Testing**:
-   - Unit tests for core components
-   - Test fixtures for different scenarios
+   - Unit tests for core components.
+   - Test fixtures for different scenarios.
+   - Added comprehensive unit tests for the `patient_generator.visualization_data.transform_job_data_for_visualization` function, covering various data scenarios (empty lists, different patient flows, distributions).
+   - As part of this testing, a bug was identified and fixed in `transform_job_data_for_visualization` where default Sankey diagram nodes were not correctly initialized when no patient data was present. All tests are currently passing.
 
 6. **Docker Development Environment**:
    - `Dockerfile` fixed and `docker-compose.dev.yml` successfully builds and runs.

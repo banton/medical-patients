@@ -138,12 +138,28 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-primary mb-4">
-        <div class="container">
-            <span class="navbar-brand">
-                <i class="fas fa-notes-medical me-2"></i>
-                Military Medical Exercise Patient Generator
-            </span>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-notes-medical me-2"></i>Military Patient Generator
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/">
+                            <i class="fas fa-home me-1"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/visualizations">
+                            <i class="fas fa-chart-line me-1"></i> Advanced Visualizations
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
@@ -692,6 +708,17 @@
                         downloadBtn.classList.remove('hidden');
                         overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
                         overallProgressBar.classList.add('bg-success');
+
+                        // Add Show Visualization button
+                        const actionsDiv = jobCard.querySelector('.job-actions');
+                        if (actionsDiv && !actionsDiv.querySelector('.show-viz-btn')) {
+                            const vizBtn = document.createElement('a');
+                            vizBtn.href = `static/visualizations.html?job_id=${jobId}`;
+                            vizBtn.className = 'btn btn-info btn-sm show-viz-btn ms-2'; // Added ms-2 for spacing
+                            vizBtn.innerHTML = '<i class="fas fa-chart-bar me-1"></i> Show Visualization';
+                            vizBtn.target = '_blank'; // Open in new tab
+                            actionsDiv.appendChild(vizBtn);
+                        }
                     } else if (jobData.status === 'failed') {
                         progressIcon.className = 'fas fa-exclamation-circle';
                         const errorMsg = document.createElement('div');

@@ -64,6 +64,10 @@ The application follows a modular design with these main components:
 
 4. Access the web interface at http://localhost:8000
 
+### Docker Deployment
+
+For containerized deployment, refer to the [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) guide for detailed instructions on building and running the application using Docker and Docker Compose. Various configurations (development, production, Traefik, etc.) are provided.
+
 ## Usage
 
 1. **Configure Generation Parameters**:
@@ -148,6 +152,11 @@ This generator creates data compliant with:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+Key files to be aware of for development:
+- `.gitignore`: Specifies intentionally untracked files that Git should ignore. This has been recently updated to include common OS-generated files, Node.js artifacts, and log files.
+- `.clinerules`: Contains project-specific intelligence and patterns for Cline (the AI assistant).
+- `memory-bank/`: Stores contextual information about the project to aid AI-assisted development.
 
 ## License
 

@@ -1,5 +1,5 @@
 # Build stage - for optimizing the final image size
-FROM python:3.9-slim AS builder
+FROM python:3.11-bookworm AS builder
 
 # Set working directory
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
 # Final stage
-FROM python:3.9-slim
+FROM python:3.11-bookworm
 
 # Create a non-root user to run the application
 RUN groupadd -r patientgen && useradd -r -g patientgen patientgen
@@ -32,6 +32,9 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
     && rm -rf /wheels
 
 # Copy application code
+COPY patient_generator/visualization_data.py /app/patient_generator/visualization_data.py
+COPY static/js/visualization-dashboard.js /app/static/js/visualization-dashboard.js
+COPY static/visualizations.html /app/static/visualizations.html
 COPY patient_generator/ /app/patient_generator/
 COPY static/ /app/static/
 COPY app.py /app/
