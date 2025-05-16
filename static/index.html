@@ -482,19 +482,77 @@
                 generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
                 
                 // Build configuration object
-                const config = {
+                // This needs to match GenerationRequestPayload and ConfigurationTemplateCreate
+                
+                // Default facility configs (example, should match a basic scenario)
+                // These would ideally come from a default template or be simplified.
+                // For now, creating a minimal valid structure.
+                const defaultFacilityConfigs = [
+                    { id: "POI", name: "Point of Injury", kia_rate: 0.01, rtd_rate: 0.0 },
+                    { id: "R1", name: "Role 1", kia_rate: 0.02, rtd_rate: 0.1 },
+                    { id: "R2", name: "Role 2", kia_rate: 0.03, rtd_rate: 0.2 },
+                    { id: "R3", name: "Role 3", kia_rate: 0.04, rtd_rate: 0.3 },
+                    { id: "R4", name: "Role 4", kia_rate: 0.05, rtd_rate: 0.0 } // No RTD from R4 in this simple model
+                ];
+
+                // Construct front_configs based on UI percentages
+                const polishFrontPercent = parseFloat(document.getElementById('polishFront').value);
+                const estonianFrontPercent = parseFloat(document.getElementById('estonianFront').value);
+                const finnishFrontPercent = parseFloat(document.getElementById('finnishFront').value);
+
+                const frontConfigs = [];
+                if (polishFrontPercent > 0) {
+                    frontConfigs.push({
+                        id: "polish_front_basic", name: "Polish Front (Basic)",
+                        nationality_distribution: { "POL": 100.0 }, // Simplified: 100% Polish for this front
+                        casualty_rate: polishFrontPercent / 100.0 // Assuming this is how it's interpreted
+                    });
+                }
+                if (estonianFrontPercent > 0) {
+                     frontConfigs.push({
+                        id: "estonian_front_basic", name: "Estonian Front (Basic)",
+                        nationality_distribution: { "EST": 100.0 },
+                        casualty_rate: estonianFrontPercent / 100.0
+                    });
+                }
+                if (finnishFrontPercent > 0) {
+                    frontConfigs.push({
+                        id: "finnish_front_basic", name: "Finnish Front (Basic)",
+                        nationality_distribution: { "FIN": 100.0 },
+                        casualty_rate: finnishFrontPercent / 100.0
+                    });
+                }
+                
+                // If no fronts have percentages, create a default one to avoid empty front_configs
+                if (frontConfigs.length === 0) {
+                    frontConfigs.push({
+                        id: "default_front_basic", name: "Default Front (Basic)",
+                        nationality_distribution: { "POL": 100.0 }, // Default to Polish
+                        casualty_rate: 1.0 // All patients from this front
+                    });
+                }
+
+
+                const adHocConfiguration = {
+                    name: "Ad-hoc Scenario from Basic UI",
+                    description: `Generated on ${new Date().toISOString()} from basic UI.`,
+                    front_configs: frontConfigs,
+                    facility_configs: defaultFacilityConfigs,
                     total_patients: parseInt(document.getElementById('totalPatients').value),
-                    polish_front_percent: parseFloat(document.getElementById('polishFront').value),
-                    estonian_front_percent: parseFloat(document.getElementById('estonianFront').value),
-                    finnish_front_percent: parseFloat(document.getElementById('finnishFront').value),
-                    disease_percent: parseFloat(document.getElementById('diseasePercent').value),
-                    non_battle_percent: parseFloat(document.getElementById('nonBattlePercent').value),
-                    battle_trauma_percent: parseFloat(document.getElementById('battleTraumaPercent').value),
-                    formats: formats,
+                    injury_distribution: {
+                        "DISEASE": parseFloat(document.getElementById('diseasePercent').value),
+                        "NON_BATTLE": parseFloat(document.getElementById('nonBattlePercent').value),
+                        "BATTLE_TRAUMA": parseFloat(document.getElementById('battleTraumaPercent').value)
+                    }
+                    // parent_config_id and version will use defaults
+                };
+
+                const payload = {
+                    configuration: adHocConfiguration, // Nested configuration object
+                    output_formats: formats,
                     use_compression: document.getElementById('useCompression').checked,
                     use_encryption: document.getElementById('useEncryption').checked,
-                    base_date: document.getElementById('baseDate').value,
-                    encryption_password: document.getElementById('encryptionPassword').value
+                    encryption_password: document.getElementById('encryptionPassword').value || null // Send null if empty
                 };
                 
                 try {
@@ -504,7 +562,7 @@
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(config)
+                        body: JSON.stringify(payload) // Send the new payload structure
                     });
                     
                     if (!response.ok) {
