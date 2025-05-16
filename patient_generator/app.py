@@ -8,655 +8,320 @@ import shutil
 import atexit
 import logging
 from collections import Counter
-from tqdm import tqdm
+# from tqdm import tqdm # tqdm might be for CLI, not library use directly unless for debug
 import multiprocessing
 import psutil
+from typing import Dict, Any, Optional, List, Callable # Added Callable for progress_callback
 
-# Use absolute imports instead of relative imports
+# Use absolute imports
 try:
-    # Try relative import first (when used as a package)
     from .flow_simulator import PatientFlowSimulator
     from .demographics import DemographicsGenerator
     from .medical import MedicalConditionGenerator
     from .fhir_generator import FHIRBundleGenerator
     from .formatter import OutputFormatter
+    from .config_manager import ConfigurationManager # New import
+    from .nationality_data import NationalityDataProvider # New import
+    from .schemas_config import ConfigurationTemplateDB # For type hint
 except ImportError:
-    # Fall back to absolute imports (when run directly)
     from patient_generator.flow_simulator import PatientFlowSimulator
     from patient_generator.demographics import DemographicsGenerator
     from patient_generator.medical import MedicalConditionGenerator
     from patient_generator.fhir_generator import FHIRBundleGenerator
     from patient_generator.formatter import OutputFormatter
+    from patient_generator.config_manager import ConfigurationManager
+    from patient_generator.nationality_data import NationalityDataProvider
+    from patient_generator.schemas_config import ConfigurationTemplateDB
+
 
 class PatientGeneratorApp:
-    """Main application class for the patient generator with performance optimizations"""
+    """Main application class for the patient generator using ConfigurationManager."""
     
-    def __init__(self, config=None):
-        self.config = config or self._default_config()
-        self.start_time = None
-        self.phase_start_time = None
-        self.total_patients = 0
+    def __init__(self, config_manager: ConfigurationManager, nationality_provider: Optional[NationalityDataProvider] = None):
+        self.config_manager = config_manager
+        self.active_config: Optional[ConfigurationTemplateDB] = self.config_manager.get_active_configuration()
+
+        if not self.active_config:
+            raise ValueError("PatientGeneratorApp requires an active configuration to be loaded in ConfigurationManager.")
+
+        self.start_time: Optional[float] = None
+        self.phase_start_time: Optional[float] = None
+        self.total_patients: int = self.active_config.total_patients
         
-        # Set up logging
         self.logger = logging.getLogger("PatientGeneratorApp")
-        
-        # Create a temp directory that will be cleaned up when the program exits
         self.temp_dir = tempfile.mkdtemp(prefix="patient_gen_app_")
-        
-        # Register cleanup function to ensure temp files are removed
         atexit.register(self._cleanup_temp_files)
+        self.temp_files: List[str] = []
         
-        # Track all temporary files created
-        self.temp_files = []
+        # Performance settings (can be overridden by env vars or future config options)
+        # For now, keep determination logic, but it could also be part of ConfigurationTemplate
+        self.num_workers: int = self._determine_worker_count()
+        self.batch_size: int = self._determine_batch_size() # Depends on total_patients
         
-        # Determine optimal number of worker threads based on system resources
-        self.num_workers = self._determine_worker_count()
-        
-        # Determine batch size based on total patients and system memory
-        self.batch_size = self._determine_batch_size()
-        
-        # Shared generators that can be re-used across workers
-        self.demographics_generator = DemographicsGenerator()
+        # Shared generators
+        self.nationality_provider = nationality_provider or NationalityDataProvider()
+        self.demographics_generator = DemographicsGenerator(self.nationality_provider)
         self.condition_generator = MedicalConditionGenerator()
         
-        self.logger.info(f"Initialized PatientGeneratorApp with {self.num_workers} workers and batch size {self.batch_size}")
-    
+        # Initialize FlowSimulator with the ConfigManager
+        self.flow_simulator = PatientFlowSimulator(self.config_manager)
+        
+        self.logger.info(f"Initialized PatientGeneratorApp with {self.num_workers} workers, batch size {self.batch_size} for {self.total_patients} patients.")
+
     def _cleanup_temp_files(self):
-        """Clean up all temporary files and the temp directory"""
-        # Remove individual temp files first
         for temp_file in self.temp_files:
             if os.path.exists(temp_file):
-                try:
-                    os.unlink(temp_file)
-                except Exception as e:
-                    self.logger.warning(f"Failed to remove temp file {temp_file}: {e}")
-        
-        # Then remove the temp directory
+                try: os.unlink(temp_file)
+                except Exception as e: self.logger.warning(f"Failed to remove temp file {temp_file}: {e}")
         try:
-            if os.path.exists(self.temp_dir):
-                shutil.rmtree(self.temp_dir)
-        except Exception as e:
-            self.logger.warning(f"Failed to remove temp directory {self.temp_dir}: {e}")
-    
-    def _create_temp_file(self, suffix=None):
-        """Create a new temporary file and track it for cleanup"""
+            if os.path.exists(self.temp_dir): shutil.rmtree(self.temp_dir)
+        except Exception as e: self.logger.warning(f"Failed to remove temp directory {self.temp_dir}: {e}")
+
+    def _create_temp_file(self, suffix=None) -> str:
         fd, temp_path = tempfile.mkstemp(dir=self.temp_dir, suffix=suffix)
-        os.close(fd)  # Close the file descriptor
+        os.close(fd)
         self.temp_files.append(temp_path)
         return temp_path
-    
-    def _determine_worker_count(self):
-        """Determine optimal number of worker threads based on system resources"""
-        # Check if explicitly set in configuration
-        if self.config.get("performance", {}).get("num_workers"):
-            return self.config["performance"]["num_workers"]
-        
-        # Check environment variable
+
+    def _determine_worker_count(self) -> int:
+        # TODO: Potentially make this part of ConfigurationTemplate or app-level settings via API
         env_threads = os.environ.get("PATIENT_GENERATOR_THREADS")
-        if env_threads and env_threads.isdigit():
-            return int(env_threads)
-        
-        # Auto-detect based on CPU count
+        if env_threads and env_threads.isdigit(): return int(env_threads)
         try:
             cpu_count = multiprocessing.cpu_count()
-            # Use 75% of available CPUs, but at least 2 and at most 8
             return min(8, max(2, int(cpu_count * 0.75)))
-        except:
-            # Default if detection fails
-            return 4
-    
-    def _determine_batch_size(self):
-        """Determine optimal batch size based on available memory and total patients"""
-        # Check if explicitly set in configuration
-        if self.config.get("performance", {}).get("batch_size"):
-            return self.config["performance"]["batch_size"]
-        
-        total_patients = self.config.get('total_patients', 1440)
-        
-        # Check environment variable for max memory
+        except: return 4
+
+    def _determine_batch_size(self) -> int:
+        # TODO: Potentially make this part of ConfigurationTemplate
         env_max_memory = os.environ.get("PATIENT_GENERATOR_MAX_MEMORY")
-        max_memory_mb = None
-        if env_max_memory and env_max_memory.isdigit():
-            max_memory_mb = int(env_max_memory)
-        elif self.config.get("performance", {}).get("max_memory_mb"):
-            max_memory_mb = self.config["performance"]["max_memory_mb"]
+        max_memory_mb = int(env_max_memory) if env_max_memory and env_max_memory.isdigit() else None
         
-        # Get available memory in bytes
         try:
-            # If max memory is set, use that as the limit
-            if max_memory_mb:
-                available_memory = max_memory_mb * 1024 * 1024
-            else:
-                # Otherwise use 50% of available system memory
-                available_memory = psutil.virtual_memory().available * 0.5
-        except:
-            # Default to 1GB if detection fails
-            available_memory = 1024 * 1024 * 1024
+            available_memory = (max_memory_mb * 1024 * 1024) if max_memory_mb else (psutil.virtual_memory().available * 0.5)
+        except: available_memory = 1024 * 1024 * 1024 # 1GB default
         
-        # Estimate memory per patient (conservative estimate: 50KB per patient)
-        estimated_memory_per_patient = 50 * 1024
-        
-        # Calculate batch size based on available memory
+        estimated_memory_per_patient = 50 * 1024 # 50KB
         memory_based_batch_size = int(available_memory / estimated_memory_per_patient)
-        
-        # Cap batch size to reasonable limits
-        min_batch_size = 50
-        max_batch_size = 500
-        
-        # Use smaller batches for more workers to improve load balancing
-        worker_adjusted_size = max(min_batch_size, int(total_patients / (self.num_workers * 2)))
-        
-        # Final batch size is minimum of memory-based and worker-adjusted size, capped at max_batch_size
-        batch_size = min(memory_based_batch_size, worker_adjusted_size, max_batch_size)
-        
-        return batch_size
-    
-    def _default_config(self):
-        """Create default configuration"""
-        return {
-            "total_patients": 1440,
-            "front_distribution": {
-                "Polish": 0.50,    # 50% of casualties from Polish front
-                "Estonian": 0.333, # 33.3% of casualties from Estonian front
-                "Finnish": 0.167   # 16.7% of casualties from Finnish front
-            },
-            "nationality_distribution": {
-                "Polish": {
-                    "POL": 0.50,
-                    "GBR": 0.10,
-                    "LIT": 0.30,
-                    "USA": 0.05,
-                    "ESP": 0.05
-                },
-                "Estonian": {
-                    "EST": 0.70,
-                    "GBR": 0.30
-                },
-                "Finnish": {
-                    "FIN": 0.40,
-                    "USA": 0.60
-                }
-            },
-            "injury_distribution": {
-                "DISEASE": 0.52,
-                "NON_BATTLE": 0.33,
-                "BATTLE_TRAUMA": 0.15
-            },
-            "encryption_key": os.urandom(32),  # Generate a random encryption key
-            "output_formats": ["json", "xml"],
-            "output_directory": "output",
-            "base_date": "2025-06-01",  # Base date for the exercise
-            "use_compression": True,
-            "use_encryption": True
-        }
-    
-    def _estimate_remaining_time(self, progress_percent, phase_progress=None):
-        """Estimate remaining time for current phase and overall process"""
+        worker_adjusted_size = max(50, int(self.total_patients / (self.num_workers * 2)))
+        return min(memory_based_batch_size, worker_adjusted_size, 500) # Cap at 500
+
+    # _default_config method is removed as config comes from ConfigurationManager
+
+    def _estimate_remaining_time(self, progress_percent: float, phase_progress: Optional[float] = None) -> Dict[str, Optional[int]]:
+        if self.start_time is None or self.phase_start_time is None: return {"total": None, "phase": None}
         now = time.time()
         elapsed_total = now - self.start_time
-        
-        if progress_percent <= 0:
-            return {"total": None, "phase": None}
-        
-        # Estimate total remaining time
+        if progress_percent <= 0: return {"total": None, "phase": None}
         total_remaining = (elapsed_total / progress_percent) * (100 - progress_percent)
-        
-        # Estimate phase remaining time if phase_progress is provided
         phase_remaining = None
         if phase_progress is not None and phase_progress > 0:
             elapsed_phase = now - self.phase_start_time
             phase_remaining = (elapsed_phase / phase_progress) * (100 - phase_progress)
-            
-        return {
-            "total": int(total_remaining),
-            "phase": int(phase_remaining) if phase_remaining is not None else None
-        }
-    
+        return {"total": int(total_remaining), "phase": int(phase_remaining) if phase_remaining is not None else None}
+
     def _start_new_phase(self):
-        """Reset the phase timer for a new processing phase"""
         self.phase_start_time = time.time()
-    
-    def _process_patient_batch(self, patients, phase):
-        """Process a batch of patients for enhanced demographics and medical conditions"""
-        # Process each patient in the batch
+
+    def _process_patient_batch(self, patients: List[Any], phase: str) -> List[Any]: # Patient type hint
         for patient in patients:
             if phase == "demographics":
-                # Generate demographics
                 demographics = self.demographics_generator.generate_person(patient.nationality, patient.gender)
                 patient.set_demographics(demographics)
-            
             elif phase == "medical":
-                # Determine if the patient should have multiple conditions
-                # More severe triage categories and battle trauma are more likely to have multiple conditions
                 multiple_conditions_chance = 0.0
+                if patient.triage_category == "T1": multiple_conditions_chance = 0.7
+                elif patient.triage_category == "T2": multiple_conditions_chance = 0.4
+                elif patient.triage_category == "T3": multiple_conditions_chance = 0.2
+                if patient.injury_type == "BATTLE_TRAUMA": multiple_conditions_chance += 0.2
                 
-                if patient.triage_category == "T1":
-                    multiple_conditions_chance = 0.7  # 70% chance for T1
-                elif patient.triage_category == "T2":
-                    multiple_conditions_chance = 0.4  # 40% chance for T2
-                elif patient.triage_category == "T3":
-                    multiple_conditions_chance = 0.2  # 20% chance for T3
-                
-                # Increase chance for battle trauma
-                if patient.injury_type == "BATTLE_TRAUMA":
-                    multiple_conditions_chance += 0.2
-                
-                # Generate conditions
                 if random.random() < multiple_conditions_chance:
-                    # Generate 2-3 conditions of the same injury type
                     condition_count = random.randint(2, 3)
                     primary_conditions = self.condition_generator.generate_multiple_conditions(
-                        patient.injury_type, 
-                        patient.triage_category,
-                        condition_count
-                    )
+                        patient.injury_type, patient.triage_category, condition_count)
                     patient.primary_conditions = primary_conditions
-                    # Set the first one as the primary for backward compatibility
                     patient.primary_condition = primary_conditions[0] if primary_conditions else None
                 else:
-                    # Generate a single primary condition (existing behavior)
                     primary_condition = self.condition_generator.generate_condition(
-                        patient.injury_type, 
-                        patient.triage_category
-                    )
+                        patient.injury_type, patient.triage_category)
                     patient.primary_condition = primary_condition
                     patient.primary_conditions = [primary_condition] if primary_condition else []
                 
-                # Generate additional conditions (potentially from other categories)
                 additional_count = 0
-                if patient.triage_category == "T1":
-                    additional_count = random.randint(1, 2)
-                elif patient.triage_category == "T2":
-                    additional_count = random.randint(0, 1)
-                    
-                if patient.primary_condition:  # Ensure we have at least one primary condition
-                    patient.additional_conditions = self.condition_generator.generate_additional_conditions(
-                        patient.primary_condition, 
-                        additional_count
-                    )
-                else:
-                    patient.additional_conditions = []
+                if patient.triage_category == "T1": additional_count = random.randint(1, 2)
+                elif patient.triage_category == "T2": additional_count = random.randint(0, 1)
                 
-                # Generate medications
+                if patient.primary_condition:
+                    patient.additional_conditions = self.condition_generator.generate_additional_conditions(
+                        patient.primary_condition, additional_count)
+                else: patient.additional_conditions = []
+                
                 conditions = patient.primary_conditions + patient.additional_conditions
                 medication_count = random.randint(1, 3) if patient.triage_category == "T1" else random.randint(0, 2)
                 patient.medications = self.condition_generator.generate_medications(conditions, medication_count)
                 
-                # Generate allergies (10% chance of having allergies)
-                if random.random() < 0.1:
-                    allergy_count = random.randint(1, 2)
-                    patient.allergies = self.condition_generator.generate_allergies(allergy_count)
-                else:
-                    patient.allergies = []
-        
+                patient.allergies = self.condition_generator.generate_allergies(random.randint(0,1)) if random.random() < 0.1 else []
         return patients
-    
-    def _create_fhir_bundles_batch(self, patients):
-        """Create FHIR bundles for a batch of patients"""
-        bundle_generator = FHIRBundleGenerator(self.demographics_generator)
+
+    def _create_fhir_bundles_batch(self, patients: List[Any]) -> List[Any]: # Patient type hint
+        bundle_generator = FHIRBundleGenerator(self.demographics_generator) # Demographics generator might need nationality provider too
         return [bundle_generator.create_patient_bundle(patient) for patient in patients]
-    
-    def run(self, progress_callback=None):
-        """Run the patient generator with parallel processing and performance optimizations"""
+
+    def run(self, 
+            output_directory: str = "output",
+            output_formats: Optional[List[str]] = None,
+            use_compression: bool = True,
+            use_encryption: bool = True,
+            encryption_key: Optional[bytes] = None, # Should be bytes
+            progress_callback: Optional[Callable[[int, Dict[str, Any]], None]] = None
+            ) -> tuple[List[Any], List[Any], List[str], Dict[str, Any]]: # patients, bundles, output_files, summary
+        
         self.start_time = time.time()
         self.phase_start_time = time.time()
-        self.total_patients = self.config['total_patients']
-        
-        # Define phases with their relative weights for progress calculation
+        # total_patients is already set from active_config in __init__
+
+        # Runtime output parameters
+        final_output_formats = output_formats if output_formats is not None else ["json", "xml"]
+        final_encryption_key = encryption_key if encryption_key is not None else os.urandom(32)
+
         phases = [
             {"name": "Initializing", "weight": 5, "description": "Setting up simulation environment"},
-            {"name": "Generating Patient Flow", "weight": 15, "description": "Simulating casualty flow through treatment facilities"},
-            {"name": "Creating Demographics", "weight": 20, "description": "Generating patient personal information"},
-            {"name": "Adding Medical Conditions", "weight": 15, "description": "Adding realistic medical conditions and treatments"},
-            {"name": "Creating FHIR Bundles", "weight": 25, "description": "Converting to HL7 FHIR format"},
-            {"name": "Formatting Output", "weight": 10, "description": "Preparing JSON and XML files"},
-            {"name": "Compressing Data", "weight": 5, "description": "Applying compression to output files"},
-            {"name": "Encrypting Data", "weight": 5, "description": "Securing data with AES-256-GCM encryption"}
+            {"name": "Generating Patient Flow", "weight": 15, "description": "Simulating casualty flow"},
+            {"name": "Creating Demographics", "weight": 20, "description": "Generating patient personal info"},
+            {"name": "Adding Medical Conditions", "weight": 15, "description": "Adding medical conditions"},
+            {"name": "Creating FHIR Bundles", "weight": 25, "description": "Converting to HL7 FHIR"},
+            {"name": "Formatting Output", "weight": 10, "description": "Preparing output files"},
+            {"name": "Compressing Data", "weight": 5, "description": "Compressing files"},
+            {"name": "Encrypting Data", "weight": 5, "description": "Encrypting files"}
         ]
-        
-        # Calculate cumulative weights for progress tracking
         cumulative_weight = 0
         for phase in phases:
             phase["start_progress"] = cumulative_weight
             cumulative_weight += phase["weight"]
             phase["end_progress"] = cumulative_weight
         
-        # Report initial progress with system configuration details
         if progress_callback:
-            system_info = {
-                "workers": self.num_workers,
-                "batch_size": self.batch_size,
-                "available_memory": f"{psutil.virtual_memory().available / (1024**3):.2f} GB"
-            }
-            
-            progress_info = {
-                "current_phase": phases[0]["name"],
-                "phase_description": phases[0]["description"],
-                "phase_progress": 0,
-                "time_estimates": self._estimate_remaining_time(0),
-                "overall_progress": 0,
-                "system_info": system_info,
-                "total_patients": self.total_patients
-            }
+            system_info = {"workers": self.num_workers, "batch_size": self.batch_size, "available_memory": f"{psutil.virtual_memory().available / (1024**3):.2f} GB"}
+            progress_info: Dict[str, Any] = {"current_phase": phases[0]["name"], "phase_description": phases[0]["description"], "phase_progress": 0,
+                                 "time_estimates": self._estimate_remaining_time(0), "overall_progress": 0, "system_info": system_info, "total_patients": self.total_patients}
             progress_callback(0, progress_info)
         
-        # PHASE 1: Initialization
-        current_phase = 0
-        self._update_progress(progress_callback, current_phase, 50, phases)
+        current_phase_idx = 0 # Initializing
+        self._update_progress(progress_callback, current_phase_idx, 50, phases)
+        # flow_simulator already initialized in __init__
+        self._update_progress(progress_callback, current_phase_idx, 100, phases)
         
-        # Initialize the patient flow simulator
-        flow_simulator = PatientFlowSimulator(self.config)
-        
-        self._update_progress(progress_callback, current_phase, 100, phases)
-        
-        # PHASE 2: Generate patient flow
-        current_phase = 1
+        current_phase_idx = 1 # Generating Patient Flow
         self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases)
+        self._update_progress(progress_callback, current_phase_idx, 0, phases)
+        patients = self.flow_simulator.generate_casualty_flow() # Uses total_patients from config
+        self._update_progress(progress_callback, current_phase_idx, 100, phases)
         
-        # Generate patient flow
-        patients = flow_simulator.generate_casualty_flow(self.total_patients)
-        
-        self._update_progress(progress_callback, current_phase, 100, phases)
-        
-        # PHASE 3: Demographics processing with parallelization
-        current_phase = 2
+        # Subsequent phases (Demographics, Medical, FHIR, Output)
+        for i, phase_name in enumerate(["demographics", "medical"]):
+            current_phase_idx = i + 2 # Starts from index 2
+            self._start_new_phase()
+            self._update_progress(progress_callback, current_phase_idx, 0, phases, {"processed_patients": 0})
+            processed_count = 0
+            with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+                patient_batches = [patients[j:j + self.batch_size] for j in range(0, len(patients), self.batch_size)]
+                future_to_batch = {executor.submit(self._process_patient_batch, batch, phase_name): batch for batch in patient_batches}
+                for future in concurrent.futures.as_completed(future_to_batch):
+                    try:
+                        processed_batch = future.result()
+                        processed_count += len(processed_batch)
+                        phase_prog = min(100, int((processed_count / len(patients)) * 100))
+                        self._update_progress(progress_callback, current_phase_idx, phase_prog, phases, {"processed_patients": processed_count})
+                    except Exception as e: self.logger.error(f"Error in phase '{phase_name}': {e}")
+            self._update_progress(progress_callback, current_phase_idx, 100, phases)
+
+        current_phase_idx = 4 # Creating FHIR Bundles
         self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases, {"processed_patients": 0})
-        
-        # Process patients in batches using multiple threads
+        self._update_progress(progress_callback, current_phase_idx, 0, phases, {"processed_patients": 0})
+        bundles: List[Any] = []
         processed_count = 0
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            # Split patients into batches
-            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
-            
-            # Submit demographics processing jobs
-            future_to_batch = {
-                executor.submit(self._process_patient_batch, batch, "demographics"): batch 
-                for batch in patient_batches
-            }
-            
-            # Process results as they complete
+            patient_batches = [patients[j:j + self.batch_size] for j in range(0, len(patients), self.batch_size)]
+            future_to_batch = {executor.submit(self._create_fhir_bundles_batch, batch): batch for batch in patient_batches}
             for future in concurrent.futures.as_completed(future_to_batch):
-                batch = future_to_batch[future]
-                try:
-                    processed_batch = future.result()
-                    # Update progress
-                    processed_count += len(processed_batch)
-                    phase_progress = min(100, int((processed_count / len(patients)) * 100))
-                    self._update_progress(
-                        progress_callback, 
-                        current_phase, 
-                        phase_progress, 
-                        phases,
-                        {"processed_patients": processed_count}
-                    )
-                except Exception as e:
-                    print(f"Demographics generation error: {e}")
-        
-        self._update_progress(progress_callback, current_phase, 100, phases)
-        
-        # PHASE 4: Medical condition processing with parallelization
-        current_phase = 3
-        self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases, {"processed_patients": 0})
-        
-        # Process medical conditions in batches
-        processed_count = 0
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            # Split patients into batches
-            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
-            
-            # Submit medical condition processing jobs
-            future_to_batch = {
-                executor.submit(self._process_patient_batch, batch, "medical"): batch 
-                for batch in patient_batches
-            }
-            
-            # Process results as they complete
-            for future in concurrent.futures.as_completed(future_to_batch):
-                batch = future_to_batch[future]
-                try:
-                    processed_batch = future.result()
-                    # Update progress
-                    processed_count += len(processed_batch)
-                    phase_progress = min(100, int((processed_count / len(patients)) * 100))
-                    self._update_progress(
-                        progress_callback, 
-                        current_phase, 
-                        phase_progress, 
-                        phases,
-                        {"processed_patients": processed_count}
-                    )
-                except Exception as e:
-                    print(f"Medical condition generation error: {e}")
-        
-        self._update_progress(progress_callback, current_phase, 100, phases)
-        
-        # PHASE 5: Generate FHIR bundles with parallelization
-        current_phase = 4
-        self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases, {"processed_patients": 0})
-        
-        # Process FHIR bundles in batches
-        bundles = []
-        processed_count = 0
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            # Split patients into batches
-            patient_batches = [patients[i:i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
-            
-            # Submit FHIR bundle creation jobs
-            future_to_batch = {
-                executor.submit(self._create_fhir_bundles_batch, batch): batch 
-                for batch in patient_batches
-            }
-            
-            # Process results as they complete
-            for future in concurrent.futures.as_completed(future_to_batch):
-                batch = future_to_batch[future]
                 try:
                     batch_bundles = future.result()
                     bundles.extend(batch_bundles)
-                    
-                    # Update progress
-                    processed_count += len(batch)
-                    phase_progress = min(100, int((processed_count / len(patients)) * 100))
-                    self._update_progress(
-                        progress_callback, 
-                        current_phase, 
-                        phase_progress, 
-                        phases,
-                        {"processed_patients": processed_count}
-                    )
-                except Exception as e:
-                    print(f"FHIR bundle creation error: {e}")
-        
-        self._update_progress(progress_callback, current_phase, 100, phases)
-        
-        # PHASE 6: Format outputs
-        current_phase = 5
-        self._start_new_phase()
-        self._update_progress(progress_callback, current_phase, 0, phases)
-        
+                    processed_count += len(future_to_batch[future]) # length of original patient batch
+                    phase_prog = min(100, int((processed_count / len(patients)) * 100))
+                    self._update_progress(progress_callback, current_phase_idx, phase_prog, phases, {"processed_patients": processed_count})
+                except Exception as e: self.logger.error(f"FHIR bundle creation error: {e}")
+        self._update_progress(progress_callback, current_phase_idx, 100, phases)
+
         formatter = OutputFormatter()
+        # Output phase combines formatting, compression, encryption
+        output_phase_start_index = 5
         
-        # Progress updates for formatting phase
-        self._update_progress(progress_callback, current_phase, 50, phases)
-        self._update_progress(progress_callback, current_phase, 100, phases)
+        # For simplicity, group these into one progress update block
+        self._update_progress(progress_callback, output_phase_start_index, 0, phases) # Start Formatting
         
-        # PHASE 7: Compression (if enabled)
-        if self.config.get("use_compression", True):
-            current_phase = 6
-            self._start_new_phase()
-            self._update_progress(progress_callback, current_phase, 0, phases)
-            self._update_progress(progress_callback, current_phase, 50, phases)
-            self._update_progress(progress_callback, current_phase, 100, phases)
+        output_files = formatter.create_output_files(
+            bundles, output_directory, formats=final_output_formats,
+            use_compression=use_compression, use_encryption=use_encryption,
+            encryption_key=final_encryption_key
+            # temp_dir_provider is not a parameter of formatter.create_output_files
+            # The OutputFormatter manages its own temp files.
+        )
+        self._update_progress(progress_callback, output_phase_start_index, 100, phases) # End Formatting
+        if use_compression:
+             self._update_progress(progress_callback, output_phase_start_index + 1, 100, phases) # End Compression
+        if use_encryption:
+             self._update_progress(progress_callback, output_phase_start_index + 2, 100, phases) # End Encryption
         
-        # PHASE 8: Encryption (if enabled)
-        if self.config.get("use_encryption", True):
-            current_phase = 7
-            self._start_new_phase()
-            self._update_progress(progress_callback, current_phase, 0, phases)
-            self._update_progress(progress_callback, current_phase, 50, phases)
-        
-        # Create output files (combines formatting, compression, and encryption)
-        # Use memory-efficient chunked processing for large datasets
-        if len(bundles) > 1000:
-            # Process large datasets in chunks to reduce memory pressure
-            chunk_size = min(500, max(100, len(bundles) // 10))
-            output_files = []
-            
-            # Process chunks 
-            for i in range(0, len(bundles), chunk_size):
-                chunk = bundles[i:i + chunk_size]
-                chunk_files = formatter.create_output_files(
-                    chunk,
-                    self.config["output_directory"],
-                    formats=self.config.get("output_formats", ["json", "xml"]),
-                    use_compression=self.config.get("use_compression", True),
-                    use_encryption=self.config.get("use_encryption", True),
-                    encryption_key=self.config.get("encryption_key"),
-                    is_chunk=(i > 0),  # Flag subsequent chunks
-                    chunk_index=i // chunk_size
-                )
-                output_files.extend(chunk_files)
-        else:
-            # For smaller datasets, process all at once
-            output_files = formatter.create_output_files(
-                bundles,
-                self.config["output_directory"],
-                formats=self.config.get("output_formats", ["json", "xml"]),
-                use_compression=self.config.get("use_compression", True),
-                use_encryption=self.config.get("use_encryption", True),
-                encryption_key=self.config.get("encryption_key")
-            )
-        
-        if self.config.get("use_encryption", True):
-            self._update_progress(progress_callback, current_phase, 100, phases)
-        
-        # Create final summary
+        # Final summary
         nationality_counts = Counter([p.nationality for p in patients])
         front_counts = Counter([p.front for p in patients])
         injury_counts = Counter([p.injury_type for p in patients])
         status_counts = Counter([p.current_status for p in patients])
-        
-        # Calculate performance metrics
-        total_time = time.time() - self.start_time
-        patients_per_second = len(patients) / total_time if total_time > 0 else 0
+        total_time_val = time.time() - (self.start_time or time.time())
         
         summary = {
-            "total_patients": len(patients),
-            "nationalities": {nat: count for nat, count in nationality_counts.items()},
-            "fronts": {front: count for front, count in front_counts.items()},
-            "injury_types": {injury: count for injury, count in injury_counts.items()},
-            "final_status": {status: count for status, count in status_counts.items()},
-            "kia_count": status_counts.get("KIA", 0),
+            "total_patients": len(patients), "nationalities": dict(nationality_counts),
+            "fronts": dict(front_counts), "injury_types": dict(injury_counts),
+            "final_status": dict(status_counts), "kia_count": status_counts.get("KIA", 0),
             "rtd_count": status_counts.get("RTD", 0),
-            "still_in_treatment": sum(status_counts.get(status, 0) for status in ["R1", "R2", "R3", "R4"]),
-            "performance": {
-                "total_time_seconds": round(total_time, 2),
-                "patients_per_second": round(patients_per_second, 2),
-                "thread_count": self.num_workers,
-                "batch_size": self.batch_size
-            }
+            "still_in_treatment": sum(status_counts.get(s, 0) for s in self.flow_simulator._transition_probabilities.keys() if s not in ["POI", "KIA", "RTD"]),
+            "performance": {"total_time_seconds": round(total_time_val, 2), "patients_per_second": round(len(patients) / total_time_val if total_time_val > 0 else 0, 2),
+                            "thread_count": self.num_workers, "batch_size": self.batch_size }
         }
-        
-        # Report completion
         if progress_callback:
-            progress_info = {
-                "current_phase": "Complete",
-                "phase_description": "Generation process completed successfully",
-                "phase_progress": 100,
-                "time_estimates": {"total": 0, "phase": 0},
-                "overall_progress": 100,
-                "performance": summary["performance"]
-            }
-            progress_callback(100, summary, progress_info)
+            progress_info_final: Dict[str, Any] = {"current_phase": "Complete", "phase_description": "Generation process completed", "phase_progress": 100,
+                                       "time_estimates": {"total": 0, "phase": 0}, "overall_progress": 100, 
+                                       "performance": summary["performance"], "summary": summary} # Add summary to details
+            progress_callback(100, progress_info_final) 
         
-        return patients, bundles
-    
-    def _update_progress(self, progress_callback, current_phase_index, phase_progress, phases, extra_info=None):
-        """Update progress with detailed information about the current phase"""
-        if not progress_callback:
-            return
-            
-        current_phase = phases[current_phase_index]
-        
-        # Calculate overall progress based on phase weights
-        phase_contribution = ((phase_progress / 100) * current_phase["weight"])
-        overall_progress = current_phase["start_progress"] + phase_contribution
-        
-        # Format progress to integer
-        overall_progress = int(overall_progress)
-        
-        # Create progress information dictionary
-        progress_info = {
-            "current_phase": current_phase["name"],
-            "phase_description": current_phase["description"],
-            "phase_progress": phase_progress,
-            "time_estimates": self._estimate_remaining_time(overall_progress, phase_progress),
-            "overall_progress": overall_progress
-        }
-        
-        # Add patient count info
-        if current_phase_index >= 1:
-            progress_info["total_patients"] = self.total_patients
-        
-        # Add any extra information
-        if extra_info:
-            progress_info.update(extra_info)
-        
-        # Call the progress callback
-        progress_callback(overall_progress, progress_info)
+        return patients, bundles, output_files, summary
 
-if __name__ == "__main__":
-    # Simple command-line usage example
-    import sys
-    
-    print("Military Medical Exercise Patient Generator")
-    print("------------------------------------------")
-    
-    # Default configuration
-    config = {
-        "total_patients": 1440,
-        "output_directory": "output",
-        "output_formats": ["json", "xml"],
-        "use_compression": True,
-        "use_encryption": True
-    }
-    
-    # Parse command line arguments if provided
-    if len(sys.argv) > 1:
-        try:
-            config["total_patients"] = int(sys.argv[1])
-        except ValueError:
-            print(f"Invalid patient count: {sys.argv[1]}")
-            sys.exit(1)
-    
-    # Initialize and run the generator
-    print(f"Generating {config['total_patients']} patients...")
-    generator = PatientGeneratorApp(config)
-    
-    print(f"Using {generator.num_workers} worker threads with batch size of {generator.batch_size}")
-    
-    start_time = time.time()
-    patients, bundles = generator.run()
-    end_time = time.time()
-    
-    # Print summary statistics
-    status_counts = Counter([p.current_status for p in patients])
-    print(f"\nGenerated {len(patients)} patient records:")
-    print(f"  - Killed in Action (KIA): {status_counts.get('KIA', 0)}")
-    print(f"  - Returned to Duty (RTD): {status_counts.get('RTD', 0)}")
-    print(f"  - Still in treatment: {sum(status_counts.get(status, 0) for status in ['R1', 'R2', 'R3', 'R4'])}")
-    
-    # Print performance metrics
-    total_time = end_time - start_time
-    print(f"\nPerformance metrics:")
-    print(f"  - Total generation time: {total_time:.2f} seconds")
-    print(f"  - Patients per second: {len(patients) / total_time:.2f}")
-    print(f"  - Worker threads: {generator.num_workers}")
-    print(f"  - Batch size: {generator.batch_size}")
-    
-    print(f"\nOutput files saved to {config['output_directory']} directory.")
+    def _update_progress(self, progress_callback: Optional[Callable[[int, Dict[str, Any]], None]], 
+                         current_phase_index: int, phase_progress: int, phases: List[Dict[str, Any]], 
+                         extra_info: Optional[Dict[str, Any]] = None):
+        if not progress_callback or self.start_time is None: return
+        current_phase_def = phases[current_phase_index]
+        phase_contribution = (phase_progress / 100.0) * current_phase_def["weight"]
+        overall_progress = int(current_phase_def["start_progress"] + phase_contribution)
+        
+        progress_data: Dict[str, Any] = {
+            "current_phase": current_phase_def["name"], "phase_description": current_phase_def["description"],
+            "phase_progress": phase_progress, "time_estimates": self._estimate_remaining_time(overall_progress, phase_progress),
+            "overall_progress": overall_progress, "total_patients": self.total_patients
+        }
+        if extra_info: progress_data.update(extra_info)
+        
+        # The callback for FastAPI app expects (overall_progress, summary_dict, progress_details_dict)
+        # Here, we are calling it with (overall_progress, progress_details_dict)
+        # The main app.py will need to adapt how it calls this or how it uses the callback.
+        # For now, let's assume the callback signature is flexible or this is an internal callback.
+        # If this is the job_progress_callback from main app.py, it expects (job_id, overall_progress, summary, details)
+        # This internal _update_progress is simpler.
+        
+        # Let's make the callback expect (overall_progress: int, details: Dict[str, Any])
+        progress_callback(overall_progress, progress_data)
+
+
+# Example main removed as this is a library class.
+# Instantiation and run will be handled by the main FastAPI app (app.py)

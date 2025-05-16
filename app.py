@@ -6,7 +6,8 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException, APIRouter
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, validator, root_validator # Added validator, root_validator
+from typing import Dict, Any, Optional, List, Callable # Added Callable and other typing imports
 import zipfile
 from io import BytesIO
 import tempfile
@@ -18,7 +19,10 @@ from collections import Counter
 # Import our patient generator modules
 from patient_generator.app import PatientGeneratorApp
 from patient_generator.visualization_data import transform_job_data_for_visualization
-from patient_generator.database import Database
+from patient_generator.database import Database, ConfigurationRepository # Added ConfigurationRepository
+from patient_generator.config_manager import ConfigurationManager # Added ConfigurationManager
+from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB # Added Pydantic models
+from patient_generator.nationality_data import NationalityDataProvider # Added
 
 app = FastAPI(title="Military Medical Exercise Patient Generator")
 
@@ -40,29 +44,38 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # app.include_router(visualization_router) # Will be moved to after router definition
 
 # Store job states
-jobs = {}
+jobs: Dict[str, Any] = {} # Added type hint
 
-# Initialize database
+# Initialize database and other singletons
 db = Database.get_instance()
+nationality_provider = NationalityDataProvider() # Instantiate once
+config_repo = ConfigurationRepository(db) # Instantiate once
 
 # Ensure output directory exists
 os.makedirs("output", exist_ok=True)
 os.makedirs("temp", exist_ok=True)
 
-class GeneratorConfig(BaseModel):
-    """Configuration for the patient generator"""
-    total_patients: int = 1440
-    polish_front_percent: float = 50.0
-    estonian_front_percent: float = 33.3
-    finnish_front_percent: float = 16.7
-    disease_percent: float = 52.0
-    non_battle_percent: float = 33.0
-    battle_trauma_percent: float = 15.0
-    formats: list = ["json", "xml"]
+class GenerationRequestPayload(BaseModel):
+    """Payload for the generation request API"""
+    configuration_id: Optional[str] = None
+    # Allow providing a full configuration ad-hoc, or use a saved one by ID
+    configuration: Optional[ConfigurationTemplateCreate] = None 
+    
+    output_formats: List[str] = ["json", "xml"]
     use_compression: bool = True
     use_encryption: bool = True
-    base_date: str = "2025-06-01"
-    encryption_password: str = ""
+    encryption_password: Optional[str] = None
+
+    # For Pydantic v2, use model_validator.
+    from pydantic import model_validator
+
+    @model_validator(mode='after')
+    def check_config_source_root(self) -> 'GenerationRequestPayload': # Changed cls, model to self
+        if self.configuration_id is None and self.configuration is None:
+            raise ValueError("Either configuration_id or an ad-hoc configuration object must be provided.")
+        if self.configuration_id is not None and self.configuration is not None:
+            raise ValueError("Provide either configuration_id or an ad-hoc configuration, not both.")
+        return self
 
 @app.get("/")
 async def get_index():
@@ -75,15 +88,24 @@ async def get_visualizations_page():
     return FileResponse("static/visualizations.html")
 
 @app.post("/api/generate")
-async def generate_patients(config: GeneratorConfig, background_tasks: BackgroundTasks):
-    """Start a patient generation job"""
+async def generate_patients(payload: GenerationRequestPayload, background_tasks: BackgroundTasks):
+    """Start a patient generation job using a saved configuration ID or an ad-hoc configuration."""
     job_id = f"job_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
-    # Create job record in memory and database
-    job_data = {
+    # Prepare for ConfigurationManager
+    # db_instance will be available globally as `db`
+    # nationality_provider is also global
+    
+    # The actual config that will be used for the job
+    # This will be populated after loading/validating the config from payload
+    effective_config_dict: Optional[Dict[str, Any]] = None 
+
+    # Create job record in memory and database (initial status)
+    job_data: Dict[str, Any] = {
         "job_id": job_id,
-        "status": "queued",
-        "config": config.dict(),
+        "status": "initializing", # New initial status
+        "config_source_payload": payload.model_dump(), # Store what was received
+        "config_used": None, # Will be filled after loading
         "created_at": datetime.now().isoformat(),
         "output_files": [],
         "progress": 0,
@@ -103,13 +125,14 @@ async def generate_patients(config: GeneratorConfig, background_tasks: Backgroun
     db.save_job(job_data)
     
     # Start generation task in background
+    # Pass the full payload to run_generator_job, it will handle config loading
     background_tasks.add_task(
         run_generator_job, 
         job_id=job_id, 
-        config=config
+        request_payload=payload # Pass the whole payload
     )
     
-    return {"job_id": job_id, "status": "queued"}
+    return {"job_id": job_id, "status": "initializing"}
 
 @app.get("/api/jobs/{job_id}")
 async def get_job_status(job_id: str):
@@ -169,9 +192,17 @@ async def download_job_output(job_id: str):
     )
 
 @app.get("/api/config/defaults")
-async def get_default_config():
-    """Get default configuration values"""
-    return GeneratorConfig().dict()
+async def get_default_config_info():
+    """Provides info on how to get a default configuration."""
+    # Actual default config should be a saved template in the DB.
+    # This endpoint can guide the user or return a predefined "default" template ID.
+    # For now, returning a placeholder.
+    # In future, could load a config template marked as 'default' from DB.
+    return {
+        "message": "Default configurations are managed as templates in the database.",
+        "example_default_id": "default_scenario_v1" 
+        # This ID would need to exist in the configuration_templates table.
+    }
 
 # Visualization API Endpoints
 visualization_router = APIRouter(prefix="/api/visualizations")
@@ -359,134 +390,122 @@ async def startup_event():
     except Exception as e:
         print(f"Warning: Could not load/synchronize jobs from database: {e}")
 
-async def run_generator_job(job_id: str, config: GeneratorConfig):
-    """Run the generator job in the background"""
+async def run_generator_job(job_id: str, request_payload: GenerationRequestPayload):
+    """Run the generator job in the background using ConfigurationManager."""
+    
+    config_manager = ConfigurationManager(db) # Use global db instance
+    loaded_config_template: Optional[ConfigurationTemplateDB] = None
+
     try:
-        # Update job status
+        if request_payload.configuration_id:
+            if not config_manager.load_configuration(request_payload.configuration_id):
+                raise HTTPException(status_code=404, detail=f"Configuration ID '{request_payload.configuration_id}' not found.")
+            loaded_config_template = config_manager.get_active_configuration()
+        elif request_payload.configuration:
+            # For ad-hoc configuration, we need to "load" it into the manager.
+            # This might involve saving it first if ConfigurationManager strictly works with saved configs,
+            # or adapting ConfigurationManager to accept an in-memory Pydantic object.
+            # For now, let's assume we might need to save ad-hoc configs to make them "active".
+            # This part needs careful design: does an ad-hoc config get saved? Or used transiently?
+            # The API proposal implies ad-hoc configs are used directly for a job.
+            # Let's adapt ConfigurationManager or create a temporary active config.
+            
+            # Simplification: If ad-hoc, we create a ConfigurationTemplateDB-like object in memory.
+            # This bypasses saving it for now. A more robust solution might save it or have
+            # ConfigurationManager accept a ConfigurationTemplateCreate directly.
+            now = datetime.utcnow()
+            temp_id = f"adhoc_{str(uuid.uuid4())}" # Temporary ID for this ad-hoc config
+            loaded_config_template = ConfigurationTemplateDB(
+                id=temp_id, # Not saved, just for in-memory representation
+                name=request_payload.configuration.name,
+                description=request_payload.configuration.description,
+                front_configs=request_payload.configuration.front_configs,
+                facility_configs=request_payload.configuration.facility_configs,
+                total_patients=request_payload.configuration.total_patients,
+                injury_distribution=request_payload.configuration.injury_distribution,
+                created_at=now,
+                updated_at=now
+            )
+            # "Activate" it in the manager (conceptually)
+            config_manager._active_configuration = loaded_config_template 
+            config_manager._config_id_loaded = temp_id # Mark as loaded
+            print(f"Using ad-hoc configuration: {loaded_config_template.name}")
+        else:
+            # This case should be caught by Pydantic validator in GenerationRequestPayload
+            raise ValueError("No configuration source provided in payload.")
+
+        if not loaded_config_template: # Should not happen if logic above is correct
+             raise ValueError("Failed to obtain an effective configuration for the job.")
+
         jobs[job_id]["status"] = "running"
-        db.save_job(jobs[job_id])  # Save to database
+        jobs[job_id]["config_used"] = loaded_config_template.model_dump(mode='json') # Store the actual config used
+        db.save_job(jobs[job_id])
         
-        # Convert web config to generator config
-        generator_config = {
-            "total_patients": config.total_patients,
-            "front_distribution": {
-                "Polish": config.polish_front_percent / 100,
-                "Estonian": config.estonian_front_percent / 100,
-                "Finnish": config.finnish_front_percent / 100
-            },
-            "nationality_distribution": {
-                "Polish": {
-                    "POL": 0.50,
-                    "GBR": 0.10,
-                    "LIT": 0.30,
-                    "USA": 0.05,
-                    "ESP": 0.05
-                },
-                "Estonian": {
-                    "EST": 0.70,
-                    "GBR": 0.30
-                },
-                "Finnish": {
-                    "FIN": 0.40,
-                    "USA": 0.60
-                }
-            },
-            "injury_distribution": {
-                "DISEASE": config.disease_percent / 100,
-                "NON_BATTLE": config.non_battle_percent / 100,
-                "BATTLE_TRAUMA": config.battle_trauma_percent / 100
-            },
-            "output_formats": config.formats,
-            "output_directory": f"output/{job_id}",
-            "base_date": config.base_date,
-            "use_compression": config.use_compression,
-            "use_encryption": config.use_encryption
-        }
+        # Initialize PatientGeneratorApp with the configured ConfigurationManager
+        # The nationality_provider is already a global instance
+        generator = PatientGeneratorApp(config_manager, nationality_provider)
         
-        # Set encryption key if provided
-        if config.encryption_password:
-            # Generate a 32-byte key from the password
-            generator_config["encryption_key"] = hashlib.pbkdf2_hmac(
+        def job_progress_callback(overall_progress: int, details: Dict[str, Any]):
+            """Callback to update job progress in memory and DB."""
+            jobs[job_id]["progress"] = overall_progress
+            jobs[job_id]["progress_details"] = details
+            
+            # Update summary if present in details (as per PatientGeneratorApp's final callback)
+            if "summary" in details:
+                jobs[job_id]["summary"] = details["summary"]
+            
+            if overall_progress % 10 == 0 or overall_progress == 100 : # Save to DB periodically
+                db.save_job(jobs[job_id])
+
+        # Runtime output parameters from the payload
+        encryption_key_bytes: Optional[bytes] = None
+        if request_payload.use_encryption and request_payload.encryption_password:
+            encryption_key_bytes = hashlib.pbkdf2_hmac(
                 'sha256', 
-                config.encryption_password.encode(), 
-                b'salt', 
+                request_payload.encryption_password.encode(), 
+                b'salt', # TODO: Use a unique salt per job or a configurable salt
                 100000, 
                 dklen=32
             )
-        else:
-            # Random key if no password provided
-            generator_config["encryption_key"] = os.urandom(32)
-        
-        # Initialize and run the generator
-        generator = PatientGeneratorApp(generator_config)
-        
-        # Update progress callback
-        def progress_callback(percent, data=None, progress_info=None):
-            jobs[job_id]["progress"] = percent
-            
-            # Update progress details if provided
-            if progress_info:
-                jobs[job_id]["progress_details"] = progress_info
-            
-            # If summary data is provided, update the job summary
-            if isinstance(data, dict) and "nationalities" in data:
-                jobs[job_id]["summary"] = data
-            
-            # Save to database (not too frequently to avoid performance issues)
-            if percent % 10 == 0 or percent == 100:
-                db.save_job(jobs[job_id])
-        
-        # Run the generator with progress reporting
-        patients, bundles = generator.run(progress_callback=progress_callback)
-        
-        # Store the generated patient objects for potential later use (e.g., detailed visualization)
-        # Note: This can consume memory. For very large jobs or many concurrent jobs,
-        # consider serializing this data to disk and loading on demand.
-        jobs[job_id]["patients_data"] = patients
+        elif request_payload.use_encryption: # No password, but encryption enabled
+            encryption_key_bytes = os.urandom(32)
 
-        # Create a summary of the generation if not already set
-        if "total_patients" not in jobs[job_id]["summary"]:
-            nationality_counts = Counter([p.nationality for p in patients])
-            front_counts = Counter([p.front for p in patients])
-            injury_counts = Counter([p.injury_type for p in patients])
-            status_counts = Counter([p.current_status for p in patients])
-            
-            # Update job summary
-            jobs[job_id]["summary"] = {
-                "total_patients": len(patients),
-                "nationalities": {nat: count for nat, count in nationality_counts.items()},
-                "fronts": {front: count for front, count in front_counts.items()},
-                "injury_types": {injury: count for injury, count in injury_counts.items()},
-                "final_status": {status: count for status, count in status_counts.items()},
-                "kia_count": status_counts.get("KIA", 0),
-                "rtd_count": status_counts.get("RTD", 0),
-                "still_in_treatment": sum(status_counts.get(status, 0) for status in ["R1", "R2", "R3", "R4"])
-            }
+
+        # Run the generator
+        # The run method now returns patients, bundles, output_files, summary
+        _patients, _bundles, output_files_list, job_summary = generator.run(
+            output_directory=f"output/{job_id}",
+            output_formats=request_payload.output_formats,
+            use_compression=request_payload.use_compression,
+            use_encryption=request_payload.use_encryption,
+            encryption_key=encryption_key_bytes,
+            progress_callback=job_progress_callback
+        )
         
-        # Update job output files
-        output_dir = generator_config["output_directory"]
-        jobs[job_id]["output_files"] = os.listdir(output_dir)
+        # Store patients_data in memory (consider alternatives for very large data)
+        # jobs[job_id]["patients_data"] = patients # This was in old code, might be too memory intensive
+
+        jobs[job_id]["output_files"] = output_files_list # Already a list of paths
+        jobs[job_id]["summary"] = job_summary # Use summary returned by generator.run()
         
-        # Count file types
-        file_types = Counter([os.path.splitext(f)[1] for f in jobs[job_id]["output_files"]])
-        jobs[job_id]["file_types"] = {ext: count for ext, count in file_types.items()}
+        file_types_counter = Counter([os.path.splitext(f)[1] for f in output_files_list])
+        jobs[job_id]["file_types"] = dict(file_types_counter)
         
-        # Calculate total file size
-        total_size = sum(os.path.getsize(os.path.join(output_dir, f)) for f in jobs[job_id]["output_files"])
-        jobs[job_id]["total_size"] = total_size
-        jobs[job_id]["total_size_formatted"] = format_size(total_size)
+        total_size_val = sum(os.path.getsize(f) for f in output_files_list if os.path.exists(f))
+        jobs[job_id]["total_size"] = total_size_val
+        jobs[job_id]["total_size_formatted"] = format_size(total_size_val)
         
-        # Update job status
         jobs[job_id]["status"] = "completed"
         jobs[job_id]["completed_at"] = datetime.now().isoformat()
-        db.save_job(jobs[job_id])  # Save to database
+        db.save_job(jobs[job_id])
         
+    except HTTPException: # Re-raise HTTPExceptions to be handled by FastAPI
+        raise
     except Exception as e:
-        # Update job status on error
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
-        db.save_job(jobs[job_id])  # Save to database
-        print(f"Error in job {job_id}: {e}")
+        db.save_job(jobs[job_id])
+        print(f"Error in job {job_id}: {e}") # Log this properly
 
 def format_size(size_bytes):
     """Format file size in human-readable format"""
@@ -500,10 +519,10 @@ def format_size(size_bytes):
 async def shutdown_event():
     """Shutdown event to close database connection"""
     try:
-        db.close()
-        print("Database connection closed")
+        db.close_pool() # Changed from db.close()
+        print("Database connection pool closed.")
     except Exception as e:
-        print(f"Warning: Error closing database connection: {e}")
+        print(f"Warning: Error closing database connection pool: {e}")
 
 if __name__ == "__main__":
     # Run the server
