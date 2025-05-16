@@ -172,7 +172,7 @@ class PatientGeneratorApp:
             output_formats: Optional[List[str]] = None,
             use_compression: bool = True,
             use_encryption: bool = True,
-            encryption_key: Optional[bytes] = None, # Should be bytes
+            encryption_password: Optional[str] = None, # Changed from encryption_key: Optional[bytes]
             progress_callback: Optional[Callable[[int, Dict[str, Any]], None]] = None
             ) -> tuple[List[Any], List[Any], List[str], Dict[str, Any]]: # patients, bundles, output_files, summary
         
@@ -182,7 +182,9 @@ class PatientGeneratorApp:
 
         # Runtime output parameters
         final_output_formats = output_formats if output_formats is not None else ["json", "xml"]
-        final_encryption_key = encryption_key if encryption_key is not None else os.urandom(32)
+        # The OutputFormatter now expects a string password for key derivation.
+        # If use_encryption is True but no password is provided, encryption will be skipped by OutputFormatter.
+        final_encryption_password = encryption_password
 
         phases = [
             {"name": "Initializing", "weight": 5, "description": "Setting up simulation environment"},
@@ -263,7 +265,7 @@ class PatientGeneratorApp:
         output_files = formatter.create_output_files(
             bundles, output_directory, formats=final_output_formats,
             use_compression=use_compression, use_encryption=use_encryption,
-            encryption_key=final_encryption_key
+            encryption_password=final_encryption_password # Changed from encryption_key
             # temp_dir_provider is not a parameter of formatter.create_output_files
             # The OutputFormatter manages its own temp files.
         )

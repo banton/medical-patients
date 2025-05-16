@@ -285,7 +285,12 @@ async def get_job_status(job_id: str):
 async def list_all_jobs():
     """List all jobs known to the server (from in-memory cache)."""
     # Sort jobs by creation time, most recent first
-    sorted_jobs = sorted(list(jobs.values()), key=lambda j: str(j.get("created_at", "")), reverse=True)
+    # Ensure a sortable string, even if created_at is None or missing.
+    def get_sort_key(job_item: Dict[str, Any]) -> str:
+        created_at_val = job_item.get("created_at")
+        # If created_at_val is None or the key is missing, use the default date string.
+        return str(created_at_val) if created_at_val else "1900-01-01T00:00:00Z"
+    sorted_jobs = sorted(list(jobs.values()), key=get_sort_key, reverse=True)
     return sorted_jobs
 
 @app.get("/api/jobs/{job_id}/results", summary="Get Job Results Summary")
@@ -373,7 +378,11 @@ async def get_dashboard_data(job_id: str = None):
         # Find the most recent completed job if no job_id is specified
         completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
         if completed_jobs_list:
-            target_job_data = max(completed_jobs_list, key=lambda j: str(j.get("completed_at", "")))
+            # Ensure a sortable string, even if completed_at is None or missing.
+            def get_max_key(job_item: Dict[str, Any]) -> str:
+                completed_at_val = job_item.get("completed_at")
+                return str(completed_at_val) if completed_at_val else "1900-01-01T00:00:00Z"
+            target_job_data = max(completed_jobs_list, key=get_max_key)
         else:
             # No job_id provided and no completed jobs exist
             raise HTTPException(status_code=404, detail="No completed jobs available for visualization.")
@@ -419,7 +428,11 @@ async def get_patient_detail(patient_id: str, job_id: str = None):
     else:
         completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
         if completed_jobs_list:
-            target_job = max(completed_jobs_list, key=lambda j: str(j.get("completed_at", "")))
+            # Ensure a sortable string, even if completed_at is None or missing.
+            def get_max_key_patient_detail(job_item: Dict[str, Any]) -> str: # Renamed to avoid conflict
+                completed_at_val = job_item.get("completed_at")
+                return str(completed_at_val) if completed_at_val else "1900-01-01T00:00:00Z"
+            target_job = max(completed_jobs_list, key=get_max_key_patient_detail)
     
     if not target_job:
         raise HTTPException(status_code=404, detail="No completed jobs found to retrieve patient data from.")
@@ -577,7 +590,8 @@ async def run_generator_job(job_id: str, request_payload: GenerationRequestPaylo
                 total_patients=request_payload.configuration.total_patients,
                 injury_distribution=request_payload.configuration.injury_distribution,
                 created_at=now,
-                updated_at=now
+                updated_at=now,
+                parent_config_id=None # Explicitly set for ad-hoc config
             )
             # "Activate" it in the manager (conceptually)
             config_manager._active_configuration = loaded_config_template 
@@ -611,18 +625,8 @@ async def run_generator_job(job_id: str, request_payload: GenerationRequestPaylo
                 db.save_job(jobs[job_id])
 
         # Runtime output parameters from the payload
-        encryption_key_bytes: Optional[bytes] = None
-        if request_payload.use_encryption and request_payload.encryption_password:
-            encryption_key_bytes = hashlib.pbkdf2_hmac(
-                'sha256', 
-                request_payload.encryption_password.encode(), 
-                b'salt', # TODO: Use a unique salt per job or a configurable salt
-                100000, 
-                dklen=32
-            )
-        elif request_payload.use_encryption: # No password, but encryption enabled
-            encryption_key_bytes = os.urandom(32)
-
+        # The encryption_password (string) is passed directly to PatientGeneratorApp.run
+        # OutputFormatter now handles key derivation from this password.
 
         # Run the generator
         # The run method now returns patients, bundles, output_files, summary
@@ -631,7 +635,7 @@ async def run_generator_job(job_id: str, request_payload: GenerationRequestPaylo
             output_formats=request_payload.output_formats,
             use_compression=request_payload.use_compression,
             use_encryption=request_payload.use_encryption,
-            encryption_key=encryption_key_bytes,
+            encryption_password=request_payload.encryption_password, # Pass the string password directly
             progress_callback=job_progress_callback
         )
         
