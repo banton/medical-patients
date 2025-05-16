@@ -2,7 +2,8 @@ import os
 import json
 import uuid
 import uvicorn
-from fastapi import FastAPI, BackgroundTasks, HTTPException, APIRouter
+from fastapi import FastAPI, BackgroundTasks, HTTPException, APIRouter, Depends, Security # Added Depends, Security
+from fastapi.security import APIKeyHeader # For basic API key auth
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,6 +17,13 @@ import hashlib
 import shutil
 from collections import Counter
 
+from fastapi.requests import Request # For slowapi
+
+# Import slowapi components
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 # Import our patient generator modules
 from patient_generator.app import PatientGeneratorApp
 from patient_generator.visualization_data import transform_job_data_for_visualization
@@ -26,7 +34,12 @@ from patient_generator.nationality_data import NationalityDataProvider # Added
 
 app = FastAPI(title="Military Medical Exercise Patient Generator")
 
-# Enable CORS
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Enable CORS (should be added after rate limiting middleware if it affects OPTIONS requests)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # For development; restrict in production
@@ -34,14 +47,131 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Add SlowAPI middleware
+# from slowapi.middleware import SlowAPIMiddleware # This is for Starlette applications
+# For FastAPI, decorating routes or routers is more common, or adding exception handler.
+# The exception handler is already added. We can decorate specific routes or routers.
+# For now, applying to specific routers or globally via dependencies is an option.
+# Let's apply it to the main app for all requests for now.
+# However, the more common way with FastAPI is to use Depends on routers/routes.
+# The example above adds it to app.state and an exception handler.
+# To make it active, routes need to be decorated or a middleware added.
+# Let's try adding the middleware for global effect.
+from slowapi.middleware import SlowAPIMiddleware
+app.add_middleware(SlowAPIMiddleware)
+
 
 # Serve static files (our single-page application)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Visualization router (will be defined later and included)
-# Forward declaration for clarity, actual definition below other routes
-# visualization_router = APIRouter(prefix="/api/visualizations") 
-# app.include_router(visualization_router) # Will be moved to after router definition
+visualization_router = APIRouter(prefix="/api/visualizations")
+# app.include_router(visualization_router) # Will be included after all routes are defined
+
+# Configuration API Router
+API_KEY_NAME = "X-API-KEY" # Standard header name for API keys
+api_key_header_auth = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+
+# THIS IS A PLACEHOLDER - DO NOT USE IN PRODUCTION
+# In a real app, load from env var, secrets manager, or database (hashed)
+EXPECTED_API_KEY = "your_secret_api_key_here" 
+
+async def get_api_key(api_key_header: str = Security(api_key_header_auth)):
+    if api_key_header == EXPECTED_API_KEY:
+        return api_key_header
+    else:
+        raise HTTPException(
+            status_code=403, detail="Could not validate credentials"
+        )
+
+config_api_router = APIRouter(
+    prefix="/api/v1/configurations", 
+    tags=["Configurations"],
+    dependencies=[Depends(get_api_key)] # Apply auth to all routes in this router
+)
+
+# Use the globally initialized config_repo
+# config_repo = ConfigurationRepository(db) # Already initialized globally
+
+@config_api_router.post("/", response_model=ConfigurationTemplateDB, status_code=201)
+async def create_configuration_template(config_in: ConfigurationTemplateCreate):
+    """
+    Create a new configuration template.
+    """
+    try:
+        # The repository method handles converting Pydantic model to DB storage
+        # and returns a Pydantic model representing the DB state.
+        created_config = config_repo.create_configuration(config_in)
+        return created_config
+    except Exception as e:
+        # Log the exception e
+        raise HTTPException(status_code=400, detail=f"Failed to create configuration: {str(e)}")
+
+@config_api_router.get("/", response_model=List[ConfigurationTemplateDB])
+async def list_configuration_templates(skip: int = 0, limit: int = 100):
+    """
+    List all configuration templates with pagination.
+    """
+    templates = config_repo.list_configurations(skip=skip, limit=limit)
+    return templates
+
+@config_api_router.get("/{config_id}", response_model=ConfigurationTemplateDB)
+async def get_configuration_template(config_id: str):
+    """
+    Retrieve a specific configuration template by its ID.
+    """
+    template = config_repo.get_configuration(config_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Configuration template not found")
+    return template
+
+@config_api_router.put("/{config_id}", response_model=ConfigurationTemplateDB)
+async def update_configuration_template(config_id: str, config_in: ConfigurationTemplateCreate):
+    """
+    Update an existing configuration template.
+    """
+    updated_template = config_repo.update_configuration(config_id, config_in)
+    if not updated_template:
+        raise HTTPException(status_code=404, detail="Configuration template not found for update")
+    return updated_template
+
+@config_api_router.delete("/{config_id}", status_code=204) # 204 No Content for successful deletion
+async def delete_configuration_template(config_id: str):
+    """
+    Delete a configuration template by its ID.
+    """
+    deleted = config_repo.delete_configuration(config_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Configuration template not found for deletion")
+    return # No content to return
+
+@config_api_router.post("/validate/", summary="Validate Configuration Syntax")
+async def validate_configuration_syntax(config_in: ConfigurationTemplateCreate):
+    """
+    Validates the syntax and structure of a provided configuration template
+    without saving it. Pydantic models handle most validations.
+    """
+    # The act of parsing config_in into ConfigurationTemplateCreate already performs
+    # many validations defined in the Pydantic models (required fields, types, custom validators).
+    # If it parses successfully, the basic structure is valid.
+    # More complex business logic validation could be added here if needed.
+    return {"valid": True, "message": "Configuration syntax is valid."}
+
+@config_api_router.get("/reference/nationalities/", response_model=List[Dict[str, str]], summary="List Available Nationalities")
+async def list_available_nationalities_for_config():
+    """
+    Lists all available NATO nationalities that can be used in configurations.
+    Uses the global nationality_provider instance.
+    """
+    return nationality_provider.list_available_nationalities()
+
+@config_api_router.get("/reference/condition-types/", response_model=List[str], summary="List Available Condition Types")
+async def list_available_condition_types():
+    """
+    Lists the basic medical condition categories used for injury distribution.
+    """
+    # These are the keys expected in the injury_distribution dict of a ConfigurationTemplate
+    return ["DISEASE", "NON_BATTLE", "BATTLE_TRAUMA"]
 
 # Store job states
 jobs: Dict[str, Any] = {} # Added type hint
@@ -157,6 +287,28 @@ async def list_all_jobs():
     # Sort jobs by creation time, most recent first
     sorted_jobs = sorted(list(jobs.values()), key=lambda j: str(j.get("created_at", "")), reverse=True)
     return sorted_jobs
+
+@app.get("/api/jobs/{job_id}/results", summary="Get Job Results Summary")
+async def get_job_results(job_id: str):
+    """
+    Get the results summary of a completed generation job.
+    """
+    job_data = db.get_job(job_id) # Fetch latest from DB
+    if not job_data:
+        # Fallback to in-memory cache if DB somehow doesn't have it but memory does
+        if job_id in jobs:
+            job_data = jobs[job_id]
+        else:
+            raise HTTPException(status_code=404, detail="Job not found")
+
+    if job_data.get("status") != "completed":
+        raise HTTPException(status_code=400, detail=f"Job {job_id} is not yet completed. Current status: {job_data.get('status')}")
+
+    summary = job_data.get("summary")
+    if not summary:
+        raise HTTPException(status_code=404, detail=f"Summary not available for job {job_id}.")
+    
+    return summary
 
 @app.get("/api/download/{job_id}")
 async def download_job_output(job_id: str):
@@ -351,6 +503,7 @@ async def get_patient_detail(patient_id: str, job_id: str = None):
     return patient_data
 
 app.include_router(visualization_router)
+app.include_router(config_api_router) # Include the new configuration router
 
 @app.on_event("startup")
 async def startup_event():
