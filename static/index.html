@@ -167,8 +167,11 @@
         <div class="row">
             <div class="col-lg-5">
                 <div class="card">
-                    <div class="card-header bg-light">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h4><i class="fas fa-cog me-2"></i>Generator Configuration</h4>
+                        <button id="advancedConfigBtn" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#configurationModal">
+                            <i class="fas fa-sliders-h me-1"></i>Advanced Configuration
+                        </button>
                     </div>
                     <div class="card-body">
                         <form id="generatorForm">
@@ -395,6 +398,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Configuration Panel Bundle -->
+    <script src="/static/dist/configuration-panel.js" defer></script> 
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -834,5 +839,27 @@
 
         }); // Closes DOMContentLoaded listener
     </script>
+
+    <!-- Configuration Modal -->
+    <div class="modal fade" id="configurationModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalLabel">Advanced Scenario Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {/* React component will be rendered here if 'reactConfigurationPanelRoot' is targeted by ConfigurationPanel.tsx */}
+                    <div id="reactConfigurationPanelRoot">
+                        <p>Loading Advanced Configuration Panel...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    {/* Save/Apply buttons might be part of the React component itself */}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
