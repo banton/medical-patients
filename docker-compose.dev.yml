@@ -8,9 +8,15 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./patient_generator:/app/patient_generator
-      - ./static:/app/static
-      - ./output:/app/output
+      - ./:/app # Map the current directory to /app in the container
+      # Individual mappings below are now covered by the above, but can be kept for clarity
+      # or if specific ownership/permissions were intended.
+      # For simplicity, we can rely on the main ./app mapping.
+      # - ./patient_generator:/app/patient_generator
+      # - ./static:/app/static
+      # - ./output:/app/output
+      # Ensure the database file itself is persisted if not covered by a broader /app mapping
+      # - ./patient_generator.db:/app/patient_generator.db # This line might be redundant if ./:/app is used
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1

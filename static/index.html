@@ -665,9 +665,20 @@
                 
                 // Update overall progress bar
                 const overallProgressBar = jobCard.querySelector('#overall-progress-' + jobId);
-                overallProgressBar.style.width = `${jobData.progress}%`;
-                overallProgressBar.setAttribute('aria-valuenow', jobData.progress);
-                overallProgressBar.textContent = `${jobData.progress}%`;
+
+                // DEBUGGING: Log the elements
+                // console.log(`[Job ${jobId}] jobCard:`, jobCard);
+                // console.log(`[Job ${jobId}] overallProgressBar found by querySelector:`, overallProgressBar);
+
+                if (!overallProgressBar) {
+                    console.error(`[Job ${jobId}] CRITICAL: overallProgressBar element not found within jobCard! Template ID: #overall-progress-${jobId}. Job card HTML:`, jobCard.innerHTML);
+                    // Potentially stop further processing for this job if critical element is missing
+                    // return; 
+                } else {
+                    overallProgressBar.style.width = `${jobData.progress}%`;
+                    overallProgressBar.setAttribute('aria-valuenow', jobData.progress);
+                    overallProgressBar.textContent = `${jobData.progress}%`;
+                }
                 
                 // Update detailed progress info if available
                 if (jobData.progress_details) {
@@ -788,6 +799,39 @@
                     }
                 }
             } // Closes updateJobUI
+
+            // Function to load existing jobs on page load
+            async function loadExistingJobs() {
+                try {
+                    const response = await fetch('/api/jobs');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch existing jobs');
+                    }
+                    const existingJobs = await response.json();
+                    
+                    if (existingJobs && existingJobs.length > 0) {
+                        document.getElementById('noJobsMessage').classList.add('hidden');
+                        existingJobs.forEach(jobData => {
+                            addJobToList(jobData.job_id); // Add the card structure
+                            updateJobUI(jobData.job_id, jobData); // Populate with data
+                            
+                            // If the job is still running or queued, start polling
+                            if (jobData.status === 'running' || jobData.status === 'queued') {
+                                pollJobStatus(jobData.job_id);
+                            }
+                        });
+                    } else {
+                        document.getElementById('noJobsMessage').classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error loading existing jobs:', error);
+                    // Optionally, display an error to the user
+                }
+            }
+
+            // Load existing jobs when the DOM is ready
+            loadExistingJobs();
+
         }); // Closes DOMContentLoaded listener
     </script>
 </body>

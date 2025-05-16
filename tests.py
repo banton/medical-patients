@@ -270,6 +270,7 @@ def test_dashboard_data_endpoint():
     max_wait = 60  # seconds
     start_time = time.time()
     job_complete = False
+    job_status = {}  # Initialize to ensure it's always bound
     
     while not job_complete and time.time() - start_time < max_wait:
         job_status_response = client.get(f"/api/jobs/{job_id}")
@@ -279,12 +280,12 @@ def test_dashboard_data_endpoint():
             pytest.fail(f"Failed to get job status for {job_id}: {job_status_response.status_code} {job_status_response.text}")
         
         job_status = job_status_response.json()
-        if job_status["status"] == "completed":
+        if job_status.get("status") == "completed": # Use .get for robustness
             job_complete = True
             break
         time.sleep(1)
     
-    assert job_complete, f"Job {job_id} failed to complete within timeout. Last status: {job_status.get('status') if 'job_status' in locals() else 'unknown'}"
+    assert job_complete, f"Job {job_id} failed to complete within timeout. Last status: {job_status.get('status', 'unknown_or_not_fetched')}"
     
     # Test dashboard data endpoint
     response = client.get(f"/api/visualizations/dashboard-data?job_id={job_id}")

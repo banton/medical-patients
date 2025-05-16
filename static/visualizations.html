@@ -3,54 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Visualization Dashboard - Military Medical Exercise</title>
+    <title>Military Medical Exercise Analysis</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for icons (if used in navbar or elsewhere) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom CSS (if any) -->
+    <!-- Custom CSS -->
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
         }
-        .navbar {
-            margin-bottom: 1.5rem;
-        }
-        #visualization-dashboard {
+        .chart-container {
             background-color: #fff;
-            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            padding: 20px;
         }
-        .modal-dialog-scrollable .modal-body {
-            overflow-y: auto;
-        }
-        .timeline {
-            position: relative;
-            padding-left: 30px; /* Space for markers */
-        }
-        .timeline-item {
-            position: relative;
-            margin-bottom: 1rem;
-        }
-        .timeline-marker {
-            position: absolute;
-            left: -8px; /* Adjust to center on the line */
-            top: 5px;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: #6c757d; /* Default marker color */
-            border: 2px solid white;
-        }
-        .timeline-item:first-child .timeline-marker {
-            background-color: #0d6efd; /* Primary color for the first/latest item */
-        }
-        .timeline-content {
-            margin-left: 20px; /* Content offset from marker */
-        }
-        /* Custom tooltip style for Recharts */
         .custom-tooltip {
             background-color: rgba(255, 255, 255, 0.95);
             border: 1px solid #ccc;
@@ -58,59 +27,58 @@
             border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .custom-tooltip p {
-            margin: 0;
-            font-size: 0.9em;
-        }
-        .custom-tooltip .fw-bold {
-            margin-bottom: 5px;
+        /* Ensure the dashboard container takes up space if needed */
+        #military-medical-dashboard {
+            min-height: 100vh; /* Example: ensure it fills viewport height */
         }
     </style>
 </head>
 <body>
+    <!-- Navigation bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">
                 <i class="fas fa-notes-medical me-2"></i>Military Patient Generator
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i class="fas fa-home me-1"></i> Home
-                        </a>
+                        <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/visualizations">
-                            <i class="fas fa-chart-line me-1"></i> Advanced Visualizations
+                        <a class="nav-link active" aria-current="page" href="/visualizations.html">
+                            Medical Analysis
                         </a>
                     </li>
-                    {/* Add other nav items if they exist in index.html */}
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid">
-        <div id="visualization-dashboard">
-            {/* React component will be rendered here */}
-            <div class="text-center p-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading Dashboard...</span>
-                </div>
-                <p class="mt-2">Loading Dashboard...</p>
-            </div>
-        </div>
+    <!-- Dashboard container -->
+    <div id="military-medical-dashboard">
+        <!-- React component will be rendered here -->
     </div>
 
-    <!-- React, ReactDOM, Recharts, Lucide will be included in bundle.js -->
-    <!-- Visualization Dashboard Component (compiled) -->
-    <script src="/static/dist/bundle.js"></script>
-
+    <!-- 
+        React, ReactDOM, and Recharts are now expected to be bundled 
+        with MilitaryMedicalDashboard.tsx by esbuild.
+        If you decide to use external CDNs for these later for optimization,
+        you would uncomment these and adjust the esbuild configuration.
+    -->
+    <!-- 
+    <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.min.js"></script> 
+    -->
+    
+    <!-- Include your compiled dashboard bundle -->
+    <script src="/static/dist/military-dashboard-bundle.js"></script>
+    
     <!-- Bootstrap JS Bundle (includes Popper) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

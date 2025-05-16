@@ -128,6 +128,13 @@ async def get_job_status(job_id: str):
     # Not found in either place
     raise HTTPException(status_code=404, detail="Job not found")
 
+@app.get("/api/jobs")
+async def list_all_jobs():
+    """List all jobs known to the server (from in-memory cache)."""
+    # Sort jobs by creation time, most recent first
+    sorted_jobs = sorted(list(jobs.values()), key=lambda j: str(j.get("created_at", "")), reverse=True)
+    return sorted_jobs
+
 @app.get("/api/download/{job_id}")
 async def download_job_output(job_id: str):
     """Download the generated files as a ZIP archive"""
@@ -183,7 +190,7 @@ async def get_dashboard_data(job_id: str = None):
         # Find the most recent completed job if no job_id is specified
         completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
         if completed_jobs_list:
-            target_job_data = max(completed_jobs_list, key=lambda j: j["completed_at"])
+            target_job_data = max(completed_jobs_list, key=lambda j: str(j.get("completed_at", "")))
         else:
             # No job_id provided and no completed jobs exist
             raise HTTPException(status_code=404, detail="No completed jobs available for visualization.")
@@ -229,7 +236,7 @@ async def get_patient_detail(patient_id: str, job_id: str = None):
     else:
         completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
         if completed_jobs_list:
-            target_job = max(completed_jobs_list, key=lambda j: j["completed_at"])
+            target_job = max(completed_jobs_list, key=lambda j: str(j.get("completed_at", "")))
     
     if not target_job:
         raise HTTPException(status_code=404, detail="No completed jobs found to retrieve patient data from.")
@@ -325,14 +332,32 @@ async def startup_event():
         except Exception as e:
             print(f"Warning: Could not clean temp directory: {e}")
     
-    # Load jobs from database
+    # Load jobs from database and synchronize with filesystem
     try:
-        db_jobs = db.get_all_jobs(limit=100)  # Limit to recent 100 jobs
-        for job_data in db_jobs:
+        # Step 1: Get ALL jobs from DB to check against filesystem
+        all_db_jobs_for_sync = db.get_all_jobs(limit=None) # Get all jobs, no limit
+        
+        deleted_count = 0
+        for job_entry in all_db_jobs_for_sync:
+            job_id_to_check = job_entry["job_id"]
+            expected_output_dir = f"output/{job_id_to_check}"
+            if not os.path.isdir(expected_output_dir):
+                print(f"Output directory {expected_output_dir} not found for job {job_id_to_check}. Removing from database.")
+                db.delete_job(job_id_to_check)
+                deleted_count += 1
+        
+        if deleted_count > 0:
+            print(f"Synchronized database: Removed {deleted_count} orphaned job entries.")
+
+        # Step 2: Load remaining jobs into memory (e.g., recent 100)
+        # This now loads from a potentially cleaned-up database
+        db_jobs_to_load = db.get_all_jobs(limit=100) 
+        for job_data in db_jobs_to_load:
             jobs[job_data["job_id"]] = job_data
-        print(f"Loaded {len(db_jobs)} jobs from database")
+        print(f"Loaded {len(db_jobs_to_load)} jobs into memory from database after sync.")
+
     except Exception as e:
-        print(f"Warning: Could not load jobs from database: {e}")
+        print(f"Warning: Could not load/synchronize jobs from database: {e}")
 
 async def run_generator_job(job_id: str, config: GeneratorConfig):
     """Run the generator job in the background"""

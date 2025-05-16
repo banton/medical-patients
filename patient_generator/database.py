@@ -4,6 +4,7 @@ import json
 import os
 import datetime
 import threading
+from typing import Optional, List, Dict, Any # Added Optional, List, Dict, Any
 
 class Database:
     """SQLite database for storing job information"""
@@ -22,13 +23,16 @@ class Database:
     def __init__(self, db_path=None):
         """Initialize the database connection"""
         self.db_path = db_path or os.path.join(os.getcwd(), "patient_generator.db")
-        self.conn = None
-        self.init_db()
+        self.conn: sqlite3.Connection = sqlite3.connect(self.db_path, check_same_thread=False) # Initialize directly
+        self.init_db() # init_db will now use the existing connection
     
     def init_db(self):
         """Initialize the database schema if it doesn't exist"""
-        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+        # self.conn is already initialized in __init__
         # Enable JSON serialization/deserialization
+        if self.conn is None: # Should not happen with current __init__
+            raise ConnectionError("Database connection is not initialized.")
+            
         self.conn.row_factory = sqlite3.Row
         
         # Create jobs table if it doesn't exist
@@ -146,15 +150,28 @@ class Database:
         
         return job_data
     
-    def get_all_jobs(self, limit=50, status=None):
-        """Get all jobs from the database with optional filtering"""
+    def get_all_jobs(self, limit: Optional[int] = 50, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get all jobs from the database with optional filtering and limit"""
         cursor = self.conn.cursor()
         
-        if status:
-            cursor.execute('SELECT * FROM jobs WHERE status = ? ORDER BY created_at DESC LIMIT ?', (status, limit))
-        else:
-            cursor.execute('SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?', (limit,))
+        query = "SELECT * FROM jobs"
+        params = []
         
+        conditions = []
+        if status:
+            conditions.append("status = ?")
+            params.append(status)
+        
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+            
+        query += " ORDER BY created_at DESC"
+        
+        if limit is not None and limit > 0: # Apply limit only if it's a positive number
+            query += " LIMIT ?"
+            params.append(limit)
+            
+        cursor.execute(query, tuple(params))
         rows = cursor.fetchall()
         
         # Convert rows to list of dictionaries

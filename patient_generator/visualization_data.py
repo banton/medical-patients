@@ -1,160 +1,198 @@
-from collections import Counter, defaultdict
-from datetime import datetime, timedelta
+# In patient_generator/visualization_data.py
+from collections import Counter, defaultdict # Ensure Counter and defaultdict are imported
 
 def transform_job_data_for_visualization(job_data):
     """
-    Transforms job data, specifically the list of Patient objects,
-    for the visualization dashboard.
+    Transforms job data for the enhanced military medical visualization dashboard.
+    Focus on patient flow through the treatment chain.
     """
     patients = job_data.get("patients_data", [])
-    sankey_base_nodes = [ # Define base nodes for reuse
-        {"name": 'POI'}, {"name": 'R1'}, {"name": 'R2'}, {"name": 'R3'},
-        {"name": 'R4'}, {"name": 'RTD'}, {"name": 'KIA'}
-    ]
-
-    if not patients:
-        # Return structure similar to mock data but empty or with defaults
-        return {
-            "summary": {"total_patients": 0, "kia_rate": 0, "rtd_rate": 0, "average_treatment_time": 0},
-            "patient_flow": {"nodes": sankey_base_nodes, "links": []}, # Use base nodes
-            "facility_usage": [],
-            "timeline_analysis": [],
-            "front_comparison": [],
-            "treatment_effectiveness": [], # Placeholder
-            "nationalityDistribution": [],
-            "injuryDistribution": [],
-            "triageDistribution": [],
-            "casualtyFlowByDay": []
-        }
-
     total_patients = len(patients)
-    kia_count = sum(1 for p in patients if p.current_status == "KIA")
-    rtd_count = sum(1 for p in patients if p.current_status == "RTD")
+    
+    # Define nodes for the Sankey diagram
+    sankey_nodes = [
+        {"id": "POI", "name": "Point of Injury"},
+        {"id": "R1", "name": "Role 1"},
+        {"id": "R2", "name": "Role 2"},
+        {"id": "R3", "name": "Role 3"},
+        {"id": "R4", "name": "Role 4"},
+        {"id": "RTD", "name": "Return to Duty"},
+        {"id": "KIA", "name": "Killed in Action"}
+    ]
+    
+    # Create a mapping of node id to index for creating links
+    node_map = {node["id"]: idx for idx, node in enumerate(sankey_nodes)}
+    
+    # Track patient flow between facilities
+    flow_links = []
+    
+    # Initialize counters for each path
+    path_counters = {
+        # From POI
+        ("POI", "KIA"): 0,
+        ("POI", "RTD"): 0,
+        ("POI", "R1"): 0,
+        
+        # From R1
+        ("R1", "KIA"): 0,
+        ("R1", "RTD"): 0,
+        ("R1", "R2"): 0,
+        
+        # From R2
+        ("R2", "KIA"): 0,
+        ("R2", "RTD"): 0,
+        ("R2", "R3"): 0,
+        
+        # From R3
+        ("R3", "KIA"): 0,
+        ("R3", "RTD"): 0,
+        ("R3", "R4"): 0
+        # Note: R4 to KIA/RTD is handled differently in facility_stats
+        # For Sankey, R4 is often a terminal point or leads to RTD.
+        # If R4 can lead to KIA, add ("R4", "KIA"): 0
+        # If R4 leads to RTD, add ("R4", "RTD"): 0. The current logic in facility_stats assumes R4 -> RTD.
+    }
+    
+    # Function to analyze patient treatment history
+    def analyze_patient_path(patient):
+        # All patients start at POI
+        # current_location = "POI" # Not strictly needed with path list
+        path = ["POI"]
+        
+        # Get treatment locations in chronological order
+        treatments = sorted(patient.treatment_history, key=lambda x: x.get("date", ""))
+        
+        # Extract just the facility sequence
+        for treatment in treatments:
+            facility = treatment.get("facility")
+            # Ensure facility is one of the defined Sankey nodes and not POI if already added
+            if facility and facility in node_map and (not path or path[-1] != facility):
+                if facility == "POI" and len(path) > 0 : # Avoid POI -> POI if POI is in treatment history
+                    continue
+                path.append(facility)
+        
+        # Add final status if it's terminal and not already the last step
+        if patient.current_status in ["RTD", "KIA"] and (not path or path[-1] != patient.current_status):
+            path.append(patient.current_status)
+        
+        # Convert path to transitions between facilities
+        for i in range(len(path) - 1):
+            source = path[i]
+            target = path[i + 1]
+            
+            # Only count transitions we're interested in for path_counters
+            transition_key = (source, target)
+            if transition_key in path_counters:
+                path_counters[transition_key] += 1
+            # Special handling for R4 to RTD if not in path_counters explicitly
+            elif source == "R4" and target == "RTD":
+                 # This assumes R4 patients eventually RTD if not KIA before R4
+                 # For a more robust Sankey, ensure all terminal paths from R4 are in path_counters
+                 if ("R4", "RTD") not in path_counters: path_counters[("R4", "RTD")] = 0
+                 path_counters[("R4", "RTD")] += 1
 
-    summary_data = {
-        "total_patients": total_patients,
-        "kia_rate": (kia_count / total_patients) if total_patients > 0 else 0,
-        "rtd_rate": (rtd_count / total_patients) if total_patients > 0 else 0,
-        "average_treatment_time": 0  # Placeholder, needs calculation based on treatment_history
+
+    # Process all patients to build flow statistics
+    for patient in patients:
+        analyze_patient_path(patient)
+    
+    # Convert path counters to Sankey links
+    # Add R4 -> RTD if it was counted and not in initial path_counters
+    if ("R4", "RTD") in path_counters and path_counters[("R4", "RTD")] > 0:
+        # This ensures R4 to RTD link is created if patients reach R4 and then RTD
+        pass # It will be picked up by the loop below
+
+    for (source, target), count in path_counters.items():
+        if count > 0 and source in node_map and target in node_map:
+            flow_links.append({
+                "source": node_map[source],
+                "target": node_map[target],
+                "value": count,
+                "source_id": source, # For tooltip or debugging
+                "target_id": target  # For tooltip or debugging
+            })
+    
+    # Create summary statistics by facility
+    # Initialize with all keys and correct default types
+    facility_ids = ["POI", "R1", "R2", "R3", "R4"]
+    facility_stats = {
+        facility_id: {
+            "total": 0, "to_kia": 0, "to_rtd": 0, "to_next": 0,
+            "kia_percent": 0.0, "rtd_percent": 0.0, "next_percent": 0.0
+        } for facility_id in facility_ids
     }
 
-    # Patient Flow (Sankey)
-    # sankey_nodes are already defined as sankey_base_nodes
-    sankey_node_map = {node["name"]: i for i, node in enumerate(sankey_base_nodes)}
-    sankey_links_counter = Counter()
+    # Populate the counts
+    facility_stats["POI"]["total"] = total_patients
+    facility_stats["POI"]["to_kia"] = path_counters.get(("POI", "KIA"), 0)
+    facility_stats["POI"]["to_rtd"] = path_counters.get(("POI", "RTD"), 0)
+    facility_stats["POI"]["to_next"] = path_counters.get(("POI", "R1"), 0)
 
-    for p in patients:
-        path = ["POI"] # All patients start at POI implicitly or explicitly
-        for treatment_event in sorted(p.treatment_history, key=lambda x: x.get("date", "")):
-            facility = treatment_event.get("facility")
-            if facility and facility not in ["RTD", "KIA"]: # RTD/KIA are terminal, handled by current_status
-                 path.append(facility)
-        
-        # Add final status if it's RTD or KIA and not the last in path
-        if p.current_status in ["RTD", "KIA"] and (not path or path[-1] != p.current_status):
-            path.append(p.current_status)
+    facility_stats["R1"]["total"] = path_counters.get(("POI", "R1"), 0)
+    facility_stats["R1"]["to_kia"] = path_counters.get(("R1", "KIA"), 0)
+    facility_stats["R1"]["to_rtd"] = path_counters.get(("R1", "RTD"), 0)
+    facility_stats["R1"]["to_next"] = path_counters.get(("R1", "R2"), 0)
 
-        # Deduplicate consecutive facilities in path (e.g. R1 -> R1)
-        deduplicated_path = []
-        if path:
-            deduplicated_path.append(path[0])
-            for i in range(1, len(path)):
-                if path[i] != path[i-1]:
-                    deduplicated_path.append(path[i])
-        
-        for i in range(len(deduplicated_path) - 1):
-            source_node_name = deduplicated_path[i]
-            target_node_name = deduplicated_path[i+1]
-            if source_node_name in sankey_node_map and target_node_name in sankey_node_map:
-                source_idx = sankey_node_map[source_node_name]
-                target_idx = sankey_node_map[target_node_name]
-                sankey_links_counter[(source_idx, target_idx)] += 1
+    facility_stats["R2"]["total"] = path_counters.get(("R1", "R2"), 0)
+    facility_stats["R2"]["to_kia"] = path_counters.get(("R2", "KIA"), 0)
+    facility_stats["R2"]["to_rtd"] = path_counters.get(("R2", "RTD"), 0)
+    facility_stats["R2"]["to_next"] = path_counters.get(("R2", "R3"), 0)
+
+    facility_stats["R3"]["total"] = path_counters.get(("R2", "R3"), 0)
+    facility_stats["R3"]["to_kia"] = path_counters.get(("R3", "KIA"), 0)
+    facility_stats["R3"]["to_rtd"] = path_counters.get(("R3", "RTD"), 0)
+    facility_stats["R3"]["to_next"] = path_counters.get(("R3", "R4"), 0)
+
+    facility_stats["R4"]["total"] = path_counters.get(("R3", "R4"), 0)
+    facility_stats["R4"]["to_kia"] = path_counters.get(("R4", "KIA"), 0)
+    facility_stats["R4"]["to_rtd"] = path_counters.get(("R4", "RTD"), 0)
+    facility_stats["R4"]["to_next"] = 0 # No next level after R4 in this model
     
-    sankey_links = [{"source": src, "target": tgt, "value": val} for (src, tgt), val in sankey_links_counter.items()]
-    patient_flow_data = {"nodes": sankey_base_nodes, "links": sankey_links} # Use base nodes
-
-    # Facility Usage
-    facility_usage_counter = Counter()
-    for p in patients:
-        visited_facilities = set(["POI"]) # Implicitly all start at POI
-        for th in p.treatment_history:
-            if th.get("facility") and th["facility"] not in ["RTD", "KIA"]:
-                 visited_facilities.add(th["facility"])
-        for facility in visited_facilities:
-            if facility in ["R1", "R2", "R3", "R4"]: # Only count usage for actual treatment facilities
-                facility_usage_counter[facility] += 1
+    # Calculate percentages for each facility
+    for facility_id, stats_val in facility_stats.items(): # Renamed to avoid conflict
+        total = stats_val["total"]
+        if total > 0:
+            stats_val["kia_percent"] = round((stats_val["to_kia"] / total) * 100, 1)
+            stats_val["rtd_percent"] = round((stats_val["to_rtd"] / total) * 100, 1)
+            stats_val["next_percent"] = round((stats_val["to_next"] / total) * 100, 1)
+        else:
+            stats_val["kia_percent"] = 0.0
+            stats_val["rtd_percent"] = 0.0
+            stats_val["next_percent"] = 0.0
     
-    facility_usage_data = [
-        {"name": facility, "used": count, "capacity": 100} # Capacity is a placeholder from mock
-        for facility, count in facility_usage_counter.items()
-    ]
-    facility_usage_data.sort(key=lambda x: x["name"])
+    # Summary of total outcomes
+    # Recalculate total_kia and total_rtd based on the sum of terminal events from path_counters
+    # This avoids double counting if a patient is KIA/RTD at POI and also counted in facility_stats["POI"]["to_kia"]
+    
+    # Total KIA is sum of all transitions to KIA
+    calculated_total_kia = sum(count for (src, tgt), count in path_counters.items() if tgt == "KIA")
+    # Total RTD is sum of all transitions to RTD
+    calculated_total_rtd = sum(count for (src, tgt), count in path_counters.items() if tgt == "RTD")
 
 
-    # Timeline Analysis (Casualties per day_of_injury)
-    # Assuming p.day_of_injury is an integer like 1, 2, 3...
-    timeline_counter = Counter()
-    for p in patients:
-        if p.day_of_injury is not None:
-            timeline_counter[f"Day {p.day_of_injury}"] += 1
-    timeline_analysis_data = [{"day": day, "casualties": count} for day, count in sorted(timeline_counter.items())]
-
-
-    # Front Comparison
-    front_data = defaultdict(lambda: {"casualties": 0, "rtd": 0, "kia": 0})
-    for p in patients:
-        if p.front:
-            front_data[p.front]["casualties"] += 1
-            if p.current_status == "RTD":
-                front_data[p.front]["rtd"] += 1
-            elif p.current_status == "KIA":
-                front_data[p.front]["kia"] += 1
-    front_comparison_data = [{"front": front, **counts} for front, counts in front_data.items()]
-
-    # Nationality Distribution
-    nationality_counter = Counter(p.nationality for p in patients if p.nationality)
-    nationality_distribution_data = [{"name": nat, "value": count} for nat, count in nationality_counter.items()]
-
-    # Injury Distribution
-    injury_counter = Counter(p.injury_type for p in patients if p.injury_type)
-    injury_distribution_data = [{"name": injury, "value": count} for injury, count in injury_counter.items()]
-
-    # Triage Distribution
-    triage_counter = Counter(p.triage_category for p in patients if p.triage_category)
-    triage_distribution_data = [{"name": triage, "value": count} for triage, count in triage_counter.items()]
-
-    # Casualty Flow By Day (Simplified: total new casualties per day at POI)
-    # This requires knowing the entry point (POI) and its day.
-    # Assuming day_of_injury refers to the day they became a casualty / entered POI.
-    casualty_flow_by_day_data = []
-    daily_poi_entries = Counter()
-    for p in patients:
-        if p.day_of_injury is not None:
-            daily_poi_entries[p.day_of_injury] +=1
-
-    for day_num, poi_count in sorted(daily_poi_entries.items()):
-        # This is a simplification. A full flow would track transitions daily.
-        casualty_flow_by_day_data.append({
-            "day": f"Day {day_num}",
-            "POI": poi_count, 
-            # Other facilities would require more complex daily state tracking
-            "R1": 0, "R2": 0, "R3": 0, "R4": 0, "RTD": 0, "KIA": 0 
-        })
-
+    # If no patients, return a default structure
+    if not patients:
+        empty_facility_stats = {
+            key: {"total": 0, "to_kia": 0, "to_rtd": 0, "to_next": 0, "kia_percent": 0.0, "rtd_percent": 0.0, "next_percent": 0.0}
+            for key in ["POI", "R1", "R2", "R3", "R4"]
+        }
+        return {
+            "summary": {"total_patients": 0, "total_kia": 0, "total_rtd": 0, "kia_percent": 0.0, "rtd_percent": 0.0},
+            "patient_flow": {"nodes": sankey_nodes, "links": []},
+            "facility_stats": empty_facility_stats
+        }
 
     return {
-        "summary": summary_data,
-        "patient_flow": patient_flow_data,
-        "facility_usage": facility_usage_data,
-        "timeline_analysis": timeline_analysis_data,
-        "front_comparison": front_comparison_data,
-        "treatment_effectiveness": [ # Placeholder as per mock
-            {"treatment": 'Tourniquet', "effectiveness": 0.9},
-            {"treatment": 'Chest Seal', "effectiveness": 0.8},
-            {"treatment": 'IV Fluids', "effectiveness": 0.7},
-        ],
-        "nationalityDistribution": nationality_distribution_data,
-        "injuryDistribution": injury_distribution_data,
-        "triageDistribution": triage_distribution_data,
-        "casualtyFlowByDay": casualty_flow_by_day_data 
+        "summary": {
+            "total_patients": total_patients,
+            "total_kia": calculated_total_kia,
+            "total_rtd": calculated_total_rtd,
+            "kia_percent": round((calculated_total_kia / total_patients) * 100, 1) if total_patients > 0 else 0.0,
+            "rtd_percent": round((calculated_total_rtd / total_patients) * 100, 1) if total_patients > 0 else 0.0
+        },
+        "patient_flow": {
+            "nodes": sankey_nodes,
+            "links": flow_links
+        },
+        "facility_stats": facility_stats
     }
