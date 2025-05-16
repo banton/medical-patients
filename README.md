@@ -153,7 +153,30 @@ This generator creates data compliant with:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-Key files to be aware of for development:
+### Git Branching Strategy
+
+This project follows a structured Git branching model:
+
+-   **`main`**: This branch represents the most stable, production-ready version of the code. Only tested and approved code from the `develop` branch is merged into `main`, typically during a release. Direct commits to `main` are discouraged.
+-   **`develop`**: This is the primary integration branch for new features and ongoing development. All feature branches are created from `develop` and merged back into `develop` upon completion and review. Nightly builds or CI/CD processes may run against this branch.
+-   **Feature Branches (`feature/<epic-name>/<task-name>`)**:
+    *   When starting a new feature or task (e.g., as defined in `memory-bank/active-context.md`), create a new branch from `develop`.
+    *   Use a descriptive naming convention, for example: `feature/config-api/add-crud-endpoints` or `feature/db-migration/setup-postgres`.
+    *   Commit work regularly to your feature branch.
+    *   Once the feature is complete, tested, and reviewed, create a Pull Request to merge it into `develop`.
+-   **Release Branches (`release/vX.Y.Z`)**:
+    *   When `develop` has accumulated enough features for a new release, a `release` branch is created from `develop`.
+    *   This branch is used for final testing, bug fixes, and preparing release-specific documentation. No new features are added here.
+    *   Once ready, the `release` branch is merged into `main` (and tagged with the version number, e.g., `v1.2.0`) and also back into `develop` to ensure any fixes made during the release process are incorporated into future development.
+-   **Hotfix Branches (`hotfix/<issue-id>` or `hotfix/<description>`)**:
+    *   If a critical bug is found in `main` (production), a `hotfix` branch is created directly from `main`.
+    *   The fix is applied and tested on this branch.
+    *   Once complete, the `hotfix` branch is merged into `main` (and tagged with an incremented patch version, e.g., `v1.2.1`) and also into `develop` to ensure the fix is included in ongoing development.
+
+This strategy helps maintain a clean and stable `main` branch while allowing for parallel development and organized integration of new features.
+
+### Key Development Files
+
 - `.gitignore`: Specifies intentionally untracked files that Git should ignore. This has been recently updated to include common OS-generated files, Node.js artifacts, and log files.
 - `.clinerules`: Contains project-specific intelligence and patterns for Cline (the AI assistant).
 - `memory-bank/`: Stores contextual information about the project to aid AI-assisted development.
