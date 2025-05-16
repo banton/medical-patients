@@ -34,5 +34,12 @@
 *   **JSDOM Limitations:** Frontend tests running in JSDOM may require mocks for browser-specific APIs not present (e.g., `ResizeObserver` for `recharts`).
 *   **React Testing Library `act()` Warnings:** Asynchronous operations in `useEffect` can lead to `act()` warnings if not carefully managed in tests. Making fetch mocks explicitly asynchronous (e.g., with `setTimeout`) can help resolve these.
 *   **Frontend Bundle Size:** The compiled `bundle.js` for the enhanced dashboard can become large if all dependencies are bundled. Consider externalizing large libraries (React, Recharts) and using CDNs for production optimization.
+*   **Memory Management (Backend):** Specifically, the in-memory storage of `jobs[job_id]["patients_data"]` in `app.py` and during FHIR bundle generation can be a bottleneck for large datasets. Streaming or disk-based serialization are potential solutions.
+*   **Error Handling Standardization:** The project would benefit from a more consistent error handling strategy across both Python backend (custom exceptions, structured logging) and React/TSX frontend (Error Boundaries, consistent feedback).
+*   **Frontend Architecture Consolidation:** The mix of traditional JS in `static/index.html` and React/TSX in `enhanced-visualization-dashboard.tsx` leads to duplicated visualization logic. A unified approach or shared library is advisable.
+*   **Configuration Management:** Centralizing configuration (e.g., into a `config.py` with Pydantic) is recommended over potentially scattered or redundant definitions.
+*   **Database Concerns:** SQLite usage needs attention to connection pooling, consistent use of parameterized queries (to prevent SQL injection), and lack of schema migration management.
+*   **Docker Optimization:** Docker images can be large. Multi-stage builds and optimized Docker Compose files for different environments (dev, prod) are needed.
+*   **Security - Encryption Salt:** The encryption implementation in `formatter.py` uses a fixed salt, which is a security vulnerability. This should be replaced with a secure random salt.
 *   Maintaining consistency across all Memory Bank files.
 *   Ensuring `.clinerules` accurately reflects the evolving project intelligence.

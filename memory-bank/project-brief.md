@@ -29,6 +29,7 @@ The Military Medical Exercise Patient Generator is a web-based application desig
    - Distribution across fronts (Polish, Estonian, Finnish)
    - Injury type distribution (Disease, Non-battle, Battle trauma)
    - Output formats and security options
+   - Efficient processing and memory management, especially for large patient counts.
 
 2. **Medical Accuracy**:
    - Realistic medical conditions using SNOMED CT codes

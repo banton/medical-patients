@@ -28,7 +28,7 @@ The Military Medical Exercise Patient Generator addresses the need for realistic
 
 5. **Security Options**: Provide compression and encryption capabilities for sensitive patient data.
 
-6. **Batch Processing**: Support the generation of large datasets (1400+ patients) for battalion-level exercises.
+6. **Batch Processing**: Support the generation of large datasets (1400+ patients) for battalion-level exercises, with efficient memory management and robust error handling.
 
 7. **Web Interface**: Allow non-technical users to configure and generate patient data through a simple browser interface.
 
@@ -44,6 +44,8 @@ The Military Medical Exercise Patient Generator addresses the need for realistic
 
 5. **Multiple Access Methods**: Offer both web interface and command-line options for different user needs and automation scenarios.
 
+6. **Reliability and Consistency**: Ensure a stable user experience through consistent frontend architecture, comprehensive error feedback, and effective error recovery mechanisms.
+
 ### Target Users
 
 1. **Medical Exercise Planners**: Those responsible for designing and executing military medical training exercises.
@@ -58,4 +60,4 @@ The Military Medical Exercise Patient Generator addresses the need for realistic
 
 ### Context of Use
 
-This system would typically be used during the planning and preparation phases of military medical exercises, generating patient data that can then be loaded into exercise management systems, deployed to NFC smarttags, or used in scenario-based training. The system is designed specifically for NATO and partner nation military medical training contexts, with an emphasis on realistic casualty flows and appropriate medical content.
+This system would typically be used during the planning and preparation phases of military medical exercises, generating patient data that can then be loaded into exercise management systems, deployed to NFC smarttags, or used in scenario-based training. The system is designed specifically for NATO and partner nation military medical training contexts, with an emphasis on realistic casualty flows and appropriate medical content. It is currently intended for controlled, local deployment rather than large-scale, distributed operation.

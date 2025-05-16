@@ -49,25 +49,43 @@ The Military Medical Exercise Patient Generator appears to be a well-structured 
 
 ### What's Left to Build/Improve
 
-1.  **Documentation**:
-    *   API documentation for visualization endpoints could be expanded.
-    *   User guides for the new enhanced visualization dashboard.
-    *   Documentation for the frontend build/test process.
-2.  **Deployment**:
-    *   Further refinement and testing of production and other Docker configurations, considering the new frontend build step.
-    *   Load balancing for high-volume usage.
-3.  **Extended Features (General)**:
-    *   Additional nationalities and languages.
-    *   More detailed medical conditions and treatments.
-    *   Integration with other medical systems.
-4.  **UI Enhancements (Beyond current dashboard)**:
-    *   Patient record viewer (detailed drill-down).
-    *   Advanced filtering and search capabilities within the dashboard.
-    *   User authentication and saved configuration profiles.
-5.  **Performance Optimization**:
-    *   **Frontend**: Optimize `static/dist/bundle.js` size (e.g., externalize large libraries).
-    *   **Backend**: Profiling and optimizing generation for large datasets (ongoing).
-    *   Memory optimization for very large datasets (ongoing).
+Reflecting the technical review, key areas for improvement include:
+
+1.  **Memory Management**:
+    *   Implement streaming/generator patterns for patient data processing (backend).
+    *   Serialize large datasets to disk instead of keeping them in memory.
+    *   Add pagination for large result sets (API and UI).
+2.  **Error Handling Standardization**:
+    *   Define custom exception hierarchy and implement consistent error handling (backend).
+    *   Implement React Error Boundaries and improve error feedback/retry mechanisms (frontend).
+3.  **Frontend Architecture**:
+    *   Optimize `static/dist/bundle.js` size (externalize libraries, code splitting).
+    *   Consolidate visualization logic between `static/index.html` and the enhanced dashboard.
+    *   Implement consistent state management for the React dashboard.
+4.  **Configuration Management**:
+    *   Centralize configuration with a dedicated module and Pydantic validation.
+5.  **Testing Coverage**:
+    *   Expand API integration tests.
+    *   Increase unit test coverage for frontend and backend components.
+    *   Consider end-to-end testing.
+6.  **Database Implementation**:
+    *   Address connection pooling for SQLite.
+    *   Ensure consistent use of parameterized queries.
+    *   Consider a migration management system.
+7.  **Docker Optimization**:
+    *   Implement multi-stage builds for smaller images.
+    *   Optimize Docker Compose configurations.
+    *   Enhance container security.
+8.  **Security**:
+    *   Address fixed salt in encryption.
+    *   Comprehensive input validation.
+9.  **Documentation**:
+    *   Expand API documentation, user guides, and technical documentation (including frontend build/test processes and Docker).
+10. **Extended Features (General)**:
+    *   Additional nationalities, medical conditions, etc.
+    *   Integration with other systems.
+11. **UI Enhancements (Beyond current dashboard)**:
+    *   Patient record viewer, advanced filtering, user authentication.
 
 ### Overall Status
 
@@ -84,29 +102,31 @@ The application is near production-ready, with comprehensive features and a soli
 -   React Testing Library `act()` warnings in frontend tests have been resolved.
 -   Implemented generation of multiple primary medical conditions, improving data realism.
 
-**Current Considerations:**
-1.  **Frontend Bundle Size**: `static/dist/bundle.js` is ~2.1MB, which could be optimized.
-2.  **Recharts Console Warning**: A minor console warning from `recharts` about chart dimensions (width/height 0) appears during Jest tests in JSDOM. This does not affect test success or application functionality.
-3.  **Memory Usage (Ongoing)**: Generating large numbers of patients could still require significant memory.
-4.  **Security Considerations (Ongoing)**: Key management for encryption in production.
-5.  **Scalability (Ongoing)**: Backend patient generation is sequential within `run_generator_job` after initial parallel patient creation.
-6.  **Internationalization**: UI is English only.
+**Current Considerations / Known Issues (incorporating technical review):**
+
+1.  **Memory Management**: High memory usage with large datasets is a primary concern (backend `jobs[job_id]["patients_data"]`, FHIR generation).
+2.  **Error Handling**: Inconsistent error handling across backend and frontend.
+3.  **Frontend Architecture**:
+    *   Mix of traditional JS and React/TSX with duplicate visualization logic.
+    *   Large bundle size for `static/dist/bundle.js` (~2.1MB).
+    *   Inconsistent state management in the React dashboard.
+    *   Minor `recharts` console warning in JSDOM tests (width/height 0) - low priority.
+4.  **Configuration Management**: Potential for redundant configuration.
+5.  **Testing Coverage**: Uneven, particularly for API integration and some frontend areas.
+6.  **Database Implementation**: Limited SQLite connection pooling, potential SQL injection risks, no migration management.
+7.  **Docker Optimization**: Large container images, unoptimized Docker Compose files.
+8.  **Security**:
+    *   Fixed salt in encryption implementation.
+    *   Limited input validation in some areas.
+9.  **Scalability**: Backend patient generation has sequential parts.
+10. **Internationalization**: UI is English only.
 
 ### Next Steps
 
-Suggested priorities for continued development:
+The refactoring roadmap outlined in `memory-bank/active-context.md` (based on the technical review) provides the detailed next steps, prioritized into phases:
+1.  **Phase 1: Critical Improvements** (Memory Management, Error Handling, Configuration)
+2.  **Phase 2: Frontend Improvements** (Architecture, UX)
+3.  **Phase 3: Testing and Documentation**
+4.  **Phase 4: Deployment Optimizations** (Docker, Database)
 
-1.  **Enhanced Visualization Dashboard**:
-    *   Further develop and refine visualizations.
-    *   Consider addressing the minor `recharts` console warning in tests if deemed necessary.
-2.  **Performance Optimization**:
-    *   Optimize frontend bundle size for `static/dist/bundle.js`.
-    *   Continue backend performance profiling for large data generation.
-3.  **Documentation**:
-    *   Expand user guides for the new dashboard and document frontend build/test commands.
-    *   Update `DOCKER_DEPLOYMENT.md` to include notes on frontend asset building if applicable to Docker workflows.
-4.  **Deployment Enhancements**:
-    *   Continue refining Docker deployment strategies.
-    *   Consider CI/CD pipeline setup.
-5.  **Extended Testing**: Add more comprehensive integration and potentially end-to-end testing for the full application flow, including the new dashboard.
-6.  **User Feedback Collection**: Gather feedback on the new visualization dashboard.
+Refer to `active-context.md` for the specific tasks within these phases.

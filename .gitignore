@@ -74,3 +74,4 @@ yarn-error.log*
 
 # Log files
 *.log
+.vscode/claudesync.json

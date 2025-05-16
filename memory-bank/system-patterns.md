@@ -29,7 +29,11 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
    - Configurable through a central application class (`PatientGeneratorApp`)
    - Component-based design with specialized generators
 
-4. **Output Handling**:
+4. **Database Layer**:
+    - SQLite for job persistence (`patient_generator/database.py`).
+    - Singleton pattern for database connection management.
+
+5. **Output Handling**:
    - Multiple format support (JSON, XML)
    - Compression and encryption options
    - NDEF formatting for NFC compatibility
@@ -53,6 +57,9 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
 
 6. **Facade Pattern**:
    - `PatientGeneratorApp` provides a simplified interface to the complex generation system.
+
+7. **Singleton Pattern**:
+   - Used in `patient_generator/database.py` for managing the database connection, ensuring only one instance is created and shared.
 
 ### Component Relationships
 
@@ -123,3 +130,39 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
 - Additional medical conditions can be added to the condition generator
 - New output formats can be implemented in the formatter
 - The flow simulator can be adjusted for different exercise scenarios
+
+### Identified Technical Debt Areas
+
+Based on a recent technical review, the following areas have been identified for potential improvement:
+
+1.  **Memory Management**:
+    *   In-memory storage of large patient datasets (e.g., `jobs[job_id]["patients_data"]` in `app.py`, FHIR bundle generation) can lead to issues with very large generation jobs.
+    *   Opportunities for streaming processing and disk-based serialization.
+
+2.  **Error Handling**:
+    *   Inconsistent error handling approaches across backend (Python) and frontend (React/TSX) components.
+    *   Need for standardized custom exceptions, structured logging, and robust error recovery mechanisms (e.g., React Error Boundaries).
+
+3.  **Frontend Architecture**:
+    *   Mix of traditional JavaScript (`static/index.html`) and modern React/TypeScript (`enhanced-visualization-dashboard.tsx`).
+    *   Duplicate visualization logic between the two frontend interfaces.
+    *   Large bundle size for the enhanced dashboard.
+    *   Inconsistent state management in the React application.
+
+4.  **Configuration Management**:
+    *   Potential for redundant configuration definitions.
+    *   Opportunity to centralize configuration using a dedicated module (e.g., `config.py` with Pydantic) and environment variables.
+
+5.  **Testing Coverage**:
+    *   Uneven test coverage, particularly for some frontend components and API integration aspects.
+    *   Need for expanded unit, integration, and potentially end-to-end tests.
+
+6.  **Database Implementation**:
+    *   Limited connection pooling.
+    *   Potential for SQL injection if queries are not consistently parameterized.
+    *   Lack of a migration management system for schema changes.
+
+7.  **Docker Optimization**:
+    *   Container images could be large due to unnecessary dependencies.
+    *   Opportunity for multi-stage builds and optimized Docker Compose configurations for different environments (dev, prod).
+    *   Review container security best practices.

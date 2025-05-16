@@ -55,6 +55,7 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - `aiofiles`: Async file operations
    - `python-multipart`: Form data handling
    - `psutil`: System resource monitoring
+   - `sqlite3` (standard library): Used for database interactions in `patient_generator/database.py`.
 
 #### Frontend
 
@@ -109,12 +110,16 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 2. **Security Considerations**:
    - CORS configuration in FastAPI
    - Temporary file handling
-   - Encryption password management
+   - Encryption password management (fixed salt identified as a vulnerability).
+   - Potential for SQL injection in database queries if not consistently parameterized.
 
 3. **Performance Factors**:
-   - Memory usage for large patient generation
-   - Background task management
-   - File size considerations for downloads
+   - **Memory Management**: Critical for large patient generation (both backend Python processes and FHIR bundle creation). In-memory storage of patient data and job data needs optimization.
+   - **Background Task Management**: Efficient handling of long-running generation jobs.
+   - **Frontend Bundle Size**: The `enhanced-visualization-dashboard.tsx` bundle (`static/dist/bundle.js`) size is a concern (~2.1MB) and needs optimization (e.g., externalizing libraries, code splitting).
+   - **Database Performance**: Query optimization and connection pooling for SQLite.
+   - **Error Handling**: Inconsistent error handling can impact perceived performance and reliability.
+   - **File Size Considerations**: For downloads, especially with multiple formats and large patient counts.
 
 ### Dependencies
 
@@ -176,6 +181,7 @@ military-patient-generator/
 ├── patient_generator/                  # Core Python generation modules
 │   ├── __init__.py
 │   ├── app.py                          # PatientGeneratorApp
+│   ├── database.py                     # SQLite database interaction
 │   ├── patient.py                      # Patient class
 │   ├── flow_simulator.py               # Patient flow simulator
 │   ├── demographics.py                 # Demographics generator

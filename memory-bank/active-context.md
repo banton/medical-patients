@@ -45,25 +45,58 @@ Significant recent development has focused on the enhanced visualization dashboa
 
 ### Next Steps
 
-Building on the recent progress:
+Building on the recent progress and incorporating findings from the technical review, the following refactoring roadmap is proposed:
 
-1.  **Enhanced Visualization Dashboard - Further Development & Testing**:
-    *   Thoroughly test all features of the `enhanced-visualization-dashboard`.
-    *   Implement any missing visualizations or refine existing ones.
-    *   Address the `recharts` console warning about chart dimensions in JSDOM if it becomes problematic or if pixel-perfect test rendering is required.
-2.  **Frontend Build Optimization**:
-    *   Evaluate the size of `static/dist/bundle.js` (currently ~2.1MB). If too large for production, configure `esbuild` to treat libraries like React, ReactDOM, and Recharts as external and load them via CDN in `visualizations.html`.
-3.  **Backend API Robustness**:
-    *   Add more comprehensive error handling and logging to visualization-related API endpoints in `app.py`.
-    *   Ensure all data transformations in `patient_generator/visualization_data.py` are robust against potential variations in patient data.
-4.  **Documentation**:
-    *   Update `DOCKER_DEPLOYMENT.md` or create new documentation for building and running the frontend components if the process differs significantly from the main Python app.
-    *   Document the new frontend build and test commands.
-5.  **General Project Goals (from previous state)**:
-    *   Continue documentation expansion (user guides, API docs).
-    *   Performance optimization for large data generation.
-    *   Deployment enhancements (CI/CD, production Docker configs).
-    *   Consider feature extensions (additional nationalities, medical conditions, etc.).
+**Phase 1: Critical Improvements (1-2 months)**
+
+1.  **Memory Management Optimization**:
+    *   Implement streaming/generator pattern for patient data processing (e.g., in `FHIRBundleGenerator`, `FlowSimulator`).
+    *   Serialize large datasets (e.g., `patients_data` in `app.py`) to disk instead of keeping them entirely in memory.
+    *   Add pagination for large result sets in API responses and UI displays.
+2.  **Error Handling Standardization**:
+    *   Define a custom exception hierarchy for backend Python code (e.g., `PatientGeneratorError`, `FlowSimulationError`).
+    *   Implement consistent try/except blocks and structured logging throughout the backend.
+    *   Implement React Error Boundaries in `enhanced-visualization-dashboard.tsx` and improve error feedback/retry mechanisms in the frontend.
+3.  **Configuration Management**:
+    *   Centralize configuration into a dedicated module (e.g., `config.py`) using Pydantic for validation.
+    *   Utilize environment variables with sensible defaults.
+
+**Phase 2: Frontend Improvements (1-2 months)**
+
+4.  **Frontend Architecture Enhancement**:
+    *   Optimize `static/dist/bundle.js` size by externalizing large libraries (React, Recharts) and using CDNs or code splitting.
+    *   Consolidate visualization logic between `static/index.html` and `enhanced-visualization-dashboard.tsx` by creating shared utility functions or migrating `index.html` visualizations to React components.
+    *   Implement a consistent state management approach for the React dashboard (e.g., React Context or a lightweight state management library).
+5.  **User Experience Refinements (Frontend)**:
+    *   Add more comprehensive loading states and progress indicators.
+    *   Improve error feedback mechanisms.
+
+**Phase 3: Testing and Documentation (1 month)**
+
+6.  **Testing Coverage Expansion**:
+    *   Add integration tests for API endpoints, covering full generation-to-visualization flows.
+    *   Expand unit tests for key backend components and frontend React components.
+    *   Consider implementing end-to-end tests.
+7.  **Documentation Improvements**:
+    *   Enhance API documentation (FastAPI route summaries, OpenAPI spec).
+    *   Create/update user guides for both frontend interfaces.
+    *   Update technical documentation, including `DOCKER_DEPLOYMENT.md` and notes on the frontend build/test process.
+
+**Phase 4: Deployment Optimizations (1 month)**
+
+8.  **Docker Optimization**:
+    *   Implement multi-stage Docker builds to reduce final image sizes.
+    *   Optimize Docker Compose configurations for different environments (dev, prod), including resource limits and health checks.
+    *   Review and implement container security best practices.
+9.  **Database Improvements**:
+    *   Implement proper connection pooling for SQLite (if applicable, or consider if a more robust DB is needed for future scale).
+    *   Ensure all SQL queries are parameterized to prevent injection vulnerabilities.
+    *   Consider adding a migration management system (e.g., Alembic) if schema changes become frequent.
+
+**Ongoing/General Project Goals**:
+*   Continue documentation expansion.
+*   Consider feature extensions (additional nationalities, medical conditions, etc.).
+*   Address security vulnerabilities (e.g., fixed salt in encryption).
 
 ### Active Decisions
 
@@ -78,12 +111,28 @@ Key architectural and implementation decisions from recent work:
 
 ### Current Challenges
 
-1.  **Frontend Bundle Size**: The current `bundle.js` for the enhanced dashboard is ~2.1MB. This may need optimization for production environments.
-2.  **Development Workflow**: Managing a hybrid Python backend and a Node.js/TypeScript frontend environment (build, test, dependencies) requires careful coordination.
-3.  **Data Consistency**: Ensuring data generated by the Python backend (e.g., patient objects, job summaries) consistently matches the structures expected by both the Python-based data transformation functions (like `transform_job_data_for_visualization`) and the frontend components.
-4.  **Dockerized Development**: Ensuring that changes to backend code are promptly reflected in the running Docker container, and that developers understand how to manage this (rebuilds, reloads).
-5.  **Memory Management (Ongoing)**: Generating large numbers of patients with comprehensive FHIR data could still strain memory resources.
-6.  **Performance vs. Realism (Ongoing)**: Balancing generation speed with the level of detail in patient simulations.
+Reflecting the technical review, key challenges include:
+
+1.  **Memory Management**:
+    *   In-memory storage of large patient datasets (e.g., `jobs[job_id]["patients_data"]` in `app.py`, FHIR bundle generation) is a primary concern for scalability.
+2.  **Error Handling**:
+    *   Inconsistent error handling across the backend and frontend. Lack of standardized exceptions and recovery mechanisms.
+3.  **Frontend Architecture**:
+    *   Managing the mix of traditional JS and React/TSX, including duplicate visualization logic.
+    *   The large bundle size of `static/dist/bundle.js` (~2.1MB) requires optimization.
+    *   Inconsistent state management in the React dashboard.
+4.  **Configuration Management**:
+    *   Potential for redundant or scattered configuration settings.
+5.  **Testing Coverage**:
+    *   Uneven test coverage, especially for API integrations and some frontend aspects.
+6.  **Database Implementation**:
+    *   Limited connection pooling and potential SQL injection risks. Lack of schema migration management.
+7.  **Docker Optimization**:
+    *   Large container images and opportunities for optimizing Docker Compose files.
+8.  **Security**:
+    *   Identified vulnerabilities like fixed salt in encryption.
+9.  **Development Workflow**: Managing the hybrid Python/Node.js environment.
+10. **Data Consistency**: Ensuring data structures align between backend and frontend.
 
 ### Working Environment
 
