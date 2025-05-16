@@ -4,42 +4,62 @@
 
 *This file captures important patterns, preferences, and project intelligence that help Cline work more effectively on this specific project. It's a living document that grows as the project evolves.*
 
+### Core Project Direction (New Initiative - May 2025)
+
+1.  **Enhanced Configurability Architecture:** The project is undergoing a major refactor to introduce a highly configurable system. This includes:
+    *   **Database Backend:** Migrating from SQLite to **PostgreSQL** (clean install).
+    *   **Schema Management:** Using **Alembic** for PostgreSQL database migrations.
+    *   **Configuration Manager:** A new backend component to manage dynamic configurations for fronts, nationalities, medical flows, etc.
+    *   **API Layer:** A comprehensive RESTful API for programmatic configuration and patient generation.
+    *   **Expanded NATO Support:** Aiming to support all 32 NATO nations with detailed demographic data.
+    *   **Phased Implementation:** Following a detailed multi-phase plan (Phase 0 to Phase 4) documented in `memory-bank/active-context.md`.
+
+2.  **Git Workflow:** Adopting a structured Git branching model:
+    *   `main`: Stable, production-ready code.
+    *   `develop`: Integration branch for features.
+    *   Feature branches: `feature/<epic-name>/<task-name>`.
+    *   Release branches: `release/vX.Y.Z`.
+    *   Hotfix branches: `hotfix/<issue-id>`.
+
 ### Initial Observations & Rules:
 
-1.  **Memory Bank First:** Always read and update the Memory Bank files (`memory-bank/*.md`) at the start of a session and after significant changes. This is crucial for maintaining context.
+1.  **Memory Bank First:** Always read and update the Memory Bank files (`memory-bank/*.md`) at the start of a session and after significant changes. This is crucial for maintaining context, especially with the new architectural direction.
 2.  **File Structure Awareness:** The project has a Python backend (`app.py`, `patient_generator/`) and a frontend. The frontend includes:
     *   A static HTML/JS application (`static/index.html`).
     *   An advanced visualization dashboard (`static/visualizations.html`) powered by a React/TSX component (`enhanced-visualization-dashboard.tsx`) which is compiled to `static/dist/bundle.js`. This part of the frontend uses Node.js, npm, `esbuild`, Jest, etc.
-3.  **Python Focus:** The core data generation logic resides in Python modules. Pay attention to Python best practices, dependencies (`requirements.txt`), and packaging (`setup.py`). Backend APIs are built with FastAPI.
-4.  **Iterative Documentation:** The Memory Bank files are now comprehensive and detailed, reflecting a mature project state. They should continue to be updated iteratively as the project evolves or new insights are gained.
-5.  **User Interaction:** The presence of `static/index.html` implies user interaction. Consider how backend changes might affect the frontend experience.
-6.  **Patient Data Core:** The `patient_generator` module is central. Understand its sub-modules (`demographics.py`, `fhir_generator.py`, etc.) and their roles.
+    *   A new React-based configuration panel will be added.
+3.  **Python Focus:** The core data generation logic resides in Python modules. Pay attention to Python best practices, dependencies (`requirements.txt`), and packaging (`setup.py`). Backend APIs are built with FastAPI, interacting with PostgreSQL.
+4.  **Iterative Documentation:** The Memory Bank files are comprehensive and must be updated iteratively as the project evolves.
+5.  **User Interaction:** Consider how backend changes (especially new configurations and API) will affect both existing and new frontend experiences.
+6.  **Patient Data Core:** The `patient_generator` module remains central but will be significantly refactored for configurability.
 
 ### Tool Usage Patterns:
 
-*   **Docker Compose Command:** If `docker-compose` (hyphenated) results in a "command not found" error, use `docker compose` (with a space) instead. This is common for newer Docker versions where Compose is integrated as a plugin.
+*   **Database:** PostgreSQL is the new standard. Alembic for migrations (`alembic revision -m "..."`, `alembic upgrade head`).
+*   **Docker Compose Command:** If `docker-compose` (hyphenated) results in a "command not found" error, use `docker compose` (with a space) instead. Docker Compose files will need updates for PostgreSQL.
 *   **Frontend Testing:** Use `npm test` to run Jest tests for `.tsx` files. Configuration is in `jest.config.js`, `tsconfig.json`, and `setupTests.ts`.
-*   **Frontend Build:** Use `npm run build` to compile `enhanced-visualization-dashboard.tsx` to `static/dist/bundle.js` using `esbuild`.
+*   **Frontend Build:** Use `npm run build` to compile `enhanced-visualization-dashboard.tsx` to `static/dist/bundle.js` using `esbuild`. Similar process will apply to new React components.
 
 ### User Preferences & Workflow:
 
-*   **Backend Server Restarts:** When changes are made to Python backend code (`app.py` or imported modules), the Uvicorn server (especially if running in Docker without live reload for Python, or if not using `--reload` flag locally) MUST be restarted for changes to take effect. This was critical for resolving API 404 errors.
+*   **Backend Server Restarts:** When changes are made to Python backend code (`app.py` or imported modules), the Uvicorn server (especially if running in Docker without live reload for Python, or if not using `--reload` flag locally) MUST be restarted for changes to take effect.
 *   User manually verifies application behavior in the browser after changes.
+*   Clean install for PostgreSQL (no data migration from SQLite).
 
-### Known Challenges & Considerations:
+### Known Challenges & Considerations (Many being addressed by new plan):
 
-*   **Cross-Stack Debugging:** Issues can span the frontend (React/TSX), backend (Python/FastAPI), and the build/serving pipeline. Debugging requires checking browser console, network tab, and backend server logs.
-*   **API Data Consistency:** Ensure data structures returned by backend APIs match the interfaces/expectations of the frontend components (e.g., `JobSummary` interface and `/api/visualizations/job-list` payload).
-*   **Python Type Errors:** Subtle type mismatches in Python (e.g., `datetime.date` vs `datetime.datetime` in lists to be sorted) can lead to 500 Internal Server Errors that manifest as data loading failures in the frontend. Careful and consistent type handling in Python data processing is crucial.
-*   **JSDOM Limitations:** Frontend tests running in JSDOM may require mocks for browser-specific APIs not present (e.g., `ResizeObserver` for `recharts`).
-*   **React Testing Library `act()` Warnings:** Asynchronous operations in `useEffect` can lead to `act()` warnings if not carefully managed in tests. Making fetch mocks explicitly asynchronous (e.g., with `setTimeout`) can help resolve these.
-*   **Frontend Bundle Size:** The compiled `bundle.js` for the enhanced dashboard can become large if all dependencies are bundled. Consider externalizing large libraries (React, Recharts) and using CDNs for production optimization.
-*   **Memory Management (Backend):** Specifically, the in-memory storage of `jobs[job_id]["patients_data"]` in `app.py` and during FHIR bundle generation can be a bottleneck for large datasets. Streaming or disk-based serialization are potential solutions.
-*   **Error Handling Standardization:** The project would benefit from a more consistent error handling strategy across both Python backend (custom exceptions, structured logging) and React/TSX frontend (Error Boundaries, consistent feedback).
-*   **Frontend Architecture Consolidation:** The mix of traditional JS in `static/index.html` and React/TSX in `enhanced-visualization-dashboard.tsx` leads to duplicated visualization logic. A unified approach or shared library is advisable.
-*   **Configuration Management:** Centralizing configuration (e.g., into a `config.py` with Pydantic) is recommended over potentially scattered or redundant definitions.
-*   **Database Concerns:** SQLite usage needs attention to connection pooling, consistent use of parameterized queries (to prevent SQL injection), and lack of schema migration management.
-*   **Docker Optimization:** Docker images can be large. Multi-stage builds and optimized Docker Compose files for different environments (dev, prod) are needed.
-*   **Security - Encryption Salt:** The encryption implementation in `formatter.py` uses a fixed salt, which is a security vulnerability. This should be replaced with a secure random salt.
+*   **Cross-Stack Debugging:** Still relevant.
+*   **API Data Consistency:** Pydantic models in the new API will help.
+*   **Python Type Errors:** Continued vigilance needed.
+*   **JSDOM Limitations:** Still relevant for frontend tests.
+*   **React Testing Library `act()` Warnings:** Monitor during new component development.
+*   **Frontend Bundle Size:** A concern for existing and new React components (Phase 4 task).
+*   **Memory Management (Backend):** Key focus of Phase 1 refactoring.
+*   **Error Handling Standardization:** To be implemented throughout new development.
+*   **Frontend Architecture Consolidation:** Phase 4 task.
+*   **Configuration Management:** Core of the new architecture.
+*   **Database Concerns:** Migrating to PostgreSQL and using Alembic addresses previous SQLite concerns (connection pooling, migrations). Parameterized queries remain essential.
+*   **Docker Optimization:** Phase 4 task.
+*   **Security - Encryption Salt:** Phase 4 task.
 *   Maintaining consistency across all Memory Bank files.
 *   Ensuring `.clinerules` accurately reflects the evolving project intelligence.

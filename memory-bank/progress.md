@@ -2,131 +2,110 @@
 
 ## Current Status
 
-The Military Medical Exercise Patient Generator appears to be a well-structured and developed project with comprehensive functionality. Based on the codebase, here's an assessment of its current status.
+The Military Medical Exercise Patient Generator is embarking on a major architectural overhaul to introduce comprehensive configurability, support for all NATO nations, a new API layer, and migration to a PostgreSQL database.
 
-### What Works
+The project is currently at the **beginning of Phase 0: Foundation & Setup** of this new initiative. This phase focuses on establishing the necessary groundwork, including setting up the Git branching model, configuring PostgreSQL, integrating Alembic for database migrations, and refactoring the database interaction layer.
 
-1. **Core Patient Generation**:
-   - Patient flow simulation through medical facilities (POI, R1-R4)
-   - Realistic demographics generation based on nationality
-   - Medical condition generation using SNOMED CT codes, now with support for multiple primary conditions of the same injury type, enhancing medical realism.
-   - HL7 FHIR R4 bundle creation, updated to correctly represent multiple primary conditions.
+### What Works (Prior to New Initiative)
 
-2. **Web Interface**:
-   - Configuration form for generation parameters (`static/index.html`).
-   - Job management system (`static/index.html`).
-   - Progress tracking (`static/index.html`).
-   - Data visualization of generation results (basic visualizations in `static/index.html`).
-   - **Enhanced Visualization Dashboard (`static/visualizations.html`)**:
-     - Successfully loads and displays advanced visualizations using React, Recharts, and Lucide-React.
-     - Fetches data from backend API endpoints (`/api/visualizations/job-list`, `/api/visualizations/dashboard-data`).
-     - The TSX component (`enhanced-visualization-dashboard.tsx`) is compiled using `esbuild` into `static/dist/bundle.js`.
-   - File download functionality.
+(This section describes the state of the application *before* the new architectural changes. It will be updated as new capabilities from the phased plan are completed.)
 
-3. **Output Options**:
-   - JSON and XML formatting
-   - Compression with gzip
-   - Encryption with AES-256-GCM
-   - NDEF formatting for NFC tags
+1.  **Core Patient Generation**:
+    *   Patient flow simulation through medical facilities (POI, R1-R4) - *to be refactored for configurability*.
+    *   Realistic demographics generation based on nationality - *to be expanded for all NATO nations and made configurable*.
+    *   Medical condition generation using SNOMED CT codes, with support for multiple primary conditions.
+    *   HL7 FHIR R4 bundle creation.
 
-4. **Command Line Support**:
-   - Demo script for direct usage
-   - Configuration via JSON
+2.  **Web Interface**:
+    *   Configuration form for generation parameters (`static/index.html`) - *to be supplemented/replaced by new advanced configuration UI*.
+    *   Job management system (`static/index.html`).
+    *   Progress tracking (`static/index.html`).
+    *   Data visualization of generation results (basic visualizations in `static/index.html`).
+    *   **Enhanced Visualization Dashboard (`static/visualizations.html`)**:
+        *   Successfully loads and displays advanced visualizations using React, Recharts, and Lucide-React.
+        *   Fetches data from backend API endpoints (`/api/visualizations/job-list`, `/api/visualizations/dashboard-data`).
+        *   The TSX component (`enhanced-visualization-dashboard.tsx`) is compiled using `esbuild` into `static/dist/bundle.js`.
+    *   File download functionality.
 
-5. **Testing**:
-   - Unit tests for core components.
-   - Test fixtures for different scenarios.
-   - Added comprehensive unit tests for the `patient_generator.visualization_data.transform_job_data_for_visualization` function, covering various data scenarios (empty lists, different patient flows, distributions).
-   - As part of this testing, a bug was identified and fixed in `transform_job_data_for_visualization` where default Sankey diagram nodes were not correctly initialized when no patient data was present. All Python unit tests are currently passing.
-   - **Frontend Testing (Enhanced Visualization Dashboard)**:
-     - Jest and React Testing Library configured for `enhanced-visualization-dashboard.test.tsx`.
-     - All frontend tests are passing, including those for data loading, tab navigation, and filtering.
-     - Initial `act()` warnings during test runs have been resolved.
+3.  **Output Options**:
+    *   JSON and XML formatting
+    *   Compression with gzip
+    *   Encryption with AES-256-GCM
+    *   NDEF formatting for NFC tags
 
-6. **Docker Development Environment**:
-   - `Dockerfile` fixed and `docker-compose.dev.yml` successfully builds and runs.
-   - Web interface and API docs accessible in the dev container.
+4.  **Command Line Support**:
+    *   Demo script for direct usage
+    *   Configuration via JSON - *to be updated for new configuration structure*.
 
-### What's Left to Build/Improve
+5.  **Testing**:
+    *   Unit tests for core Python components.
+    *   Frontend tests for `enhanced-visualization-dashboard.tsx` using Jest and React Testing Library.
+    *   All existing unit tests (Python and frontend) were passing prior to this new initiative.
 
-Reflecting the technical review, key areas for improvement include:
+6.  **Docker Development Environment**:
+    *   `Dockerfile` and `docker-compose.dev.yml` were functional for the previous SQLite-based setup. *Will be updated for PostgreSQL.*
 
-1.  **Memory Management**:
-    *   Implement streaming/generator patterns for patient data processing (backend).
-    *   Serialize large datasets to disk instead of keeping them in memory.
-    *   Add pagination for large result sets (API and UI).
-2.  **Error Handling Standardization**:
-    *   Define custom exception hierarchy and implement consistent error handling (backend).
-    *   Implement React Error Boundaries and improve error feedback/retry mechanisms (frontend).
-3.  **Frontend Architecture**:
-    *   Optimize `static/dist/bundle.js` size (externalize libraries, code splitting).
-    *   Consolidate visualization logic between `static/index.html` and the enhanced dashboard.
-    *   Implement consistent state management for the React dashboard.
-4.  **Configuration Management**:
-    *   Centralize configuration with a dedicated module and Pydantic validation.
-5.  **Testing Coverage**:
-    *   Expand API integration tests.
-    *   Increase unit test coverage for frontend and backend components.
-    *   Consider end-to-end testing.
-6.  **Database Implementation**:
-    *   Address connection pooling for SQLite.
-    *   Ensure consistent use of parameterized queries.
-    *   Consider a migration management system.
-7.  **Docker Optimization**:
-    *   Implement multi-stage builds for smaller images.
-    *   Optimize Docker Compose configurations.
-    *   Enhance container security.
-8.  **Security**:
-    *   Address fixed salt in encryption.
-    *   Comprehensive input validation.
-9.  **Documentation**:
-    *   Expand API documentation, user guides, and technical documentation (including frontend build/test processes and Docker).
-10. **Extended Features (General)**:
-    *   Additional nationalities, medical conditions, etc.
-    *   Integration with other systems.
-11. **UI Enhancements (Beyond current dashboard)**:
-    *   Patient record viewer, advanced filtering, user authentication.
+### What's Left to Build/Improve (Focus of the New Initiative)
+
+The primary focus is the implementation of the new configurability architecture, broken down into phases:
+
+1.  **Phase 0: Foundation & Setup (Current)**
+    *   Git branching model.
+    *   PostgreSQL setup (clean install, replacing SQLite).
+    *   Alembic integration for schema migrations.
+    *   Refactor `database.py` for PostgreSQL and connection pooling.
+2.  **Phase 1: Backend Configuration Abstraction & Core Logic**
+    *   Database models and schema for configurations (fronts, nationalities, facilities).
+    *   `ConfigurationRepository` for DB interaction.
+    *   NATO nations data repository and integration.
+    *   Refactor `PatientFlowSimulator`, `DemographicsGenerator`, `PatientGeneratorApp` to use the new configuration system.
+    *   Implement configuration versioning and default/backward compatibility.
+    *   Address memory management during refactoring.
+3.  **Phase 2: API Enhancement**
+    *   RESTful API for CRUD operations on configurations.
+    *   API for initiating generation jobs with specific configurations.
+    *   API for job status, results, and downloads.
+    *   Reference data API endpoints.
+    *   API security (authentication, rate limiting) and documentation.
+4.  **Phase 3: Frontend Enhancement & SDK**
+    *   New React-based `ConfigurationPanel` for advanced scenario configuration (fronts, nationalities, facilities, medical parameters).
+    *   Integration of this panel into `static/index.html` via a modal.
+    *   Python SDK for programmatic interaction with the new API.
+5.  **Phase 4: Hardening, Technical Debt, and Final Touches**
+    *   Address remaining technical debt (encryption salt, frontend architecture consolidation, bundle size optimization, Docker multi-stage builds).
+    *   Expand testing coverage (API integration, E2E).
+    *   Finalize all documentation.
 
 ### Overall Status
 
-The project is in a strong functional state with robust core patient generation capabilities and significantly improved data visualization through the new React-based enhanced dashboard. Both web interfaces (main generator and advanced visualizations) and command-line support are operational. The introduction of frontend testing and a build process marks a significant step in modernizing the frontend architecture. The codebase remains well-structured.
-
-The application is near production-ready, with comprehensive features and a solid testing foundation for both backend and key frontend components.
+The project is at a pivotal point, transitioning from a functional application with some hardcoded limitations to a highly flexible, API-driven, and database-configurable system. The immediate next steps are foundational (database migration, Git setup) before tackling the core architectural changes.
 
 ### Known Issues
 
-**Resolved Recently:**
--   Initial loading errors for the Enhanced Visualization Dashboard (related to Babel, Recharts, and TSX compilation) have been fixed.
--   404 errors for visualization API endpoints (e.g., `/api/visualizations/job-list`) have been resolved (primarily by ensuring backend server runs latest code).
--   500 Internal Server Error for `/api/visualizations/dashboard-data` (caused by `TypeError` in data transformation) has been fixed.
--   React Testing Library `act()` warnings in frontend tests have been resolved.
--   Implemented generation of multiple primary medical conditions, improving data realism.
+**Resolved Recently (Prior to New Initiative):**
+*   Initial loading errors for the Enhanced Visualization Dashboard.
+*   404 errors for visualization API endpoints.
+*   500 Internal Server Error for `/api/visualizations/dashboard-data`.
+*   React Testing Library `act()` warnings in frontend tests.
+*   Implemented generation of multiple primary medical conditions.
 
-**Current Considerations / Known Issues (incorporating technical review):**
+**Current Considerations / Known Issues (To be addressed by new plan):**
 
-1.  **Memory Management**: High memory usage with large datasets is a primary concern (backend `jobs[job_id]["patients_data"]`, FHIR generation).
-2.  **Error Handling**: Inconsistent error handling across backend and frontend.
-3.  **Frontend Architecture**:
-    *   Mix of traditional JS and React/TSX with duplicate visualization logic.
-    *   Large bundle size for `static/dist/bundle.js` (~2.1MB).
-    *   Inconsistent state management in the React dashboard.
-    *   Minor `recharts` console warning in JSDOM tests (width/height 0) - low priority.
-4.  **Configuration Management**: Potential for redundant configuration.
-5.  **Testing Coverage**: Uneven, particularly for API integration and some frontend areas.
-6.  **Database Implementation**: Limited SQLite connection pooling, potential SQL injection risks, no migration management.
-7.  **Docker Optimization**: Large container images, unoptimized Docker Compose files.
-8.  **Security**:
-    *   Fixed salt in encryption implementation.
-    *   Limited input validation in some areas.
-9.  **Scalability**: Backend patient generation has sequential parts.
-10. **Internationalization**: UI is English only.
+1.  **Database System:** Currently SQLite, migrating to PostgreSQL. This addresses SQLite's limitations (connection pooling, migration management).
+2.  **Configuration Hardcoding:** Core limitation being addressed by the new architecture.
+3.  **Memory Management:** High memory usage with large datasets remains a concern; will be addressed during backend refactoring (Phase 1).
+4.  **Error Handling:** Inconsistent error handling; will be standardized during new component development.
+5.  **Frontend Architecture:** Mix of JS/React, bundle sizes; will be reviewed in Phase 4.
+6.  **Security - Encryption Salt:** Fixed salt in `formatter.py`; scheduled for Phase 4.
+7.  **Testing Coverage:** Needs expansion for new API and configuration logic.
 
 ### Next Steps
 
-The refactoring roadmap outlined in `memory-bank/active-context.md` (based on the technical review) provides the detailed next steps, prioritized into phases:
-1.  **Phase 1: Critical Improvements** (Memory Management, Error Handling, Configuration)
-2.  **Phase 2: Frontend Improvements** (Architecture, UX)
-3.  **Phase 3: Testing and Documentation**
-4.  **Phase 4: Deployment Optimizations** (Docker, Database)
+The project is currently executing **Phase 0: Foundation & Setup** as detailed in `memory-bank/active-context.md`. This involves:
+*   Task 0.1: Update Memory Bank - Initial Plan (Completed)
+*   Task 0.2: Establish Git Branching Model
+*   Task 0.3: Setup PostgreSQL Database
+*   Task 0.4: Integrate Alembic for Database Migrations
+*   Task 0.5: Refactor `patient_generator/database.py` for PostgreSQL
 
-Refer to `active-context.md` for the specific tasks within these phases.
+Subsequent phases (1-4) will follow as outlined in `active-context.md`, focusing on backend abstraction, API development, frontend enhancements, and finally, hardening and documentation.

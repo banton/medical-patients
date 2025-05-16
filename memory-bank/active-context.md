@@ -2,19 +2,20 @@
 
 ## Current Work Focus
 
-Based on the Military Medical Exercise Patient Generator codebase, this document tracks the current development focus, recent changes, and upcoming priorities.
+The project is embarking on a significant architectural enhancement to introduce comprehensive configurability for the patient generator. This initiative aims to support all NATO nations, allow customization of medical flow parameters, fronts, and other scenario details, and enable programmatic control via a new API layer.
 
-### Current Focus
+The immediate focus is **Phase 0: Foundation & Setup**, which includes:
+1.  **Establishing a robust Git branching model.**
+2.  **Migrating the backend database from SQLite to PostgreSQL (clean install).**
+3.  **Integrating Alembic for database schema migrations.**
+4.  **Refactoring database interaction layer for PostgreSQL.**
+5.  **Updating all Memory Bank documents to reflect this new plan.**
 
-The project is enhancing its frontend capabilities, particularly for data visualization. Current focus areas include:
-
-1.  **Enhanced Visualization Dashboard**: Implementing and stabilizing the new React/TSX-based advanced visualization dashboard (`enhanced-visualization-dashboard.tsx`). This includes setting up testing, a build process, and ensuring it integrates correctly with the backend.
-2.  **Frontend Testing**: Establishing a robust testing environment for React/TSX components using Jest and React Testing Library.
-3.  **Frontend Build Process**: Implementing a build pipeline (using `esbuild`) for frontend components to ensure they are correctly compiled and bundled for browser use.
-4.  **Backend API Support**: Ensuring backend FastAPI routes correctly serve data required by the new visualization dashboard and are free of errors.
-5.  **User Experience Refinement**: Continued focus on making data visualizations clear and useful.
+This foundational work will pave the way for subsequent phases involving backend configuration abstraction, API development, and frontend enhancements.
 
 ### Recent Changes
+
+(This section reflects work prior to the new architectural initiative. It will be updated as new phases progress.)
 
 Significant recent development has focused on the enhanced visualization dashboard:
 
@@ -45,121 +46,169 @@ Significant recent development has focused on the enhanced visualization dashboa
 
 ### Next Steps
 
-Building on the recent progress and incorporating findings from the technical review, the following refactoring roadmap is proposed:
+The project will follow a phased approach to implement the enhanced configurability architecture.
 
-**Phase 1: Critical Improvements (1-2 months)**
+**Overarching Principles:**
+*   **Git Branching Strategy:** `main` (stable), `develop` (integration), `feature/<epic>/<task>`, `release/vX.Y.Z`, `hotfix/<issue>`.
+*   **Task Breakdown & Acceptance Criteria:** Small, manageable units with clear, testable acceptance criteria.
+*   **Iterative Memory Bank Updates:** Memory Bank and `.clinerules` updated at the end of each significant task or phase.
+*   **Prioritize Technical Debt:** Integrate technical debt resolution into relevant feature development.
 
-1.  **Memory Management Optimization**:
-    *   Implement streaming/generator pattern for patient data processing (e.g., in `FHIRBundleGenerator`, `FlowSimulator`).
-    *   Serialize large datasets (e.g., `patients_data` in `app.py`) to disk instead of keeping them entirely in memory.
-    *   Add pagination for large result sets in API responses and UI displays.
-2.  **Error Handling Standardization**:
-    *   Define a custom exception hierarchy for backend Python code (e.g., `PatientGeneratorError`, `FlowSimulationError`).
-    *   Implement consistent try/except blocks and structured logging throughout the backend.
-    *   Implement React Error Boundaries in `enhanced-visualization-dashboard.tsx` and improve error feedback/retry mechanisms in the frontend.
-3.  **Configuration Management**:
-    *   Centralize configuration into a dedicated module (e.g., `config.py`) using Pydantic for validation.
-    *   Utilize environment variables with sensible defaults.
+---
 
-**Phase 2: Frontend Improvements (1-2 months)**
+**Phase 0: Foundation & Setup (Current Focus)**
+*   **Task 0.1: Update Memory Bank - Initial Plan (Completed)**
+    *   Description: Document overall plan and architectural decisions in `active-context.md` and `progress.md`.
+    *   Status: Completed.
+*   **Task 0.2: Establish Git Branching Model**
+    *   Description: Create `develop` branch. Document strategy.
+    *   Acceptance Criteria: `develop` branch exists. Strategy documented.
+*   **Task 0.3: Setup PostgreSQL Database**
+    *   Description: Install/configure PostgreSQL. Update Docker Compose.
+    *   Acceptance Criteria: PostgreSQL running and accessible.
+*   **Task 0.4: Integrate Alembic for Database Migrations**
+    *   Description: Add Alembic. Initialize. Create initial migration.
+    *   Acceptance Criteria: Alembic configured. `alembic upgrade head` runs.
+*   **Task 0.5: Refactor `patient_generator/database.py` for PostgreSQL**
+    *   Description: Replace SQLite logic with PostgreSQL (psycopg2-binary). Implement connection pooling.
+    *   Acceptance Criteria: Backend connects to PostgreSQL. Basic DB operations adapted.
 
-4.  **Frontend Architecture Enhancement**:
-    *   Optimize `static/dist/bundle.js` size by externalizing large libraries (React, Recharts) and using CDNs or code splitting.
-    *   Consolidate visualization logic between `static/index.html` and `enhanced-visualization-dashboard.tsx` by creating shared utility functions or migrating `index.html` visualizations to React components.
-    *   Implement a consistent state management approach for the React dashboard (e.g., React Context or a lightweight state management library).
-5.  **User Experience Refinements (Frontend)**:
-    *   Add more comprehensive loading states and progress indicators.
-    *   Improve error feedback mechanisms.
+---
 
-**Phase 3: Testing and Documentation (1 month)**
+**Phase 1: Backend Configuration Abstraction & Core Logic**
+*   **Epic 1.1: Configuration Data Models & Database Schema**
+    *   Task 1.1.1: Define Core Pydantic Models for Configuration (`FrontConfig`, `NationalityConfig`, `FacilityConfig`, `ConfigurationTemplate`).
+    *   Task 1.1.2: Design PostgreSQL Schema & Create Alembic Migrations for configuration tables.
+    *   Task 1.1.3: Implement `ConfigurationRepository` (CRUD for configurations in PostgreSQL).
+*   **Epic 1.2: NATO Nations Data Repository**
+    *   Task 1.2.1: Research and Collate NATO Nations Data (demographics, ID formats, etc.).
+    *   Task 1.2.2: Implement `NationalityConfiguration` logic to load/access NATO data.
+*   **Epic 1.3: Refactor Core Generation Logic for Configurability**
+    *   Task 1.3.1: Create `ConfigurationManager` to load and provide active configuration.
+    *   Task 1.3.2: Refactor `PatientFlowSimulator` for dynamic, configurable facility chains and parameters.
+    *   Task 1.3.3: Refactor `DemographicsGenerator` to use configurable nationality data.
+    *   Task 1.3.4: Refactor `MedicalConditionGenerator` (if needed for configurable flow parameters).
+    *   Task 1.3.5: Update `patient_generator.app.PatientGeneratorApp` & FastAPI `app.py` to use `ConfigurationManager`.
+    *   Task 1.3.6: Address Memory Management in Generation (streaming/generator patterns).
+*   **Epic 1.4: Configuration Versioning & Default/Backward Compatibility**
+    *   Task 1.4.1: Add Versioning to `ConfigurationTemplate` model and database.
+    *   Task 1.4.2: Implement Default Configuration mimicking current hardcoded behavior.
 
-6.  **Testing Coverage Expansion**:
-    *   Add integration tests for API endpoints, covering full generation-to-visualization flows.
-    *   Expand unit tests for key backend components and frontend React components.
-    *   Consider implementing end-to-end tests.
-7.  **Documentation Improvements**:
-    *   Enhance API documentation (FastAPI route summaries, OpenAPI spec).
-    *   Create/update user guides for both frontend interfaces.
-    *   Update technical documentation, including `DOCKER_DEPLOYMENT.md` and notes on the frontend build/test process.
+---
 
-**Phase 4: Deployment Optimizations (1 month)**
+**Phase 2: API Enhancement**
+*   **Epic 2.1: Configuration Management API Endpoints**
+    *   Task 2.1.1: Implement FastAPI Router and Pydantic Models for Config API.
+    *   Task 2.1.2: Implement CRUD Endpoints for Configurations (`/api/v1/configurations/`).
+    *   Task 2.1.3: Implement `/api/v1/configurations/validate/` Endpoint.
+*   **Epic 2.2: Generation API Endpoints**
+    *   Task 2.2.1: Implement FastAPI Router and Pydantic Models for Generation API.
+    *   Task 2.2.2: Implement `POST /api/v1/generate/` Endpoint for job creation.
+    *   Task 2.2.3: Implement Job Status (`/jobs/{job_id}/`) and Download Endpoints.
+*   **Epic 2.3: Reference Data API Endpoints**
+    *   Task 2.3.1: Implement Endpoints for reference data (nationalities, facility types, etc.).
+*   **Epic 2.4: API Security & Documentation**
+    *   Task 2.4.1: Implement API Authentication (Token-Based).
+    *   Task 2.4.2: Implement Rate Limiting.
+    *   Task 2.4.3: Generate/Enhance OpenAPI/Swagger Documentation.
 
-8.  **Docker Optimization**:
-    *   Implement multi-stage Docker builds to reduce final image sizes.
-    *   Optimize Docker Compose configurations for different environments (dev, prod), including resource limits and health checks.
-    *   Review and implement container security best practices.
-9.  **Database Improvements**:
-    *   Implement proper connection pooling for SQLite (if applicable, or consider if a more robust DB is needed for future scale).
-    *   Ensure all SQL queries are parameterized to prevent injection vulnerabilities.
-    *   Consider adding a migration management system (e.g., Alembic) if schema changes become frequent.
+---
 
-**Ongoing/General Project Goals**:
-*   Continue documentation expansion.
-*   Consider feature extensions (additional nationalities, medical conditions, etc.).
-*   Address security vulnerabilities (e.g., fixed salt in encryption).
+**Phase 3: Frontend Enhancement & SDK**
+*   **Epic 3.1: Frontend Configuration UI (`ConfigurationPanel` React Component)**
+    *   Task 3.1.1: Basic Structure of `ConfigurationPanel.tsx`.
+    *   Task 3.1.2: Fetch and Display Saved Configurations from API.
+    *   Task 3.1.3: Implement Front Management UI (`FrontEditor` sub-component).
+    *   Task 3.1.4: Implement Facility Management UI (`FacilityEditor` sub-component).
+    *   Task 3.1.5: Implement Nationality Configuration UI.
+    *   Task 3.1.6: Implement Save/Load/Apply Configuration Logic (interacting with API).
+    *   Task 3.1.7: Implement Parameter Impact Preview (Basic).
+    *   Task 3.1.8: Integrate Configuration Modal into `static/index.html`.
+*   **Epic 3.2: Python SDK Development**
+    *   Task 3.2.1: Implement `PatientGeneratorClient` Class structure.
+    *   Task 3.2.2: Implement SDK Methods for Configuration API.
+    *   Task 3.2.3: Implement SDK Methods for Generation API.
+    *   Task 3.2.4: Add Examples and Documentation for SDK.
+
+---
+
+**Phase 4: Hardening, Technical Debt, and Final Touches**
+*   **Epic 4.1: Address Remaining Technical Debt**
+    *   Task 4.1.1: Security - Fix Encryption Salt in `formatter.py`.
+    *   Task 4.1.2: Frontend Architecture Consolidation (visualization logic).
+    *   Task 4.1.3: Frontend Bundle Size Optimization (externalize libraries/code splitting).
+    *   Task 4.1.4: Docker Optimization (Multi-stage builds).
+*   **Epic 4.2: Testing Expansion**
+    *   Task 4.2.1: API Integration Tests.
+    *   Task 4.2.2: End-to-End Tests (Consider Selenium/Playwright).
+*   **Epic 4.3: Documentation Finalization**
+    *   Task 4.3.1: Update User Guides for new features.
+    *   Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs).
 
 ### Active Decisions
 
-Key architectural and implementation decisions from recent work:
+Key architectural and implementation decisions for the new initiative:
 
-1.  **Dedicated Frontend Build**: Adopted `esbuild` for compiling and bundling the TSX-based `enhanced-visualization-dashboard`. This moves away from in-browser transpilation for this component.
-2.  **Component Self-Rendering**: The `enhanced-visualization-dashboard.tsx` now includes logic to render itself into a DOM element, making the bundled output directly usable in an HTML page.
-3.  **Jest for Frontend Testing**: Standardized on Jest with `ts-jest` for testing React/TSX components.
-4.  **Consistent Datetime Objects**: Ensured `datetime.datetime` objects are used consistently for dates in `treatment_history` within the Python backend to prevent comparison errors.
-5.  **Bundling Core Frontend Libraries**: Currently, React, ReactDOM, Recharts, and Lucide-React are bundled into `bundle.js`. This simplifies deployment but results in a larger bundle file. (Future decision: externalize these to CDNs if needed).
-6.  **Multiple Primary Conditions Logic**: The new logic for generating multiple primary conditions has been implemented as per the user's detailed specification. This enhances medical realism.
+1.  **Architectural Shift:** Adopt a new architecture focused on comprehensive configurability, managed through a `ConfigurationManager` and database-backed persistence.
+2.  **Database Migration:** Migrate from SQLite to PostgreSQL for the backend database, using a clean install (no data migration from SQLite).
+3.  **Schema Management:** Utilize Alembic for managing PostgreSQL database schema migrations.
+4.  **API-Driven Approach:** Implement a RESTful API for programmatic configuration and patient generation.
+5.  **Phased Implementation:** Follow the detailed 5-phase plan (Phase 0 to Phase 4) outlined above.
+6.  **Git Workflow:** Adopt a structured Git branching model (`main`, `develop`, feature branches, etc.).
+7.  **SDK Development:** Provide a Python SDK for easier API integration.
+
+Decisions from previous work (still relevant until refactored):
+*   Dedicated Frontend Build: `esbuild` for `enhanced-visualization-dashboard.tsx`.
+*   Component Self-Rendering: `enhanced-visualization-dashboard.tsx` handles its own DOM rendering.
+*   Jest for Frontend Testing: Standard for React/TSX components.
+*   Consistent Datetime Objects: Use `datetime.datetime` for `treatment_history`.
+*   Bundling Core Frontend Libraries: Currently, React, ReactDOM, Recharts, and Lucide-React are bundled into `bundle.js`. (Future decision: externalize these to CDNs if needed).
+*   Multiple Primary Conditions Logic: Implemented as per previous specifications.
 
 ### Current Challenges
 
-Reflecting the technical review, key challenges include:
+Many previous challenges are being directly addressed by the new architectural plan. The primary challenges now revolve around the successful execution of this plan:
 
-1.  **Memory Management**:
-    *   In-memory storage of large patient datasets (e.g., `jobs[job_id]["patients_data"]` in `app.py`, FHIR bundle generation) is a primary concern for scalability.
-2.  **Error Handling**:
-    *   Inconsistent error handling across the backend and frontend. Lack of standardized exceptions and recovery mechanisms.
-3.  **Frontend Architecture**:
-    *   Managing the mix of traditional JS and React/TSX, including duplicate visualization logic.
-    *   The large bundle size of `static/dist/bundle.js` (~2.1MB) requires optimization.
-    *   Inconsistent state management in the React dashboard.
-4.  **Configuration Management**:
-    *   Potential for redundant or scattered configuration settings.
-5.  **Testing Coverage**:
-    *   Uneven test coverage, especially for API integrations and some frontend aspects.
-6.  **Database Implementation**:
-    *   Limited connection pooling and potential SQL injection risks. Lack of schema migration management.
-7.  **Docker Optimization**:
-    *   Large container images and opportunities for optimizing Docker Compose files.
-8.  **Security**:
-    *   Identified vulnerabilities like fixed salt in encryption.
-9.  **Development Workflow**: Managing the hybrid Python/Node.js environment.
-10. **Data Consistency**: Ensuring data structures align between backend and frontend.
+1.  **Complexity of New Architecture:** Managing the development and integration of the new configuration layer, database, API, and updated frontend components.
+2.  **Scope Management:** Ensuring the phased implementation stays on track and avoids scope creep within each phase.
+3.  **Data Sourcing (NATO Nations):** Collating and structuring comprehensive demographic data for all 32 NATO nations.
+4.  **Performance with Dynamic Configurations:** Ensuring the generation engine remains performant with highly flexible and potentially complex configurations. This is an ongoing concern that the memory management tasks in Phase 1 aim to mitigate.
+5.  **UI/UX for Advanced Configuration:** Designing an intuitive yet powerful UI for the new configuration capabilities.
+6.  **Transition and Integration:** Smoothly integrating the new configuration system with the existing generation logic and frontend.
+7.  **Technical Debt Integration:** Effectively tackling identified technical debt (e.g., encryption salt, frontend bundle size) alongside new feature development.
+
+Challenges from previous technical review that are being actively addressed by the new plan:
+*   Memory Management (addressed in Phase 1).
+*   Error Handling Standardization (to be incorporated throughout new development).
+*   Configuration Management (core of the new architecture).
+*   Database Implementation (migrating to PostgreSQL, using Alembic).
+*   Docker Optimization (Phase 4).
+*   Security - Encryption Salt (Phase 4).
 
 ### Working Environment
 
 The project is developed using:
 
 1.  **Python 3.8+**: For the backend, using FastAPI.
-2.  **Node.js & npm**: For frontend dependency management, testing (Jest), and building (esbuild).
-3.  **TypeScript/TSX**: For the `enhanced-visualization-dashboard` React component.
-4.  **React**: Frontend library for the enhanced dashboard.
-5.  **Recharts, Lucide-React**: Charting and icon libraries for the React dashboard.
-6.  **FastAPI**: Asynchronous web framework for the backend API.
-7.  **Bootstrap 5 & FontAwesome**: For general UI styling (loaded via CDN for HTML pages).
-8.  **Standard Development Tools**:
+2.  **PostgreSQL**: New backend database.
+3.  **Alembic**: For database migrations.
+4.  **Node.js & npm**: For frontend dependency management, testing (Jest), and building (esbuild).
+5.  **TypeScript/TSX**: For the `enhanced-visualization-dashboard` React component and new configuration UI components.
+6.  **React**: Frontend library for the enhanced dashboard and new UI.
+7.  **Recharts, Lucide-React**: Charting and icon libraries for the React dashboard.
+8.  **Bootstrap 5 & FontAwesome**: For general UI styling (loaded via CDN for HTML pages).
+9.  **Standard Development Tools**:
     *   Python: Virtual environments, pip.
     *   Frontend: `package.json` for scripts and dependencies.
     *   Testing: `unittest` (Python), Jest (`ts-jest`) (Frontend).
     *   Version Control: Git.
-    *   Containerization: Docker (as implied by user and project files like `Dockerfile`).
+    *   Containerization: Docker.
 
 ### Collaboration Context
 
 The project appears to be set up for collaboration with:
 
-1. **Modular Architecture**: Clear separation of concerns allowing developers to work on different components.
-
-2. **Comprehensive Documentation**: README, installation guides, and getting started documentation.
-
-3. **Unit Testing**: Test coverage for core functionality to ensure collaborative changes don't break existing features.
-
-4. **Standardized Interfaces**: Well-defined interfaces between components to facilitate parallel development.
+1. **Modular Architecture**: Clear separation of concerns allowing developers to work on different components. This will be further enhanced by the new architecture.
+2. **Comprehensive Documentation**: README, installation guides, and getting started documentation. Memory Bank is central.
+3. **Unit Testing**: Test coverage for core functionality to ensure collaborative changes don't break existing features. Will be expanded.
+4. **Standardized Interfaces**: Well-defined interfaces between components to facilitate parallel development, especially with the new API.
