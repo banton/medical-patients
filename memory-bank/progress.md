@@ -9,8 +9,8 @@ The Military Medical Exercise Patient Generator appears to be a well-structured 
 1. **Core Patient Generation**:
    - Patient flow simulation through medical facilities (POI, R1-R4)
    - Realistic demographics generation based on nationality
-   - Medical condition generation using SNOMED CT codes
-   - HL7 FHIR R4 bundle creation
+   - Medical condition generation using SNOMED CT codes, now with support for multiple primary conditions of the same injury type, enhancing medical realism.
+   - HL7 FHIR R4 bundle creation, updated to correctly represent multiple primary conditions.
 
 2. **Web Interface**:
    - Configuration form for generation parameters (`static/index.html`).
@@ -82,6 +82,7 @@ The application is near production-ready, with comprehensive features and a soli
 -   404 errors for visualization API endpoints (e.g., `/api/visualizations/job-list`) have been resolved (primarily by ensuring backend server runs latest code).
 -   500 Internal Server Error for `/api/visualizations/dashboard-data` (caused by `TypeError` in data transformation) has been fixed.
 -   React Testing Library `act()` warnings in frontend tests have been resolved.
+-   Implemented generation of multiple primary medical conditions, improving data realism.
 
 **Current Considerations:**
 1.  **Frontend Bundle Size**: `static/dist/bundle.js` is ~2.1MB, which could be optimized.

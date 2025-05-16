@@ -18,6 +18,7 @@ from collections import Counter
 # Import our patient generator modules
 from patient_generator.app import PatientGeneratorApp
 from patient_generator.visualization_data import transform_job_data_for_visualization
+from patient_generator.database import Database
 
 app = FastAPI(title="Military Medical Exercise Patient Generator")
 
@@ -40,6 +41,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Store job states
 jobs = {}
+
+# Initialize database
+db = Database.get_instance()
 
 # Ensure output directory exists
 os.makedirs("output", exist_ok=True)
@@ -75,8 +79,9 @@ async def generate_patients(config: GeneratorConfig, background_tasks: Backgroun
     """Start a patient generation job"""
     job_id = f"job_{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
-    # Create job record
-    jobs[job_id] = {
+    # Create job record in memory and database
+    job_data = {
+        "job_id": job_id,
         "status": "queued",
         "config": config.dict(),
         "created_at": datetime.now().isoformat(),
@@ -91,6 +96,12 @@ async def generate_patients(config: GeneratorConfig, background_tasks: Backgroun
         "summary": {},
     }
     
+    # Store in memory (keep for backward compatibility)
+    jobs[job_id] = job_data
+    
+    # Store in database
+    db.save_job(job_data)
+    
     # Start generation task in background
     background_tasks.add_task(
         run_generator_job, 
@@ -103,10 +114,19 @@ async def generate_patients(config: GeneratorConfig, background_tasks: Backgroun
 @app.get("/api/jobs/{job_id}")
 async def get_job_status(job_id: str):
     """Get the status of a generation job"""
-    if job_id not in jobs:
-        raise HTTPException(status_code=404, detail="Job not found")
+    # Try to get job from memory first
+    if job_id in jobs:
+        return jobs[job_id]
     
-    return jobs[job_id]
+    # If not in memory, try to get from database
+    job_data = db.get_job(job_id)
+    if job_data:
+        # Cache in memory for faster access
+        jobs[job_id] = job_data
+        return job_data
+    
+    # Not found in either place
+    raise HTTPException(status_code=404, detail="Job not found")
 
 @app.get("/api/download/{job_id}")
 async def download_job_output(job_id: str):
@@ -183,29 +203,21 @@ async def get_dashboard_data(job_id: str = None):
 @visualization_router.get("/job-list")
 async def get_visualization_job_list():
     """Get a list of jobs that can be used for visualization"""
+    # Get completed jobs from database (faster than filtering in-memory jobs)
+    db_jobs = db.get_all_jobs(status="completed")
+    
     job_list = []
-    # Sort jobs by creation time (which is part of job_id or use created_at), most recent first
-    sorted_job_ids = sorted(jobs.keys(), key=lambda jid: jobs[jid].get("created_at", ""), reverse=True)
-
-    for job_id_key in sorted_job_ids:
-        job = jobs[job_id_key]
-        if job["status"] == "completed" and job.get("completed_at"):
-            # Create a user-friendly description for the dropdown
-            # Using completed_at for the description as per the frontend example's display preference
-            # Ensure the job has summary and config, and created_at
-            total_patients = job.get("summary", {}).get("total_patients")
-            if total_patients is None: # Fallback to config if summary not detailed
-                total_patients = job.get("config", {}).get("total_patients", 0)
-            
-            created_at_iso = job.get("created_at", "")
-
-            job_list.append({
-                "job_id": job_id_key,
-                "total_patients": total_patients,
-                "created_at": created_at_iso 
-                # Frontend's JobSummary interface expects job_id, total_patients, created_at
-                # The dropdown in frontend formats created_at using new Date().toLocaleDateString()
-            })
+    for job_data in db_jobs:
+        total_patients = job_data.get("summary", {}).get("total_patients")
+        if total_patients is None:  # Fallback to config if summary not detailed
+            total_patients = job_data.get("config", {}).get("total_patients", 0)
+        
+        job_list.append({
+            "job_id": job_data["job_id"],
+            "total_patients": total_patients,
+            "created_at": job_data.get("created_at", "")
+        })
+        
     return job_list
 
 @visualization_router.get("/patient-detail/{patient_id}")
@@ -304,19 +316,30 @@ app.include_router(visualization_router)
 
 @app.on_event("startup")
 async def startup_event():
-    """Startup event to clean temporary files"""
+    """Startup event to clean temporary files and load jobs from database"""
+    # Existing code for temp directory cleanup
     if os.path.exists("temp"):
         try:
             shutil.rmtree("temp")
             os.makedirs("temp")
         except Exception as e:
             print(f"Warning: Could not clean temp directory: {e}")
+    
+    # Load jobs from database
+    try:
+        db_jobs = db.get_all_jobs(limit=100)  # Limit to recent 100 jobs
+        for job_data in db_jobs:
+            jobs[job_data["job_id"]] = job_data
+        print(f"Loaded {len(db_jobs)} jobs from database")
+    except Exception as e:
+        print(f"Warning: Could not load jobs from database: {e}")
 
 async def run_generator_job(job_id: str, config: GeneratorConfig):
     """Run the generator job in the background"""
     try:
         # Update job status
         jobs[job_id]["status"] = "running"
+        db.save_job(jobs[job_id])  # Save to database
         
         # Convert web config to generator config
         generator_config = {
@@ -383,6 +406,10 @@ async def run_generator_job(job_id: str, config: GeneratorConfig):
             # If summary data is provided, update the job summary
             if isinstance(data, dict) and "nationalities" in data:
                 jobs[job_id]["summary"] = data
+            
+            # Save to database (not too frequently to avoid performance issues)
+            if percent % 10 == 0 or percent == 100:
+                db.save_job(jobs[job_id])
         
         # Run the generator with progress reporting
         patients, bundles = generator.run(progress_callback=progress_callback)
@@ -427,11 +454,13 @@ async def run_generator_job(job_id: str, config: GeneratorConfig):
         # Update job status
         jobs[job_id]["status"] = "completed"
         jobs[job_id]["completed_at"] = datetime.now().isoformat()
+        db.save_job(jobs[job_id])  # Save to database
         
     except Exception as e:
         # Update job status on error
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
+        db.save_job(jobs[job_id])  # Save to database
         print(f"Error in job {job_id}: {e}")
 
 def format_size(size_bytes):
@@ -441,6 +470,15 @@ def format_size(size_bytes):
             return f"{size_bytes:.2f} {unit}"
         size_bytes /= 1024.0
     return f"{size_bytes:.2f} TB"
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Shutdown event to close database connection"""
+    try:
+        db.close()
+        print("Database connection closed")
+    except Exception as e:
+        print(f"Warning: Error closing database connection: {e}")
 
 if __name__ == "__main__":
     # Run the server

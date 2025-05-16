@@ -226,27 +226,59 @@ class PatientGeneratorApp:
                 patient.set_demographics(demographics)
             
             elif phase == "medical":
-                # Generate primary condition
-                primary_condition = self.condition_generator.generate_condition(
-                    patient.injury_type, 
-                    patient.triage_category
-                )
-                patient.primary_condition = primary_condition
+                # Determine if the patient should have multiple conditions
+                # More severe triage categories and battle trauma are more likely to have multiple conditions
+                multiple_conditions_chance = 0.0
                 
-                # Generate additional conditions
+                if patient.triage_category == "T1":
+                    multiple_conditions_chance = 0.7  # 70% chance for T1
+                elif patient.triage_category == "T2":
+                    multiple_conditions_chance = 0.4  # 40% chance for T2
+                elif patient.triage_category == "T3":
+                    multiple_conditions_chance = 0.2  # 20% chance for T3
+                
+                # Increase chance for battle trauma
+                if patient.injury_type == "BATTLE_TRAUMA":
+                    multiple_conditions_chance += 0.2
+                
+                # Generate conditions
+                if random.random() < multiple_conditions_chance:
+                    # Generate 2-3 conditions of the same injury type
+                    condition_count = random.randint(2, 3)
+                    primary_conditions = self.condition_generator.generate_multiple_conditions(
+                        patient.injury_type, 
+                        patient.triage_category,
+                        condition_count
+                    )
+                    patient.primary_conditions = primary_conditions
+                    # Set the first one as the primary for backward compatibility
+                    patient.primary_condition = primary_conditions[0] if primary_conditions else None
+                else:
+                    # Generate a single primary condition (existing behavior)
+                    primary_condition = self.condition_generator.generate_condition(
+                        patient.injury_type, 
+                        patient.triage_category
+                    )
+                    patient.primary_condition = primary_condition
+                    patient.primary_conditions = [primary_condition] if primary_condition else []
+                
+                # Generate additional conditions (potentially from other categories)
                 additional_count = 0
                 if patient.triage_category == "T1":
                     additional_count = random.randint(1, 2)
                 elif patient.triage_category == "T2":
                     additional_count = random.randint(0, 1)
                     
-                patient.additional_conditions = self.condition_generator.generate_additional_conditions(
-                    primary_condition, 
-                    additional_count
-                )
+                if patient.primary_condition:  # Ensure we have at least one primary condition
+                    patient.additional_conditions = self.condition_generator.generate_additional_conditions(
+                        patient.primary_condition, 
+                        additional_count
+                    )
+                else:
+                    patient.additional_conditions = []
                 
                 # Generate medications
-                conditions = [primary_condition] + patient.additional_conditions
+                conditions = patient.primary_conditions + patient.additional_conditions
                 medication_count = random.randint(1, 3) if patient.triage_category == "T1" else random.randint(0, 2)
                 patient.medications = self.condition_generator.generate_medications(conditions, medication_count)
                 

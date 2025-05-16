@@ -13,6 +13,7 @@ class Patient:
         self.nationality = None
         self.front = None  # Polish, Estonian, Finnish
         self.primary_condition = None
+        self.primary_conditions = []  # List for multiple primary conditions
         self.additional_conditions = []
         self.gender = None
         

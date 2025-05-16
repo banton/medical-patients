@@ -133,8 +133,13 @@ class FHIRBundleGenerator:
         """Create FHIR resources for the patient's medical history"""
         resources = []
         
-        # Create condition resources based on primary condition
-        if hasattr(patient, 'primary_condition') and patient.primary_condition:
+        # Create condition resources based on primary conditions
+        if hasattr(patient, 'primary_conditions') and patient.primary_conditions:
+            for condition in patient.primary_conditions:
+                condition_resource = self._create_condition_resource(condition, patient_id)
+                resources.append(condition_resource)
+        # Backward compatibility for single primary_condition
+        elif hasattr(patient, 'primary_condition') and patient.primary_condition:
             condition_resource = self._create_condition_resource(patient.primary_condition, patient_id)
             resources.append(condition_resource)
         

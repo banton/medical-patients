@@ -82,6 +82,46 @@ class MedicalConditionGenerator:
         }
         
         return complete_condition
+
+    def generate_multiple_conditions(self, injury_type, triage_category, count=2):
+        """Generate multiple medical conditions of the same injury type"""
+        conditions = []
+        
+        # Select appropriate condition pool
+        if injury_type == "BATTLE_TRAUMA":
+            conditions_pool = self.battle_trauma_conditions.copy()
+        elif injury_type == "NON_BATTLE":
+            conditions_pool = self.non_battle_injuries.copy()
+        else:  # DISEASE
+            conditions_pool = self.disease_conditions.copy()
+        
+        # Prevent duplicates by sampling without replacement
+        if count > len(conditions_pool):
+            count = len(conditions_pool)
+        
+        # Randomly select 'count' conditions from the pool
+        selected_base_conditions = random.sample(conditions_pool, count)
+        
+        # Add severity based on triage category
+        for base_condition in selected_base_conditions:
+            if triage_category == "T1":
+                severity = self.severity_modifiers[3]  # Severe
+            elif triage_category == "T2":
+                severity = random.choice(self.severity_modifiers[1:3])  # Moderate or Moderate to severe
+            else:  # T3
+                severity = self.severity_modifiers[0]  # Mild to moderate
+            
+            # Combine into a complete condition
+            complete_condition = {
+                "code": base_condition["code"],
+                "display": base_condition["display"],
+                "severity": severity["display"],
+                "severity_code": severity["code"]
+            }
+            
+            conditions.append(complete_condition)
+        
+        return conditions
     
     def generate_additional_conditions(self, primary_condition, count=0):
         """Generate additional conditions that might accompany the primary one"""
