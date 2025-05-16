@@ -1,0 +1,604 @@
+{
+  "NATO_NATIONS": {
+    "ALB": {
+      "name": "Albania",
+      "first_names": {
+        "male": [
+          "Agron", "Arben", "Besnik", "Bledar", "Dritan", "Eduart", "Fatos", "Genti", "Ilir", "Kujtim",
+          "Luan", "Mentor", "Ndriçim", "Orgest", "Petrit", "Qemal", "Rexhep", "Skënder", "Taulant", "Zamir"
+        ],
+        "female": [
+          "Adelina", "Besa", "Donika", "Elira", "Fatime", "Gentiana", "Hasime", "Irena", "Jehona", "Klajda",
+          "Luljeta", "Marsela", "Nevila", "Ornela", "Pranvera", "Rudina", "Sonila", "Teuta", "Vjollca", "Zamira"
+        ]
+      },
+      "last_names": [
+        "Hoxha", "Shehu", "Dervishi", "Bektashi", "Prifti", "Gjoni", "Kraja", "Topalli", "Krasniqi", "Çela",
+        "Brahimi", "Daci", "Halili", "Gjika", "Lleshi", "Mati", "Noka", "Osmani", "Prendi", "Zeqiri"
+      ],
+      "id_format": "K\\d{4}\\d{4}[A-Z]",
+      "id_generator": "function() { return 'K' + Math.floor(10000000 + Math.random() * 90000000) + String.fromCharCode(65 + Math.floor(Math.random() * 26)); }",
+      "language": "sq"
+    },
+    "BEL": {
+      "name": "Belgium",
+      "first_names": {
+        "male": [
+          "Lucas", "Liam", "Louis", "Noah", "Arthur", "Adam", "Jules", "Victor", "Mathis", "Nathan",
+          "Jean", "Thomas", "Nicolas", "David", "Pierre", "Marc", "Philippe", "Maxime", "Alexandre", "Michel"
+        ],
+        "female": [
+          "Emma", "Olivia", "Louise", "Mila", "Alice", "Juliette", "Anna", "Lucie", "Camille", "Lina",
+          "Marie", "Sophie", "Élise", "Charlotte", "Léa", "Clara", "Julie", "Chloé", "Sarah", "Manon"
+        ]
+      },
+      "last_names": [
+        "Peeters", "Janssens", "Maes", "Jacobs", "Mertens", "Willems", "Claes", "Goossens", "Wouters", "De Smet",
+        "Dubois", "Lambert", "Martin", "Simon", "Dupont", "Durant", "Lefèvre", "Leroy", "Lemaire", "Leclercq"
+      ],
+      "id_format": "\\d{2}\\.\\d{2}\\.\\d{2}-\\d{3}\\.\\d{2}",
+      "id_generator": "function() { let yy = 50 + Math.floor(Math.random() * 49); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let seq = 100 + Math.floor(Math.random() * 900); let check = 1 + Math.floor(Math.random() * 99); return yy.toString().padStart(2, '0') + '.' + mm.toString().padStart(2, '0') + '.' + dd.toString().padStart(2, '0') + '-' + seq.toString() + '.' + check.toString().padStart(2, '0'); }",
+      "language": "nl,fr,de"
+    },
+    "BGR": {
+      "name": "Bulgaria",
+      "first_names": {
+        "male": [
+          "Georgi", "Ivan", "Dimitar", "Nikolay", "Petar", "Hristo", "Stefan", "Aleksandar", "Todor", "Stoyan",
+          "Vasil", "Yordan", "Plamen", "Angel", "Krasimir", "Rumen", "Lyubomir", "Valentin", "Emil", "Asen"
+        ],
+        "female": [
+          "Maria", "Ivana", "Elena", "Dimitrina", "Gergana", "Yordanka", "Silvia", "Desislava", "Daniela", "Radka",
+          "Tsvetanka", "Violeta", "Antoaneta", "Margarita", "Viktoria", "Diana", "Petra", "Nadezhda", "Ralitsa", "Tanya"
+        ]
+      },
+      "last_names": [
+        "Georgiev", "Ivanov", "Dimitrov", "Petrov", "Hristov", "Stoychev", "Stefanov", "Todorov", "Nikolov", "Stoyanov",
+        "Kolev", "Marinov", "Angelov", "Vasilev", "Yordanov", "Kostov", "Iliev", "Popov", "Kovachev", "Atanasov"
+      ],
+      "id_format": "\\d{10}",
+      "id_generator": "function() { let year = 1950 + Math.floor(Math.random() * 50); let month = 1 + Math.floor(Math.random() * 12); let day = 1 + Math.floor(Math.random() * 28); let regionalCode = 10 + Math.floor(Math.random() * 90); let randomDigits = 1000 + Math.floor(Math.random() * 9000); return year.toString().slice(-2) + month.toString().padStart(2, '0') + day.toString().padStart(2, '0') + regionalCode.toString() + randomDigits.toString(); }",
+      "language": "bg"
+    },
+    "CAN": {
+      "name": "Canada",
+      "first_names": {
+        "male": [
+          "Noah", "Liam", "William", "Logan", "Benjamin", "Jacob", "Lucas", "Thomas", "Ethan", "Oliver",
+          "James", "Alexander", "Nathan", "Samuel", "Nicolas", "Gabriel", "Olivier", "Felix", "Charles", "Antoine"
+        ],
+        "female": [
+          "Olivia", "Emma", "Charlotte", "Sophia", "Amelia", "Ava", "Emily", "Elizabeth", "Sofia", "Mia",
+          "Lea", "Alice", "Florence", "Chloe", "Zoe", "Rosalie", "Victoria", "Beatrice", "Camille", "Clara"
+        ]
+      },
+      "last_names": [
+        "Smith", "Brown", "Tremblay", "Martin", "Roy", "Wilson", "Johnson", "Gagnon", "Lee", "Williams",
+        "Taylor", "Côté", "Jones", "Bouchard", "White", "Gauthier", "Morin", "Miller", "Davis", "Fortin"
+      ],
+      "id_format": "\\d{3}-\\d{3}-\\d{3}",
+      "id_generator": "function() { return Math.floor(100 + Math.random() * 900).toString() + '-' + Math.floor(100 + Math.random() * 900).toString() + '-' + Math.floor(100 + Math.random() * 900).toString(); }",
+      "language": "en,fr"
+    },
+    "HRV": {
+      "name": "Croatia",
+      "first_names": {
+        "male": [
+          "Ivan", "Marko", "Josip", "Ante", "Petar", "Matej", "Luka", "Nikola", "Stjepan", "Tomislav",
+          "Mario", "Karlo", "Filip", "Antonio", "Domagoj", "Dario", "Vedran", "Ivica", "Matija", "Davor"
+        ],
+        "female": [
+          "Ana", "Ivana", "Marija", "Maja", "Petra", "Katarina", "Marina", "Josipa", "Jelena", "Martina",
+          "Valentina", "Iva", "Lucija", "Nina", "Mirjana", "Danijela", "Kristina", "Sandra", "Nikolina", "Barbara"
+        ]
+      },
+      "last_names": [
+        "Horvat", "Kovačić", "Babić", "Marić", "Jurić", "Novak", "Kovačević", "Knežević", "Pavlović", "Matić",
+        "Petrović", "Tomić", "Perić", "Kovač", "Blažević", "Božić", "Vuković", "Pavić", "Lovrić", "Radić"
+      ],
+      "id_format": "\\d{11}",
+      "id_generator": "function() { let day = 1 + Math.floor(Math.random() * 28); let month = 1 + Math.floor(Math.random() * 12); let year = 1950 + Math.floor(Math.random() * 50); let randomDigits = Math.floor(10000 + Math.random() * 90000); return day.toString().padStart(2, '0') + month.toString().padStart(2, '0') + year.toString() + randomDigits.toString(); }",
+      "language": "hr"
+    },
+    "CZE": {
+      "name": "Czech Republic",
+      "first_names": {
+        "male": [
+          "Jiří", "Jan", "Petr", "Josef", "Pavel", "Martin", "Tomáš", "Jaroslav", "Miroslav", "Zdeněk",
+          "František", "Václav", "Michal", "Milan", "Karel", "Lukáš", "David", "Jakub", "Ladislav", "Roman"
+        ],
+        "female": [
+          "Marie", "Jana", "Eva", "Hana", "Anna", "Lenka", "Kateřina", "Věra", "Lucie", "Alena",
+          "Petra", "Jaroslava", "Veronika", "Martina", "Tereza", "Jitka", "Michaela", "Barbora", "Zdeňka", "Monika"
+        ]
+      },
+      "last_names": [
+        "Novák", "Svoboda", "Novotný", "Dvořák", "Černý", "Procházka", "Kučera", "Veselý", "Horák", "Němec",
+        "Marek", "Pospíšil", "Hájek", "Jelínek", "Král", "Růžička", "Beneš", "Fiala", "Sedláček", "Doležal"
+      ],
+      "id_format": "\\d{6}\\/\\d{4}",
+      "id_generator": "function() { let yy = Math.floor(Math.random() * 99); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let xxxx = Math.floor(1000 + Math.random() * 9000); if (Math.random() > 0.5) mm += 50; return yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + '/' + xxxx.toString(); }",
+      "language": "cs"
+    },
+    "DNK": {
+      "name": "Denmark",
+      "first_names": {
+        "male": [
+          "William", "Noah", "Lucas", "Oliver", "Emil", "Alfred", "Oscar", "Victor", "Malthe", "August",
+          "Frederik", "Magnus", "Valdemar", "Anton", "Carl", "Villads", "Aksel", "Christian", "Theodor", "Alexander"
+        ],
+        "female": [
+          "Emma", "Alma", "Clara", "Sofia", "Ida", "Freja", "Ella", "Agnes", "Anna", "Karla",
+          "Laura", "Isabella", "Josefine", "Victoria", "Olivia", "Alberte", "Nora", "Frida", "Mathilde", "Caroline"
+        ]
+      },
+      "last_names": [
+        "Nielsen", "Jensen", "Hansen", "Pedersen", "Andersen", "Christensen", "Larsen", "Sørensen", "Rasmussen", "Jørgensen",
+        "Petersen", "Madsen", "Kristensen", "Olsen", "Thomsen", "Christiansen", "Poulsen", "Johansen", "Knudsen", "Mortensen"
+      ],
+      "id_format": "\\d{6}-\\d{4}",
+      "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yy = Math.floor(Math.random() * 99); let lastFour = 1000 + Math.floor(Math.random() * 9000); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + yy.toString().padStart(2, '0') + '-' + lastFour.toString(); }",
+      "language": "da"
+    },
+    "EST": {
+      "name": "Estonia",
+      "first_names": {
+        "male": [
+          "Markus", "Rasmus", "Oliver", "Martin", "Robin", "Karl", "Sander", "Robert", "Kristjan", "Marten",
+          "Andres", "Jaan", "Margus", "Tõnu", "Rein", "Tarmo", "Marko", "Aivar", "Toomas", "Tiit"
+        ],
+        "female": [
+          "Sofia", "Maria", "Laura", "Eliise", "Mia", "Emma", "Hanna", "Aleksandra", "Elizaveta", "Milana",
+          "Tiina", "Kadri", "Anne", "Kristiina", "Mari", "Piret", "Sirje", "Kristi", "Liis", "Katrin"
+        ]
+      },
+      "last_names": [
+        "Tamm", "Saar", "Sepp", "Mägi", "Kask", "Kukk", "Rebane", "Ilves", "Luik", "Koppel",
+        "Kaasik", "Saks", "Kuusk", "Raudsepp", "Oja", "Pärn", "Karu", "Vaher", "Teder", "Rand"
+      ],
+      "id_format": "\\d{11}",
+      "id_generator": "function() { let gender = Math.random() > 0.5 ? 3 + Math.floor(Math.random() * 2) : 4 + Math.floor(Math.random() * 2); let yy = 50 + Math.floor(Math.random() * 50); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let randomDigits = Math.floor(100 + Math.random() * 900); let checkDigit = Math.floor(Math.random() * 10); return gender.toString() + yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + randomDigits.toString() + checkDigit.toString(); }",
+      "language": "et"
+    },
+    "FRA": {
+      "name": "France",
+      "first_names": {
+        "male": [
+          "Gabriel", "Léo", "Raphaël", "Louis", "Lucas", "Adam", "Arthur", "Jules", "Hugo", "Maël",
+          "Jean", "Thomas", "Nicolas", "Pierre", "Philippe", "Michel", "Alain", "Jacques", "Bernard", "Robert"
+        ],
+        "female": [
+          "Emma", "Jade", "Louise", "Alice", "Chloé", "Léa", "Manon", "Rose", "Anna", "Inès",
+          "Marie", "Catherine", "Françoise", "Monique", "Isabelle", "Nathalie", "Sylvie", "Martine", "Nicole", "Jacqueline"
+        ]
+      },
+      "last_names": [
+        "Martin", "Bernard", "Thomas", "Petit", "Robert", "Richard", "Durand", "Dubois", "Moreau", "Laurent",
+        "Simon", "Michel", "Lefebvre", "Leroy", "Roux", "David", "Bertrand", "Morel", "Fournier", "Girard"
+      ],
+      "id_format": "\\d \\d{2} \\d{2} \\d{2} \\d{3} \\d{3} \\d{2}",
+      "id_generator": "function() { let gender = Math.floor(1 + Math.random() * 2); let yy = Math.floor(Math.random() * 100); let mm = Math.floor(1 + Math.random() * 12); let place = Math.floor(Math.random() * 100); let office = Math.floor(100 + Math.random() * 900); let regNum = Math.floor(100 + Math.random() * 900); let key = Math.floor(Math.random() * 100); return gender + ' ' + yy.toString().padStart(2, '0') + ' ' + mm.toString().padStart(2, '0') + ' ' + place.toString().padStart(2, '0') + ' ' + office + ' ' + regNum + ' ' + key.toString().padStart(2, '0'); }",
+      "language": "fr"
+    },
+    "DEU": {
+      "name": "Germany",
+      "first_names": {
+        "male": [
+          "Ben", "Leon", "Finn", "Noah", "Elias", "Paul", "Luis", "Jonas", "Felix", "Maximilian",
+          "Thomas", "Michael", "Andreas", "Stefan", "Peter", "Klaus", "Wolfgang", "Jürgen", "Hans", "Frank"
+        ],
+        "female": [
+          "Emilia", "Hannah", "Emma", "Sofia", "Mia", "Lina", "Mila", "Charlotte", "Ella", "Klara",
+          "Sabine", "Susanne", "Petra", "Karin", "Andrea", "Monika", "Claudia", "Birgit", "Stefanie", "Nicole"
+        ]
+      },
+      "last_names": [
+        "Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Schulz", "Hoffmann",
+        "Schäfer", "Koch", "Bauer", "Richter", "Klein", "Wolf", "Schröder", "Neumann", "Schwarz", "Zimmermann"
+      ],
+      "id_format": "[A-Z]\\d{8}",
+      "id_generator": "function() { return String.fromCharCode(65 + Math.floor(Math.random() * 26)) + Math.floor(10000000 + Math.random() * 90000000).toString(); }",
+      "language": "de"
+    },
+    "GRC": {
+      "name": "Greece",
+      "first_names": {
+        "male": [
+          "Giorgos", "Dimitris", "Konstantinos", "Yiannis", "Nikos", "Christos", "Panagiotis", "Vasilis", "Thanasis", "Michalis",
+          "Alexandros", "Andreas", "Evangelos", "Petros", "Spyridon", "Theodoros", "Ilias", "Stavros", "Antonis", "Sotiris"
+        ],
+        "female": [
+          "Maria", "Eleni", "Georgia", "Dimitra", "Katerina", "Vasiliki", "Sofia", "Konstantina", "Anna", "Ioanna",
+          "Chrysoula", "Paraskevi", "Despoina", "Angeliki", "Evangelia", "Christina", "Panagiota", "Alexandra", "Aikaterini", "Zoi"
+        ]
+      },
+      "last_names": [
+        "Papadopoulos", "Papadopoulou", "Georgiou", "Vlachos", "Konstantinidis", "Dimitriou", "Nikolaou", "Papandreou", "Alexiou", "Vassiliou",
+        "Antoniou", "Dimopoulos", "Papas", "Makris", "Oikonomou", "Theodorou", "Panagiotopoulos", "Michailidis", "Pappas", "Angelopoulos"
+      ],
+      "id_format": "[A-Z]\\d{8}",
+      "id_generator": "function() { return String.fromCharCode(65 + Math.floor(Math.random() * 26)) + Math.floor(10000000 + Math.random() * 90000000).toString(); }",
+      "language": "el"
+    },
+    "HUN": {
+      "name": "Hungary",
+      "first_names": {
+        "male": [
+          "Bence", "Máté", "Levente", "Ádám", "Dávid", "Balázs", "Péter", "Tamás", "László", "Gábor",
+          "István", "András", "Zoltán", "Attila", "Sándor", "József", "János", "Ferenc", "Zsolt", "Mihály"
+        ],
+        "female": [
+          "Hanna", "Anna", "Nóra", "Zoé", "Luca", "Lili", "Emma", "Boglárka", "Zsófia", "Jázmin",
+          "Mária", "Erzsébet", "Katalin", "Éva", "Ilona", "Andrea", "Zsuzsanna", "Judit", "Ágnes", "Margit"
+        ]
+      },
+      "last_names": [
+        "Nagy", "Kovács", "Tóth", "Szabó", "Horváth", "Varga", "Kiss", "Molnár", "Németh", "Farkas",
+        "Balogh", "Papp", "Takács", "Juhász", "Lakatos", "Mészáros", "Oláh", "Simon", "Rácz", "Fekete"
+      ],
+      "id_format": "\\d{6}[A-Z]{2}",
+      "id_generator": "function() { let yy = Math.floor(Math.random() * 100); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let letters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + String.fromCharCode(65 + Math.floor(Math.random() * 26)); return yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + letters; }",
+      "language": "hu"
+    },
+    "ISL": {
+      "name": "Iceland",
+      "first_names": {
+        "male": [
+          "Aron", "Alexander", "Guðmundur", "Kristján", "Jón", "Sigurður", "Gunnar", "Ólafur", "Kári", "Daníel",
+          "Stefán", "Bjarki", "Einar", "Arnar", "Kristinn", "Björn", "Davíð", "Tómas", "Magnús", "Sindri"
+        ],
+        "female": [
+          "Emma", "Sara", "Eva", "Guðrún", "Katrín", "Anna", "María", "Margrét", "Kristín", "Helga",
+          "Elísabet", "Sigrún", "Ingibjörg", "Lilja", "Ásta", "Birna", "Hildur", "Hekla", "Þóra", "Harpa"
+        ]
+      },
+      "last_names": [
+        "Jónsson", "Jónsdóttir", "Sigurðsson", "Sigurðardóttir", "Guðmundsson", "Guðmundsdóttir", "Kristjánsson", "Kristjánsdóttir", "Ólafsson", "Ólafsdóttir",
+        "Arnarson", "Arnarsdóttir", "Þórðarson", "Þórðardóttir", "Gunnarsson", "Gunnarsdóttir", "Magnússon", "Magnúsdóttir", "Einarsson", "Einarsdóttir"
+      ],
+      "id_format": "\\d{6}-\\d{4}",
+      "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yy = Math.floor(Math.random() * 100); let lastFour = 1000 + Math.floor(Math.random() * 9000); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + yy.toString().padStart(2, '0') + '-' + lastFour.toString(); }",
+      "language": "is"
+    },
+    "ITA": {
+      "name": "Italy",
+      "first_names": {
+        "male": [
+          "Francesco", "Alessandro", "Lorenzo", "Leonardo", "Andrea", "Matteo", "Gabriele", "Riccardo", "Mattia", "Tommaso",
+          "Giuseppe", "Antonio", "Mario", "Luigi", "Giovanni", "Roberto", "Salvatore", "Paolo", "Vincenzo", "Michele"
+        ],
+        "female": [
+          "Sofia", "Giulia", "Aurora", "Alice", "Ginevra", "Emma", "Giorgia", "Greta", "Beatrice", "Anna",
+          "Maria", "Giuseppina", "Rosa", "Angela", "Teresa", "Giovanna", "Carmela", "Anna Maria", "Lucia", "Caterina"
+        ]
+      },
+      "last_names": [
+        "Rossi", "Russo", "Ferrari", "Esposito", "Bianchi", "Romano", "Colombo", "Ricci", "Marino", "Greco",
+        "Bruno", "Gallo", "Conti", "De Luca", "Mancini", "Costa", "Giordano", "Rizzo", "Lombardi", "Moretti"
+      ],
+      "id_format": "[A-Z]{2}\\d{5}[A-Z]\\d[A-Z]\\d{2}[A-Z]\\d{3}[A-Z]",
+      "id_generator": "function() { let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; let l1 = letters.charAt(Math.floor(Math.random() * letters.length)); let l2 = letters.charAt(Math.floor(Math.random() * letters.length)); let d5 = Math.floor(10000 + Math.random() * 90000).toString(); let l3 = letters.charAt(Math.floor(Math.random() * letters.length)); let d1 = Math.floor(Math.random() * 10).toString(); let l4 = letters.charAt(Math.floor(Math.random() * letters.length)); let d2 = Math.floor(10 + Math.random() * 90).toString(); let l5 = letters.charAt(Math.floor(Math.random() * letters.length)); let d3 = Math.floor(100 + Math.random() * 900).toString(); let l6 = letters.charAt(Math.floor(Math.random() * letters.length)); return l1 + l2 + d5 + l3 + d1 + l4 + d2 + l5 + d3 + l6; }",
+      "language": "it"
+    },
+    "LVA": {
+      "name": "Latvia",
+      "first_names": {
+        "male": [
+          "Roberts", "Markuss", "Emīls", "Gustavs", "Jānis", "Artjoms", "Daniels", "Olivers", "Ralfs", "Aleksandrs",
+          "Andris", "Kaspars", "Juris", "Mārtiņš", "Edgars", "Kristaps", "Oskars", "Raimonds", "Guntis", "Pēteris"
+        ],
+        "female": [
+          "Sofija", "Emīlija", "Alise", "Marta", "Estere", "Anna", "Elizabete", "Amēlija", "Viktorija", "Elza",
+          "Inese", "Līga", "Ilze", "Laima", "Iveta", "Sandra", "Kristīne", "Dace", "Anita", "Baiba"
+        ]
+      },
+      "last_names": [
+        "Bērziņš", "Kalniņš", "Ozoliņš", "Jansons", "Pētersons", "Krūmiņš", "Liepiņš", "Balodis", "Ozols", "Bērziņa",
+        "Kalniņa", "Ozoliņa", "Jansone", "Pētersone", "Krūmiņa", "Liepiņa", "Baloža", "Zariņš", "Vītols", "Kļaviņš"
+      ],
+      "id_format": "\\d{6}-\\d{5}",
+      "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yy = Math.floor(Math.random() * 100); let lastFive = 10000 + Math.floor(Math.random() * 90000); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + yy.toString().padStart(2, '0') + '-' + lastFive.toString(); }",
+      "language": "lv"
+    },
+    "LTU": {
+      "name": "Lithuania",
+      "first_names": {
+        "male": [
+          "Matas", "Lukas", "Dominykas", "Jokūbas", "Kajus", "Nojus", "Dovydas", "Benas", "Herkus", "Joris",
+          "Jonas", "Tomas", "Lukas", "Mantas", "Darius", "Andrius", "Vytautas", "Mindaugas", "Gediminas", "Paulius"
+        ],
+        "female": [
+          "Liepa", "Emilija", "Amelija", "Lėja", "Sofija", "Gabija", "Austėja", "Luknė", "Kamilė", "Patricija",
+          "Greta", "Ieva", "Egle", "Ruta", "Laura", "Agne", "Lina", "Rasa", "Vaida", "Jurgita"
+       ]
+     },
+     "last_names": [
+       "Kazlauskas", "Petrauskas", "Jankauskas", "Žukauskas", "Butkus", "Vasiliauskas", "Paulauskas", "Urbonas", "Kavaliauskas", "Stankevičius",
+       "Navickas", "Mickevičius", "Balčiūnas", "Ivanovas", "Lukoševičius", "Grigas", "Bakšys", "Žilinskas", "Vaitkus", "Valaitis"
+     ],
+     "id_format": "\\d{11}",
+     "id_generator": "function() { let gender = Math.random() > 0.5 ? 3 + Math.floor(Math.random() * 2) : 4 + Math.floor(Math.random() * 2); let yy = 50 + Math.floor(Math.random() * 50); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let randomDigits = Math.floor(10000 + Math.random() * 90000); let checkDigit = Math.floor(Math.random() * 10); return gender.toString() + yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + randomDigits.toString() + checkDigit.toString(); }",
+     "language": "lt"
+   },
+   "LUX": {
+     "name": "Luxembourg",
+     "first_names": {
+       "male": [
+         "Luca", "Gabriel", "Leo", "Louis", "Noah", "Theo", "Felix", "Ben", "Adam", "David",
+         "Michel", "Jean", "Nicolas", "Pierre", "Pit", "Tom", "Marc", "Claude", "Fernand", "Jos"
+       ],
+       "female": [
+         "Emma", "Sophia", "Lina", "Mia", "Emilia", "Lea", "Sofia", "Anna", "Lena", "Amelia",
+         "Marie", "Martine", "Claire", "Anne", "Catherine", "Nicole", "Isabelle", "Sophie", "Monique", "Françoise"
+       ]
+     },
+     "last_names": [
+       "Schmit", "Muller", "Weber", "Hoffmann", "Wagner", "Schneider", "Meyer", "Becker", "Klein", "Kieffer",
+       "Schröder", "Simon", "Welter", "Wahl", "Wolff", "Braun", "Kremer", "Marx", "Schmitz", "Theis"
+     ],
+     "id_format": "\\d{13}",
+     "id_generator": "function() { let yy = 1920 + Math.floor(Math.random() * 80); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let random = Math.floor(10000 + Math.random() * 90000); return yy.toString() + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + random.toString(); }",
+     "language": "lb,fr,de"
+   },
+   "MNE": {
+     "name": "Montenegro",
+     "first_names": {
+       "male": [
+         "Nikola", "Luka", "Marko", "Stefan", "Vuk", "Vasilije", "Aleksandar", "Petar", "Andrija", "Filip",
+         "Miloš", "Jovan", "Đorđe", "Nemanja", "Dušan", "Matija", "Mihajlo", "Pavle", "Bogdan", "Todor"
+       ],
+       "female": [
+         "Sofija", "Sara", "Anđela", "Mila", "Jana", "Milica", "Anastasija", "Mia", "Dunja", "Nina",
+         "Marija", "Jovana", "Jelena", "Ana", "Aleksandra", "Ivana", "Teodora", "Kristina", "Tamara", "Dragana"
+       ]
+     },
+     "last_names": [
+       "Popović", "Vukčević", "Đurović", "Marković", "Petrović", "Jovanović", "Vuković", "Perović", "Šćepanović", "Radović",
+       "Vujović", "Đurišić", "Knežević", "Kovačević", "Nikolić", "Ivanović", "Božović", "Bulatović", "Pavićević", "Tomašević"
+     ],
+     "id_format": "\\d{13}",
+     "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let rrr = Math.floor(100 + Math.random() * 900); let bbb = Math.floor(10 + Math.random() * 90); let k = Math.floor(Math.random() * 10); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + rrr.toString() + bbb.toString() + k.toString(); }",
+     "language": "sr,sq"
+   },
+   "NLD": {
+     "name": "Netherlands",
+     "first_names": {
+       "male": [
+         "Noah", "Liam", "Lucas", "Sem", "Finn", "Daan", "Levi", "James", "Milan", "Luuk",
+         "Jan", "Peter", "Johannes", "Hendrik", "Willem", "Cornelis", "Gerrit", "Johan", "Antonius", "Petrus"
+       ],
+       "female": [
+         "Julia", "Emma", "Sophie", "Mila", "Tess", "Sara", "Nora", "Liv", "Eva", "Evi",
+         "Maria", "Johanna", "Anna", "Elisabeth", "Cornelia", "Catharina", "Wilhelmina", "Petronella", "Adriana", "Hendrika"
+       ]
+     },
+     "last_names": [
+       "De Jong", "Jansen", "De Vries", "Van den Berg", "Van Dijk", "Bakker", "Janssen", "Visser", "Smit", "Meijer",
+       "De Boer", "Mulder", "De Groot", "Bos", "Vos", "Peters", "Hendriks", "Van Leeuwen", "Dekker", "Brouwer"
+     ],
+     "id_format": "\\d{9}",
+     "id_generator": "function() { return Math.floor(100000000 + Math.random() * 900000000).toString(); }",
+     "language": "nl"
+   },
+   "MKD": {
+     "name": "North Macedonia",
+     "first_names": {
+       "male": [
+         "Stefan", "Luka", "Marko", "Nikola", "Aleksandar", "Petar", "Filip", "Andrej", "Mihail", "Viktor",
+         "Dimitar", "Jovan", "Bojan", "Darko", "Goran", "Dragan", "Milan", "Ivan", "Zoran", "Gjorgji"
+       ],
+       "female": [
+         "Ana", "Elena", "Sara", "Marija", "Sofija", "Angela", "Mia", "Teodora", "Kristina", "Jana",
+         "Ivana", "Aleksandra", "Katerina", "Jovana", "Bojana", "Viktorija", "Martina", "Magdalena", "Dragana", "Maja"
+       ]
+     },
+     "last_names": [
+       "Popovski", "Stojanovski", "Petrovski", "Dimitrovski", "Nikolovski", "Angelovski", "Georgievski", "Trajkovski", "Ilievski", "Jankulovski",
+       "Ristovski", "Todorovski", "Stojanov", "Petrov", "Dimitrov", "Nikolov", "Angelov", "Georgiev", "Trajkov", "Iliev"
+     ],
+     "id_format": "\\d{13}",
+     "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yyy = Math.floor(1950 + Math.random() * 70); let rrr = Math.floor(Math.random() * 1000); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + (yyy % 1000).toString() + rrr.toString().padStart(3, '0'); }",
+     "language": "mk"
+   },
+   "NOR": {
+     "name": "Norway",
+     "first_names": {
+       "male": [
+         "Oliver", "Noah", "William", "Lucas", "Filip", "Liam", "Jakob", "Emil", "Theo", "Isak",
+         "Jan", "Per", "Bjørn", "Hans", "Nils", "Ole", "Lars", "Anders", "Johan", "Knut"
+       ],
+       "female": [
+         "Emma", "Nora", "Olivia", "Sofie", "Ella", "Maja", "Sophia", "Emilie", "Leah", "Sofia",
+         "Anne", "Ingrid", "Marit", "Kari", "Inger", "Liv", "Eva", "Berit", "Solveig", "Hilde"
+       ]
+     },
+     "last_names": [
+       "Hansen", "Johansen", "Olsen", "Larsen", "Andersen", "Pedersen", "Nilsen", "Jensen", "Kristiansen", "Karlsen",
+       "Johnsen", "Pettersen", "Eriksen", "Berg", "Haugen", "Hagen", "Johannessen", "Andreassen", "Jacobsen", "Halvorsen"
+     ],
+     "id_format": "\\d{11}",
+     "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yy = Math.floor(Math.random() * 100); let inn = Math.floor(100 + Math.random() * 900); let checksum = 10 + Math.floor(Math.random() * 90); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + yy.toString().padStart(2, '0') + inn.toString() + checksum.toString(); }",
+     "language": "no"
+   },
+   "POL": {
+     "name": "Poland",
+     "first_names": {
+       "male": [
+         "Jakub", "Jan", "Adam", "Piotr", "Michał", "Paweł", "Tomasz", "Krzysztof", "Andrzej", "Marcin", 
+         "Marek", "Łukasz", "Grzegorz", "Józef", "Zbigniew", "Jerzy", "Mateusz", "Tadeusz", "Dariusz", "Daniel"
+       ],
+       "female": [
+         "Anna", "Maria", "Katarzyna", "Małgorzata", "Agnieszka", "Barbara", "Krystyna", "Ewa", "Elżbieta", 
+         "Zofia", "Janina", "Teresa", "Joanna", "Magdalena", "Monika", "Jadwiga", "Danuta", "Aleksandra", "Halina", "Irena"
+       ]
+     },
+     "last_names": [
+       "Nowak", "Kowalski", "Wiśniewski", "Wójcik", "Kowalczyk", "Kamiński", "Lewandowski", "Zieliński", "Szymański", "Woźniak",
+       "Dąbrowski", "Kozłowski", "Jankowski", "Mazur", "Kwiatkowski", "Krawczyk", "Piotrowski", "Grabowski", "Nowakowski", "Pawłowski"
+     ],
+     "id_format": "\\d{11}",
+     "id_generator": "function() { return Math.floor(10000000000 + Math.random() * 90000000000).toString(); }",
+     "language": "pl"
+   },
+   "PRT": {
+     "name": "Portugal",
+     "first_names": {
+       "male": [
+         "Santiago", "João", "Francisco", "Rodrigo", "Tomás", "Miguel", "Duarte", "Afonso", "Gabriel", "Martim",
+         "António", "José", "Manuel", "Pedro", "Joaquim", "Carlos", "Fernando", "Paulo", "Jorge", "Luís"
+       ],
+       "female": [
+         "Maria", "Leonor", "Matilde", "Carolina", "Beatriz", "Ana", "Sofia", "Clara", "Francisca", "Mariana",
+         "Ana Maria", "Ana Sofia", "Margarida", "Madalena", "Catarina", "Joana", "Inês", "Teresa", "Alexandra", "Cristina"
+       ]
+     },
+     "last_names": [
+       "Silva", "Santos", "Ferreira", "Pereira", "Oliveira", "Costa", "Rodrigues", "Martins", "Jesus", "Sousa",
+       "Fernandes", "Gonçalves", "Gomes", "Lopes", "Marques", "Alves", "Almeida", "Ribeiro", "Pinto", "Carvalho"
+     ],
+     "id_format": "\\d{8}-\\d",
+     "id_generator": "function() { let numbers = Math.floor(10000000 + Math.random() * 90000000); let checksum = Math.floor(Math.random() * 10); return numbers.toString() + '-' + checksum.toString(); }",
+     "language": "pt"
+   },
+   "ROU": {
+     "name": "Romania",
+     "first_names": {
+       "male": [
+         "Andrei", "David", "Alexandru", "Gabriel", "Ștefan", "Luca", "Darius", "Mihai", "Matei", "Tudor",
+         "Ion", "Gheorghe", "Vasile", "Constantin", "Florin", "Adrian", "Ioan", "Marius", "Bogdan", "Cătălin"
+       ],
+       "female": [
+         "Sofia", "Maria", "Ioana", "Elena", "Andreea", "Antonia", "Daria", "Ana", "Alexandra", "Ștefania",
+         "Ana Maria", "Cristina", "Mihaela", "Gabriela", "Daniela", "Alina", "Florentina", "Adriana", "Georgiana", "Diana"
+       ]
+     },
+     "last_names": [
+       "Popa", "Popescu", "Pop", "Radu", "Dumitru", "Stan", "Stoica", "Gheorghe", "Matei", "Ciobanu",
+       "Ionescu", "Rusu", "Mihai", "Constantin", "Marin", "Crețu", "Dinu", "Tudor", "Dobre", "Diaconu"
+     ],
+     "id_format": "\\d{13}",
+     "id_generator": "function() { let s = Math.floor(1 + Math.random() * 2); let yy = Math.floor(Math.random() * 100); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let cc = Math.floor(1 + Math.random() * 52); let nnn = Math.floor(1 + Math.random() * 999); let c = Math.floor(Math.random() * 10); return s.toString() + yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + cc.toString().padStart(2, '0') + nnn.toString().padStart(3, '0') + c.toString(); }",
+     "language": "ro"
+   },
+   "SVK": {
+     "name": "Slovakia",
+     "first_names": {
+       "male": [
+         "Jakub", "Samuel", "Adam", "Michal", "Martin", "Tomáš", "Lukáš", "Filip", "Matej", "Oliver",
+         "Ján", "Peter", "Jozef", "Štefan", "Milan", "Juraj", "Daniel", "Vladimír", "Dušan", "Marek"
+       ],
+       "female": [
+         "Sofia", "Nina", "Ema", "Ella", "Viktória", "Natália", "Nela", "Laura", "Sára", "Tamara",
+         "Anna", "Mária", "Katarína", "Helena", "Eva", "Zuzana", "Jana", "Martina", "Monika", "Veronika"
+       ]
+     },
+     "last_names": [
+       "Horváth", "Kováč", "Tóth", "Nagy", "Baláž", "Molnár", "Varga", "Lukáč", "Balogh", "Polák",
+       "Novák", "Kováčik", "Králik", "Szabó", "Takáč", "Kollár", "Farkaš", "Krajčír", "Pospíšil", "Juhász"
+     ],
+     "id_format": "\\d{6}\\/\\d{4}",
+     "id_generator": "function() { let yy = Math.floor(Math.random() * 100); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let xxxx = Math.floor(1000 + Math.random() * 9000); if (Math.random() > 0.5) mm += 50; return yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + '/' + xxxx.toString(); }",
+     "language": "sk"
+   },
+   "SVN": {
+     "name": "Slovenia",
+     "first_names": {
+       "male": [
+         "Luka", "Jakob", "Mark", "Filip", "Anže", "Jan", "Žan", "Nik", "Lovro", "Vid",
+         "Janez", "Matjaž", "Marko", "Peter", "Andrej", "Tomaž", "Jože", "Franc", "Anton", "Ivan"
+       ],
+       "female": [
+         "Zala", "Eva", "Lara", "Ema", "Sara", "Julija", "Mia", "Neža", "Ana", "Hana",
+         "Marija", "Ana Marija", "Maja", "Nataša", "Mateja", "Irena", "Mojca", "Barbara", "Katarina", "Nina"
+       ]
+     },
+     "last_names": [
+       "Novak", "Horvat", "Kovačič", "Krajnc", "Zupančič", "Potočnik", "Kovač", "Mlakar", "Vidmar", "Golob",
+       "Kos", "Bizjak", "Kolar", "Hribar", "Klemenčič", "Kastelic", "Jerman", "Breznik", "Žagar", "Papež"
+     ],
+     "id_format": "\\d{13}",
+     "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yyy = Math.floor(1950 + Math.random() * 70); let rrr = Math.floor(Math.random() * 1000); let zzz = Math.floor(Math.random() * 1000); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + (yyy % 1000).toString() + rrr.toString().padStart(3, '0') + zzz.toString().padStart(3, '0'); }",
+     "language": "sl"
+   },
+   "ESP": {
+     "name": "Spain",
+     "first_names": {
+       "male": [
+         "Hugo", "Mateo", "Martín", "Lucas", "Leo", "Daniel", "Alejandro", "Manuel", "Pablo", "Álvaro",
+         "Antonio", "José", "Manuel", "Francisco", "Juan", "David", "Javier", "Carlos", "Jesús", "Miguel"
+       ],
+       "female": [
+         "Lucía", "Sofía", "Martina", "María", "Julia", "Paula", "Valeria", "Emma", "Daniela", "Carla",
+         "Carmen", "Josefa", "Isabel", "María Dolores", "María Pilar", "María Teresa", "Ana María", "María Carmen", "Laura", "Cristina"
+       ]
+     },
+     "last_names": [
+       "García", "Rodríguez", "González", "Fernández", "López", "Martínez", "Sánchez", "Pérez", "Gómez", "Martín",
+       "Jiménez", "Ruiz", "Hernández", "Díaz", "Moreno", "Álvarez", "Muñoz", "Romero", "Alonso", "Gutiérrez"
+     ],
+     "id_format": "\\d{8}[A-Z]",
+     "id_generator": "function() { let numbers = Math.floor(10000000 + Math.random() * 90000000); let letters = 'TRWAGMYFPDXBNJZSQVHLCKE'; let checksum = numbers % 23; return numbers.toString() + letters.charAt(checksum); }",
+     "language": "es"
+   },
+   "TUR": {
+     "name": "Turkey",
+     "first_names": {
+       "male": [
+         "Yusuf", "Berat", "Mustafa", "Ahmet", "Mehmet", "Ali", "Emir", "Eymen", "Ömer", "Kerem",
+         "İbrahim", "Hasan", "Hüseyin", "İsmail", "Osman", "Murat", "Süleyman", "Burak", "Emre", "Enes"
+       ],
+       "female": [
+         "Zeynep", "Elif", "Defne", "Ebrar", "Hiranur", "Eylül", "Miraç", "Azra", "Ecrin", "Miray",
+         "Ayşe", "Fatma", "Hatice", "Emine", "Zehra", "Merve", "Esra", "Yağmur", "Selin", "Büşra"
+       ]
+     },
+     "last_names": [
+       "Yılmaz", "Kaya", "Demir", "Şahin", "Çelik", "Yıldız", "Yıldırım", "Öztürk", "Aydın", "Özdemir",
+       "Arslan", "Doğan", "Kılıç", "Aslan", "Çetin", "Kara", "Koç", "Kurt", "Özkan", "Şimşek"
+     ],
+     "id_format": "\\d{11}",
+     "id_generator": "function() { return Math.floor(10000000000 + Math.random() * 90000000000).toString(); }",
+     "language": "tr"
+   },
+   "GBR": {
+     "name": "United Kingdom",
+     "first_names": {
+       "male": [
+         "Oliver", "Noah", "George", "Arthur", "Muhammad", "Leo", "Oscar", "Harry", "Archie", "Jack",
+         "John", "David", "Michael", "Robert", "James", "William", "Thomas", "Richard", "Charles", "Joseph"
+       ],
+       "female": [
+         "Olivia", "Amelia", "Isla", "Ava", "Lily", "Mia", "Sophia", "Isabella", "Grace", "Rosie",
+         "Mary", "Patricia", "Jennifer", "Elizabeth", "Linda", "Barbara", "Susan", "Margaret", "Sarah", "Dorothy"
+       ]
+     },
+     "last_names": [
+       "Smith", "Jones", "Taylor", "Brown", "Williams", "Wilson", "Johnson", "Davies", "Robinson", "Wright",
+       "Thompson", "Evans", "Walker", "White", "Roberts", "Green", "Hall", "Wood", "Jackson", "Clarke"
+     ],
+     "id_format": "[A-Z]{2}\\d{6}[A-Z]",
+     "id_generator": "function() { let letters = 'ABCEGHJKLMNPRSTWXYZ'; let l1 = letters.charAt(Math.floor(Math.random() * letters.length)); let l2 = letters.charAt(Math.floor(Math.random() * letters.length)); let numbers = Math.floor(100000 + Math.random() * 900000); let l3 = letters.charAt(Math.floor(Math.random() * letters.length)); return l1 + l2 + numbers.toString() + l3; }",
+     "language": "en"
+   },
+   "USA": {
+     "name": "United States",
+     "first_names": {
+       "male": [
+         "Liam", "Noah", "Oliver", "Elijah", "James", "William", "Benjamin", "Lucas", "Henry", "Theodore",
+         "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Thomas", "Charles", "Christopher"
+       ],
+       "female": [
+         "Olivia", "Emma", "Charlotte", "Amelia", "Sophia", "Isabella", "Ava", "Mia", "Evelyn", "Luna",
+         "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Sarah", "Karen"
+       ]
+     },
+     "last_names": [
+       "Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Garcia", "Rodriguez", "Wilson",
+       "Martinez", "Anderson", "Taylor", "Thomas", "Hernandez", "Moore", "Martin", "Jackson", "Thompson", "White"
+     ],
+     "id_format": "\\d{3}-\\d{2}-\\d{4}",
+     "id_generator": "function() { let area = Math.floor(100 + Math.random() * 900); let group = Math.floor(10 + Math.random() * 90); let serial = Math.floor(1000 + Math.random() * 9000); return area.toString() + '-' + group.toString() + '-' + serial.toString(); }",
+     "language": "en"
+   }
+ }
+}
