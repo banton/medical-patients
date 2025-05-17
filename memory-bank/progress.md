@@ -60,6 +60,10 @@ The project is currently at the **beginning of Phase 4: Hardening, Technical Deb
 
 6.  **Docker Development Environment**:
     *   Docker Compose files (`docker-compose.dev.yml`, `docker-compose.yml`, `docker-compose.prod.yml`) updated for PostgreSQL.
+    *   Added `start-dev.sh` script to automate development environment setup. This script now correctly identifies the application service as `app`, waits for it to be "healthy" using its Docker healthcheck, and then applies DB migrations.
+    *   Alembic's `env.py` was updated to prioritize `DATABASE_URL` from the environment, ensuring correct DB connection (to `db` service) when migrations are run inside Docker via `start-dev.sh` (May 16, 2025). This combination significantly improves startup reliability.
+7.  **Frontend Build Process**:
+    *   Consolidated frontend build commands in `package.json` under `build:all-frontend` (May 16, 2025). This ensures all necessary assets like `configuration-panel.js` are built.
 
 ### What's Left to Build/Improve (Focus of Phase 4)
 

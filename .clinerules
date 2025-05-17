@@ -38,7 +38,17 @@
 *   **Database:** PostgreSQL is the new standard. Alembic for migrations (`alembic revision -m "..."`, `alembic upgrade head`).
 *   **Docker Compose Command:** If `docker-compose` (hyphenated) results in a "command not found" error, use `docker compose` (with a space) instead. Docker Compose files will need updates for PostgreSQL.
 *   **Frontend Testing:** Use `npm test` to run Jest tests for `.tsx` files. Configuration is in `jest.config.js`, `tsconfig.json`, and `setupTests.ts`.
-*   **Frontend Build:** Use `npm run build` to compile `enhanced-visualization-dashboard.tsx` to `static/dist/bundle.js` using `esbuild`. Similar process will apply to new React components.
+*   **Frontend Build:**
+    *   Individual components can be built with `npm run build:viz-dashboard`, `npm run build:config-panel`, `npm run build:military-dashboard`.
+    *   All frontend assets can be built using `npm run build:all-frontend`. This is the recommended script to ensure all necessary JavaScript bundles (e.g., `static/dist/configuration-panel.js`, `static/dist/bundle.js`) are generated.
+*   **Development Environment Startup:** Use the `./start-dev.sh` script to automate:
+    *   `npm install` (Ensures frontend dependencies are present).
+    *   `npm run build:all-frontend` (Builds all necessary frontend assets).
+    *   `docker compose -f docker-compose.dev.yml up --build -d` (Starts Docker services in detached mode).
+    *   A robust wait loop to ensure the `app` service (FastAPI backend) is "healthy" (using Docker healthcheck).
+    *   Alembic database migrations (`docker compose -f docker-compose.dev.yml exec app alembic upgrade head`).
+        *   Note: `alembic_migrations/env.py` is configured to use the `DATABASE_URL` env var from the `app` container, ensuring it connects to the `db` service correctly.
+    This script is the recommended and most reliable way to start the development environment, preventing issues with service readiness for migrations.
 
 ### User Preferences & Workflow:
 

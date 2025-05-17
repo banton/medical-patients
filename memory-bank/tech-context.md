@@ -87,18 +87,33 @@ The Military Medical Exercise Patient Generator is built using modern web techno
      - Install package in development mode: `pip install -e .` (if applicable).
    - **Frontend (for enhanced visualization dashboard)**:
      - Install Node.js dependencies: `npm install`.
-     - Build the dashboard component: `npm run build`.
+     - Build the dashboard component: `npm run build:viz-dashboard`. (Note: `npm run build` was the old command for only this component).
+     - To build all frontend components (visualization dashboard, configuration panel, military dashboard), use: `npm run build:all-frontend`.
 
-3. **Testing**:
+3. **Running the Development Environment**:
+   - A convenience script `start-dev.sh` is provided to automate the setup:
+     - Installs/updates frontend dependencies (`npm install`).
+     - Builds all frontend assets (`npm run build:all-frontend`).
+     - Starts Docker services using `docker-compose.dev.yml` (`docker compose -f docker-compose.dev.yml up --build -d`).
+     - Waits for the `app` service (the FastAPI backend) to report as "healthy" (leveraging its defined healthcheck) before proceeding.
+     - Applies database migrations (`docker compose -f docker-compose.dev.yml exec app alembic upgrade head`). The `alembic_migrations/env.py` script has been updated to prioritize the `DATABASE_URL` environment variable (pointing to the `db` service) when running inside Docker, resolving potential connection issues.
+   - To run: `./start-dev.sh` (ensure it's executable: `chmod +x start-dev.sh`).
+   - This script simplifies starting the application, database, and ensuring frontend assets are built, and includes a robust wait mechanism for service readiness before running migrations.
+
+4. **Testing**:
    - **Backend**: Python's `unittest` framework. Run with `python -m unittest tests.py` (or similar).
    - **Frontend**: Jest with `ts-jest` for `.tsx` files. Run with `npm test`.
      - Configuration files: `jest.config.js`, `tsconfig.json`, `setupTests.ts`.
 
 ### Deployment Options
 
-1. **Local Development Server**:
-   - Run with `python app.py`
-   - Access via http://localhost:8000
+1. **Local Development Server (using `start-dev.sh`)**:
+   - The `start-dev.sh` script handles starting the Dockerized environment.
+   - Backend (FastAPI) accessible at: `http://localhost:8000`
+   - Main UI: `http://localhost:8000/static/index.html`
+   - For manual server start (without Docker, if Python environment and DB are set up separately):
+     - Ensure frontend assets are built (`npm run build:all-frontend`).
+     - Run backend: `uvicorn app:app --reload` (or `python app.py` if it uses Uvicorn internally).
 
 2. **Production Deployment**:
    - Containerization possible (though not explicitly included)
@@ -169,8 +184,9 @@ Bootstrap and FontAwesome are still loaded via CDN in `visualizations.html` and 
 military-patient-generator/
 ├── app.py                                # Main FastAPI application
 ├── requirements.txt                    # Python dependencies
-├── package.json                        # Frontend Node.js dependencies & scripts
+├── package.json                        # Frontend Node.js dependencies & scripts (includes `build:all-frontend`)
 ├── package-lock.json                 # Frontend dependency lock file
+├── start-dev.sh                        # Development environment startup script
 ├── jest.config.js                      # Jest test runner configuration
 ├── tsconfig.json                       # TypeScript configuration
 ├── setupTests.ts                       # Jest setup file (e.g., for mocks)

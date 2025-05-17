@@ -45,6 +45,11 @@ Significant recent development has focused on the enhanced visualization dashboa
     *   Added `requests` to `requirements.txt` to resolve import warnings in `patient_generator_sdk.py`.
     *   Attempted to resolve persistent Pylance errors in `app.py` related to `None` type assignment in key functions for sorting; these may be linter-specific issues as the runtime logic appears sound.
     *   Addressed Pylance errors in `patient_generator/formatter.py` concerning `dicttoxml` return types and "possibly unbound" cryptography components by clarifying type conversions and adding assertions.
+8.  **Developer Experience Improvement (May 16, 2025)**:
+    *   Consolidated frontend build commands in `package.json` under a new `build:all-frontend` script.
+    *   Created `start-dev.sh` script to automate frontend dependency installation, frontend asset building, Docker service startup (using `docker-compose.dev.yml`), and database migrations (Alembic).
+    *   Refined `start-dev.sh` to correctly identify the application service as `app` (not `backend`) and to wait for this service to report a "healthy" state (based on its Docker healthcheck) before attempting database migrations. This further improves the reliability of the startup process.
+    *   Updated `alembic_migrations/env.py` to prioritize the `DATABASE_URL` environment variable (which uses the Docker service name `db`) over the `alembic.ini` configuration when running inside Docker. This resolves `localhost` connection errors during migrations executed by `start-dev.sh`.
 
 ### Next Steps
 
