@@ -83,6 +83,8 @@ The project is currently at the **beginning of Phase 4: Hardening, Technical Deb
     *   Create and execute a script to seed the database with the "Default Scenario (Legacy)" configuration template.
 6.  **Main UI (`static/index.html`) Adaptation**:
     *   Update the main generation form to either use a default `configuration_id` or allow selection from saved templates, rather than individual parameter inputs.
+7.  **UI for Static Fronts Configuration (New - Phase 4, Epic 4.4)**:
+    *   Task 4.4.1: Create a UI section in the advanced configuration panel to view (and eventually edit) parameters from `patient_generator/fronts_config.json`. (Pending)
 
 ### Overall Status
 
@@ -103,7 +105,11 @@ Phases 0-3 of the enhanced configurability initiative are complete. The system n
 2.  **Frontend Architecture & Performance:** Bundle sizes and potential duplication in visualization logic.
 3.  **Testing Coverage:** API and E2E tests are needed.
 4.  **API Key Management:** The current hardcoded API key is a placeholder and needs a secure solution.
-5.  **Pylance Type Errors:** Minor static analysis warnings in `database.py`, `schemas_config.py`, and `app.py` persist; review if they indicate underlying issues or are type-checker limitations.
+5.  **Pylance Type Errors & Warnings (May 2025):**
+    *   Most Pylance errors in `patient_generator/database.py` and `patient_generator/formatter.py` have been addressed through type hinting and code logic refinements.
+    *   Persistent Pylance errors in `app.py` (related to `None` type assignment in specific key functions) remain despite several attempts to clarify type flow; these are likely linter-specific or caching issues as the runtime logic appears sound.
+    *   "Possibly unbound" warnings for cryptography components in `patient_generator/formatter.py` persist; these are likely due to Pylance's handling of conditional imports, while the runtime code correctly guards against missing `cryptography`.
+    *   Import warnings for `slowapi` in `app.py` and `requests` in `patient_generator_sdk.py` should be resolved by ensuring the Python environment is up-to-date with `requirements.txt` (which now includes `requests` and already had `slowapi`).
 
 ### Next Steps
 

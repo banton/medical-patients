@@ -55,7 +55,9 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - `aiofiles`: Async file operations
    - `python-multipart`: Form data handling
    - `psutil`: System resource monitoring
-   - `sqlite3` (standard library): Used for database interactions in `patient_generator/database.py`.
+   - **`psycopg2-binary`**: PostgreSQL adapter for Python (will be added to `requirements.txt`).
+   - **`alembic`**: Database migration tool (will be added to `requirements.txt`).
+   - `sqlalchemy`: Often used with Alembic and for ORM capabilities with PostgreSQL (may be added).
 
 #### Frontend
 
@@ -71,6 +73,8 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 1. **Required Tools**:
    - Python 3.8 or higher
    - Pip (Python package installer)
+   - **PostgreSQL**: Database server.
+   - **Alembic**: For managing database schema migrations.
    - Node.js and npm (for frontend dependencies, testing, and building)
    - Git (for version control)
    - Virtual environment tool for Python (venv, conda, etc.)
@@ -111,20 +115,22 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - CORS configuration in FastAPI
    - Temporary file handling
    - Encryption password management (fixed salt identified as a vulnerability).
-   - Potential for SQL injection in database queries if not consistently parameterized.
+   - Potential for SQL injection in database queries if not consistently parameterized (applies to PostgreSQL as well).
 
 3. **Performance Factors**:
    - **Memory Management**: Critical for large patient generation (both backend Python processes and FHIR bundle creation). In-memory storage of patient data and job data needs optimization.
    - **Background Task Management**: Efficient handling of long-running generation jobs.
    - **Frontend Bundle Size**: The `enhanced-visualization-dashboard.tsx` bundle (`static/dist/bundle.js`) size is a concern (~2.1MB) and needs optimization (e.g., externalizing libraries, code splitting).
-   - **Database Performance**: Query optimization and connection pooling for SQLite.
+   - **Database Performance**: Query optimization and connection pooling for **PostgreSQL**.
    - **Error Handling**: Inconsistent error handling can impact perceived performance and reliability.
    - **File Size Considerations**: For downloads, especially with multiple formats and large patient counts.
 
 ### Dependencies
 
-#### Python Package Dependencies
+#### Python Package Dependencies (to be updated)
 
+The `requirements.txt` will need to be updated to include `psycopg2-binary` and `alembic`. `sqlalchemy` might also be added.
+Current (example, will change):
 ```
 fastapi==0.100.0
 uvicorn==0.22.0
@@ -135,6 +141,9 @@ faker==18.10.1
 dicttoxml==1.7.16
 aiofiles==23.1.0
 psutil>=7.0.0
+# psycopg2-binary (to be added)
+# alembic (to be added)
+# sqlalchemy (potentially to be added)
 ```
 
 #### Frontend Dependencies (npm packages from `package.json`)
@@ -181,7 +190,7 @@ military-patient-generator/
 ├── patient_generator/                  # Core Python generation modules
 │   ├── __init__.py
 │   ├── app.py                          # PatientGeneratorApp
-│   ├── database.py                     # SQLite database interaction
+│   ├── database.py                     # Database interaction (migrating to PostgreSQL)
 │   ├── patient.py                      # Patient class
 │   ├── flow_simulator.py               # Patient flow simulator
 │   ├── demographics.py                 # Demographics generator

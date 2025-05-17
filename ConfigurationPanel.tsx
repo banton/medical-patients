@@ -34,6 +34,17 @@ interface ConfigTemplateUI {
     parent_config_id?: string;
 }
 
+interface StaticFrontNationUI {
+    iso: string;
+    ratio: number;
+}
+
+interface StaticFrontDefinitionUI {
+    name: string;
+    ratio: number;
+    nations: StaticFrontNationUI[];
+}
+
 // Helper to generate unique IDs for new items
 const generateId = () => `temp_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -49,6 +60,7 @@ const ConfigurationPanel: React.FC = () => {
     const [totalPatients, setTotalPatients] = useState<number>(1000);
     const [injuryDistribution, setInjuryDistribution] = useState<{ [key: string]: number }>({});
     const [availableNationalities, setAvailableNationalities] = useState<{ code: string; name: string }[]>([]);
+    const [staticFrontsData, setStaticFrontsData] = useState<StaticFrontDefinitionUI[] | null>(null);
 
 
     useEffect(() => {
@@ -85,6 +97,33 @@ const ConfigurationPanel: React.FC = () => {
                 console.log("Fetched available nationalities:", dataNats);
             } catch (error) {
                 console.error("Error fetching nationalities:", error);
+            }
+
+            // Fetch static front definitions
+            try {
+                const responseStaticFronts = await fetch('/api/v1/configurations/reference/static-fronts/', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-API-KEY': 'your_secret_api_key_here' // Placeholder API Key
+                    }
+                });
+                if (!responseStaticFronts.ok) {
+                    if (responseStaticFronts.status === 404) { // Or however your API indicates "not found / not configured"
+                        console.log("Static fronts configuration file (fronts_config.json) not found or empty on backend.");
+                        setStaticFrontsData(null); // Explicitly set to null or empty array
+                    } else {
+                        throw new Error(`Fetch static fronts failed: ${responseStaticFronts.status}`);
+                    }
+                } else {
+                    const dataStaticFronts: StaticFrontDefinitionUI[] | null = await responseStaticFronts.json();
+                    // API might return null if file not found/empty and response_model is Optional[...]
+                    setStaticFrontsData(dataStaticFronts);
+                    console.log("Fetched static front definitions:", dataStaticFronts);
+                }
+            } catch (error) {
+                console.error("Error fetching static front definitions:", error);
+                setStaticFrontsData(null); // Ensure it's null on error
             }
         };
 
@@ -279,9 +318,13 @@ const ConfigurationPanel: React.FC = () => {
 
 
             <section style={{ marginBottom: '20px' }}>
-                <h4>Combat Fronts</h4>
+                <h4>Combat Fronts (Editable Scenario Definition)</h4>
+                <p style={{fontSize: '0.9em', color: '#555'}}>
+                    Define fronts below if NOT using the static <code>fronts_config.json</code>. 
+                    If static fronts (shown below) are active, they will override these settings.
+                </p>
                 <button onClick={handleAddNewFront} style={{ padding: '8px', marginBottom: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px' }}>
-                    Add Front
+                    Add Editable Front
                 </button>
                 {fronts.map((front, index) => (
                     <FrontEditor
@@ -299,6 +342,38 @@ const ConfigurationPanel: React.FC = () => {
                     />
                 ))}
             </section>
+
+            {staticFrontsData && staticFrontsData.length > 0 && (
+                <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #007bff', borderRadius: '5px', backgroundColor: '#e7f3ff' }}>
+                    <h4>Static Fronts Configuration (from <code>fronts_config.json</code> - Read-Only)</h4>
+                    <p style={{color: '#004085', fontWeight: 'bold'}}>
+                        The following static front configuration is active and will be used for patient generation, overriding any editable fronts defined above.
+                    </p>
+                    {staticFrontsData.map((front, index) => (
+                        <div key={index} style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '10px', marginBottom: '10px', backgroundColor: 'white' }}>
+                            <h5>{front.name} (Ratio: {(front.ratio * 100).toFixed(1)}%)</h5>
+                            {front.nations && front.nations.length > 0 ? (
+                                <ul style={{ listStyleType: 'disc', paddingLeft: '20px' }}>
+                                    {front.nations.map((nation, nIndex) => (
+                                        <li key={nIndex}>
+                                            {nation.iso}: {(nation.ratio * 100).toFixed(1)}%
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : <p>No nations specified for this front.</p>}
+                        </div>
+                    ))}
+                </section>
+            )}
+             {staticFrontsData === null && (
+                 <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ffc107', borderRadius: '5px', backgroundColor: '#fff3cd' }}>
+                    <h4>Static Fronts Configuration (from <code>fronts_config.json</code>)</h4>
+                    <p style={{color: '#856404'}}>
+                        Static <code>fronts_config.json</code> was not found or is empty/invalid. Editable scenario fronts (if defined above) will be used.
+                    </p>
+                </section>
+            )}
+
 
             <section style={{ marginBottom: '20px' }}>
                 <h4>Medical Facilities (Evacuation Chain - Order Matters)</h4>

@@ -21,12 +21,8 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # Import your models' MetaData object here.
-# For example, if your SQLAlchemy Base is in 'patient_generator.models.base':
-# from patient_generator.models.base import Base
-# target_metadata = Base.metadata
-# For now, we'll use a generic MetaData object. It will be populated
-# when models are defined and imported.
-target_metadata = MetaData()
+from patient_generator.models_db import Base # Import Base from our models file
+target_metadata = Base.metadata # Point Alembic to our models' metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

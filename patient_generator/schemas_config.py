@@ -5,6 +5,8 @@ from datetime import datetime
 
 # Forward declaration for recursive models if needed, though not immediately apparent here.
 
+# --- Base Configuration Models ---
+
 class FrontConfig(BaseModel):
     id: str = Field(..., description="Unique identifier for the front")
     name: str = Field(..., description="Display name of the front")
@@ -15,7 +17,7 @@ class FrontConfig(BaseModel):
 
     @validator('nationality_distribution')
     def validate_distribution_sum(cls, v: Dict[str, float]):
-        if not v: 
+        if not v:
             return v # Allow empty if appropriate, or raise error if it must be non-empty
         total = sum(v.values())
         if abs(total - 100.0) > 0.1: # Tolerance for float sum
@@ -31,7 +33,7 @@ class FrontConfig(BaseModel):
             raise ValueError("Casualty rate must be between 0.0 and 1.0")
         return v
 
-class NationalityConfig(BaseModel): # Primarily for reference data structure
+class NationalityConfig(BaseModel): # Primarily for reference data structure, not directly part of main config template
     code: str = Field(..., description="ISO 3166-1 alpha-3 country code (e.g., DEU)")
     name: str = Field(..., description="Full name of the nation (e.g., Germany)")
     demographics_source: str = Field(..., description="Reference to detailed demographics data (e.g., filename or DB key)")
@@ -54,7 +56,7 @@ class FacilityConfig(BaseModel):
         # if more complex cross-field validation (e.g. kia_rate + rtd_rate <= 1) were needed here.
         # For now, individual validity is sufficient.
         return v
-    
+
     @validator('rtd_rate') # Example of cross-field validation if needed
     def check_total_probabilities(cls, v: float, values: Dict[str, Any]):
         kia_rate = values.get('kia_rate')
@@ -62,13 +64,12 @@ class FacilityConfig(BaseModel):
             raise ValueError("Sum of KIA rate and RTD rate cannot exceed 1.0")
         return v
 
+# --- Configuration Template Models ---
 
-class ConfigurationTemplate(BaseModel):
-    id: Optional[str] = Field(None, description="Unique identifier for the saved configuration (e.g., UUID, assigned on save)")
+class ConfigurationTemplateBase(BaseModel):
+    """Base model for common configuration template fields."""
     name: str = Field(..., min_length=1, description="User-defined name for this configuration template")
     description: Optional[str] = Field(None, description="Optional description for the template")
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Timestamp of creation")
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Timestamp of last update")
     
     front_configs: List[FrontConfig] = Field(..., description="List of combat front configurations")
     facility_configs: List[FacilityConfig] = Field(..., description="Ordered list of medical facility configurations defining the evac chain")
@@ -76,12 +77,12 @@ class ConfigurationTemplate(BaseModel):
     total_patients: int = Field(..., gt=0, description="Total number of patients to generate for this scenario")
     injury_distribution: Dict[str, float] = Field(..., description="Overall distribution of injury types (percentages summing to 100)")
 
-    version: int = Field(default=1, ge=1, description="Version number of the configuration template")
+    version: Optional[int] = Field(default=1, ge=1, description="Version number of the configuration template") # Made Optional for consistency
     parent_config_id: Optional[str] = Field(None, description="ID of the parent template this was derived from, if any")
 
     @validator('facility_configs')
     def validate_facility_ids_unique(cls, v: List[FacilityConfig]):
-        if not v: # An evacuation chain must have at least one facility
+        if not v:
             raise ValueError("Facility configurations cannot be empty.")
         ids = [facility.id for facility in v]
         if len(ids) != len(set(ids)):
@@ -90,7 +91,7 @@ class ConfigurationTemplate(BaseModel):
 
     @validator('front_configs')
     def validate_front_ids_unique(cls, v: List[FrontConfig]):
-        if not v: # A scenario must have at least one front
+        if not v:
             raise ValueError("Front configurations cannot be empty.")
         ids = [front.id for front in v]
         if len(ids) != len(set(ids)):
@@ -109,67 +110,96 @@ class ConfigurationTemplate(BaseModel):
                 raise ValueError("Injury distribution percentages must be between 0 and 100")
         return v
 
-# API Specific Models
-class ConfigurationTemplateCreate(BaseModel): # Model for creating a new template via API. Inherits from BaseModel directly.
-    name: str = Field(..., min_length=1, description="User-defined name for this configuration template")
-    description: Optional[str] = Field(None, description="Optional description for the template")
-    # Fields from ConfigurationTemplate that are provided on creation:
-    front_configs: List[FrontConfig]
-    facility_configs: List[FacilityConfig]
-    total_patients: int = Field(..., gt=0)
-    injury_distribution: Dict[str, float] = Field(..., description="Overall distribution of injury types (percentages summing to 100)")
-    parent_config_id: Optional[str] = Field(None, description="Optional ID of a parent template to denote derivation")
-    # version will default to 1 if not provided, or can be set if creating a new version of an existing one (app logic dependent)
+class ConfigurationTemplate(ConfigurationTemplateBase):
+    """General configuration template model, includes optional ID and timestamps with defaults."""
+    id: Optional[str] = Field(None, description="Unique identifier for the saved configuration (e.g., UUID, assigned on save)")
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Timestamp of creation")
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow, description="Timestamp of last update")
+
+class ConfigurationTemplateCreate(ConfigurationTemplateBase):
+    """Model for creating a new template via API. Inherits common fields from Base."""
+    # name, description, front_configs, facility_configs, total_patients, injury_distribution, parent_config_id
+    # are inherited from ConfigurationTemplateBase.
+    # version is also inherited with its default. If it needs to be optional on create:
     version: Optional[int] = Field(default=1, ge=1, description="Version number, defaults to 1 for new templates")
 
-
-    # Validators are inherited from the field definitions in FrontConfig, FacilityConfig
-    # and the main ConfigurationTemplate model if this inherited from it.
-    # Since it inherits from BaseModel, we need to redefine or ensure they are called.
-    # Pydantic v2 automatically runs validators for nested models.
-    # For clarity, specific validators for create context can be added if behavior differs.
-
-    # Example: if we wanted to ensure front_configs is not empty specifically on create
+    # Re-define validators if behavior needs to be stricter or different for creation context.
+    # Pydantic V2 runs validators from base classes automatically.
+    # These are redundant if base validators are sufficient.
     @validator('front_configs')
-    def check_front_configs_on_create(cls, v: List[FrontConfig]):
+    def check_front_configs_on_create(cls, v: List[FrontConfig]): # Example if stricter check needed
         if not v:
             raise ValueError("Front configurations cannot be empty on creation.")
-        # Call parent validator if this class inherited from ConfigurationTemplate
-        # For now, Pydantic will validate each FrontConfig item internally.
-        # Re-validating uniqueness here as well for safety, though Pydantic might do it.
-        ids = [front.id for front in v]
-        if len(ids) != len(set(ids)):
-            raise ValueError("Front IDs within a configuration must be unique")
+        # Base validator for uniqueness will also run.
         return v
 
     @validator('facility_configs')
-    def check_facility_configs_on_create(cls, v: List[FacilityConfig]):
+    def check_facility_configs_on_create(cls, v: List[FacilityConfig]): # Example
         if not v:
             raise ValueError("Facility configurations cannot be empty on creation.")
-        ids = [facility.id for facility in v]
-        if len(ids) != len(set(ids)):
-            raise ValueError("Facility IDs within a configuration must be unique")
         return v
 
     @validator('injury_distribution')
-    def check_injury_distribution_on_create(cls, v: Dict[str, float]):
+    def check_injury_distribution_on_create(cls, v: Dict[str, float]): # Example
         if not v:
             raise ValueError("Injury distribution cannot be empty on creation")
-        total = sum(v.values())
-        if abs(total - 100.0) > 0.1:
-            raise ValueError("Injury distribution percentages must sum to 100")
-        for percentage in v.values():
-            if not (0 <= percentage <= 100):
-                raise ValueError("Injury distribution percentages must be between 0 and 100")
+        # Base validator for sum and range will also run.
         return v
 
-
-class ConfigurationTemplateDB(ConfigurationTemplate): # Model for representing template from DB
-    id: str = Field(..., description="Unique identifier for the saved configuration") 
+class ConfigurationTemplateDB(ConfigurationTemplateBase):
+    """Model for representing a configuration template retrieved from the database."""
+    id: str = Field(..., description="Unique identifier for the saved configuration")
     created_at: datetime = Field(..., description="Timestamp of creation")
     updated_at: datetime = Field(..., description="Timestamp of last update")
-    # version and parent_config_id are inherited from ConfigurationTemplate
+    # Other fields (name, description, front_configs, etc.) are inherited from ConfigurationTemplateBase.
 
     class Config:
-        # orm_mode = True # Pydantic V1
         from_attributes = True # Pydantic V2
+
+# --- Models for external fronts_config.json ---
+
+class FrontDefinitionNation(BaseModel):
+    iso: str = Field(..., description="ISO 3166-1 alpha-3 country code")
+    ratio: float = Field(..., ge=0.0, le=1.0, description="Ratio of this nationality within the front (sums to 1.0 for the front)")
+
+    @validator('ratio')
+    def validate_ratio_range(cls, v: float):
+        if not (0.0 <= v <= 1.0):
+            raise ValueError("Nation ratio must be between 0.0 and 1.0")
+        return v
+
+class FrontDefinition(BaseModel):
+    name: str = Field(..., description="Display name of the front")
+    ratio: float = Field(..., ge=0.0, le=1.0, description="Ratio of total soldiers/patients allocated to this front (sums to 1.0 across all fronts)")
+    nations: List[FrontDefinitionNation] = Field(..., description="List of nations participating in this front and their ratios")
+
+    @validator('ratio')
+    def validate_front_ratio_range(cls, v: float):
+        if not (0.0 <= v <= 1.0):
+            raise ValueError("Front ratio must be between 0.0 and 1.0")
+        return v
+
+    @validator('nations')
+    def validate_nation_ratios_sum(cls, v: List[FrontDefinitionNation]):
+        if not v:
+            raise ValueError("Nations list cannot be empty for a front.")
+        total_nation_ratio = sum(nation.ratio for nation in v)
+        if abs(total_nation_ratio - 1.0) > 0.001: # Tolerance for float sum
+            raise ValueError("Sum of nation ratios within a front must be 1.0")
+        return v
+
+class FrontsConfiguration(BaseModel):
+    fronts: List[FrontDefinition] = Field(..., description="List of battle front definitions")
+
+    @validator('fronts')
+    def validate_front_ratios_sum(cls, v: List[FrontDefinition]):
+        if not v:
+            raise ValueError("Fronts list cannot be empty in the configuration.")
+        total_front_ratio = sum(front.ratio for front in v)
+        if abs(total_front_ratio - 1.0) > 0.001: # Tolerance for float sum
+            raise ValueError("Sum of ratios for all fronts must be 1.0")
+        # Ensure unique front names if necessary, though not strictly part of this task's JSON structure
+        # names = [front.name for front in v]
+        # if len(names) != len(set(names)):
+        #     raise ValueError("Front names must be unique.")
+        return v

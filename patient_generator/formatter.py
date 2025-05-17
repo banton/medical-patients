@@ -8,6 +8,7 @@ import atexit
 import shutil
 import logging
 from xml.dom.minidom import parseString
+from typing import Union # Added Union
 import dicttoxml
 
 try:
@@ -97,25 +98,50 @@ class OutputFormatter:
             
             for bundle in bundles:
                 # Convert each bundle to XML
-                bundle_xml = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                bundle_xml_output = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                bundle_xml_str: str
+                if isinstance(bundle_xml_output, bytes):
+                    bundle_xml_str = bundle_xml_output.decode('utf-8')
+                elif isinstance(bundle_xml_output, str): # Should ideally be LiteralString if Pylance is right
+                    bundle_xml_str = bundle_xml_output
+                else:
+                    # Fallback or error if type is unexpected
+                    self.logger.error(f"Unexpected type from dicttoxml: {type(bundle_xml_output)}")
+                    bundle_xml_str = str(bundle_xml_output) # Best effort
+                
                 # Write directly to stream
-                stream.write(bundle_xml.decode('utf-8'))
+                stream.write(bundle_xml_str)
                 stream.write('\n')
             
             stream.write('</PatientBundles>')
             return None
         else:
             # Standard approach for small datasets
-            xml_data = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
+            xml_data_output = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
+            xml_data_to_parse: Union[str, bytes]
             
+            if isinstance(xml_data_output, bytes):
+                xml_data_to_parse = xml_data_output
+            elif isinstance(xml_data_output, str):
+                xml_data_to_parse = xml_data_output
+            else:
+                self.logger.error(f"Unexpected type from dicttoxml (custom_root): {type(xml_data_output)}")
+                # Fallback: try to convert to string, then encode if parseString needs bytes
+                xml_data_to_parse = str(xml_data_output).encode('utf-8')
+
+
             # Format XML for better readability
             try:
-                dom = parseString(xml_data)
-                pretty_xml = dom.toprettyxml()
+                # parseString can take bytes or str.
+                dom = parseString(xml_data_to_parse) 
+                pretty_xml: str = dom.toprettyxml()
                 return pretty_xml
             except Exception as e:
                 print(f"Warning: XML pretty formatting failed: {e}")
-                return xml_data.decode('utf-8')
+                # If parsing failed, return the original data, decoded if it was bytes
+                if isinstance(xml_data_to_parse, bytes):
+                    return xml_data_to_parse.decode('utf-8')
+                return xml_data_to_parse # It's already a string
     
     def compress_gzip(self, data):
         """Compress data using gzip"""
@@ -142,7 +168,8 @@ class OutputFormatter:
         A random IV is generated for GCM and prepended to the output.
         Output format: kdf_salt (16B) + gcm_iv (16B) + gcm_tag (16B) + ciphertext
         """
-        if not CRYPTO_AVAILABLE:
+        assert CRYPTO_AVAILABLE, "Cryptography package is required for encryption but not found."
+        if not CRYPTO_AVAILABLE: # This check is redundant due to assert but good for logical flow if assert is disabled
             raise ImportError("Cryptography package is required for encryption")
             
         if isinstance(data, str):
@@ -186,7 +213,8 @@ class OutputFormatter:
     
     def encrypt_stream(self, input_stream, output_stream, password):
         """Encrypt data from one stream to another using AES-256-GCM with key derivation."""
-        if not CRYPTO_AVAILABLE:
+        assert CRYPTO_AVAILABLE, "Cryptography package is required for encryption but not found."
+        if not CRYPTO_AVAILABLE: # Redundant with assert, but explicit
             raise ImportError("Cryptography package is required for encryption")
 
         # Read input data into memory - GCM mode requires entire data

@@ -5,12 +5,12 @@ from typing import List, Dict, Any, Optional
 
 try:
     from .patient import Patient
-    from .config_manager import ConfigurationManager # Import new ConfigurationManager
-    from .schemas_config import FacilityConfig, FrontConfig # For type hinting if needed
+    from .config_manager import ConfigurationManager
+    from .schemas_config import FacilityConfig, FrontConfig as DBFrontConfig, FrontDefinition, FrontDefinitionNation # Updated imports
 except ImportError:
     from patient_generator.patient import Patient
     from patient_generator.config_manager import ConfigurationManager
-    from patient_generator.schemas_config import FacilityConfig, FrontConfig
+    from patient_generator.schemas_config import FacilityConfig, FrontConfig as DBFrontConfig, FrontDefinition, FrontDefinitionNation # Updated imports
 
 
 class PatientFlowSimulator:
@@ -80,24 +80,53 @@ class PatientFlowSimulator:
         
         # POI (Point of Injury) transitions - assuming some initial KIA rate before first facility
         # TODO: Make POI KIA rate configurable
-        poi_kia_rate = self.config_manager.get_config_value("poi_kia_rate", 0.20) # Example of getting a potential new global config
+        poi_kia_rate_val = self.config_manager.get_config_value("poi_kia_rate", 0.20)
+        poi_kia_rate: float = 0.20 # Default
+        if isinstance(poi_kia_rate_val, (int, float)):
+            poi_kia_rate = float(poi_kia_rate_val)
+        else:
+            print(f"Warning: poi_kia_rate from config is not a number: {poi_kia_rate_val}. Defaulting to {poi_kia_rate}.")
+
+        matrix["POI"] = {"KIA": poi_kia_rate} # This now assigns Dict[str, float]
         
-        matrix["POI"] = {"KIA": poi_kia_rate}
+        # Calculate remaining probability for POI to transition to the first facility or RTD
+        poi_remaining_prob = 1.0 - poi_kia_rate
+        if poi_remaining_prob < 0: poi_remaining_prob = 0.0 # Clamp if poi_kia_rate was > 1
+
         if self.facility_configs_ordered:
             first_facility_id = self.facility_configs_ordered[0]["id"]
-            matrix["POI"][first_facility_id] = 1.0 - poi_kia_rate
+            matrix["POI"][first_facility_id] = poi_remaining_prob
         else: # No facilities, all remaining from POI are effectively RTD or some other status
-            matrix["POI"]["RTD"] = 1.0 - poi_kia_rate # Or another terminal status
+            matrix["POI"]["RTD"] = poi_remaining_prob # Or another terminal status
 
         for i, facility_data in enumerate(self.facility_configs_ordered):
             facility_id = facility_data["id"]
-            # Ensure rates are floats, Pydantic model should guarantee this from config.
-            # Explicitly cast to float to satisfy type checker, though .get() with float default should suffice.
-            kia_rate: float = float(facility_data.get("kia_rate", 0.10))
-            rtd_rate: float = float(facility_data.get("rtd_rate", 0.30))
+            
+            # Initialize with defaults, then try to update from facility_data
+            kia_rate: float = 0.1 
+            rtd_rate: float = 0.3
 
-            # Pydantic validator on FacilityConfig ensures kia_rate + rtd_rate <= 1.0
-            # So, no need for normalization here if config is validated upstream.
+            try:
+                # These should be present and floats due to FacilityConfig Pydantic model
+                kia_val_from_dict = facility_data["kia_rate"]
+                rtd_val_from_dict = facility_data["rtd_rate"]
+                
+                # Ensure they are indeed numbers before casting
+                if not isinstance(kia_val_from_dict, (int, float)):
+                    raise ValueError(f"kia_rate '{kia_val_from_dict}' is not a number")
+                if not isinstance(rtd_val_from_dict, (int, float)):
+                    raise ValueError(f"rtd_rate '{rtd_val_from_dict}' is not a number")
+
+                kia_rate = float(kia_val_from_dict)
+                rtd_rate = float(rtd_val_from_dict)
+
+            except KeyError as e:
+                print(f"Critical Error: Missing rate key {e} in facility data for {facility_id}. Using default rates.")
+            except ValueError as e: 
+                print(f"Critical Error: Rate value issue for facility {facility_id}. Data: {facility_data}. Error: {e}. Using default rates.")
+
+            # Pydantic validator on FacilityConfig should ensure kia_rate + rtd_rate <= 1.0
+            # and that they are between 0.0 and 1.0. These are now post-retrieval/defaulting.
             # if (kia_rate + rtd_rate) > 1.0:
             #     print(f"Warning: KIA ({kia_rate}) + RTD ({rtd_rate}) > 1 for facility {facility_id}. Normalizing.")
             #     total_rate = kia_rate + rtd_rate
@@ -175,25 +204,57 @@ class PatientFlowSimulator:
     def _create_initial_patient(self, patient_id: int) -> Patient:
         patient = Patient(patient_id)
         
-        if not self.front_distribution: # Handle case with no fronts configured
-            # Default behavior or raise error, for now, assign a placeholder
-            patient.front = "N/A"
-            patient.nationality = "N/A" # Or a default nationality
-        else:
-            front_id = self._select_weighted_item(self.front_distribution)
-            selected_front_config = next((fc for fc in self.front_configs if fc['id'] == front_id), None)
+        static_front_defs: Optional[List[FrontDefinition]] = self.config_manager.get_static_front_definitions()
+
+        if static_front_defs:
+            # Use static fronts_config.json
+            front_distribution_static = {front_def.name: front_def.ratio for front_def in static_front_defs if front_def.ratio > 0}
             
-            if selected_front_config:
-                patient.front = selected_front_config.get("name", front_id) # Use name if available
-                # Nationality distribution from the selected front
-                current_front_nat_dist = selected_front_config.get("nationality_distribution", {})
-                if current_front_nat_dist:
-                    patient.nationality = self._select_weighted_item(current_front_nat_dist)
-                else:
-                    patient.nationality = "N/A" # Default if a front has no nationality distribution
-            else: # Should not happen if front_distribution is derived from front_configs
-                patient.front = "ErrorFront" 
-                patient.nationality = "N/A"
+            if not front_distribution_static:
+                 patient.front = "N/A_StaticEmpty"
+                 patient.nationality = "N/A_StaticEmpty"
+            else:
+                selected_front_name = self._select_weighted_item(front_distribution_static)
+                # Find the selected FrontDefinition object by its name
+                selected_front_def = next((fdef for fdef in static_front_defs if fdef.name == selected_front_name), None)
+
+                if selected_front_def:
+                    patient.front = selected_front_def.name
+                    nat_dist_static = {nat_def.iso: nat_def.ratio for nat_def in selected_front_def.nations if nat_def.ratio > 0}
+                    if not nat_dist_static:
+                        patient.nationality = "N/A_FrontHasNoNations"
+                    else:
+                        patient.nationality = self._select_weighted_item(nat_dist_static)
+                else: 
+                    patient.front = "ErrorStaticFront" # Should not happen if logic is correct
+                    patient.nationality = "N/A"
+        else:
+            # Fallback to DB-based front_configs (using self.front_distribution calculated in __init__)
+            if not self.front_distribution: 
+                patient.front = "N/A_DB_NoFrontDist"
+                patient.nationality = "N/A_DB_NoFrontDist"
+            else:
+                # self.front_distribution is Dict[str(front_id), float(casualty_rate_normalized)]
+                front_id = self._select_weighted_item(self.front_distribution)
+                # self.front_configs is List[Dict[str, Any]] from DB
+                selected_front_config_db = next((fc for fc in self.front_configs if fc['id'] == front_id), None)
+                
+                if selected_front_config_db:
+                    patient.front = selected_front_config_db.get("name", front_id)
+                    # DB nationality_distribution is Dict[str(iso_code), float(percentage 0-100)]
+                    current_front_nat_dist_db = selected_front_config_db.get("nationality_distribution", {})
+                    if current_front_nat_dist_db:
+                        # Filter for positive ratios before passing to _select_weighted_item
+                        valid_nat_dist_db = {iso: ratio for iso, ratio in current_front_nat_dist_db.items() if ratio > 0}
+                        if valid_nat_dist_db:
+                            patient.nationality = self._select_weighted_item(valid_nat_dist_db)
+                        else:
+                            patient.nationality = "N/A_DBFrontHasNoValidNationRatios"
+                    else:
+                        patient.nationality = "N/A_DBFrontHasNoNations"
+                else: # Should not happen if front_id came from self.front_distribution keys
+                    patient.front = "ErrorDBFront"
+                    patient.nationality = "N/A"
 
         patient.gender = random.choice(['male', 'female'])
         patient.day_of_injury = self._select_weighted_item(self.day_distribution)

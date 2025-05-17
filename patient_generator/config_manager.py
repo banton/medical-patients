@@ -1,25 +1,58 @@
 # patient_generator/config_manager.py
-from typing import Optional, Dict, Any, List # Added List
+import json # Added for loading JSON
+from typing import Optional, Dict, Any, List
 from .database import Database, ConfigurationRepository
-from .schemas_config import ConfigurationTemplateDB
+from .schemas_config import ConfigurationTemplateDB, FrontsConfiguration, FrontDefinition # Added FrontsConfiguration, FrontDefinition
 
 class ConfigurationManager:
     """
-    Manages loading and providing access to the active scenario configuration template.
+    Manages loading and providing access to the active scenario configuration template
+    and the static fronts configuration file.
     """
     _active_configuration: Optional[ConfigurationTemplateDB] = None
     _config_id_loaded: Optional[str] = None
     _repository: ConfigurationRepository
+    _static_fronts_config: Optional[FrontsConfiguration] = None # Added for fronts_config.json
 
-    def __init__(self, database_instance: Optional[Database] = None):
+    def __init__(self, database_instance: Optional[Database] = None, static_fronts_config_path: str = "patient_generator/fronts_config.json"):
         """
         Initializes the ConfigurationManager.
         If database_instance is not provided, it gets a default instance.
+        Loads the static fronts configuration.
         """
         db = database_instance or Database.get_instance()
         self._repository = ConfigurationRepository(db)
-        # Note: Consider if loading a default config immediately is desired,
+        self._load_static_fronts_config(static_fronts_config_path)
+        # Note: Consider if loading a default DB config immediately is desired,
         # or if it should wait for an explicit load_configuration call.
+
+    def _load_static_fronts_config(self, file_path: str):
+        """
+        Loads the static fronts configuration from the specified JSON file.
+        """
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            self._static_fronts_config = FrontsConfiguration.model_validate(data)
+            print(f"Successfully loaded static fronts configuration from: {file_path}")
+        except FileNotFoundError:
+            print(f"Static fronts configuration file not found: {file_path}. Static fronts will not be used.")
+            self._static_fronts_config = None
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from {file_path}: {e}. Static fronts will not be used.")
+            self._static_fronts_config = None
+        except Exception as e: # Catch Pydantic validation errors too
+            print(f"Error loading or validating static fronts configuration from {file_path}: {e}. Static fronts will not be used.")
+            self._static_fronts_config = None
+            
+    def get_static_front_definitions(self) -> Optional[List[FrontDefinition]]:
+        """
+        Returns the list of FrontDefinition objects from the loaded static fronts_config.json.
+        Returns None if the static config was not loaded or is invalid.
+        """
+        if self._static_fronts_config:
+            return self._static_fronts_config.fronts
+        return None
 
     def load_configuration(self, config_id: str) -> bool:
         """

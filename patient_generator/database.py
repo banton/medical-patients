@@ -7,7 +7,7 @@ import os
 import datetime
 import threading
 import uuid # For generating IDs
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Literal, overload
 
 # Import Pydantic models for configuration
 from .schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, ConfigurationTemplate
@@ -47,18 +47,17 @@ class Database:
                 self.release_connection(conn)
             else:
                 print("Failed to initialize database connection pool.")
-                Database._pool = None
+                Database._pool = None # Ensure pool is None if init fails
         except (Exception, psycopg2.Error) as error:
             print(f"Error while connecting to PostgreSQL or initializing pool: {error}")
-            Database._pool = None
+            Database._pool = None # Ensure pool is None if init fails
 
     def get_connection(self) -> Optional[psycopg2.extensions.connection]:
-        if not self._pool:
+        if self._pool is None: # More direct check
             print("Connection pool is not initialized. Attempting to re-initialize.")
-            # Try to re-initialize. This might be risky if called from many places.
-            # Consider a more robust re-initialization strategy or fail fast.
+            # Try to re-initialize.
             self.__init__() 
-            if not self._pool:
+            if self._pool is None: # Check again after attempt
                  print("Re-initialization of connection pool failed.")
                  return None
         try:
@@ -74,17 +73,29 @@ class Database:
             except Exception as e:
                 print(f"Error releasing connection to pool: {e}")
 
-    def _execute_query(self, query: str, params: Union[tuple, Dict[str, Any]] = None, fetch_one: bool = False, fetch_all: bool = False, commit: bool = False):
+    @overload
+    def _execute_query(self, query: str, params: Optional[Union[tuple, Dict[str, Any]]] = None, *, fetch_one: Literal[True], fetch_all: Literal[False] = False, commit: bool = False) -> Optional[psycopg2.extras.DictRow]: ...
+    @overload
+    def _execute_query(self, query: str, params: Optional[Union[tuple, Dict[str, Any]]] = None, *, fetch_one: Literal[False] = False, fetch_all: Literal[True], commit: bool = False) -> List[psycopg2.extras.DictRow]: ...
+    @overload
+    def _execute_query(self, query: str, params: Optional[Union[tuple, Dict[str, Any]]] = None, *, fetch_one: Literal[False] = False, fetch_all: Literal[False] = False, commit: bool = False) -> None: ...
+    
+    def _execute_query(self, query: str, params: Optional[Union[tuple, Dict[str, Any]]] = None, *, fetch_one: bool = False, fetch_all: bool = False, commit: bool = False):
         conn = None
         try:
             conn = self.get_connection()
-            if not conn:
+            if not conn: # conn could be None if get_connection fails
                 raise ConnectionError("Failed to get database connection.")
             
             with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-                cur.execute(query, params)
+                if params is not None:
+                    cur.execute(query, params)
+                else:
+                    cur.execute(query)
+                
                 if commit:
                     conn.commit()
+                
                 if fetch_one:
                     return cur.fetchone()
                 if fetch_all:
@@ -150,18 +161,19 @@ class Database:
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
         query = "SELECT * FROM jobs WHERE job_id = %s"
         row = self._execute_query(query, (job_id,), fetch_one=True)
-        if row is None: return None
-        job_data = dict(row)
-        job_data['config'] = json.loads(job_data['config']) if job_data.get('config') else {}
-        job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') else {}
-        job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') else {}
-        job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') else []
-        job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') else {}
+        if row is None: 
+            return None
+        job_data: Dict[str, Any] = dict(row) # Explicitly type job_data
+        job_data['config'] = json.loads(job_data['config']) if job_data.get('config') and isinstance(job_data['config'], str) else (job_data.get('config') or {})
+        job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') and isinstance(job_data['summary'], str) else (job_data.get('summary') or {})
+        job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') and isinstance(job_data['progress_details'], str) else (job_data.get('progress_details') or {})
+        job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') and isinstance(job_data['output_files'], str) else (job_data.get('output_files') or [])
+        job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') and isinstance(job_data['file_types'], str) else (job_data.get('file_types') or {})
         return job_data
 
     def get_all_jobs(self, limit: Optional[int] = 50, status: Optional[str] = None) -> List[Dict[str, Any]]:
         query_parts = ["SELECT * FROM jobs"]
-        params_list: List[Any] = [] # Explicitly type params_list
+        params_list: List[Any] = []
         conditions = []
         if status:
             conditions.append("status = %s")
@@ -169,20 +181,23 @@ class Database:
         if conditions:
             query_parts.append("WHERE " + " AND ".join(conditions))
         query_parts.append("ORDER BY created_at DESC")
-        if limit is not None and limit > 0:
+        if limit is not None and limit > 0: # Ensure limit is positive
             query_parts.append("LIMIT %s")
             params_list.append(limit)
+        
         final_query = " ".join(query_parts)
-        rows = self._execute_query(final_query, tuple(params_list), fetch_all=True)
-        jobs = []
-        if rows:
-            for row in rows:
-                job_data = dict(row)
-                job_data['config'] = json.loads(job_data['config']) if job_data.get('config') else {}
-                job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') else {}
-                job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') else {}
-                job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') else []
-                job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') else {}
+        # _execute_query with fetch_all=True returns List[DictRow]
+        rows: List[psycopg2.extras.DictRow] = self._execute_query(final_query, tuple(params_list), fetch_all=True)
+        
+        jobs: List[Dict[str, Any]] = []
+        if rows: # rows is a list, could be empty
+            for row_item in rows:
+                job_data: Dict[str, Any] = dict(row_item) # Explicitly type job_data
+                job_data['config'] = json.loads(job_data['config']) if job_data.get('config') and isinstance(job_data['config'], str) else (job_data.get('config') or {})
+                job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') and isinstance(job_data['summary'], str) else (job_data.get('summary') or {})
+                job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') and isinstance(job_data['progress_details'], str) else (job_data.get('progress_details') or {})
+                job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') and isinstance(job_data['output_files'], str) else (job_data.get('output_files') or [])
+                job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') and isinstance(job_data['file_types'], str) else (job_data.get('file_types') or {})
                 jobs.append(job_data)
         return jobs
 
@@ -212,69 +227,92 @@ class ConfigurationRepository:
         # Pydantic model expects Python dicts for JSONB fields after json.loads
         # The DB stores them as JSONB, psycopg2 DictRow might return them as strings or already parsed
         # depending on typecasters. Assuming they need json.loads if they are strings.
-        data = dict(row)
+        data: Dict[str, Any] = dict(row) # Ensure data is a mutable dict
         for field in ['front_configs', 'facility_configs', 'injury_distribution']:
-            if field in data and isinstance(data[field], str): # Only load if it's a string
-                try:
-                    data[field] = json.loads(data[field])
-                except json.JSONDecodeError:
-                    # Handle cases where string is not valid JSON, or field is not JSONB in DB
-                    print(f"Warning: Could not decode JSON for field {field} in config ID {data.get('id')}")
-                    data[field] = {} # Default to empty dict or appropriate default
-            elif field in data and data[field] is None: # Handle if JSONB field is NULL
-                 data[field] = {} if field == 'injury_distribution' else []
+            if field in data:
+                if isinstance(data[field], str): # Only load if it's a string
+                    try:
+                        data[field] = json.loads(data[field])
+                    except json.JSONDecodeError:
+                        # Handle cases where string is not valid JSON, or field is not JSONB in DB
+                        print(f"Warning: Could not decode JSON for field {field} in config ID {data.get('id')}")
+                        # Assign default based on Pydantic model or expected structure
+                        data[field] = [] if field in ['front_configs', 'facility_configs'] else {}
+                elif data[field] is None: # Handle if JSONB field is NULL
+                     data[field] = [] if field in ['front_configs', 'facility_configs'] else {}
+            else: # Field might not be present in row if columns were not selected
+                data[field] = [] if field in ['front_configs', 'facility_configs'] else {}
 
 
         # Ensure datetime objects are timezone-aware if not already (PostgreSQL stores them as UTC)
         # Pydantic V2 with from_attributes=True should handle this if types match.
+        # Ensure all required fields for ConfigurationTemplateDB are present in `data`
+        # or provide defaults if Pydantic model doesn't have them.
         return ConfigurationTemplateDB(**data)
 
 
     def create_configuration(self, config_create: ConfigurationTemplateCreate) -> ConfigurationTemplateDB:
         """Creates a new configuration template."""
-        # Generate a new UUID for the configuration if not provided by Pydantic model (it's not)
-        # Our DB model for ConfigurationTemplateDBModel uses String for id, so we generate string UUID.
         config_id = str(uuid.uuid4())
-        now = datetime.datetime.utcnow() # Pydantic models handle default for created_at/updated_at
+        now = datetime.datetime.utcnow()
 
         query = """
         INSERT INTO configuration_templates 
-            (id, name, description, front_configs, facility_configs, injury_distribution, total_patients, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (id, name, description, front_configs, facility_configs, injury_distribution, total_patients, created_at, updated_at, version, parent_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING *;
         """
-        # Pydantic .model_dump_json() or .model_dump(mode='json') can be used for JSON fields
         params = (
             config_id,
             config_create.name,
             config_create.description,
-            json.dumps([fc.model_dump() for fc in config_create.front_configs]), # Serialize list of Pydantic models
+            json.dumps([fc.model_dump() for fc in config_create.front_configs]),
             json.dumps([fc.model_dump() for fc in config_create.facility_configs]),
             json.dumps(config_create.injury_distribution),
             config_create.total_patients,
-            now, # Explicitly set for DB insert
-            now  # Explicitly set for DB insert
+            now, 
+            now,
+            config_create.version, 
+            config_create.parent_config_id # Corrected attribute name
         )
-        row = self.db._execute_query(query, params, fetch_one=True, commit=True)
-        if not row:
-            raise Exception("Failed to create configuration template, no data returned.") # Or a more specific exception
-        return self._row_to_pydantic(row) # type: ignore
+        # _execute_query with fetch_one=True returns Optional[DictRow]
+        db_row = self.db._execute_query(query, params, fetch_one=True, commit=True)
+        
+        if db_row is None:
+            raise Exception("Failed to create configuration template, no data returned from DB.")
+        
+        pydantic_obj = self._row_to_pydantic(db_row)
+        if pydantic_obj is None: # Should not happen if db_row is not None and _row_to_pydantic is robust
+            raise Exception("Failed to convert DB row to Pydantic model after creation.")
+        return pydantic_obj
 
     def get_configuration(self, config_id: str) -> Optional[ConfigurationTemplateDB]:
         """Retrieves a configuration template by its ID."""
         query = "SELECT * FROM configuration_templates WHERE id = %s;"
-        row = self.db._execute_query(query, (config_id,), fetch_one=True)
-        return self._row_to_pydantic(row)
+        # _execute_query with fetch_one=True returns Optional[DictRow]
+        db_row = self.db._execute_query(query, (config_id,), fetch_one=True)
+        if db_row is None:
+            return None
+        return self._row_to_pydantic(db_row)
 
     def list_configurations(self, skip: int = 0, limit: int = 100) -> List[ConfigurationTemplateDB]:
         """Lists all configuration templates with pagination."""
         query = "SELECT * FROM configuration_templates ORDER BY name OFFSET %s LIMIT %s;"
-        rows = self.db._execute_query(query, (skip, limit), fetch_all=True)
-        return [self._row_to_pydantic(row) for row in rows if row] # type: ignore
+        # _execute_query with fetch_all=True returns List[DictRow]
+        db_rows: List[psycopg2.extras.DictRow] = self.db._execute_query(query, (skip, limit), fetch_all=True)
+        
+        configurations: List[ConfigurationTemplateDB] = []
+        if db_rows: # db_rows is a list, could be empty
+            for db_row_item in db_rows:
+                pydantic_obj = self._row_to_pydantic(db_row_item)
+                if pydantic_obj is not None:
+                    configurations.append(pydantic_obj)
+        return configurations
 
     def update_configuration(self, config_id: str, config_update: ConfigurationTemplateCreate) -> Optional[ConfigurationTemplateDB]:
         """Updates an existing configuration template."""
         now = datetime.datetime.utcnow()
+        # Assuming version and parent_id might also be updatable or handled by model
         query = """
         UPDATE configuration_templates SET
             name = %s,
@@ -283,7 +321,9 @@ class ConfigurationRepository:
             facility_configs = %s,
             injury_distribution = %s,
             total_patients = %s,
-            updated_at = %s
+            updated_at = %s,
+            version = %s,
+            parent_id = %s
         WHERE id = %s
         RETURNING *;
         """
@@ -295,10 +335,15 @@ class ConfigurationRepository:
             json.dumps(config_update.injury_distribution),
             config_update.total_patients,
             now,
+            config_update.version, 
+            config_update.parent_config_id, # Corrected attribute name
             config_id
         )
-        row = self.db._execute_query(query, params, fetch_one=True, commit=True)
-        return self._row_to_pydantic(row)
+        # _execute_query with fetch_one=True returns Optional[DictRow]
+        db_row = self.db._execute_query(query, params, fetch_one=True, commit=True)
+        if db_row is None:
+            return None
+        return self._row_to_pydantic(db_row)
 
     def delete_configuration(self, config_id: str) -> bool:
         """Deletes a configuration template by its ID. Returns True if deleted."""

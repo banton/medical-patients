@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, validator, root_validator # Added validator, root_validator
-from typing import Dict, Any, Optional, List, Callable # Added Callable and other typing imports
+from typing import Dict, Any, Optional, List, Callable, cast # Added Callable, cast and other typing imports
 import zipfile
 from io import BytesIO
 import tempfile
@@ -29,7 +29,7 @@ from patient_generator.app import PatientGeneratorApp
 from patient_generator.visualization_data import transform_job_data_for_visualization
 from patient_generator.database import Database, ConfigurationRepository # Added ConfigurationRepository
 from patient_generator.config_manager import ConfigurationManager # Added ConfigurationManager
-from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB # Added Pydantic models
+from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition as PatientGeneratorFrontDefinition # Added Pydantic models
 from patient_generator.nationality_data import NationalityDataProvider # Added
 
 app = FastAPI(title="Military Medical Exercise Patient Generator")
@@ -173,6 +173,19 @@ async def list_available_condition_types():
     # These are the keys expected in the injury_distribution dict of a ConfigurationTemplate
     return ["DISEASE", "NON_BATTLE", "BATTLE_TRAUMA"]
 
+@config_api_router.get("/reference/static-fronts/", response_model=Optional[List[PatientGeneratorFrontDefinition]], summary="Get Static Front Definitions")
+async def get_static_front_definitions_api():
+    """
+    Retrieves the front definitions loaded from the static 'fronts_config.json' file.
+    Returns null if the file was not found or was invalid.
+    """
+    # The global config_manager instance is used here.
+    # It loads fronts_config.json upon its initialization.
+    front_defs = config_manager.get_static_front_definitions()
+    if front_defs is None:
+        return None 
+    return front_defs
+
 # Store job states
 jobs: Dict[str, Any] = {} # Added type hint
 
@@ -180,6 +193,7 @@ jobs: Dict[str, Any] = {} # Added type hint
 db = Database.get_instance()
 nationality_provider = NationalityDataProvider() # Instantiate once
 config_repo = ConfigurationRepository(db) # Instantiate once
+config_manager = ConfigurationManager(database_instance=db) # Instantiate ConfigurationManager globally
 
 # Ensure output directory exists
 os.makedirs("output", exist_ok=True)
@@ -365,7 +379,7 @@ async def get_default_config_info():
 visualization_router = APIRouter(prefix="/api/visualizations")
 
 @visualization_router.get("/dashboard-data")
-async def get_dashboard_data(job_id: str = None):
+async def get_dashboard_data(job_id: str = None): # type: ignore
     """Get data for the visualization dashboard"""
     target_job_data = None
     if job_id:
@@ -378,10 +392,15 @@ async def get_dashboard_data(job_id: str = None):
         # Find the most recent completed job if no job_id is specified
         completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
         if completed_jobs_list:
-            # Ensure a sortable string, even if completed_at is None or missing.
             def get_max_key(job_item: Dict[str, Any]) -> str:
-                completed_at_val = job_item.get("completed_at")
-                return str(completed_at_val) if completed_at_val else "1900-01-01T00:00:00Z"
+                val: Optional[Any] = job_item.get("completed_at")
+                if val is None:
+                    return "1900-01-01T00:00:00Z"
+                if isinstance(val, str):
+                    return val
+                # At this point, val is not None and not str.
+                assert val is not None, "Value should have been confirmed not None by prior checks"
+                return f"{val}" 
             target_job_data = max(completed_jobs_list, key=get_max_key)
         else:
             # No job_id provided and no completed jobs exist
@@ -420,7 +439,7 @@ async def get_visualization_job_list():
     return job_list
 
 @visualization_router.get("/patient-detail/{patient_id}")
-async def get_patient_detail(patient_id: str, job_id: str = None):
+async def get_patient_detail(patient_id: str, job_id: str = None): # type: ignore
     """Get detailed data for a specific patient"""
     target_job = None
     if job_id and job_id in jobs and jobs[job_id]["status"] == "completed":
@@ -428,10 +447,15 @@ async def get_patient_detail(patient_id: str, job_id: str = None):
     else:
         completed_jobs_list = [j for j in jobs.values() if j["status"] == "completed" and j.get("completed_at")]
         if completed_jobs_list:
-            # Ensure a sortable string, even if completed_at is None or missing.
             def get_max_key_patient_detail(job_item: Dict[str, Any]) -> str: # Renamed to avoid conflict
-                completed_at_val = job_item.get("completed_at")
-                return str(completed_at_val) if completed_at_val else "1900-01-01T00:00:00Z"
+                val: Optional[Any] = job_item.get("completed_at")
+                if val is None:
+                    return "1900-01-01T00:00:00Z"
+                if isinstance(val, str):
+                    return val
+                # At this point, val is not None and not str.
+                assert val is not None, "Value should have been confirmed not None by prior checks"
+                return f"{val}" 
             target_job = max(completed_jobs_list, key=get_max_key_patient_detail)
     
     if not target_job:
@@ -591,7 +615,7 @@ async def run_generator_job(job_id: str, request_payload: GenerationRequestPaylo
                 injury_distribution=request_payload.configuration.injury_distribution,
                 created_at=now,
                 updated_at=now,
-                parent_config_id=None # Explicitly set for ad-hoc config
+                parent_config_id=request_payload.configuration.parent_config_id # Pass from payload
             )
             # "Activate" it in the manager (conceptually)
             config_manager._active_configuration = loaded_config_template 

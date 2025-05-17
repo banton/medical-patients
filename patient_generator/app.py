@@ -60,7 +60,7 @@ class PatientGeneratorApp:
         
         # Shared generators
         self.nationality_provider = nationality_provider or NationalityDataProvider()
-        self.demographics_generator = DemographicsGenerator(self.nationality_provider)
+        self.demographics_generator = DemographicsGenerator() # Removed nationality_provider argument
         self.condition_generator = MedicalConditionGenerator()
         
         # Initialize FlowSimulator with the ConfigManager

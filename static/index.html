@@ -181,22 +181,30 @@
                             </div>
                             
                             <div class="mb-3">
-                                <h5><i class="fas fa-globe-europe me-2"></i>Front Distribution</h5>
-                                <div class="row">
-                                    <div class="col">
-                                        <label for="polishFront" class="form-label">Polish Front (%)</label>
-                                        <input type="number" class="form-control front-percent" id="polishFront" value="50.0" min="0" max="100" step="0.1">
+                                <h5><i class="fas fa-globe-europe me-2"></i>Front Distribution (Basic UI)</h5>
+                                <p class="form-text" style="font-size: 0.85em;">
+                                    Note: These settings are for basic ad-hoc generation. If a static <code>fronts_config.json</code>
+                                    is active on the server, it will override these front settings.
+                                    See "Advanced Configuration" for details on active static fronts.
+                                </p>
+                                <div id="basicFrontDistributionUI">
+                                    {/* This content will be replaced if static config is active */}
+                                    <div class="row">
+                                        <div class="col">
+                                            <label for="polishFront" class="form-label">Polish Front (%)</label>
+                                            <input type="number" class="form-control front-percent" id="polishFront" value="50.0" min="0" max="100" step="0.1">
+                                        </div>
+                                        <div class="col">
+                                            <label for="estonianFront" class="form-label">Estonian Front (%)</label>
+                                            <input type="number" class="form-control front-percent" id="estonianFront" value="33.3" min="0" max="100" step="0.1">
+                                        </div>
+                                        <div class="col">
+                                            <label for="finnishFront" class="form-label">Finnish Front (%)</label>
+                                            <input type="number" class="form-control front-percent" id="finnishFront" value="16.7" min="0" max="100" step="0.1">
+                                        </div>
                                     </div>
-                                    <div class="col">
-                                        <label for="estonianFront" class="form-label">Estonian Front (%)</label>
-                                        <input type="number" class="form-control front-percent" id="estonianFront" value="33.3" min="0" max="100" step="0.1">
-                                    </div>
-                                    <div class="col">
-                                        <label for="finnishFront" class="form-label">Finnish Front (%)</label>
-                                        <input type="number" class="form-control front-percent" id="finnishFront" value="16.7" min="0" max="100" step="0.1">
-                                    </div>
+                                    <div class="form-text text-danger hidden" id="frontPercentError">Percentages must add up to 100%</div>
                                 </div>
-                                <div class="form-text text-danger hidden" id="frontPercentError">Percentages must add up to 100%</div>
                             </div>
                             
                             <div class="mb-3">
@@ -415,15 +423,56 @@
             
             // Job card template
             const jobCardTemplate = document.getElementById('jobCardTemplate').innerHTML;
+            const basicFrontDistributionUIDiv = document.getElementById('basicFrontDistributionUI');
+            let staticFrontsAreActive = false;
+
+            // Fetch static fronts to adjust UI
+            async function checkStaticFrontsConfig() {
+                try {
+                    const response = await fetch('/api/v1/configurations/reference/static-fronts/', {
+                        headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' } // Assuming API key needed
+                    });
+                    if (response.ok) {
+                        const staticFronts = await response.json();
+                        if (staticFronts && staticFronts.length > 0) {
+                            staticFrontsAreActive = true;
+                            if (basicFrontDistributionUIDiv) {
+                                basicFrontDistributionUIDiv.innerHTML = `
+                                    <div class="alert alert-info" role="alert">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Front distribution is currently managed by the static <code>fronts_config.json</code> file on the server.
+                                        These settings will be used for generation. See "Advanced Configuration" for details.
+                                    </div>`;
+                            }
+                            // Disable front percent inputs if they were separate from the div replaced
+                            document.querySelectorAll('.front-percent').forEach(input => input.disabled = true);
+                        } else {
+                            staticFrontsAreActive = false;
+                             // Ensure inputs are enabled if static config is not active or empty
+                            document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
+                        }
+                    } else {
+                        console.warn("Could not fetch static fronts config status, basic UI will remain active.");
+                        staticFrontsAreActive = false;
+                        document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
+                    }
+                } catch (error) {
+                    console.error("Error checking static fronts config:", error);
+                    staticFrontsAreActive = false; // Assume basic UI is active on error
+                    document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
+                }
+            }
             
-            // Validate front percentages
+            // Validate front percentages (only if static fronts are not active)
             function validateFrontPercentages() {
+                if (staticFrontsAreActive) return true; // Skip validation if static config is used
+
                 let total = 0;
-                frontPercentInputs.forEach(input => {
-                    total += parseFloat(input.value);
+                document.querySelectorAll('.front-percent:not([disabled])').forEach(input => {
+                    total += parseFloat(input.value) || 0;
                 });
                 
-                if (Math.abs(total - 100) > 0.1) {
+                if (Math.abs(total - 100) > 0.1 && total > 0) { // only show error if total is not 0 (i.e. inputs are active)
                     frontPercentError.classList.remove('hidden');
                     return false;
                 } else {
@@ -449,7 +498,7 @@
             }
             
             // Add validation on input change
-            frontPercentInputs.forEach(input => {
+            document.querySelectorAll('.front-percent').forEach(input => {
                 input.addEventListener('input', validateFrontPercentages);
             });
             
@@ -488,55 +537,66 @@
                 // These would ideally come from a default template or be simplified.
                 // For now, creating a minimal valid structure.
                 const defaultFacilityConfigs = [
-                    { id: "POI", name: "Point of Injury", kia_rate: 0.01, rtd_rate: 0.0 },
+                    { id: "POI", name: "Point of Injury", kia_rate: 0.01, rtd_rate: 0.0 }, // POI is conceptual, not usually a configured facility
                     { id: "R1", name: "Role 1", kia_rate: 0.02, rtd_rate: 0.1 },
                     { id: "R2", name: "Role 2", kia_rate: 0.03, rtd_rate: 0.2 },
                     { id: "R3", name: "Role 3", kia_rate: 0.04, rtd_rate: 0.3 },
-                    { id: "R4", name: "Role 4", kia_rate: 0.05, rtd_rate: 0.0 } // No RTD from R4 in this simple model
+                    { id: "R4", name: "Role 4", kia_rate: 0.05, rtd_rate: 0.0 } 
                 ];
 
-                // Construct front_configs based on UI percentages
-                const polishFrontPercent = parseFloat(document.getElementById('polishFront').value);
-                const estonianFrontPercent = parseFloat(document.getElementById('estonianFront').value);
-                const finnishFrontPercent = parseFloat(document.getElementById('finnishFront').value);
+                let adHocFrontConfigs = [];
+                if (!staticFrontsAreActive) {
+                    // Construct front_configs based on UI percentages only if static config is not active
+                    const polishFrontInput = document.getElementById('polishFront');
+                    const estonianFrontInput = document.getElementById('estonianFront');
+                    const finnishFrontInput = document.getElementById('finnishFront');
 
-                const frontConfigs = [];
-                if (polishFrontPercent > 0) {
-                    frontConfigs.push({
-                        id: "polish_front_basic", name: "Polish Front (Basic)",
-                        nationality_distribution: { "POL": 100.0 }, // Simplified: 100% Polish for this front
-                        casualty_rate: polishFrontPercent / 100.0 // Assuming this is how it's interpreted
-                    });
-                }
-                if (estonianFrontPercent > 0) {
-                     frontConfigs.push({
-                        id: "estonian_front_basic", name: "Estonian Front (Basic)",
-                        nationality_distribution: { "EST": 100.0 },
-                        casualty_rate: estonianFrontPercent / 100.0
-                    });
-                }
-                if (finnishFrontPercent > 0) {
-                    frontConfigs.push({
-                        id: "finnish_front_basic", name: "Finnish Front (Basic)",
-                        nationality_distribution: { "FIN": 100.0 },
-                        casualty_rate: finnishFrontPercent / 100.0
-                    });
-                }
-                
-                // If no fronts have percentages, create a default one to avoid empty front_configs
-                if (frontConfigs.length === 0) {
-                    frontConfigs.push({
-                        id: "default_front_basic", name: "Default Front (Basic)",
-                        nationality_distribution: { "POL": 100.0 }, // Default to Polish
-                        casualty_rate: 1.0 // All patients from this front
-                    });
+                    const polishFrontPercent = polishFrontInput ? parseFloat(polishFrontInput.value) : 0;
+                    const estonianFrontPercent = estonianFrontInput ? parseFloat(estonianFrontInput.value) : 0;
+                    const finnishFrontPercent = finnishFrontInput ? parseFloat(finnishFrontInput.value) : 0;
+
+                    if (polishFrontPercent > 0) {
+                        adHocFrontConfigs.push({
+                            id: "polish_front_basic_ui", name: "Polish Front (Basic UI)",
+                            nationality_distribution: { "POL": 100.0 }, 
+                            casualty_rate: polishFrontPercent / 100.0 
+                        });
+                    }
+                    if (estonianFrontPercent > 0) {
+                         adHocFrontConfigs.push({
+                            id: "estonian_front_basic_ui", name: "Estonian Front (Basic UI)",
+                            nationality_distribution: { "EST": 100.0 },
+                            casualty_rate: estonianFrontPercent / 100.0
+                        });
+                    }
+                    if (finnishFrontPercent > 0) {
+                        adHocFrontConfigs.push({
+                            id: "finnish_front_basic_ui", name: "Finnish Front (Basic UI)",
+                            nationality_distribution: { "FIN": 100.0 },
+                            casualty_rate: finnishFrontPercent / 100.0
+                        });
+                    }
+                    
+                    if (adHocFrontConfigs.length === 0) { // If all basic UI inputs are 0 or disabled
+                        adHocFrontConfigs.push({ // Provide a minimal default if no static and no basic UI fronts
+                            id: "default_front_fallback", name: "Default Fallback Front",
+                            nationality_distribution: { "USA": 100.0 }, // Example default
+                            casualty_rate: 1.0 
+                        });
+                    }
+                } else {
+                    // If static fronts are active, the backend will use them.
+                    // We can send an empty front_configs or a placeholder,
+                    // as the backend logic in PatientFlowSimulator prioritizes static config.
+                    // Sending an empty array is cleaner.
+                    adHocFrontConfigs = []; 
                 }
 
 
                 const adHocConfiguration = {
-                    name: "Ad-hoc Scenario from Basic UI",
-                    description: `Generated on ${new Date().toISOString()} from basic UI.`,
-                    front_configs: frontConfigs,
+                    name: staticFrontsAreActive ? "Scenario using Static Fronts" : "Ad-hoc Scenario from Basic UI",
+                    description: `Generated on ${new Date().toISOString()}. ${staticFrontsAreActive ? "Static fronts_config.json was used." : "Basic UI inputs were used for fronts."}`,
+                    front_configs: adHocFrontConfigs,
                     facility_configs: defaultFacilityConfigs,
                     total_patients: parseInt(document.getElementById('totalPatients').value),
                     injury_distribution: {
@@ -894,6 +954,9 @@
 
             // Load existing jobs when the DOM is ready
             loadExistingJobs();
+            
+            // Check static fronts config status on page load
+            checkStaticFrontsConfig();
 
         }); // Closes DOMContentLoaded listener
     </script>

@@ -1,0 +1,45 @@
+{
+  "fronts": [
+    {
+      "name": "Eastern Front",
+      "ratio": 0.6,
+      "nations": [
+        { "iso": "POL", "ratio": 0.25 },
+        { "iso": "DEU", "ratio": 0.2 },
+        { "iso": "USA", "ratio": 0.15 },
+        { "iso": "GBR", "ratio": 0.1 },
+        { "iso": "ROU", "ratio": 0.1 },
+        { "iso": "CZE", "ratio": 0.05 },
+        { "iso": "HUN", "ratio": 0.05 },
+        { "iso": "BGR", "ratio": 0.05 },
+        { "iso": "SVK", "ratio": 0.05 }
+      ]
+    },
+    {
+      "name": "Northern Front",
+      "ratio": 0.3,
+      "nations": [
+        { "iso": "FIN", "ratio": 0.25 },
+        { "iso": "GER", "ratio": 0.25 },
+        { "iso": "NOR", "ratio": 0.2 },
+        { "iso": "DNK", "ratio": 0.1 },
+        { "iso": "EST", "ratio": 0.07 },
+        { "iso": "LVA", "ratio": 0.07 },
+        { "iso": "LTU", "ratio": 0.06 }
+      ]
+    },
+    {
+      "name": "Southern Front",
+      "ratio": 0.1,
+      "nations": [
+        { "iso": "ITA", "ratio": 0.3 },
+        { "iso": "ESP", "ratio": 0.2 },
+        { "iso": "GRC", "ratio": 0.15 },
+        { "iso": "TUR", "ratio": 0.15 },
+        { "iso": "HRV", "ratio": 0.1 },
+        { "iso": "ALB", "ratio": 0.05 },
+        { "iso": "MNE", "ratio": 0.05 }
+      ]
+    }
+  ]
+}

@@ -40,6 +40,11 @@ Significant recent development has focused on the enhanced visualization dashboa
     *   Modified `_process_patient_batch` in `PatientGeneratorApp` (`patient_generator/app.py`) to use the new method for generating multiple primary conditions based on injury type and triage category.
     *   Added `primary_conditions` list attribute to the `Patient` class in `patient_generator/patient.py`.
     *   Updated `_create_medical_resources` in `FHIRBundleGenerator` (`patient_generator/fhir_generator.py`) to handle the `primary_conditions` list and maintain backward compatibility.
+7.  **Pylance Error Resolution (May 2025)**:
+    *   Addressed multiple Pylance static analysis errors in `patient_generator/database.py` by refining type hints (including `typing.overload`), ensuring correct handling of `Optional` types, and correcting attribute names for Pydantic models.
+    *   Added `requests` to `requirements.txt` to resolve import warnings in `patient_generator_sdk.py`.
+    *   Attempted to resolve persistent Pylance errors in `app.py` related to `None` type assignment in key functions for sorting; these may be linter-specific issues as the runtime logic appears sound.
+    *   Addressed Pylance errors in `patient_generator/formatter.py` concerning `dicttoxml` return types and "possibly unbound" cryptography components by clarifying type conversions and adding assertions.
 
 ### Next Steps
 
@@ -139,6 +144,10 @@ The project will follow a phased approach to implement the enhanced configurabil
 *   **Epic 4.3: Documentation Finalization**
     *   Task 4.3.1: Update User Guides for new features.
     *   Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs).
+*   **Epic 4.4: UI Enhancements for Static Configurations**
+    *   Task 4.4.1: UI for Static Fronts Configuration.
+        *   **Objective:** Create a UI section within the advanced configuration panel (`ConfigurationPanel.tsx`) to allow users to view and eventually edit the parameters currently defined in `patient_generator/fronts_config.json`.
+        *   **Description:** This UI will initially display the values from `fronts_config.json` (front names, ratios, nations, nation ratios). Future iterations will allow editing these values and saving them back (potentially to the same JSON file or to a new DB-backed model if the static file approach is temporary). For now, the focus is on making these parameters visible and understandable within the existing configuration UI. This task is a precursor to potentially making these front definitions fully dynamic and DB-driven, but starts with managing the static JSON.
 
 ### Active Decisions
 
