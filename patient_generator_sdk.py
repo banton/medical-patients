@@ -18,7 +18,9 @@ class PatientGeneratorClient:
         Initialize the client with the API base URL and optional API key.
         Args:
             base_url: The base URL of the API (e.g., http://localhost:8000)
-            api_key: Optional API key for authentication.
+            api_key: Optional API key for authentication. This key should match the one
+                     configured in the backend (e.g., in `dashboard_auth.toml` or environment variables
+                     for a production setup, or the development key if running locally).
         """
         if not base_url.endswith('/'):
             base_url += '/'
@@ -161,7 +163,9 @@ class PatientGeneratorClient:
 if __name__ == "__main__":
     # It's recommended to manage API keys securely, e.g., via environment variables or a config file.
     # For this example, we'll use a placeholder. Replace with your actual API key if required.
-    API_KEY = "your_secret_api_key_here" # Replace with your actual API key or None
+    # The development server (app.py) uses a hardcoded key "dev_api_key" if no dashboard_auth.toml is found or properly configured.
+    # For a deployed instance, this key would be managed securely.
+    API_KEY = "dev_api_key" # Replace with your actual API key or None if API key is not enforced for all endpoints
     BASE_URL = "http://localhost:8000"
 
     client = PatientGeneratorClient(base_url=BASE_URL, api_key=API_KEY)
