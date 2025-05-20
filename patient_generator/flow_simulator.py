@@ -58,9 +58,9 @@ class PatientFlowSimulator:
             "Day 1": 0.20, "Day 2": 0.40, "Day 4": 0.30, "Day 8": 0.10
         }
         self._triage_weights = { # TODO: Make this configurable
-            "BATTLE_TRAUMA": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
-            "NON_BATTLE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
-            "DISEASE": {"T1": 0.2, "T2": 0.3, "T3": 0.5}
+            "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},    # Key updated
+            "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5}, # Key updated
+            "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5}           # Key updated
         }
         self._base_date_str = active_config.created_at.strftime("%Y-%m-%d") # Or a dedicated config field
 
@@ -220,7 +220,12 @@ class PatientFlowSimulator:
 
                 if selected_front_def:
                     patient.front = selected_front_def.name
-                    nat_dist_static = {nat_def.iso: nat_def.ratio for nat_def in selected_front_def.nations if nat_def.ratio > 0}
+                    # nat_def objects now have 'nationality_code' and 'percentage'
+                    nat_dist_static = {
+                        nat_def.nationality_code: nat_def.percentage 
+                        for nat_def in selected_front_def.nations 
+                        if nat_def.percentage > 0
+                    }
                     if not nat_dist_static:
                         patient.nationality = "N/A_FrontHasNoNations"
                     else:

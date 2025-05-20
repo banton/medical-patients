@@ -7,24 +7,34 @@ from datetime import datetime
 
 # --- Base Configuration Models ---
 
+class NationalityDistributionItem(BaseModel):
+    nationality_code: str = Field(..., description="ISO 3166-1 alpha-3 country code")
+    percentage: float = Field(..., ge=0, le=100, description="Percentage for this nationality, must be between 0 and 100")
+
 class FrontConfig(BaseModel):
     id: str = Field(..., description="Unique identifier for the front")
     name: str = Field(..., description="Display name of the front")
     description: Optional[str] = Field(None, description="Optional description of the front")
-    nationality_distribution: Dict[str, float] = Field(..., description="Distribution of nationalities (ISO codes to percentages summing to 100)")
+    nationality_distribution: List[NationalityDistributionItem] = Field(..., description="Distribution of nationalities. Must contain at least one item, and percentages must sum to 100.")
     casualty_rate: Optional[float] = Field(None, description="Overall casualty rate from this front (e.g., 0.1 for 10%)")
     # additional_params: Dict[str, Any] = {} # For future extensibility
 
     @validator('nationality_distribution')
-    def validate_distribution_sum(cls, v: Dict[str, float]):
+    def validate_nationality_distribution(cls, v: List[NationalityDistributionItem]):
         if not v:
-            return v # Allow empty if appropriate, or raise error if it must be non-empty
-        total = sum(v.values())
-        if abs(total - 100.0) > 0.1: # Tolerance for float sum
-            raise ValueError("Nationality distribution percentages must sum to 100")
-        for percentage in v.values():
-            if not (0 <= percentage <= 100):
-                raise ValueError("Nationality distribution percentages must be between 0 and 100")
+            raise ValueError("Nationality distribution must contain at least one nationality.")
+        
+        total_percentage = sum(item.percentage for item in v)
+        if abs(total_percentage - 100.0) > 0.1:  # Tolerance for float sum
+            raise ValueError("Nationality distribution percentages must sum to 100.")
+
+        seen_nationalities = set()
+        for item in v:
+            if not (0 <= item.percentage <= 100):
+                raise ValueError(f"Percentage for {item.nationality_code} must be between 0 and 100.")
+            if item.nationality_code in seen_nationalities:
+                raise ValueError(f"Duplicate nationality_code '{item.nationality_code}' in distribution.")
+            seen_nationalities.add(item.nationality_code)
         return v
 
     @validator('casualty_rate')
@@ -75,7 +85,10 @@ class ConfigurationTemplateBase(BaseModel):
     facility_configs: List[FacilityConfig] = Field(..., description="Ordered list of medical facility configurations defining the evac chain")
     
     total_patients: int = Field(..., gt=0, description="Total number of patients to generate for this scenario")
-    injury_distribution: Dict[str, float] = Field(..., description="Overall distribution of injury types (percentages summing to 100)")
+    injury_distribution: Dict[str, float] = Field(
+        ..., 
+        description="Overall distribution of injury types (Battle Injury, Disease, Non-Battle Injury), percentages summing to 100"
+    )
 
     version: Optional[int] = Field(default=1, ge=1, description="Version number of the configuration template") # Made Optional for consistency
     parent_config_id: Optional[str] = Field(None, description="ID of the parent template this was derived from, if any")
@@ -99,16 +112,27 @@ class ConfigurationTemplateBase(BaseModel):
         return v
         
     @validator('injury_distribution')
-    def validate_injury_distribution_sum(cls, v: Dict[str, float]):
+    def validate_injury_distribution(cls, v: Dict[str, float]):
+        EXPECTED_KEYS = {"Battle Injury", "Disease", "Non-Battle Injury"}
+        
         if not v:
-            raise ValueError("Injury distribution cannot be empty")
-        total = sum(v.values())
-        if abs(total - 100.0) > 0.1: # Tolerance for float sum
-            raise ValueError("Injury distribution percentages must sum to 100")
-        for percentage in v.values():
+            raise ValueError("Injury distribution cannot be empty and must contain Battle Injury, Disease, and Non-Battle Injury.")
+        
+        if set(v.keys()) != EXPECTED_KEYS:
+            raise ValueError(f"Injury distribution must contain exactly the keys: {', '.join(EXPECTED_KEYS)}.")
+
+        total_percentage = sum(v.values())
+        if abs(total_percentage - 100.0) > 0.1:  # Tolerance for float sum
+            raise ValueError("Injury distribution percentages must sum to 100.")
+
+        for key, percentage in v.items():
             if not (0 <= percentage <= 100):
-                raise ValueError("Injury distribution percentages must be between 0 and 100")
+                raise ValueError(f"Percentage for injury type '{key}' must be between 0 and 100.")
         return v
+
+# class InjuryDistributionItem(BaseModel): # No longer needed
+#     type: str = Field(..., description="Type of injury")
+#     percentage: float = Field(..., ge=0, le=100, description="Percentage for this injury type")
 
 class ConfigurationTemplate(ConfigurationTemplateBase):
     """General configuration template model, includes optional ID and timestamps with defaults."""
@@ -140,10 +164,11 @@ class ConfigurationTemplateCreate(ConfigurationTemplateBase):
         return v
 
     @validator('injury_distribution')
-    def check_injury_distribution_on_create(cls, v: Dict[str, float]): # Example
-        if not v:
-            raise ValueError("Injury distribution cannot be empty on creation")
-        # Base validator for sum and range will also run.
+    def check_injury_distribution_on_create(cls, v: Dict[str, float]): # Validator for create
+        # The main validator in ConfigurationTemplateBase will handle the detailed checks.
+        # This one can be simpler or ensure non-emptiness if base allows empty for some reason.
+        if not v: # Should be caught by base, but as an example
+            raise ValueError("Injury distribution cannot be empty on creation.")
         return v
 
 class ConfigurationTemplateDB(ConfigurationTemplateBase):
@@ -159,19 +184,19 @@ class ConfigurationTemplateDB(ConfigurationTemplateBase):
 # --- Models for external fronts_config.json ---
 
 class FrontDefinitionNation(BaseModel):
-    iso: str = Field(..., description="ISO 3166-1 alpha-3 country code")
-    ratio: float = Field(..., ge=0.0, le=1.0, description="Ratio of this nationality within the front (sums to 1.0 for the front)")
+    nationality_code: str = Field(..., description="ISO 3166-1 alpha-3 country code")
+    percentage: float = Field(..., ge=0.0, le=100.0, description="Percentage of this nationality within the front (sums to 100.0 for the front)")
 
-    @validator('ratio')
-    def validate_ratio_range(cls, v: float):
-        if not (0.0 <= v <= 1.0):
-            raise ValueError("Nation ratio must be between 0.0 and 1.0")
+    @validator('percentage')
+    def validate_percentage_range(cls, v: float):
+        if not (0.0 <= v <= 100.0):
+            raise ValueError("Nation percentage must be between 0.0 and 100.0")
         return v
 
 class FrontDefinition(BaseModel):
     name: str = Field(..., description="Display name of the front")
     ratio: float = Field(..., ge=0.0, le=1.0, description="Ratio of total soldiers/patients allocated to this front (sums to 1.0 across all fronts)")
-    nations: List[FrontDefinitionNation] = Field(..., description="List of nations participating in this front and their ratios")
+    nations: List[FrontDefinitionNation] = Field(..., description="List of nations participating in this front and their percentages")
 
     @validator('ratio')
     def validate_front_ratio_range(cls, v: float):
@@ -180,12 +205,12 @@ class FrontDefinition(BaseModel):
         return v
 
     @validator('nations')
-    def validate_nation_ratios_sum(cls, v: List[FrontDefinitionNation]):
+    def validate_nation_percentages_sum(cls, v: List[FrontDefinitionNation]):
         if not v:
             raise ValueError("Nations list cannot be empty for a front.")
-        total_nation_ratio = sum(nation.ratio for nation in v)
-        if abs(total_nation_ratio - 1.0) > 0.001: # Tolerance for float sum
-            raise ValueError("Sum of nation ratios within a front must be 1.0")
+        total_nation_percentage = sum(nation.percentage for nation in v)
+        if abs(total_nation_percentage - 100.0) > 0.1:  # Tolerance for float sum
+            raise ValueError("Sum of nation percentages within a front must be 100.0")
         return v
 
 class FrontsConfiguration(BaseModel):

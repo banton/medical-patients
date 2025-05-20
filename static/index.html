@@ -538,21 +538,27 @@
 
                         if (staticFrontsData && staticFrontsData.length > 0) {
                             adHocFrontConfigs = staticFrontsData.map(frontDef => {
-                                const nationalityDistribution = {};
+                                let nationalityDistributionList = [];
                                 if (frontDef.nations && frontDef.nations.length > 0) {
-                                    frontDef.nations.forEach(nation => {
-                                        nationalityDistribution[nation.iso] = nation.ratio * 100; // Convert ratio to percentage
+                                    // The API /api/v1/configurations/reference/static-fronts/
+                                    // now returns nations with nationality_code and percentage (0-100)
+                                    // due to previous schema and fronts_config.json updates.
+                                    nationalityDistributionList = frontDef.nations.map(nation => {
+                                        return {
+                                            nationality_code: nation.nationality_code, 
+                                            percentage: nation.percentage 
+                                        };
                                     });
                                 } else {
-                                    // Fallback if a static front has no nations defined (should be validated by FrontDefinition model)
-                                    nationalityDistribution["USA"] = 100.0; // Example default
+                                    // Fallback if a static front has no nations defined
+                                    nationalityDistributionList.push({ nationality_code: "USA", percentage: 100.0 });
                                 }
                                 
                                 return {
                                     id: `static_${frontDef.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
                                     name: frontDef.name,
                                     description: `Static front definition: ${frontDef.name}`,
-                                    nationality_distribution: nationalityDistribution,
+                                    nationality_distribution: nationalityDistributionList,
                                     casualty_rate: frontDef.ratio 
                                 };
                             });
@@ -583,21 +589,21 @@
                     if (polishFrontPercent > 0) {
                         adHocFrontConfigs.push({
                             id: "polish_front_basic_ui", name: "Polish Front (Basic UI)",
-                            nationality_distribution: { "POL": 100.0 }, 
+                            nationality_distribution: [{ nationality_code: "POL", percentage: 100.0 }], 
                             casualty_rate: polishFrontPercent / 100.0 
                         });
                     }
                     if (estonianFrontPercent > 0) {
                          adHocFrontConfigs.push({
                             id: "estonian_front_basic_ui", name: "Estonian Front (Basic UI)",
-                            nationality_distribution: { "EST": 100.0 },
+                            nationality_distribution: [{ nationality_code: "EST", percentage: 100.0 }],
                             casualty_rate: estonianFrontPercent / 100.0
                         });
                     }
                     if (finnishFrontPercent > 0) {
                         adHocFrontConfigs.push({
                             id: "finnish_front_basic_ui", name: "Finnish Front (Basic UI)",
-                            nationality_distribution: { "FIN": 100.0 },
+                            nationality_distribution: [{ nationality_code: "FIN", percentage: 100.0 }],
                             casualty_rate: finnishFrontPercent / 100.0
                         });
                     }
@@ -608,7 +614,7 @@
                     console.warn("No front configurations were derived from static data or UI inputs. Using a global fallback front.");
                     adHocFrontConfigs.push({
                         id: "global_fallback_front", name: "Global Fallback Front",
-                        nationality_distribution: { "USA": 100.0 },
+                        nationality_distribution: [{ nationality_code: "USA", percentage: 100.0 }],
                         casualty_rate: 1.0 // This front will receive all patients
                     });
                 }
@@ -621,9 +627,9 @@
                     facility_configs: defaultFacilityConfigs,
                     total_patients: parseInt(document.getElementById('totalPatients').value),
                     injury_distribution: {
-                        "DISEASE": parseFloat(document.getElementById('diseasePercent').value),
-                        "NON_BATTLE": parseFloat(document.getElementById('nonBattlePercent').value),
-                        "BATTLE_TRAUMA": parseFloat(document.getElementById('battleTraumaPercent').value)
+                        "Disease": parseFloat(document.getElementById('diseasePercent').value),
+                        "Non-Battle Injury": parseFloat(document.getElementById('nonBattlePercent').value),
+                        "Battle Injury": parseFloat(document.getElementById('battleTraumaPercent').value)
                     }
                 };
 

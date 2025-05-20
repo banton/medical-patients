@@ -1,15 +1,20 @@
 {/* ConfigurationPanel.tsx */}
 import React, { useState, useEffect } from 'react';
 import FrontEditor from './FrontEditor';
-import FacilityEditor from './FacilityEditor'; // Import the FacilityEditor component
+import FacilityEditor from './FacilityEditor';
 
-// Define interfaces for the configuration objects based on schemas_config.py
-// These might be simplified versions for UI state or imported if shareable
+// --- UI State Interfaces (include client-side temporary IDs) ---
+interface NationalityDistributionItemState {
+    id: string; 
+    nationality_code: string; 
+    percentage: number;
+}
+
 interface FrontConfigUI {
     id: string;
     name: string;
     description?: string;
-    nationality_distribution: { [key: string]: number }; // nationality code -> percentage
+    nationality_distribution: NationalityDistributionItemState[]; 
     casualty_rate?: number;
 }
 
@@ -29,11 +34,12 @@ interface ConfigTemplateUI {
     front_configs: FrontConfigUI[];
     facility_configs: FacilityConfigUI[];
     total_patients: number;
-    injury_distribution: { [key: string]: number };
+    injury_distribution: { [key: string]: number }; // Reverted to dictionary
     version?: number;
     parent_config_id?: string;
 }
 
+// --- Static Data Interfaces ---
 interface StaticFrontNationUI {
     iso: string;
     ratio: number;
@@ -45,111 +51,173 @@ interface StaticFrontDefinitionUI {
     nations: StaticFrontNationUI[];
 }
 
-// Helper to generate unique IDs for new items
-const generateId = () => `temp_${Math.random().toString(36).substr(2, 9)}`;
+// --- API Payload Interfaces ---
+interface ApiNationalityDistributionItem {
+    nationality_code: string;
+    percentage: number;
+}
+
+interface ApiFrontConfig {
+    id: string; 
+    name: string;
+    description?: string;
+    nationality_distribution: ApiNationalityDistributionItem[];
+    casualty_rate?: number;
+}
+
+interface ApiConfigTemplatePayload {
+    name: string;
+    description?: string;
+    front_configs: ApiFrontConfig[];
+    facility_configs: FacilityConfigUI[];
+    total_patients: number;
+    injury_distribution: { [key: string]: number }; // Reverted to dictionary
+    version?: number; // Kept optional for UI state
+    parent_config_id?: string; // Kept optional for UI state
+}
+
+// API Payload - version and parent_config_id are truly optional if not sent
+interface ApiConfigTemplatePayloadForSave {
+    name: string;
+    description?: string;
+    front_configs: ApiFrontConfig[];
+    facility_configs: FacilityConfigUI[];
+    total_patients: number;
+    injury_distribution: { [key: string]: number };
+    version?: number; // Optional: will be sent if present
+    parent_config_id?: string; // Optional: will be sent if present
+}
+
+
+const generateId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+const DEFAULT_INJURY_DISTRIBUTION = {
+    "Battle Injury": 52,
+    "Disease": 33,
+    "Non-Battle Injury": 15
+};
 
 const ConfigurationPanel: React.FC = () => {
     const [savedConfigs, setSavedConfigs] = useState<ConfigTemplateUI[]>([]);
     const [activeConfig, setActiveConfig] = useState<ConfigTemplateUI | null>(null);
     
-    // Separate states for editable parts of the activeConfig
     const [fronts, setFronts] = useState<FrontConfigUI[]>([]);
     const [facilities, setFacilities] = useState<FacilityConfigUI[]>([]);
     const [configName, setConfigName] = useState<string>("");
     const [configDescription, setConfigDescription] = useState<string>("");
     const [totalPatients, setTotalPatients] = useState<number>(1000);
-    const [injuryDistribution, setInjuryDistribution] = useState<{ [key: string]: number }>({});
+    const [injuryDistribution, setInjuryDistribution] = useState<{ [key: string]: number }>(DEFAULT_INJURY_DISTRIBUTION); // State reverted
     const [availableNationalities, setAvailableNationalities] = useState<{ code: string; name: string }[]>([]);
     const [staticFrontsData, setStaticFrontsData] = useState<StaticFrontDefinitionUI[] | null>(null);
-
+    const [apiError, setApiError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Fetch initial data (simplified for brevity, assuming it works as before for configs, nationalities, static fronts)
+        // Important: When loading configs, ensure injury_distribution is correctly populated or defaulted.
         const fetchInitialData = async () => {
-            // Fetch saved configurations
+            setApiError(null);
             try {
                 const responseConfigs = await fetch('/api/v1/configurations/', {
                     method: 'GET',
-                    headers: { 
-                        'Accept': 'application/json',
-                        'X-API-KEY': 'your_secret_api_key_here' // Placeholder API Key
-                    }
+                    headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' }
                 });
                 if (!responseConfigs.ok) throw new Error(`Fetch configs failed: ${responseConfigs.status}`);
-                const dataConfigs: ConfigTemplateUI[] = await responseConfigs.json();
-                setSavedConfigs(dataConfigs);
-                console.log("Fetched saved configurations:", dataConfigs);
+                const dataConfigs: ConfigTemplateUI[] = await responseConfigs.json(); 
+                
+                const typedDataConfigs = dataConfigs.map(config => ({
+                    ...config,
+                    front_configs: config.front_configs.map((fc: any) => ({
+                        ...fc,
+                        nationality_distribution: Array.isArray(fc.nationality_distribution) 
+                            ? fc.nationality_distribution.map((nd: any, index: number) => ({
+                                id: `loaded-nat-${fc.id}-${index}-${Date.now()}`,
+                                nationality_code: nd.nationality_code,
+                                percentage: nd.percentage
+                              }))
+                            : [] 
+                    })),
+                    // Ensure injury_distribution is a dictionary, defaulting if not present or wrong type
+                    injury_distribution: (typeof config.injury_distribution === 'object' && config.injury_distribution !== null && !Array.isArray(config.injury_distribution))
+                        ? config.injury_distribution
+                        : DEFAULT_INJURY_DISTRIBUTION
+                }));
+                setSavedConfigs(typedDataConfigs);
             } catch (error) {
                 console.error("Error fetching configurations:", error);
+                setApiError(`Error fetching configurations: ${error instanceof Error ? error.message : String(error)}`);
             }
-
-            // Fetch available nationalities
-            try {
+             try {
                 const responseNats = await fetch('/api/v1/configurations/reference/nationalities/', {
-                     method: 'GET',
-                     headers: {
-                         'Accept': 'application/json',
-                         'X-API-KEY': 'your_secret_api_key_here' // Placeholder API Key
-                     }
+                     method: 'GET', headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' }
                 });
                 if (!responseNats.ok) throw new Error(`Fetch nationalities failed: ${responseNats.status}`);
                 const dataNats: { code: string; name: string }[] = await responseNats.json();
                 setAvailableNationalities(dataNats);
-                console.log("Fetched available nationalities:", dataNats);
             } catch (error) {
                 console.error("Error fetching nationalities:", error);
+                setApiError(`Error fetching nationalities: ${error instanceof Error ? error.message : String(error)}`);
+
             }
 
-            // Fetch static front definitions
             try {
                 const responseStaticFronts = await fetch('/api/v1/configurations/reference/static-fronts/', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-API-KEY': 'your_secret_api_key_here' // Placeholder API Key
-                    }
+                    method: 'GET', headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' }
                 });
                 if (!responseStaticFronts.ok) {
-                    if (responseStaticFronts.status === 404) { // Or however your API indicates "not found / not configured"
-                        console.log("Static fronts configuration file (fronts_config.json) not found or empty on backend.");
-                        setStaticFrontsData(null); // Explicitly set to null or empty array
+                    if (responseStaticFronts.status === 404) {
+                        console.log("Static fronts configuration file not found or empty.");
+                        setStaticFrontsData(null);
                     } else {
                         throw new Error(`Fetch static fronts failed: ${responseStaticFronts.status}`);
                     }
                 } else {
                     const dataStaticFronts: StaticFrontDefinitionUI[] | null = await responseStaticFronts.json();
-                    // API might return null if file not found/empty and response_model is Optional[...]
                     setStaticFrontsData(dataStaticFronts);
-                    console.log("Fetched static front definitions:", dataStaticFronts);
                 }
             } catch (error) {
                 console.error("Error fetching static front definitions:", error);
-                setStaticFrontsData(null); // Ensure it's null on error
+                setApiError(`Error fetching static fronts: ${error instanceof Error ? error.message : String(error)}`);
+                setStaticFrontsData(null);
             }
         };
-
         fetchInitialData();
     }, []);
 
     const loadConfigToEdit = (config: ConfigTemplateUI) => {
+        setApiError(null);
         setActiveConfig(config);
         setConfigName(config.name);
         setConfigDescription(config.description || "");
-        setFronts([...config.front_configs]); // Deep copy for editing
-        setFacilities([...config.facility_configs]); // Deep copy
+        
+        const frontsWithClientIds = config.front_configs.map(f => ({
+            ...f,
+            nationality_distribution: f.nationality_distribution.map((nd, index) => ({
+                id: nd.id || `loaded-nat-${f.id}-${index}-${Date.now()}`,
+                nationality_code: nd.nationality_code,
+                percentage: nd.percentage
+            }))
+        }));
+        setFronts([...frontsWithClientIds]);
+        setFacilities([...config.facility_configs]);
         setTotalPatients(config.total_patients);
-        setInjuryDistribution({...config.injury_distribution});
+        // Ensure injury_distribution is a dictionary, defaulting if not present or wrong type
+        setInjuryDistribution(
+            (typeof config.injury_distribution === 'object' && config.injury_distribution !== null && !Array.isArray(config.injury_distribution))
+                ? { ...DEFAULT_INJURY_DISTRIBUTION, ...config.injury_distribution } // Merge with defaults to ensure all keys
+                : { ...DEFAULT_INJURY_DISTRIBUTION }
+        );
     };
     
-    const handleAddNewFront = () => {
+    const handleAddNewFront = () => { /* ... (remains the same) ... */ 
+        const defaultNationalityCode = availableNationalities.length > 0 ? availableNationalities[0].code : "";
         setFronts([...fronts, {
             id: generateId(),
             name: "New Front",
-            nationality_distribution: {},
+            nationality_distribution: [{ id: generateId(), nationality_code: defaultNationalityCode, percentage: 100.0 }],
             casualty_rate: 0.1
         }]);
     };
-
-    const handleAddNewFacility = () => {
+    const handleAddNewFacility = () => { /* ... (remains the same) ... */ 
         setFacilities([...facilities, {
             id: generateId(),
             name: "New Facility",
@@ -158,148 +226,227 @@ const ConfigurationPanel: React.FC = () => {
         }]);
     };
 
-    // TODO: Implement update/delete for fronts and facilities
+    const handleInjuryPercentageChange = (type: string, value: string) => {
+        const percentage = parseFloat(value);
+        setInjuryDistribution(prev => ({
+            ...prev,
+            [type]: isNaN(percentage) ? 0 : Math.max(0, Math.min(100, percentage))
+        }));
+    };
     
     const handleSaveConfiguration = async () => {
+        setApiError(null);
         if (!configName.trim()) {
             alert("Configuration name cannot be empty.");
             return;
         }
-        // Basic validation for distributions (should sum to 100)
+        // Fronts validation (remains the same)
         for (const front of fronts) {
-            const natTotal = Object.values(front.nationality_distribution).reduce((s, p) => s + p, 0);
-            if (Math.abs(natTotal - 100.0) > 0.1 && Object.values(front.nationality_distribution).length > 0) {
+            if (front.nationality_distribution.length === 0) {
+                alert(`Front "${front.name}" must have at least one nationality in its distribution.`);
+                return;
+            }
+            const natTotal = front.nationality_distribution.reduce((s, item) => s + (item.percentage || 0), 0);
+            if (Math.abs(natTotal - 100.0) > 0.1) {
                 alert(`Nationality distribution for front "${front.name}" must sum to 100%. Currently: ${natTotal.toFixed(1)}%`);
                 return;
             }
+            const natCodes = front.nationality_distribution.map(item => item.nationality_code);
+            if (new Set(natCodes).size !== natCodes.length) {
+                alert(`Front "${front.name}" has duplicate nationalities in its distribution.`);
+                return;
+            }
         }
-        const injuryTotal = Object.values(injuryDistribution).reduce((s, p) => s + p, 0);
-        if (Math.abs(injuryTotal - 100.0) > 0.1 && Object.values(injuryDistribution).length > 0) {
-            alert(`Injury distribution must sum to 100%. Currently: ${injuryTotal.toFixed(1)}%`);
+
+        // Injury distribution validation (dictionary based)
+        const injuryValues = Object.values(injuryDistribution);
+        if (injuryValues.length !== 3) { // Ensure all 3 keys are present
+             alert("Injury distribution must include Battle Injury, Disease, and Non-Battle Injury percentages.");
+             return;
+        }
+        const injuryTotalPercentage = injuryValues.reduce((s, p) => s + (p || 0), 0);
+        if (Math.abs(injuryTotalPercentage - 100.0) > 0.1) {
+            alert(`Injury distribution percentages must sum to 100%. Currently: ${injuryTotalPercentage.toFixed(1)}%`);
             return;
         }
 
+        const apiFrontConfigs: ApiFrontConfig[] = fronts.map(f_ui => ({ /* ... (remains the same) ... */ 
+            id: f_ui.id.startsWith('temp_') ? f_ui.name.replace(/\s+/g, '_').toLowerCase() : f_ui.id,
+            name: f_ui.name,
+            description: f_ui.description,
+            casualty_rate: f_ui.casualty_rate,
+            nationality_distribution: f_ui.nationality_distribution.map(item_ui => ({
+                nationality_code: item_ui.nationality_code,
+                percentage: item_ui.percentage,
+            })),
+        }));
+        const apiFacilityConfigs: FacilityConfigUI[] = facilities.map(fac_ui => ({ /* ... (remains the same) ... */ 
+            id: fac_ui.id.startsWith('temp_') ? fac_ui.name.replace(/\s+/g, '_').toLowerCase() : fac_ui.id,
+            name: fac_ui.name,
+            description: fac_ui.description,
+            capacity: fac_ui.capacity,
+            kia_rate: fac_ui.kia_rate,
+            rtd_rate: fac_ui.rtd_rate,
+        }));
 
-        const configToSave: Omit<ConfigTemplateUI, 'id' | 'created_at' | 'updated_at' | 'version'> & { parent_config_id?: string, version?: number} = {
+        const payloadForApi: ApiConfigTemplatePayload = {
             name: configName,
             description: configDescription || undefined,
-            front_configs: fronts,
-            facility_configs: facilities,
+            front_configs: apiFrontConfigs,
+            facility_configs: apiFacilityConfigs,
             total_patients: totalPatients,
-            injury_distribution: injuryDistribution,
-            parent_config_id: activeConfig?.parent_config_id, // Preserve parent if updating a derived config
-            version: activeConfig?.id ? (activeConfig.version || 0) + 1 : 1 // Increment version if updating, else 1
+            injury_distribution: injuryDistribution, // Now a dictionary
+            // parent_config_id and version are handled below for finalPayload
         };
         
-        // If it's an update to an existing config, use its ID for parent_config_id if creating a new version
-        // Or, if simply updating, the API PUT should handle versioning.
-        // For now, let's assume save always creates new or updates existing with new version.
-        // The API PUT /configurations/{id} updates in place. POST / creates new.
+        // Construct the actual payload for the API, conditionally including version and parent_config_id
+        const finalPayload: ApiConfigTemplatePayloadForSave = {
+            name: payloadForApi.name,
+            description: payloadForApi.description,
+            front_configs: payloadForApi.front_configs,
+            facility_configs: payloadForApi.facility_configs,
+            total_patients: payloadForApi.total_patients,
+            injury_distribution: payloadForApi.injury_distribution,
+        };
 
+        if (activeConfig?.id && !activeConfig.id.startsWith('temp_')) {
+            // If updating an existing config, include version and potentially parent_config_id
+            finalPayload.version = (activeConfig.version || 0) + 1;
+            if (activeConfig.parent_config_id) { // Only include if it was part of the loaded config
+                finalPayload.parent_config_id = activeConfig.parent_config_id;
+            }
+        } else {
+            // For new configs, version defaults to 1 on backend if not provided.
+            // parent_config_id might be set if "Save As New Version" from an existing one,
+            // but current UI doesn't explicitly support that flow for parent_config_id.
+            // Let's assume for a brand new config, parent_config_id is not sent.
+            // If activeConfig was a derivative (had parent_config_id) but is being saved as NEW (no activeConfig.id),
+            // this logic might need refinement based on desired UX for "Save As" vs "New".
+            // For now, only include parent_config_id if it's an update of a config that had one.
+        }
+        
         let endpoint = '/api/v1/configurations/';
         let method = 'POST';
 
-        if (activeConfig && activeConfig.id && !activeConfig.id.startsWith('temp_')) { // Check if it's a saved config being edited
-            // Option 1: Update existing (PUT) - API should handle version increment or use optimistic locking
-            // endpoint = `/api/v1/configurations/${activeConfig.id}`;
-            // method = 'PUT';
-            // Option 2: Save as new version (POST, with parent_id set) - this requires more complex UI/UX
-            // For simplicity, let's assume we are creating a new one or updating an existing one.
-            // If activeConfig.id exists, we are updating.
+        if (activeConfig && activeConfig.id && !activeConfig.id.startsWith('temp_')) {
             endpoint = `/api/v1/configurations/${activeConfig.id}`;
             method = 'PUT';
-            // The backend ConfigurationRepository.update_configuration will set updated_at.
-            // Versioning logic on backend might increment version or require it in payload.
-            // Our Pydantic ConfigurationTemplateCreate does not include 'id', 'created_at', 'updated_at'.
-            // The backend PUT should handle setting updated_at. Version might be auto-incremented or taken from payload.
-            // Let's ensure the payload for PUT matches ConfigurationTemplateCreate.
         }
 
-
         try {
-            const payloadForApi: any = { ...configToSave };
-            // Remove fields not in ConfigurationTemplateCreate for POST/PUT
-            delete payloadForApi.id; 
-            delete payloadForApi.created_at;
-            delete payloadForApi.updated_at;
-            // Version might be handled by backend on PUT, or could be part of payload if API supports it.
-            // For now, ConfigurationTemplateCreate allows version.
-
-            const response = await fetch(endpoint, {
+            // const finalPayload: any = { ...payloadForApi }; // Old way
+            const response = await fetch(endpoint, { 
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-API-KEY': 'your_secret_api_key_here' // Placeholder
+                    'X-API-KEY': 'your_secret_api_key_here'
                 },
-                body: JSON.stringify(payloadForApi)
+                body: JSON.stringify(finalPayload)
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(`Failed to save configuration: ${response.status} - ${errorData.detail || response.statusText}`);
+                let formattedError = `Failed to save configuration: ${response.status}`;
+                if (errorData.detail && Array.isArray(errorData.detail)) {
+                    formattedError += errorData.detail.map((err: any) => `\n- ${err.loc.join(' -> ')}: ${err.msg}`).join('');
+                } else if (errorData.detail) {
+                    formattedError += ` - ${errorData.detail}`;
+                } else {
+                    formattedError += ` - ${response.statusText}`;
+                }
+                setApiError(formattedError);
+                throw new Error(formattedError);
             }
+            setApiError(null);
 
-            const savedOrUpdatedConfig: ConfigTemplateUI = await response.json();
-            alert(`Configuration "${savedOrUpdatedConfig.name}" saved successfully!`);
+            const savedOrUpdatedConfigResponse: ConfigTemplateUI = await response.json();
             
-            // Refresh list of saved configs and update active one
+            const savedOrUpdatedConfigUI: ConfigTemplateUI = {
+                ...savedOrUpdatedConfigResponse,
+                front_configs: savedOrUpdatedConfigResponse.front_configs.map((fc: any) => ({
+                    ...fc,
+                    nationality_distribution: fc.nationality_distribution.map((nd: any, index: number) => ({
+                        id: `saved-nat-${fc.id}-${index}-${Date.now()}`,
+                        nationality_code: nd.nationality_code,
+                        percentage: nd.percentage
+                    }))
+                })),
+                // Ensure injury_distribution is correctly formed for UI state
+                injury_distribution: (typeof savedOrUpdatedConfigResponse.injury_distribution === 'object' && savedOrUpdatedConfigResponse.injury_distribution !== null && !Array.isArray(savedOrUpdatedConfigResponse.injury_distribution))
+                    ? savedOrUpdatedConfigResponse.injury_distribution
+                    : { ...DEFAULT_INJURY_DISTRIBUTION }
+            };
+
+            alert(`Configuration "${savedOrUpdatedConfigUI.name}" saved successfully!`);
+            
             const newSavedConfigs = [...savedConfigs];
-            const existingIndex = newSavedConfigs.findIndex(c => c.id === savedOrUpdatedConfig.id);
+            const existingIndex = newSavedConfigs.findIndex(c => c.id === savedOrUpdatedConfigUI.id);
             if (existingIndex !== -1) {
-                newSavedConfigs[existingIndex] = savedOrUpdatedConfig;
+                newSavedConfigs[existingIndex] = savedOrUpdatedConfigUI;
             } else {
-                newSavedConfigs.push(savedOrUpdatedConfig);
+                newSavedConfigs.push(savedOrUpdatedConfigUI);
             }
             setSavedConfigs(newSavedConfigs);
-            loadConfigToEdit(savedOrUpdatedConfig); // Load the saved version (with ID, timestamps) into form
+            loadConfigToEdit(savedOrUpdatedConfigUI);
 
         } catch (error) {
+            if (!apiError) {
+                 setApiError(error instanceof Error ? error.message : String(error));
+            }
             console.error("Error saving configuration:", error);
-            alert(`Error saving configuration: ${error instanceof Error ? error.message : String(error)}`);
         }
     };
 
     const handleResetForm = () => {
+        setApiError(null);
         setActiveConfig(null);
         setConfigName("New Scenario");
         setConfigDescription("");
-        setFronts([]);
-        setFacilities([]);
+        const defaultNationalityCode = availableNationalities.length > 0 ? availableNationalities[0].code : "";
+        setFronts([{ id: generateId(), name: "Default Front", nationality_distribution: [{id: generateId(), nationality_code: defaultNationalityCode, percentage: 100}], casualty_rate: 0.1 }]);
+        setFacilities([{id: generateId(), name: "Default Facility", kia_rate: 0.05, rtd_rate: 0.2}]);
         setTotalPatients(1000);
-        setInjuryDistribution({});
+        setInjuryDistribution({ ...DEFAULT_INJURY_DISTRIBUTION });
     };
 
+    const totalInjuryPercentage = Object.values(injuryDistribution).reduce((sum, val) => sum + (val || 0), 0);
 
     return (
         <div className="configuration-panel p-3" style={{ fontFamily: 'Arial, sans-serif' }}>
             <h2>Scenario Configuration Panel</h2>
+            {apiError && (
+                <div style={{ padding: '10px', margin: '10px 0', backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb', borderRadius: '4px', whiteSpace: 'pre-wrap' }}>
+                    <strong>Error:</strong> {apiError}
+                </div>
+            )}
             <hr />
 
-            <div style={{ marginBottom: '20px' }}>
+            {/* Load Existing / Create New Section */}
+            <div style={{ marginBottom: '20px' }}> {/* ... (remains the same) ... */ }
                 <h4>Load Existing Configuration</h4>
                 <select 
                     onChange={(e) => {
                         const selectedId = e.target.value;
-                        const configToLoad = savedConfigs.find(c => c.id === selectedId);
-                        if (configToLoad) {
-                            loadConfigToEdit(configToLoad);
+                        if (selectedId) {
+                            const configToLoad = savedConfigs.find(c => c.id === selectedId);
+                            if (configToLoad) loadConfigToEdit(configToLoad);
+                        } else {
+                            handleResetForm();
                         }
                     }}
-                    defaultValue=""
+                    value={activeConfig?.id || ""}
                     style={{ padding: '8px', marginRight: '10px', minWidth: '200px' }}
                 >
-                    <option value="" disabled>Select a configuration...</option>
+                    <option value="">-- Create New / Clear --</option>
                     {savedConfigs.map(conf => (
                         <option key={conf.id} value={conf.id}>{conf.name} (v{conf.version})</option>
                     ))}
                 </select>
-                <button onClick={() => { /* TODO: Clear form for new config */ setActiveConfig(null); setConfigName("New Config"); /* reset other fields */ }} style={{ padding: '8px' }}>
-                    Create New
-                </button>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
+            {/* Configuration Details Section */}
+            <div style={{ marginBottom: '20px' }}> {/* ... (remains the same) ... */ }
                 <h4>Configuration Details</h4>
                 <div>
                     <label htmlFor="configName" style={{ marginRight: '10px' }}>Name:</label>
@@ -313,15 +460,35 @@ const ConfigurationPanel: React.FC = () => {
                     <label htmlFor="totalPatients" style={{ marginRight: '10px' }}>Total Patients:</label>
                     <input type="number" id="totalPatients" value={totalPatients} onChange={(e) => setTotalPatients(parseInt(e.target.value,10) || 0)} style={{ padding: '5px', width: '100px' }}/>
                 </div>
-                {/* TODO: UI for injury_distribution */}
             </div>
 
+            {/* Injury Distribution Section - Reverted to simple inputs */}
+            <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '5px' }}>
+                <h4>Overall Injury Distribution (%)</h4>
+                {Object.keys(DEFAULT_INJURY_DISTRIBUTION).map((key) => (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                        <label htmlFor={`injury-${key}`} style={{ width: '150px', marginRight: '10px' }}>{key}:</label>
+                        <input
+                            type="number"
+                            id={`injury-${key}`}
+                            value={injuryDistribution[key] === undefined ? '' : injuryDistribution[key]}
+                            onChange={(e) => handleInjuryPercentageChange(key, e.target.value)}
+                            placeholder="%"
+                            min="0" max="100" step="0.1"
+                            style={{ width: '80px', padding: '8px' }}
+                        />
+                    </div>
+                ))}
+                <p style={{ fontSize: '0.9em', color: Math.abs(totalInjuryPercentage - 100.0) > 0.1 ? 'red' : '#555', marginTop: '10px' }}>
+                    Total: {totalInjuryPercentage.toFixed(1)}% (must be 100%)
+                </p>
+            </section>
 
-            <section style={{ marginBottom: '20px' }}>
+            {/* Combat Fronts Section */}
+            <section style={{ marginBottom: '20px' }}> {/* ... (remains the same) ... */ }
                 <h4>Combat Fronts (Editable Scenario Definition)</h4>
                 <p style={{fontSize: '0.9em', color: '#555'}}>
-                    Define fronts below if NOT using the static <code>fronts_config.json</code>. 
-                    If static fronts (shown below) are active, they will override these settings.
+                    Define fronts below. These will be used for generation.
                 </p>
                 <button onClick={handleAddNewFront} style={{ padding: '8px', marginBottom: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px' }}>
                     Add Editable Front
@@ -343,11 +510,13 @@ const ConfigurationPanel: React.FC = () => {
                 ))}
             </section>
 
-            {staticFrontsData && staticFrontsData.length > 0 && (
+            {/* Static Fronts Display Section */}
+            {staticFrontsData && staticFrontsData.length > 0 && ( /* ... (remains the same) ... */ 
                 <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #007bff', borderRadius: '5px', backgroundColor: '#e7f3ff' }}>
-                    <h4>Static Fronts Configuration (from <code>fronts_config.json</code> - Read-Only)</h4>
-                    <p style={{color: '#004085', fontWeight: 'bold'}}>
-                        The following static front configuration is active and will be used for patient generation, overriding any editable fronts defined above.
+                    <h4>Static Fronts Configuration (from <code>fronts_config.json</code> - Read-Only for Reference)</h4>
+                    <p style={{color: '#004085'}}>
+                        The following static front configuration (if file exists on backend) is shown for reference. 
+                        The editable scenario fronts defined above will be used for saving and generation via this panel.
                     </p>
                     {staticFrontsData.map((front, index) => (
                         <div key={index} style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '10px', marginBottom: '10px', backgroundColor: 'white' }}>
@@ -365,22 +534,21 @@ const ConfigurationPanel: React.FC = () => {
                     ))}
                 </section>
             )}
-             {staticFrontsData === null && (
+             {staticFrontsData === null && ( /* ... (remains the same) ... */ 
                  <section style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ffc107', borderRadius: '5px', backgroundColor: '#fff3cd' }}>
                     <h4>Static Fronts Configuration (from <code>fronts_config.json</code>)</h4>
                     <p style={{color: '#856404'}}>
-                        Static <code>fronts_config.json</code> was not found or is empty/invalid. Editable scenario fronts (if defined above) will be used.
+                        Static <code>fronts_config.json</code> was not found or is empty/invalid on the backend.
                     </p>
                 </section>
             )}
 
-
-            <section style={{ marginBottom: '20px' }}>
+            {/* Medical Facilities Section */}
+            <section style={{ marginBottom: '20px' }}> {/* ... (remains the same) ... */ }
                 <h4>Medical Facilities (Evacuation Chain - Order Matters)</h4>
                 <button onClick={handleAddNewFacility} style={{ padding: '8px', marginBottom: '10px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px' }}>
                     Add Facility
                 </button>
-                {/* TODO: Implement drag-and-drop for reordering facilities */}
                 {facilities.map((facility, index) => (
                     <FacilityEditor
                         key={facility.id}
@@ -397,7 +565,8 @@ const ConfigurationPanel: React.FC = () => {
                 ))}
             </section>
             
-            <section style={{ marginTop: '20px', padding: '15px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#fdfdfd' }}>
+            {/* Quick Preview Section - Updated for injury_distribution */}
+            <section style={{ marginTop: '20px', padding: '15px', border: '1px solid #eee', borderRadius: '5px', backgroundColor: '#fdfdfd' }}> {/* ... (summary updated) ... */ }
                 <h4>Quick Preview & Validation</h4>
                 {configName && <p><strong>Scenario Name:</strong> {configName}</p>}
                 <p><strong>Total Patients to Generate:</strong> {totalPatients}</p>
@@ -409,8 +578,8 @@ const ConfigurationPanel: React.FC = () => {
                             <li key={f.id}>
                                 {f.name || "(Unnamed Front)"}: 
                                 Casualty Rate: {f.casualty_rate === undefined ? 'N/A' : (f.casualty_rate * 100).toFixed(1) + '%'}
-                                | Nationalities: {Object.keys(f.nationality_distribution).join(', ') || 'None'}
-                                (Total Dist: {Object.values(f.nationality_distribution).reduce((s, p) => s + p, 0).toFixed(1)}%)
+                                | Nationalities: {f.nationality_distribution.map(n => `${n.nationality_code || '(select)'} (${n.percentage.toFixed(1)}%)`).join(', ') || 'None'}
+                                (Total Dist: {f.nationality_distribution.reduce((s, item) => s + (item.percentage || 0), 0).toFixed(1)}%)
                             </li>
                         ))}
                     </ul>
@@ -425,36 +594,30 @@ const ConfigurationPanel: React.FC = () => {
                 {Object.keys(injuryDistribution).length > 0 ? (
                     <ul>
                         {Object.entries(injuryDistribution).map(([type, percent]) => (
-                            <li key={type}>{type}: {percent.toFixed(1)}%</li>
+                            <li key={type}>{type}: {(percent || 0).toFixed(1)}%</li>
                         ))}
-                         <li>Total: {Object.values(injuryDistribution).reduce((s, p) => s + p, 0).toFixed(1)}%</li>
+                         <li>Total: {totalInjuryPercentage.toFixed(1)}%</li>
                     </ul>
-                ) : <p>No injury distribution configured.</p>}
+                ) : <p>No injury distribution configured (will use defaults).</p>}
             </section>
             
             <hr />
-            <div className="actions" style={{ marginTop: '20px' }}>
+            {/* Actions Section */}
+            <div className="actions" style={{ marginTop: '20px' }}> {/* ... (remains the same) ... */ }
                 <button onClick={handleSaveConfiguration} style={{ padding: '10px 15px', marginRight: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}>
                     Save Configuration
                 </button>
                 <button onClick={handleResetForm} style={{ padding: '10px 15px', marginRight: '10px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px' }}>
                     Clear Form / New
                 </button>
-                {/* Apply might not be needed if this panel is part of the main generation page */}
-                {/* <button onClick={() => console.log("TODO: Apply Configuration to Generator")} style={{ padding: '10px 15px', backgroundColor: '#17a2b8', color: 'white', border: 'none', borderRadius: '4px' }}>
-                    Apply to Generator
-                </button> */}
             </div>
         </div>
     );
 };
 
-// This component would typically be rendered into a DOM element by another script,
-// similar to enhanced-visualization-dashboard.tsx, or imported into a larger React app.
-// For example, if it's meant to be a standalone bundle:
 import ReactDOM from 'react-dom/client';
 
-const renderConfigurationPanel = () => {
+const renderConfigurationPanel = () => { /* ... (remains the same) ... */ 
     const container = document.getElementById('reactConfigurationPanelRoot');
     if (container) {
       const root = ReactDOM.createRoot(container);
@@ -468,18 +631,13 @@ const renderConfigurationPanel = () => {
     }
 };
 
-// Check if we are in a browser environment before trying to render
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    // Auto-render if the specific root element exists, or provide a function to call
+if (typeof window !== 'undefined' && typeof document !== 'undefined') { /* ... (remains the same) ... */ 
     if (document.getElementById('reactConfigurationPanelRoot')) {
         renderConfigurationPanel();
     } else {
-        // Expose the render function globally if the root isn't immediately available,
-        // allowing an external script to call it once the DOM is ready.
         (window as any).renderReactConfigurationPanel = renderConfigurationPanel;
         console.log("ConfigurationPanel: Root element not found. Call window.renderReactConfigurationPanel() to render.");
     }
 }
-
 
 export default ConfigurationPanel;

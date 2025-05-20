@@ -258,7 +258,7 @@ class ConfigurationRepository:
 
         query = """
         INSERT INTO configuration_templates 
-            (id, name, description, front_configs, facility_configs, injury_distribution, total_patients, created_at, updated_at, version, parent_id)
+            (id, name, description, front_configs, facility_configs, injury_distribution, total_patients, created_at, updated_at, version, parent_config_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING *;
         """
@@ -323,7 +323,7 @@ class ConfigurationRepository:
             total_patients = %s,
             updated_at = %s,
             version = %s,
-            parent_id = %s
+            parent_config_id = %s
         WHERE id = %s
         RETURNING *;
         """

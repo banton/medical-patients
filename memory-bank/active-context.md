@@ -143,6 +143,12 @@ The project will follow a phased approach to implement the enhanced configurabil
                 5.  Update any relevant API endpoints if data fetching for these consolidated components needs to change.
     *   Task 4.1.3: Frontend Bundle Size Optimization (externalize libraries/code splitting).
     *   Task 4.1.4: Docker Optimization (Multi-stage builds).
+    *   Task 4.1.5: UI Refinement - Nationality Distribution in Front Editor. (Completed)
+        *   **Description:** Modified `FrontEditor.tsx` and `ConfigurationPanel.tsx` to change nationality input from a dictionary to an ordered list of dropdowns. Ensured at least one nationality is always present. Updated backend Pydantic schemas (`schemas_config.py`) and added an Alembic migration marker.
+    *   Task 4.1.6: UI Refinement - Injury Distribution and Error Handling. (Completed - Reverted to simpler model)
+        *   **Description:** The injury distribution input in `ConfigurationPanel.tsx` was reverted to use three fixed categories ("Battle Injury", "Disease", "Non-Battle Injury") and their percentages, matching the simpler model previously in `static/index.html`. Backend Pydantic schemas (`schemas_config.py`) were updated to expect `injury_distribution` as `Dict[str, float]` with these fixed keys. Facility ID submission was corrected, and basic API error display remains.
+    *   Task 4.1.7: Database Schema Update for `version` and `parent_config_id`. (Completed)
+        *   **Description:** After user resolved Alembic "multiple heads" issue, the migration `2b84a220e9ac_add_version_and_parent_to_config_template.py` (adding `version` and `parent_config_id` columns to `configuration_templates` table) was successfully applied via `start-dev.sh`. `ConfigurationPanel.tsx` already handles sending these fields. A subsequent bug was fixed where `patient_generator/database.py` was using `parent_id` instead of `parent_config_id` in SQL queries.
 *   **Epic 4.2: Testing Expansion**
     *   Task 4.2.1: API Integration Tests.
     *   Task 4.2.2: End-to-End Tests (Consider Selenium/Playwright).
