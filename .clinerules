@@ -40,21 +40,29 @@
 *   **Frontend Testing:** Use `npm test` to run Jest tests for `.tsx` files. Configuration is in `jest.config.js`, `tsconfig.json`, and `setupTests.ts`.
 *   **Frontend Build:**
     *   Individual components can be built with `npm run build:viz-dashboard`, `npm run build:config-panel`, `npm run build:military-dashboard`.
-    *   All frontend assets can be built using `npm run build:all-frontend`. This is the recommended script to ensure all necessary JavaScript bundles (e.g., `static/dist/configuration-panel.js`, `static/dist/bundle.js`) are generated.
+    *   All frontend assets can be built using `npm run build:all-frontend`. This is the recommended script to ensure all necessary JavaScript bundles (e.g., `static/dist/configuration-panel.js`, `static/dist/bundle.js`, `static/dist/military-dashboard.js`) are generated.
 *   **Development Environment Startup:** Use the `./start-dev.sh` script to automate:
     *   `npm install` (Ensures frontend dependencies are present).
     *   `npm run build:all-frontend` (Builds all necessary frontend assets).
     *   `docker compose -f docker-compose.dev.yml up --build -d` (Starts Docker services in detached mode).
     *   A robust wait loop to ensure the `app` service (FastAPI backend) is "healthy" (using Docker healthcheck).
     *   Alembic database migrations (`docker compose -f docker-compose.dev.yml exec app alembic upgrade head`).
-        *   Note: `alembic_migrations/env.py` is configured to use the `DATABASE_URL` env var from the `app` container, ensuring it connects to the `db` service correctly.
-    This script is the recommended and most reliable way to start the development environment, preventing issues with service readiness for migrations.
+        *   Note: `alembic_migrations/env.py` has been updated to prioritize the `DATABASE_URL` environment variable (set in `docker-compose.dev.yml` for the `app` service to point to the `db` service). If `DATABASE_URL` is not set, it falls back to the `sqlalchemy.url` from `alembic.ini`.
+    This script is the recommended and most reliable way to start the development environment.
 
 ### User Preferences & Workflow:
 
 *   **Backend Server Restarts:** When changes are made to Python backend code (`app.py` or imported modules), the Uvicorn server (especially if running in Docker without live reload for Python, or if not using `--reload` flag locally) MUST be restarted for changes to take effect.
 *   User manually verifies application behavior in the browser after changes.
-*   Clean install for PostgreSQL (no data migration from SQLite).
+    *   Clean install for PostgreSQL (no data migration from SQLite).
+
+### Ticket Management:
+
+*   **Open Tickets File:** All active development tasks, technical debt, and hardening items are tracked in `memory-bank/open-tickets.md`.
+    *   Each ticket includes a unique ID, title, epic, description, and clear acceptance criteria.
+    *   This file is the source of truth for current work.
+    *   New tasks identified during development must be added to this file as new tickets with acceptance criteria before work begins.
+    *   Cline will always consult this file to determine the next task.
 
 ### Known Challenges & Considerations (Many being addressed by new plan):
 
@@ -67,9 +75,9 @@
 *   **Memory Management (Backend):** Key focus of Phase 1 refactoring.
 *   **Error Handling Standardization:** To be implemented throughout new development.
 *   **Frontend Architecture Consolidation:** Phase 4 task.
-*   **Configuration Management:** Core of the new architecture.
-*   **Database Concerns:** Migrating to PostgreSQL and using Alembic addresses previous SQLite concerns (connection pooling, migrations). Parameterized queries remain essential.
-*   **Docker Optimization:** Phase 4 task.
-*   **Security - Encryption Salt:** Phase 4 task.
+*   **Configuration Management:** Core of the new architecture (Phases 0-3 completed).
+*   **Database Concerns:** PostgreSQL with Alembic is implemented. Parameterized queries and connection pool efficiency remain essential.
+*   **Docker Optimization:** Phase 4 task (Task 4.1.4).
+*   **Security - Encryption Salt:** Addressed in Phase 4 (Task 4.1.1 Completed).
 *   Maintaining consistency across all Memory Bank files.
 *   Ensuring `.clinerules` accurately reflects the evolving project intelligence.

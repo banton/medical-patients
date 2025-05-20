@@ -61,34 +61,25 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Get the DATABASE_URL from environment variable if available
-    db_url_from_env = os.environ.get('DATABASE_URL')
-
-    if db_url_from_env:
-        # If DATABASE_URL is set, use it directly to create the engine
-        # This ensures that when running inside Docker, it uses the service name (e.g., 'db')
-        # We need to create a configuration dictionary for create_engine
-        # or directly pass the URL. For simplicity, we'll pass the URL.
-        # However, engine_from_config expects a dictionary-like section.
-        # A cleaner way is to update the config object if env var is present.
-        
-        # Create a new configuration dictionary for the engine
-        # or update the existing one from alembic.ini
-        configuration = config.get_section(config.config_ini_section, {})
-        configuration['sqlalchemy.url'] = db_url_from_env
-        
+    # Get the database URL from the environment variable first
+    db_url = os.getenv("DATABASE_URL")
+    
+    # If DATABASE_URL is not set, fall back to alembic.ini configuration
+    if db_url is None:
+        ini_section = config.get_section(config.config_ini_section, {})
+        # Ensure 'sqlalchemy.url' is present in the ini_section or handle its absence
+        if "sqlalchemy.url" not in ini_section:
+            raise ValueError("sqlalchemy.url not found in alembic.ini and DATABASE_URL environment variable is not set.")
         connectable = engine_from_config(
-            configuration,
+            ini_section,
             prefix="sqlalchemy.",
             poolclass=pool.NullPool,
         )
     else:
-        # Fallback to alembic.ini configuration if DATABASE_URL is not set
-        connectable = engine_from_config(
-            config.get_section(config.config_ini_section, {}),
-            prefix="sqlalchemy.",
-            poolclass=pool.NullPool,
-        )
+        # If DATABASE_URL is set, create engine configuration directly
+        # This assumes DATABASE_URL is a complete SQLAlchemy URL
+        from sqlalchemy import create_engine
+        connectable = create_engine(db_url)
 
     with connectable.connect() as connection:
         context.configure(

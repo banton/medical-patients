@@ -161,14 +161,19 @@ class Database:
     def get_job(self, job_id: str) -> Optional[Dict[str, Any]]:
         query = "SELECT * FROM jobs WHERE job_id = %s"
         row = self._execute_query(query, (job_id,), fetch_one=True)
-        if row is None: 
-            return None
-        job_data: Dict[str, Any] = dict(row) # Explicitly type job_data
-        job_data['config'] = json.loads(job_data['config']) if job_data.get('config') and isinstance(job_data['config'], str) else (job_data.get('config') or {})
-        job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') and isinstance(job_data['summary'], str) else (job_data.get('summary') or {})
-        job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') and isinstance(job_data['progress_details'], str) else (job_data.get('progress_details') or {})
-        job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') and isinstance(job_data['output_files'], str) else (job_data.get('output_files') or [])
-        job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') and isinstance(job_data['file_types'], str) else (job_data.get('file_types') or {})
+        if row is None: return None
+        job_data = dict(row)
+        for field_name, default_value in [
+            ('config', {}), ('summary', {}), ('progress_details', {}),
+            ('output_files', []), ('file_types', {})
+        ]:
+            if job_data.get(field_name) and isinstance(job_data[field_name], str):
+                try:
+                    job_data[field_name] = json.loads(job_data[field_name])
+                except json.JSONDecodeError:
+                    job_data[field_name] = default_value
+            elif not job_data.get(field_name): # Handles None or empty string if not already dict/list
+                job_data[field_name] = default_value
         return job_data
 
     def get_all_jobs(self, limit: Optional[int] = 50, status: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -186,18 +191,22 @@ class Database:
             params_list.append(limit)
         
         final_query = " ".join(query_parts)
-        # _execute_query with fetch_all=True returns List[DictRow]
-        rows: List[psycopg2.extras.DictRow] = self._execute_query(final_query, tuple(params_list), fetch_all=True)
-        
-        jobs: List[Dict[str, Any]] = []
-        if rows: # rows is a list, could be empty
-            for row_item in rows:
-                job_data: Dict[str, Any] = dict(row_item) # Explicitly type job_data
-                job_data['config'] = json.loads(job_data['config']) if job_data.get('config') and isinstance(job_data['config'], str) else (job_data.get('config') or {})
-                job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') and isinstance(job_data['summary'], str) else (job_data.get('summary') or {})
-                job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') and isinstance(job_data['progress_details'], str) else (job_data.get('progress_details') or {})
-                job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') and isinstance(job_data['output_files'], str) else (job_data.get('output_files') or [])
-                job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') and isinstance(job_data['file_types'], str) else (job_data.get('file_types') or {})
+        rows = self._execute_query(final_query, tuple(params_list), fetch_all=True)
+        jobs = []
+        if rows:
+            for row_item in rows: # Changed 'row' to 'row_item' to avoid conflict with outer scope 'row' in get_job
+                job_data = dict(row_item)
+                for field_name, default_value in [
+                    ('config', {}), ('summary', {}), ('progress_details', {}),
+                    ('output_files', []), ('file_types', {})
+                ]:
+                    if job_data.get(field_name) and isinstance(job_data[field_name], str):
+                        try:
+                            job_data[field_name] = json.loads(job_data[field_name])
+                        except json.JSONDecodeError:
+                            job_data[field_name] = default_value
+                    elif not job_data.get(field_name): # Handles None or empty string if not already dict/list
+                         job_data[field_name] = default_value
                 jobs.append(job_data)
         return jobs
 

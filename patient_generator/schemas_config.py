@@ -30,7 +30,7 @@ class FrontConfig(BaseModel):
 
         seen_nationalities = set()
         for item in v:
-            if not (0 <= item.percentage <= 100):
+            if not (0 <= item.percentage <= 100): # This check is somewhat redundant due to NationalityDistributionItem's Field
                 raise ValueError(f"Percentage for {item.nationality_code} must be between 0 and 100.")
             if item.nationality_code in seen_nationalities:
                 raise ValueError(f"Duplicate nationality_code '{item.nationality_code}' in distribution.")
@@ -171,12 +171,13 @@ class ConfigurationTemplateCreate(ConfigurationTemplateBase):
             raise ValueError("Injury distribution cannot be empty on creation.")
         return v
 
-class ConfigurationTemplateDB(ConfigurationTemplateBase):
-    """Model for representing a configuration template retrieved from the database."""
+class ConfigurationTemplateDB(ConfigurationTemplate): # Model for representing template from DB
     id: str = Field(..., description="Unique identifier for the saved configuration")
-    created_at: datetime = Field(..., description="Timestamp of creation")
-    updated_at: datetime = Field(..., description="Timestamp of last update")
-    # Other fields (name, description, front_configs, etc.) are inherited from ConfigurationTemplateBase.
+    # Override fields from parent. Since parent had default_factory, child must specify a default.
+    # Using default=... marks them as required, expecting values from DB.
+    created_at: datetime = Field(default=..., description="Timestamp of creation")
+    updated_at: datetime = Field(default=..., description="Timestamp of last update")
+    # version and parent_config_id are inherited from ConfigurationTemplate
 
     class Config:
         from_attributes = True # Pydantic V2

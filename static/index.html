@@ -9,8 +9,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         .hidden {
@@ -358,28 +356,7 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6>Nationality Distribution</h6>
-                            <div class="chart-container">
-                                <canvas id="nationality-chart-{job_id}"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Injury Types</h6>
-                            <div class="chart-container">
-                                <canvas id="injury-chart-{job_id}"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Final Status Distribution</h6>
-                            <div class="chart-container">
-                                <canvas id="status-chart-{job_id}"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <h6>Output Summary</h6>
                             <table class="table table-sm summary-table">
                                 <tbody id="job-output-summary-{job_id}">
@@ -406,9 +383,6 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Store chart objects
-            const charts = {};
-            
             // Form validation and submission
             const generatorForm = document.getElementById('generatorForm');
             const frontPercentInputs = document.querySelectorAll('.front-percent');
@@ -566,7 +540,7 @@
                             console.warn("Static fronts were indicated as active, but no data was returned from the API. Using a fallback front config to ensure validation passes.");
                             adHocFrontConfigs.push({
                                 id: "fallback_static_front_api_empty", name: "Fallback Static Front (API Empty)",
-                                nationality_distribution: { "USA": 100.0 },
+                                nationality_distribution: [{ nationality_code: "USA", percentage: 100.0 }], // Ensure list of items
                                 casualty_rate: 1.0
                             });
                         }
@@ -742,37 +716,7 @@
                 }, 1000); 
             }
             
-            function createChart(canvasId, type, labels, data, colors) {
-                const ctx = document.getElementById(canvasId).getContext('2d');
-                if (charts[canvasId]) {
-                    charts[canvasId].destroy();
-                }
-                charts[canvasId] = new Chart(ctx, {
-                    type: type,
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: colors || [
-                                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-                                '#5a5c69', '#858796', '#6f42c1', '#e83e8c', '#fd7e14'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                                labels: { font: { size: 10 } }
-                            }
-                        }
-                    }
-                });
-                return charts[canvasId];
-            }
-            
+            // Update job UI with latest data
             function updateJobUI(jobId, jobData) {
                 const jobCard = document.querySelector(`.job-card[id="job-${jobId}"]`);
                 if (!jobCard) return;
@@ -855,13 +799,6 @@
                     if (jobData.summary.rtd_count !== undefined) document.getElementById(`job-rtd-count-${jobId}`).textContent = jobData.summary.rtd_count;
                     if (jobData.summary.kia_count !== undefined) document.getElementById(`job-kia-count-${jobId}`).textContent = jobData.summary.kia_count;
                     
-                    if (jobData.summary.nationalities) createChart(`nationality-chart-${jobId}`, 'pie', Object.keys(jobData.summary.nationalities), Object.values(jobData.summary.nationalities));
-                    if (jobData.summary.injury_types) {
-                        const labels = Object.keys(jobData.summary.injury_types).map(k => ({'DISEASE':'Disease','NON_BATTLE':'Non-Battle','BATTLE_TRAUMA':'Battle Trauma'}[k]||k));
-                        createChart(`injury-chart-${jobId}`, 'pie', labels, Object.values(jobData.summary.injury_types), ['#36b9cc', '#1cc88a', '#e74a3b']);
-                    }
-                    if (jobData.summary.final_status) createChart(`status-chart-${jobId}`, 'pie', Object.keys(jobData.summary.final_status), Object.values(jobData.summary.final_status));
-                    
                     if (jobData.output_files && jobData.output_files.length > 0) {
                         const outputSummary = document.getElementById(`job-output-summary-${jobId}`);
                         let summaryHtml = '';
@@ -927,3 +864,38 @@
     </div>
 </body>
 </html>
+
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+<environment_details>
+# VSCode Visible Files
+.clinerules
+.clinerules
+.gitignore
+.gitignore
+static/index.html
+
+# VSCode Open Tabs
+.clinerules
+alembic_migrations/env.py
+memory-bank/active-context.md
+memory-bank/progress.md
+memory-bank/system-patterns.md
+memory-bank/tech-context.md
+package.json
+patient_generator/database.py
+patient_generator/schemas_config.py
+patient_generator/flow_simulator.py
+static/index.html
+
+# Current Time
+20/05/2025, 4:50:24 pm (America/Halifax, UTC-3:00)
+
+# Context Window Usage
+381,000 / 1,048.576K tokens used (36%)
+
+# Current Mode
+ACT MODE
+</environment_details>

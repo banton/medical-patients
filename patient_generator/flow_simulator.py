@@ -245,18 +245,22 @@ class PatientFlowSimulator:
                 selected_front_config_db = next((fc for fc in self.front_configs if fc['id'] == front_id), None)
                 
                 if selected_front_config_db:
-                    patient.front = selected_front_config_db.get("name", front_id)
-                    # DB nationality_distribution is Dict[str(iso_code), float(percentage 0-100)]
-                    current_front_nat_dist_db = selected_front_config_db.get("nationality_distribution", {})
-                    if current_front_nat_dist_db:
-                        # Filter for positive ratios before passing to _select_weighted_item
-                        valid_nat_dist_db = {iso: ratio for iso, ratio in current_front_nat_dist_db.items() if ratio > 0}
-                        if valid_nat_dist_db:
-                            patient.nationality = self._select_weighted_item(valid_nat_dist_db)
+                    patient.front = selected_front_config_db.get("name", front_id) # Use name if available
+                    # Nationality distribution from the selected front
+                    # It's now a List[Dict[str, Any]] like [{'nationality_code': 'USA', 'percentage': 100.0}]
+                    current_front_nat_dist_list = selected_front_config_db.get("nationality_distribution", [])
+                    if current_front_nat_dist_list:
+                        # Convert List[Dict] to Dict[str, float] for _select_weighted_item
+                        weights_for_selection: Dict[str, float] = {
+                            item['nationality_code']: item['percentage']
+                            for item in current_front_nat_dist_list if 'nationality_code' in item and 'percentage' in item and item['percentage'] > 0
+                        }
+                        if weights_for_selection:
+                            patient.nationality = self._select_weighted_item(weights_for_selection)
                         else:
-                            patient.nationality = "N/A_DBFrontHasNoValidNationRatios"
+                            patient.nationality = "N/A_DBFrontHasNoValidNationRatios" 
                     else:
-                        patient.nationality = "N/A_DBFrontHasNoNations"
+                        patient.nationality = "N/A_DBFrontHasNoNations" 
                 else: # Should not happen if front_id came from self.front_distribution keys
                     patient.front = "ErrorDBFront"
                     patient.nationality = "N/A"

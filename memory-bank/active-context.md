@@ -5,51 +5,29 @@
 The project has completed the primary implementation phases (0-3) for the new enhanced configurability architecture. This includes the migration to PostgreSQL, a new API layer, refactored core generation logic, an initial frontend configuration panel, and a Python SDK.
 
 The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**. This involves:
-1.  Addressing identified technical debt (security, frontend architecture, bundle sizes, Docker optimization).
+1.  Addressing identified technical debt (frontend architecture, bundle sizes, Docker optimization).
 2.  Expanding testing coverage (API integration, E2E tests).
-3.  Finalizing all user and technical documentation.
+3.  Finalizing all user and technical documentation (Current Task: 4.3.2).
 4.  Ensuring overall system stability and performance.
+5.  Implementing UI enhancements for static configurations (Task 4.4.1).
 
 ### Recent Changes
 
-(This section reflects work prior to the new architectural initiative. It will be updated as new phases progress.)
+**Completion of Phases 0-3 (Enhanced Configurability Architecture):**
+*   **Phase 0 (Foundation & Setup):** Established Git branching, migrated to PostgreSQL, integrated Alembic, and refactored the database layer.
+*   **Phase 1 (Backend Configuration Abstraction):** Implemented Pydantic models for configuration, designed the PostgreSQL schema for configurations, created `ConfigurationRepository`, `NationalityDataProvider`, `ConfigurationManager`, and refactored core generation logic (`PatientFlowSimulator`, `DemographicsGenerator`, `PatientGeneratorApp`) to be configuration-driven. Basic configuration versioning and default configuration concepts were introduced.
+*   **Phase 2 (API Enhancement):** Developed a versioned RESTful API (`/api/v1/`) with endpoints for CRUD operations on configurations, validation, patient generation (accepting `configuration_id`), job status, results, and reference data. Basic API security (API key) and rate limiting were implemented. OpenAPI documentation is auto-generated.
+*   **Phase 3 (Frontend Enhancement & SDK):** Created the `ConfigurationPanel.tsx` React component for advanced scenario configuration (integrated into `static/index.html`), including UI for managing fronts, facilities, and basic parameter impact previews. Developed a Python SDK (`patient_generator_sdk.py`) for programmatic API interaction.
 
-Significant recent development has focused on the enhanced visualization dashboard:
-
-1.  **Frontend Testing Setup**:
-    *   Configured Jest (with `ts-jest`) to test `.tsx` (React/TypeScript) components.
-    *   Installed necessary dev dependencies: `ts-jest`, `jest-environment-jsdom`, `@types/react-dom`, `@testing-library/react`, `@testing-library/jest-dom`.
-    *   Created `jest.config.js` and `tsconfig.json` to support the testing and TypeScript compilation.
-    *   Updated `setupTests.ts` to include mocks (e.g., `ResizeObserver`) needed for tests involving charting libraries.
-    *   Successfully ran and debugged tests for `enhanced-visualization-dashboard.test.tsx`, resolving `act()` warnings.
-2.  **Frontend Build Process**:
-    *   Installed `esbuild` as a frontend bundler.
-    *   Added a `build` script to `package.json` (`npm run build`) to compile `enhanced-visualization-dashboard.tsx` into `static/dist/bundle.js`.
-    *   Modified `enhanced-visualization-dashboard.tsx` to include its own ReactDOM rendering logic, making it a self-contained application entry point when bundled.
-3.  **HTML Integration**:
-    *   Updated `static/visualizations.html` to load the compiled `bundle.js` instead of attempting in-browser Babel transpilation. Removed CDN links for React, ReactDOM, Recharts, and Lucide-React as they are now part of the bundle.
-4.  **Backend API Fixes for Visualizations**:
-    *   Diagnosed and resolved 404 errors for `/api/visualizations/job-list` by guiding the user on backend server restarts (related to Docker environment).
-    *   Corrected the data format returned by the `/api/visualizations/job-list` endpoint in `app.py` to match frontend expectations.
-    *   Diagnosed and fixed a 500 Internal Server Error for `/api/visualizations/dashboard-data`. The root cause was a `TypeError` in `patient_generator/flow_simulator.py` due to inconsistent `datetime.date` vs `datetime.datetime` objects in `treatment_history`. This was resolved by ensuring all treatment dates are `datetime.datetime` objects.
-5.  **Previous Work (Context)**:
-    *   Development of unit tests for Python core components (e.g., `transform_job_data_for_visualization`).
-    *   Creation of Docker deployment documentation and testing of the dev Docker environment.
-6.  **Multiple Primary Conditions Implementation**:
-    *   Added `generate_multiple_conditions` method to `MedicalConditionGenerator` in `patient_generator/medical.py`.
-    *   Modified `_process_patient_batch` in `PatientGeneratorApp` (`patient_generator/app.py`) to use the new method for generating multiple primary conditions based on injury type and triage category.
-    *   Added `primary_conditions` list attribute to the `Patient` class in `patient_generator/patient.py`.
-    *   Updated `_create_medical_resources` in `FHIRBundleGenerator` (`patient_generator/fhir_generator.py`) to handle the `primary_conditions` list and maintain backward compatibility.
-7.  **Pylance Error Resolution (May 2025)**:
-    *   Addressed multiple Pylance static analysis errors in `patient_generator/database.py` by refining type hints (including `typing.overload`), ensuring correct handling of `Optional` types, and correcting attribute names for Pydantic models.
-    *   Added `requests` to `requirements.txt` to resolve import warnings in `patient_generator_sdk.py`.
-    *   Attempted to resolve persistent Pylance errors in `app.py` related to `None` type assignment in key functions for sorting; these may be linter-specific issues as the runtime logic appears sound.
-    *   Addressed Pylance errors in `patient_generator/formatter.py` concerning `dicttoxml` return types and "possibly unbound" cryptography components by clarifying type conversions and adding assertions.
-8.  **Developer Experience Improvement (May 16, 2025)**:
-    *   Consolidated frontend build commands in `package.json` under a new `build:all-frontend` script.
-    *   Created `start-dev.sh` script to automate frontend dependency installation, frontend asset building, Docker service startup (using `docker-compose.dev.yml`), and database migrations (Alembic).
-    *   Refined `start-dev.sh` to correctly identify the application service as `app` (not `backend`) and to wait for this service to report a "healthy" state (based on its Docker healthcheck) before attempting database migrations. This further improves the reliability of the startup process.
-    *   Updated `alembic_migrations/env.py` to prioritize the `DATABASE_URL` environment variable (which uses the Docker service name `db`) over the `alembic.ini` configuration when running inside Docker. This resolves `localhost` connection errors during migrations executed by `start-dev.sh`.
+**Specific Phase 4 Completions (Committed May 20, 2025):**
+1.  **Security Fix (Task 4.1.1):** Implemented unique salt generation using PBKDF2 for encryption in `formatter.py`, enhancing security.
+2.  **UI Update - Nationality Distribution (Task 4.1.5):** Modified `FrontEditor.tsx` (within `ConfigurationPanel.tsx`) to use an ordered list of dropdowns for nationality distribution per front, improving usability and data structure. Backend Pydantic schemas and an Alembic migration marker were updated accordingly.
+3.  **UI Update - Injury Distribution & Error Handling (Task 4.1.6):** Reverted injury distribution input in `ConfigurationPanel.tsx` to three fixed categories ("Battle Injury", "Disease", "Non-Battle Injury") based on user feedback. Backend Pydantic schemas were updated. Basic API error display in the panel remains.
+4.  **Database Fix - Configuration Versioning (Task 4.1.7):** Corrected `parent_config_id` (was `parent_id`) usage in `patient_generator/database.py` SQL queries to ensure accurate linking for configuration versioning, following the successful application of Alembic migration `2b84a220e9ac` (which added `version` and `parent_config_id` columns).
+5.  **Developer Experience Improvement (Prior to current commit, May 16, 2025):**
+    *   Consolidated frontend build commands in `package.json` (`build:all-frontend`).
+    *   Created `start-dev.sh` script for automated dev environment setup (npm install, frontend build, Docker services, DB migrations with health checks).
+    *   Updated `alembic_migrations/env.py` for robust Docker DB connections.
 
 ### Next Steps
 
@@ -78,18 +56,18 @@ The project will follow a phased approach to implement the enhanced configurabil
     *   Task 1.1.2: Design PostgreSQL Schema & Create Alembic Migrations (Completed)
     *   Task 1.1.3: Implement `ConfigurationRepository` (Completed)
 *   **Epic 1.2: NATO Nations Data Repository (Completed)**
-    *   Task 1.2.1: Collate NATO Nations Data (Completed - User Provided)
+    *   Task 1.2.1: Collate NATO Nations Data (User Provided) (Completed)
     *   Task 1.2.2: Implement `NationalityDataProvider` (Completed)
 *   **Epic 1.3: Refactor Core Generation Logic (Completed)**
     *   Task 1.3.1: Create `ConfigurationManager` (Completed)
     *   Task 1.3.2: Refactor `PatientFlowSimulator` (Completed)
     *   Task 1.3.3: Refactor `DemographicsGenerator` (Completed)
-    *   Task 1.3.4: Refactor `MedicalConditionGenerator` (Completed - No changes needed at this stage)
+    *   Task 1.3.4: Refactor `MedicalConditionGenerator` (No changes needed at this stage) (Completed)
     *   Task 1.3.5: Update `patient_generator.app.PatientGeneratorApp` & FastAPI `app.py` (Completed)
     *   Task 1.3.6: Address Memory Management (Initial improvements made, further optimization in Phase 4) (Completed for Phase 1 scope)
 *   **Epic 1.4: Configuration Versioning & Default/Backward Compatibility (Completed)**
-    *   Task 1.4.1: Add Versioning to `ConfigurationTemplate` (Completed)
-    *   Task 1.4.2: Implement Default Configuration (Design completed, seeding is separate) (Completed for Phase 1 scope)
+    *   Task 1.4.1: Add Versioning to `ConfigurationTemplate` (DB migration `2b84a220e9ac` applied) (Completed)
+    *   Task 1.4.2: Implement Default Configuration (Design completed, seeding separate) (Completed for Phase 1 scope)
 
 ---
 
@@ -101,13 +79,13 @@ The project will follow a phased approach to implement the enhanced configurabil
 *   **Epic 2.2: Generation API Endpoints (Completed)**
     *   Task 2.2.1: Implement FastAPI Router and Models (Completed as part of main app.py refactor)
     *   Task 2.2.2: Implement `POST /api/generate/` Endpoint (Completed)
-    *   Task 2.2.3: Implement Job Status & Download Endpoints (Completed - existing adapted, new /results added)
+    *   Task 2.2.3: Implement Job Status & Download Endpoints (Existing adapted, new `/results` added) (Completed)
 *   **Epic 2.3: Reference Data API Endpoints (Completed)**
     *   Task 2.3.1: Implement Endpoints for nationalities, condition types (Completed)
 *   **Epic 2.4: API Security & Documentation (Completed)**
-    *   Task 2.4.1: Implement API Authentication (Basic API Key - Completed)
-    *   Task 2.4.2: Implement Rate Limiting (Basic global - Completed)
-    *   Task 2.4.3: Generate/Enhance OpenAPI/Swagger Documentation (Completed - via FastAPI auto-docs)
+    *   Task 2.4.1: Implement API Authentication (Basic API Key) (Completed)
+    *   Task 2.4.2: Implement Rate Limiting (Basic global) (Completed)
+    *   Task 2.4.3: Generate/Enhance OpenAPI/Swagger Documentation (Via FastAPI auto-docs) (Completed)
 
 ---
 
@@ -117,15 +95,15 @@ The project will follow a phased approach to implement the enhanced configurabil
     *   Task 3.1.2: Fetch and Display Saved Configurations (Completed)
     *   Task 3.1.3: Implement Front Management UI (Completed)
     *   Task 3.1.4: Implement Facility Management UI (Completed)
-    *   Task 3.1.5: Implement Nationality Configuration UI (Completed - part of FrontEditor)
+    *   Task 3.1.5: Implement Nationality Configuration UI (Part of FrontEditor, ordered list dropdowns) (Completed)
     *   Task 3.1.6: Implement Save/Load/Apply Configuration Logic (Save/Load completed)
-    *   Task 3.1.7: Implement Parameter Impact Preview (Basic textual - Completed)
+    *   Task 3.1.7: Implement Parameter Impact Preview (Basic textual) (Completed)
     *   Task 3.1.8: Integrate Configuration Modal into `static/index.html` (Completed)
 *   **Epic 3.2: Python SDK Development (Completed)**
     *   Task 3.2.1: Implement `PatientGeneratorClient` Class structure (Completed)
     *   Task 3.2.2: Implement SDK Methods for Configuration API (Completed)
     *   Task 3.2.3: Implement SDK Methods for Generation API (Completed)
-    *   Task 3.2.4: Add Examples and Documentation for SDK (Basic example in file - Completed)
+    *   Task 3.2.4: Add Examples and Documentation for SDK (Basic example in file) (Completed)
 
 ---
 
@@ -141,8 +119,11 @@ The project will follow a phased approach to implement the enhanced configurabil
                 3.  This might involve creating smaller, reusable React chart components (using Recharts, as in `enhanced-visualization-dashboard.tsx`) that can be embedded or linked from `index.html`, or adapting `index.html` to redirect/load the `ExerciseDashboard` for viewing results.
                 4.  Ensure the main generation flow from `static/index.html` (if still intended to be used independently of the advanced config panel for some default scenario) can display its results using the consolidated React-based visualization components.
                 5.  Update any relevant API endpoints if data fetching for these consolidated components needs to change.
+        *   **Status:** Pending.
     *   Task 4.1.3: Frontend Bundle Size Optimization (externalize libraries/code splitting).
+        *   **Status:** Pending.
     *   Task 4.1.4: Docker Optimization (Multi-stage builds).
+        *   **Status:** Pending.
     *   Task 4.1.5: UI Refinement - Nationality Distribution in Front Editor. (Completed)
         *   **Description:** Modified `FrontEditor.tsx` and `ConfigurationPanel.tsx` to change nationality input from a dictionary to an ordered list of dropdowns. Ensured at least one nationality is always present. Updated backend Pydantic schemas (`schemas_config.py`) and added an Alembic migration marker.
     *   Task 4.1.6: UI Refinement - Injury Distribution and Error Handling. (Completed - Reverted to simpler model)
@@ -151,14 +132,18 @@ The project will follow a phased approach to implement the enhanced configurabil
         *   **Description:** After user resolved Alembic "multiple heads" issue, the migration `2b84a220e9ac_add_version_and_parent_to_config_template.py` (adding `version` and `parent_config_id` columns to `configuration_templates` table) was successfully applied via `start-dev.sh`. `ConfigurationPanel.tsx` already handles sending these fields. A subsequent bug was fixed where `patient_generator/database.py` was using `parent_id` instead of `parent_config_id` in SQL queries.
 *   **Epic 4.2: Testing Expansion**
     *   Task 4.2.1: API Integration Tests.
+        *   **Status:** Pending.
     *   Task 4.2.2: End-to-End Tests (Consider Selenium/Playwright).
+        *   **Status:** Pending.
 *   **Epic 4.3: Documentation Finalization**
     *   Task 4.3.1: Update User Guides for new features.
-    *   Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs).
+        *   **Status:** Pending.
+    *   Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK). (Current Task)
 *   **Epic 4.4: UI Enhancements for Static Configurations**
     *   Task 4.4.1: UI for Static Fronts Configuration.
         *   **Objective:** Create a UI section within the advanced configuration panel (`ConfigurationPanel.tsx`) to allow users to view and eventually edit the parameters currently defined in `patient_generator/fronts_config.json`.
         *   **Description:** This UI will initially display the values from `fronts_config.json` (front names, ratios, nations, nation ratios). Future iterations will allow editing these values and saving them back (potentially to the same JSON file or to a new DB-backed model if the static file approach is temporary). For now, the focus is on making these parameters visible and understandable within the existing configuration UI. This task is a precursor to potentially making these front definitions fully dynamic and DB-driven, but starts with managing the static JSON.
+        *   **Status:** Pending.
 
 ### Active Decisions
 

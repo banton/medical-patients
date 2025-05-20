@@ -12,10 +12,10 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - Used for all data generation, processing, and API logic
 
 2. **JavaScript/TypeScript (TSX)**: Frontend interactivity and component development.
-   - `enhanced-visualization-dashboard.tsx` is written in TSX (TypeScript + JSX).
-   - AJAX for asynchronous communication with backend.
-   - DOM manipulation for dynamic UI updates.
-   - Chart rendering and form validation.
+   - React components like `enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, and `MilitaryMedicalDashboard.tsx` are written in TSX (TypeScript + JSX).
+   - Asynchronous communication with the backend API (e.g., using `fetch`).
+   - DOM manipulation for dynamic UI updates, largely managed by React.
+   - Advanced charting, complex form interactions, and state management within React components.
 
 3. **HTML/CSS**: Frontend structure and styling
    - Bootstrap 5 framework for responsive design
@@ -51,22 +51,26 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - Data validation
    - Configuration management
 
-7. **Additional Utilities**:
-   - `aiofiles`: Async file operations
-   - `python-multipart`: Form data handling
-   - `psutil`: System resource monitoring
-   - **`psycopg2-binary`**: PostgreSQL adapter for Python (will be added to `requirements.txt`).
-   - **`alembic`**: Database migration tool (will be added to `requirements.txt`).
-   - `sqlalchemy`: Often used with Alembic and for ORM capabilities with PostgreSQL (may be added).
+7. **Database & Migration**:
+   - **`psycopg2-binary`**: PostgreSQL adapter for Python.
+   - **`alembic`**: Database migration tool for managing PostgreSQL schema changes.
+   - **`SQLAlchemy`**: Core ORM and SQL toolkit, often used with Alembic and for interacting with PostgreSQL (used for model definitions in `models_db.py` and by Alembic).
+8. **API Interaction**:
+    - **`requests`**: HTTP library, used by the Python SDK (`patient_generator_sdk.py`).
+9. **Additional Utilities**:
+   - `aiofiles`: Async file operations.
+   - `python-multipart`: Form data handling.
+   - `psutil`: System resource monitoring.
 
 #### Frontend
 
-1.  **React (19.1.0+)**: For building the user interface, specifically the enhanced visualization dashboard.
+1.  **React (19.1.0+)**: Core library for building user interfaces, used for `enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, `MilitaryMedicalDashboard.tsx`, and their sub-components (e.g., `FrontEditor.tsx`, `FacilityEditor.tsx`).
 2.  **Recharts (2.15.3+)**: Used for rendering complex charts in the enhanced visualization dashboard.
 3.  **Lucide-React (0.510.0+)**: For icons within the React components.
 4.  **Bootstrap (5.3.0+)**: Used for overall styling and layout, loaded via CDN in HTML.
 5.  **FontAwesome (6.4.0+)**: Used for iconography, loaded via CDN in HTML.
 6.  **Testing Library (`@testing-library/react`, `@testing-library/jest-dom`)**: For testing React components.
+7.  **Chart.js**: (No longer directly used in `static/index.html`; comprehensive visualizations are in `enhanced-visualization-dashboard.tsx` using Recharts).
 
 ### Development Environment
 
@@ -74,43 +78,51 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - Python 3.8 or higher
    - Pip (Python package installer)
    - **PostgreSQL**: Database server.
-   - **Alembic**: For managing database schema migrations.
+   - **Alembic**: CLI tool for managing database schema migrations.
    - Node.js and npm (for frontend dependencies, testing, and building)
    - Git (for version control)
    - Virtual environment tool for Python (venv, conda, etc.)
-   - `esbuild` (for building the frontend dashboard component)
+   - `esbuild` (for building frontend React components).
+   - Docker and Docker Compose (for containerized development environment).
 
 2. **Setup Process**:
-   - **Backend**:
-     - Create and activate Python virtual environment.
-     - Install Python dependencies: `pip install -r requirements.txt`.
-     - Install package in development mode: `pip install -e .` (if applicable).
-   - **Frontend (for enhanced visualization dashboard)**:
+   - **Backend & Database**:
+     - Primarily managed via Docker Compose (`docker-compose.dev.yml`).
+     - `requirements.txt` lists Python dependencies.
+     - Alembic (`alembic.ini`, `alembic_migrations/`) manages DB schema.
+   - **Frontend**:
+     - `package.json` manages Node.js dependencies and build scripts.
      - Install Node.js dependencies: `npm install`.
-     - Build the dashboard component: `npm run build:viz-dashboard`. (Note: `npm run build` was the old command for only this component).
-     - To build all frontend components (visualization dashboard, configuration panel, military dashboard), use: `npm run build:all-frontend`.
+     - Build all frontend components: `npm run build:all-frontend`.
+     - Individual components can be built using:
+        - `npm run build:viz-dashboard`
+        - `npm run build:config-panel`
+        - `npm run build:military-dashboard`
 
 3. **Running the Development Environment**:
    - A convenience script `start-dev.sh` is provided to automate the setup:
      - Installs/updates frontend dependencies (`npm install`).
      - Builds all frontend assets (`npm run build:all-frontend`).
-     - Starts Docker services using `docker-compose.dev.yml` (`docker compose -f docker-compose.dev.yml up --build -d`).
+     - Starts Docker services using `docker-compose.dev.yml` (`docker compose -f docker-compose.dev.yml up --build -d`). This includes the FastAPI application (`app` service) and PostgreSQL (`db` service).
      - Waits for the `app` service (the FastAPI backend) to report as "healthy" (leveraging its defined healthcheck) before proceeding.
      - Applies database migrations (`docker compose -f docker-compose.dev.yml exec app alembic upgrade head`). The `alembic_migrations/env.py` script has been updated to prioritize the `DATABASE_URL` environment variable (pointing to the `db` service) when running inside Docker, resolving potential connection issues.
    - To run: `./start-dev.sh` (ensure it's executable: `chmod +x start-dev.sh`).
    - This script simplifies starting the application, database, and ensuring frontend assets are built, and includes a robust wait mechanism for service readiness before running migrations.
+   - Backend (FastAPI) accessible at: `http://localhost:8000` (or as mapped by Docker).
+   - Main UI: `http://localhost:8000/static/index.html`.
 
 4. **Testing**:
-   - **Backend**: Python's `unittest` framework. Run with `python -m unittest tests.py` (or similar).
+   - **Backend**: Python's `unittest` framework. Run with `python -m unittest tests.py` (or similar, potentially executed within the Docker container).
    - **Frontend**: Jest with `ts-jest` for `.tsx` files. Run with `npm test`.
      - Configuration files: `jest.config.js`, `tsconfig.json`, `setupTests.ts`.
 
 ### Deployment Options
 
-1. **Local Development Server (using `start-dev.sh`)**:
+1. **Local Development Server (using `start-dev.sh` & Docker)**:
    - The `start-dev.sh` script handles starting the Dockerized environment.
-   - Backend (FastAPI) accessible at: `http://localhost:8000`
-   - Main UI: `http://localhost:8000/static/index.html`
+   - FastAPI application and PostgreSQL database run in Docker containers.
+   - Backend (FastAPI) accessible at: `http://localhost:8000` (or configured port).
+   - Main UI: `http://localhost:8000/static/index.html`.
    - For manual server start (without Docker, if Python environment and DB are set up separately):
      - Ensure frontend assets are built (`npm run build:all-frontend`).
      - Run backend: `uvicorn app:app --reload` (or `python app.py` if it uses Uvicorn internally).
@@ -129,14 +141,14 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 2. **Security Considerations**:
    - CORS configuration in FastAPI
    - Temporary file handling
-   - Encryption password management (fixed salt identified as a vulnerability).
-   - Potential for SQL injection in database queries if not consistently parameterized (applies to PostgreSQL as well).
+   - Encryption password management (fixed salt vulnerability has been addressed with unique salts per encryption using PBKDF2).
+   - Potential for SQL injection in database queries if not consistently parameterized (applies to PostgreSQL).
 
 3. **Performance Factors**:
-   - **Memory Management**: Critical for large patient generation (both backend Python processes and FHIR bundle creation). In-memory storage of patient data and job data needs optimization.
+   - **Memory Management**: Critical for large patient generation. Addressed in part by Phase 1 refactoring, but ongoing vigilance needed.
    - **Background Task Management**: Efficient handling of long-running generation jobs.
-   - **Frontend Bundle Size**: The `enhanced-visualization-dashboard.tsx` bundle (`static/dist/bundle.js`) size is a concern (~2.1MB) and needs optimization (e.g., externalizing libraries, code splitting).
-   - **Database Performance**: Query optimization and connection pooling for **PostgreSQL**.
+   - **Frontend Bundle Sizes**: Bundles for `enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, and `MilitaryMedicalDashboard.tsx` need monitoring and potential optimization (e.g., code splitting, externalizing libraries).
+   - **Database Performance**: Query optimization and efficient connection pooling for PostgreSQL.
    - **Error Handling**: Inconsistent error handling can impact perceived performance and reliability.
    - **File Size Considerations**: For downloads, especially with multiple formats and large patient counts.
 
@@ -147,18 +159,20 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 The `requirements.txt` will need to be updated to include `psycopg2-binary` and `alembic`. `sqlalchemy` might also be added.
 Current (example, will change):
 ```
-fastapi==0.100.0
-uvicorn==0.22.0
-python-multipart==0.0.6
-pydantic>=2.0.0
-cryptography==41.0.1
-faker==18.10.1
-dicttoxml==1.7.16
-aiofiles==23.1.0
+fastapi>=0.100.0
+uvicorn>=0.22.0
+python-multipart>=0.0.6
+pydantic>=2.0.0 # Crucial for API models and configuration schemas
+cryptography>=41.0.1
+faker>=18.10.1
+dicttoxml>=1.7.16
+aiofiles>=23.1.0
 psutil>=7.0.0
-# psycopg2-binary (to be added)
-# alembic (to be added)
-# sqlalchemy (potentially to be added)
+psycopg2-binary # PostgreSQL adapter
+alembic # Database migrations
+sqlalchemy # ORM and SQL toolkit, used with Alembic and models
+requests # For Python SDK HTTP calls
+# Other specific versions as per requirements.txt
 ```
 
 #### Frontend Dependencies (npm packages from `package.json`)
@@ -182,37 +196,57 @@ Bootstrap and FontAwesome are still loaded via CDN in `visualizations.html` and 
 
 ```
 military-patient-generator/
-├── app.py                                # Main FastAPI application
-├── requirements.txt                    # Python dependencies
-├── package.json                        # Frontend Node.js dependencies & scripts (includes `build:all-frontend`)
-├── package-lock.json                 # Frontend dependency lock file
-├── start-dev.sh                        # Development environment startup script
+├── .clinerules                         # Cline's project intelligence
+├── .dockerignore                       # Specifies files to ignore for Docker builds
+├── .gitignore                          # Specifies intentionally untracked files for Git
+├── alembic.ini                         # Configuration file for Alembic
+├── app.py                              # Main FastAPI application entry point
+├── ConfigurationPanel.tsx              # React component for advanced configuration UI
+├── FacilityEditor.tsx                  # React sub-component for facility editing
+├── FrontEditor.tsx                     # React sub-component for front editing
+├── MilitaryMedicalDashboard.tsx        # React component for a specialized dashboard
+├── Dockerfile                          # Instructions for building the application Docker image
+├── docker-compose.*.yml                # Docker Compose files for different environments
+├── enhanced-visualization-dashboard.tsx  # React component for general visualizations
+├── enhanced-visualization-dashboard.test.tsx # Tests for visualization dashboard
 ├── jest.config.js                      # Jest test runner configuration
-├── tsconfig.json                       # TypeScript configuration
+├── package.json                        # Frontend Node.js dependencies & scripts
+├── package-lock.json                   # Frontend dependency lock file
+├── patient_generator_sdk.py            # Python SDK for interacting with the API
+├── README.md                           # Main project README
+├── requirements.txt                    # Python dependencies
+├── setup.py                            # Python package setup (for `patient_generator` module)
 ├── setupTests.ts                       # Jest setup file (e.g., for mocks)
-├── enhanced-visualization-dashboard.tsx  # React TSX component for advanced visualizations
-├── enhanced-visualization-dashboard.test.tsx # Jest tests for the TSX component
-├── setup.py                            # Python package setup
-├── tests.py                            # Python unit tests
-├── demo.py                             # Demonstration script
-├── static/                             # Static web files
-│   ├── index.html                    # Main HTML page for generator
-│   ├── visualizations.html           # HTML page for advanced visualizations
-│   └── dist/
-│       └── bundle.js                 # Compiled JavaScript for enhanced dashboard
-│   └── js/
-│       └── visualization-dashboard.js # Older JS dashboard (if still used)
+├── start-dev.sh                        # Script to start the development environment
+├── tests.py                            # Python backend unit tests
+├── tsconfig.json                       # TypeScript configuration
 │
-├── patient_generator/                  # Core Python generation modules
+├── alembic_migrations/                 # Alembic migration scripts
+│   ├── versions/                       # Individual migration files
+│   ├── env.py                          # Alembic environment setup
+│   └── script.py.mako                  # Alembic script template
+│
+├── patient_generator/                  # Core Python patient generation module
 │   ├── __init__.py
-│   ├── app.py                          # PatientGeneratorApp
-│   ├── database.py                     # Database interaction (migrating to PostgreSQL)
-│   ├── patient.py                      # Patient class
-│   ├── flow_simulator.py               # Patient flow simulator
+│   ├── app.py                          # Contains PatientGeneratorApp class (distinct from root app.py)
+│   ├── config_manager.py               # Manages loading and providing configurations
+│   ├── database.py                     # Database interaction logic (PostgreSQL, ConfigurationRepository)
 │   ├── demographics.py                 # Demographics generator
-│   ├── medical.py                      # Medical condition generator
 │   ├── fhir_generator.py               # FHIR bundle generator
-│   └── formatter.py                    # Output formatter
+│   ├── flow_simulator.py               # Patient flow simulator
+│   ├── formatter.py                    # Output formatter
+│   ├── medical.py                      # Medical condition generator
+│   ├── models_db.py                    # SQLAlchemy database models
+│   ├── patient.py                      # Patient class
+│   └── schemas_config.py               # Pydantic schemas for configuration objects
+│
+├── static/                             # Static web files served by FastAPI
+│   ├── index.html                      # Main HTML page for generator (hosts ConfigurationPanel)
+│   ├── visualizations.html             # HTML page for enhanced visualization dashboard
+│   └── dist/                           # Compiled frontend JavaScript bundles
+│       ├── bundle.js                   # For enhanced-visualization-dashboard.tsx
+│       ├── configuration-panel.js      # For ConfigurationPanel.tsx
+│       └── military-dashboard.js       # For MilitaryMedicalDashboard.tsx (if applicable)
 │
 └── node_modules/                       # Frontend Node.js packages (usually in .gitignore)
 ```
