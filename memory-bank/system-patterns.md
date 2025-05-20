@@ -29,9 +29,11 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
    - Configurable through a central application class (`PatientGeneratorApp`)
    - Component-based design with specialized generators
 
-4. **Database Layer**:
-    - SQLite for job persistence (`patient_generator/database.py`).
-    - Singleton pattern for database connection management.
+4. **Database Layer (Migrating to PostgreSQL)**:
+    - **PostgreSQL**: The backend database for job persistence and storing configurations (e.g., fronts, nationalities, medical flows).
+    - **Alembic**: Used for database schema migrations to manage changes to the PostgreSQL database structure.
+    - **`patient_generator/database.py`**: Module responsible for database interactions, being refactored to work with PostgreSQL (e.g., using `psycopg2-binary`) and implement connection pooling.
+    - Singleton pattern may still be used for managing the database engine or connection pool.
 
 5. **Output Handling**:
    - Multiple format support (JSON, XML)
@@ -157,10 +159,10 @@ Based on a recent technical review, the following areas have been identified for
     *   Uneven test coverage, particularly for some frontend components and API integration aspects.
     *   Need for expanded unit, integration, and potentially end-to-end tests.
 
-6.  **Database Implementation**:
-    *   Limited connection pooling.
-    *   Potential for SQL injection if queries are not consistently parameterized.
-    *   Lack of a migration management system for schema changes.
+6.  **Database Implementation (Being Addressed by New Architecture)**:
+    *   Previous limitations with SQLite (connection pooling, migration management) are being addressed by migrating to **PostgreSQL** and using **Alembic** for schema migrations.
+    *   The refactor of `patient_generator/database.py` aims to implement robust connection pooling for PostgreSQL.
+    *   Parameterized queries remain essential to prevent SQL injection.
 
 7.  **Docker Optimization**:
     *   Container images could be large due to unnecessary dependencies.

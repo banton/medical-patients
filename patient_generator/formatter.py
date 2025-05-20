@@ -8,17 +8,27 @@ import atexit
 import shutil
 import logging
 from xml.dom.minidom import parseString
+from typing import Union # Added Union
 import dicttoxml
 
 try:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
 
 class OutputFormatter:
     """Formats FHIR bundles for output with memory optimization for large datasets"""
+
+    # Constants for KDF and Encryption
+    KDF_SALT_SIZE = 16  # bytes
+    KDF_ITERATIONS = 600000  # OWASP recommendation for PBKDF2-HMAC-SHA256
+    AES_KEY_SIZE = 32  # bytes for AES-256
+    GCM_IV_SIZE = 16   # bytes for GCM IV
+    # GCM tag is typically 16 bytes (128 bits)
     
     def __init__(self):
         self.nfc_mime_types = {
@@ -88,25 +98,50 @@ class OutputFormatter:
             
             for bundle in bundles:
                 # Convert each bundle to XML
-                bundle_xml = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                bundle_xml_output = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                bundle_xml_str: str
+                if isinstance(bundle_xml_output, bytes):
+                    bundle_xml_str = bundle_xml_output.decode('utf-8')
+                elif isinstance(bundle_xml_output, str): # Should ideally be LiteralString if Pylance is right
+                    bundle_xml_str = bundle_xml_output
+                else:
+                    # Fallback or error if type is unexpected
+                    self.logger.error(f"Unexpected type from dicttoxml: {type(bundle_xml_output)}")
+                    bundle_xml_str = str(bundle_xml_output) # Best effort
+                
                 # Write directly to stream
-                stream.write(bundle_xml.decode('utf-8'))
+                stream.write(bundle_xml_str)
                 stream.write('\n')
             
             stream.write('</PatientBundles>')
             return None
         else:
             # Standard approach for small datasets
-            xml_data = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
+            xml_data_output = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
+            xml_data_to_parse: Union[str, bytes]
             
+            if isinstance(xml_data_output, bytes):
+                xml_data_to_parse = xml_data_output
+            elif isinstance(xml_data_output, str):
+                xml_data_to_parse = xml_data_output
+            else:
+                self.logger.error(f"Unexpected type from dicttoxml (custom_root): {type(xml_data_output)}")
+                # Fallback: try to convert to string, then encode if parseString needs bytes
+                xml_data_to_parse = str(xml_data_output).encode('utf-8')
+
+
             # Format XML for better readability
             try:
-                dom = parseString(xml_data)
-                pretty_xml = dom.toprettyxml()
+                # parseString can take bytes or str.
+                dom = parseString(xml_data_to_parse) 
+                pretty_xml: str = dom.toprettyxml()
                 return pretty_xml
             except Exception as e:
                 print(f"Warning: XML pretty formatting failed: {e}")
-                return xml_data.decode('utf-8')
+                # If parsing failed, return the original data, decoded if it was bytes
+                if isinstance(xml_data_to_parse, bytes):
+                    return xml_data_to_parse.decode('utf-8')
+                return xml_data_to_parse # It's already a string
     
     def compress_gzip(self, data):
         """Compress data using gzip"""
@@ -125,45 +160,69 @@ class OutputFormatter:
                     break
                 gzip_out.write(chunk)
     
-    def encrypt_aes(self, data, key):
-        """Encrypt data using AES-256-GCM"""
-        if not CRYPTO_AVAILABLE:
+    def encrypt_aes(self, data, password):
+        """
+        Encrypt data using AES-256-GCM with a key derived from password.
+        The password is used to derive an AES key using PBKDF2.
+        A random salt is generated for PBKDF2 and prepended to the output.
+        A random IV is generated for GCM and prepended to the output.
+        Output format: kdf_salt (16B) + gcm_iv (16B) + gcm_tag (16B) + ciphertext
+        """
+        assert CRYPTO_AVAILABLE, "Cryptography package is required for encryption but not found."
+        if not CRYPTO_AVAILABLE: # This check is redundant due to assert but good for logical flow if assert is disabled
             raise ImportError("Cryptography package is required for encryption")
             
         if isinstance(data, str):
             data = data.encode('utf-8')
-            
-        # Generate a random 16-byte initialization vector
-        iv = os.urandom(16)
         
-        # Create an encryptor object
+        if not isinstance(password, str):
+            raise TypeError("Password must be a string.")
+
+        # 1. Generate KDF salt
+        kdf_salt = os.urandom(self.KDF_SALT_SIZE)
+
+        # 2. Derive AES key using PBKDF2HMAC
+        pbkdf2 = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=self.AES_KEY_SIZE,
+            salt=kdf_salt,
+            iterations=self.KDF_ITERATIONS,
+            backend=default_backend()
+        )
+        aes_key = pbkdf2.derive(password.encode('utf-8'))
+
+        # 3. Generate a random GCM initialization vector (IV)
+        gcm_iv = os.urandom(self.GCM_IV_SIZE)
+        
+        # 4. Create an encryptor object
         cipher = Cipher(
-            algorithms.AES(key),
-            modes.GCM(iv),
+            algorithms.AES(aes_key),
+            modes.GCM(gcm_iv), # GCM tag is typically 16 bytes
             backend=default_backend()
         )
         encryptor = cipher.encryptor()
         
-        # Encrypt the data
+        # 5. Encrypt the data
         ciphertext = encryptor.update(data) + encryptor.finalize()
         
-        # Get the tag (MAC)
-        tag = encryptor.tag
+        # 6. Get the GCM tag (MAC)
+        gcm_tag = encryptor.tag # This is typically 16 bytes for AES-GCM
         
-        # Return IV + tag + ciphertext
-        return iv + tag + ciphertext
+        # 7. Return kdf_salt + gcm_iv + gcm_tag + ciphertext
+        return kdf_salt + gcm_iv + gcm_tag + ciphertext
     
-    def encrypt_stream(self, input_stream, output_stream, key):
-        """Encrypt data from one stream to another using AES-256-GCM"""
-        if not CRYPTO_AVAILABLE:
+    def encrypt_stream(self, input_stream, output_stream, password):
+        """Encrypt data from one stream to another using AES-256-GCM with key derivation."""
+        assert CRYPTO_AVAILABLE, "Cryptography package is required for encryption but not found."
+        if not CRYPTO_AVAILABLE: # Redundant with assert, but explicit
             raise ImportError("Cryptography package is required for encryption")
 
         # Read input data into memory - GCM mode requires entire data
         # This is a limitation of the GCM mode which doesn't support streaming
         data = input_stream.read()
         
-        # Encrypt using regular method
-        encrypted_data = self.encrypt_aes(data, key)
+        # Encrypt using regular method (which now handles key derivation)
+        encrypted_data = self.encrypt_aes(data, password)
         
         # Write to output stream
         output_stream.write(encrypted_data)
@@ -190,7 +249,7 @@ class OutputFormatter:
         return ndef_message
     
     def create_output_files(self, bundles, output_dir, formats=None, use_compression=True, 
-                          use_encryption=False, encryption_key=None, is_chunk=False, chunk_index=0):
+                          use_encryption=False, encryption_password=None, is_chunk=False, chunk_index=0):
         """Create all required output files with streaming options for large datasets"""
         if formats is None:
             formats = ["json", "xml"]
@@ -218,8 +277,12 @@ class OutputFormatter:
                 else:
                     # Small dataset, use in-memory processing
                     json_data = self.format_json(bundles)
-                    with open(json_path, "w") as f:
-                        f.write(json_data)
+                    if isinstance(json_data, str):
+                        with open(json_path, "w") as f:
+                            f.write(json_data)
+                    else:
+                        # This case should ideally not be reached if len(bundles) <= 1000
+                        self.logger.warning("json_data was not a string for small dataset JSON processing.")
                     
             output_files.append(json_path)
             
@@ -231,7 +294,7 @@ class OutputFormatter:
                     gzip_json_path = os.path.join(output_dir, "patients.json.gz")
                 
                 # Use streaming compression for large datasets
-                if len(bundles) > 1000:
+                if len(bundles) > 1000 or is_chunk: # Apply streaming for chunks too
                     with open(json_path, "rb") as f_in, open(gzip_json_path, "wb") as f_out:
                         self.compress_stream(f_in, f_out)
                 else:
@@ -245,7 +308,7 @@ class OutputFormatter:
                 output_files.append(gzip_json_path)
             
             # Encrypted JSON
-            if use_encryption and encryption_key:
+            if use_encryption and encryption_password:
                 if is_chunk:
                     encrypted_json_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.json.enc")
                 else:
@@ -253,7 +316,7 @@ class OutputFormatter:
                 
                 # Use streaming encryption for large datasets
                 with open(json_path, "rb") as f_in, open(encrypted_json_path, "wb") as f_out:
-                    self.encrypt_stream(f_in, f_out, encryption_key)
+                    self.encrypt_stream(f_in, f_out, encryption_password)
                 
                 output_files.append(encrypted_json_path)
                 
@@ -274,7 +337,7 @@ class OutputFormatter:
                         
                         # Then encrypt
                         with open(temp_gz_path, "rb") as f_in, open(gzip_encrypted_json_path, "wb") as f_out:
-                            self.encrypt_stream(f_in, f_out, encryption_key)
+                            self.encrypt_stream(f_in, f_out, encryption_password)
                         
                         output_files.append(gzip_encrypted_json_path)
                     except Exception as e:
@@ -296,8 +359,12 @@ class OutputFormatter:
                 else:
                     # Small dataset, use in-memory processing
                     xml_data = self.format_xml(bundles)
-                    with open(xml_path, "w") as f:
-                        f.write(xml_data)
+                    if isinstance(xml_data, str):
+                        with open(xml_path, "w") as f:
+                            f.write(xml_data)
+                    else:
+                        # This case should ideally not be reached if len(bundles) <= 1000
+                        self.logger.warning("xml_data was not a string for small dataset XML processing.")
                     
             output_files.append(xml_path)
             
@@ -314,14 +381,14 @@ class OutputFormatter:
                 output_files.append(gzip_xml_path)
             
             # Encrypted XML with streaming
-            if use_encryption and encryption_key:
+            if use_encryption and encryption_password:
                 if is_chunk:
                     encrypted_xml_path = os.path.join(output_dir, f"patients_chunk_{chunk_index}.xml.enc")
                 else:
                     encrypted_xml_path = os.path.join(output_dir, "patients.xml.enc")
                 
                 with open(xml_path, "rb") as f_in, open(encrypted_xml_path, "wb") as f_out:
-                    self.encrypt_stream(f_in, f_out, encryption_key)
+                    self.encrypt_stream(f_in, f_out, encryption_password)
                 
                 output_files.append(encrypted_xml_path)
                 
@@ -342,7 +409,7 @@ class OutputFormatter:
                         
                         # Then encrypt
                         with open(temp_gz_path, "rb") as f_in, open(gzip_encrypted_xml_path, "wb") as f_out:
-                            self.encrypt_stream(f_in, f_out, encryption_key)
+                            self.encrypt_stream(f_in, f_out, encryption_password)
                         
                         output_files.append(gzip_encrypted_xml_path)
                     except Exception as e:
@@ -363,29 +430,41 @@ class OutputFormatter:
             # Gzipped NDEF
             if use_compression:
                 gzipped_data = self.compress_gzip(sample_json)
-                gzip_ndef = self.format_ndef(gzipped_data, "gzip")
+                # Note: NDEF payload for binary data should be bytes directly
+                gzip_ndef = self.format_ndef(gzipped_data, "gzip") # format_ndef expects data, not a dict
                 gzip_ndef_path = os.path.join(output_dir, "sample_gzip.ndef.bin")
                 with open(gzip_ndef_path, "wb") as f:
-                    f.write(gzipped_data)
+                    # Assuming format_ndef returns a dict, we'd serialize its payload if it's binary
+                    # However, the current format_ndef is simplified. For binary, we write the payload.
+                    if isinstance(gzip_ndef, dict) and "payload" in gzip_ndef:
+                         f.write(gzip_ndef["payload"])
+                    else: # If it's raw bytes
+                         f.write(gzipped_data) # Write the actual gzipped data
                 output_files.append(gzip_ndef_path)
             
             # Encrypted NDEF
-            if use_encryption and encryption_key:
-                encrypted_data = self.encrypt_aes(sample_json.encode('utf-8'), encryption_key)
-                encrypted_ndef = self.format_ndef(encrypted_data, "encrypted")
+            if use_encryption and encryption_password:
+                encrypted_data = self.encrypt_aes(sample_json.encode('utf-8'), encryption_password)
+                encrypted_ndef = self.format_ndef(encrypted_data, "encrypted") # Pass raw encrypted bytes
                 encrypted_ndef_path = os.path.join(output_dir, "sample_encrypted.ndef.bin")
                 with open(encrypted_ndef_path, "wb") as f:
-                    f.write(encrypted_data)
+                    if isinstance(encrypted_ndef, dict) and "payload" in encrypted_ndef:
+                        f.write(encrypted_ndef["payload"])
+                    else: # If it's raw bytes
+                        f.write(encrypted_data) # Write the actual encrypted data
                 output_files.append(encrypted_ndef_path)
                 
                 # Gzipped and encrypted NDEF
                 if use_compression:
-                    gzipped_json = self.compress_gzip(sample_json)
-                    gzip_encrypted_data = self.encrypt_aes(gzipped_json, encryption_key)
-                    gzip_encrypted_ndef = self.format_ndef(gzip_encrypted_data, "gzip_encrypted")
+                    gzipped_json_bytes = self.compress_gzip(sample_json) # Ensure this is bytes
+                    gzip_encrypted_data = self.encrypt_aes(gzipped_json_bytes, encryption_password)
+                    gzip_encrypted_ndef = self.format_ndef(gzip_encrypted_data, "gzip_encrypted") # Pass raw
                     gzip_encrypted_ndef_path = os.path.join(output_dir, "sample_gzip_encrypted.ndef.bin")
                     with open(gzip_encrypted_ndef_path, "wb") as f:
-                        f.write(gzip_encrypted_data)
+                        if isinstance(gzip_encrypted_ndef, dict) and "payload" in gzip_encrypted_ndef:
+                             f.write(gzip_encrypted_ndef["payload"])
+                        else: # If it's raw bytes
+                             f.write(gzip_encrypted_data) # Write the actual gzip_encrypted_data
                     output_files.append(gzip_encrypted_ndef_path)
         
         return output_files

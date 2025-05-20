@@ -54,8 +54,8 @@ venv.bak/
 # Project-specific
 output/
 demo_output/
-*.json
-*.xml
+# *.json # Removed to allow specific JSON files like demographics.json
+*.xml # Keep ignoring general XML, GZ, ENC files unless specified
 *.gz
 *.enc
 *.ndef

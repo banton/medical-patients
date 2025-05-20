@@ -1,0 +1,30 @@
+{
+  "fronts": [
+    {
+      "name": "Poland",
+      "ratio": 0.6,
+      "nations": [
+        { "nationality_code": "POL", "percentage": 50.0 },
+        { "nationality_code": "LTU", "percentage": 25.0 },
+        { "nationality_code": "NLD", "percentage": 20.0 },
+        { "nationality_code": "ESP", "percentage": 5.0 }
+      ]
+    },
+    {
+      "name": "Estonia",
+      "ratio": 0.3,
+      "nations": [
+        { "nationality_code": "EST", "percentage": 50.0 },
+        { "nationality_code": "GBR", "percentage": 50.0 }
+      ]
+    },
+    {
+      "name": "Finland",
+      "ratio": 0.1,
+      "nations": [
+        { "nationality_code": "FIN", "percentage": 50.0 },
+        { "nationality_code": "USA", "percentage": 50.0 }
+      ]
+    }
+  ]
+}

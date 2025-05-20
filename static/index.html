@@ -167,8 +167,11 @@
         <div class="row">
             <div class="col-lg-5">
                 <div class="card">
-                    <div class="card-header bg-light">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
                         <h4><i class="fas fa-cog me-2"></i>Generator Configuration</h4>
+                        <button id="advancedConfigBtn" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#configurationModal">
+                            <i class="fas fa-sliders-h me-1"></i>Advanced Configuration
+                        </button>
                     </div>
                     <div class="card-body">
                         <form id="generatorForm">
@@ -178,22 +181,25 @@
                             </div>
                             
                             <div class="mb-3">
-                                <h5><i class="fas fa-globe-europe me-2"></i>Front Distribution</h5>
-                                <div class="row">
-                                    <div class="col">
-                                        <label for="polishFront" class="form-label">Polish Front (%)</label>
-                                        <input type="number" class="form-control front-percent" id="polishFront" value="50.0" min="0" max="100" step="0.1">
+                                <h5><i class="fas fa-globe-europe me-2"></i>Front Distribution (Basic UI)</h5>
+                                <div id="basicFrontDistributionUI">
+                                    {/* This content will be replaced if static config is active */}
+                                    <div class="row">
+                                        <div class="col">
+                                            <label for="polishFront" class="form-label">Polish Front (%)</label>
+                                            <input type="number" class="form-control front-percent" id="polishFront" value="50.0" min="0" max="100" step="0.1">
+                                        </div>
+                                        <div class="col">
+                                            <label for="estonianFront" class="form-label">Estonian Front (%)</label>
+                                            <input type="number" class="form-control front-percent" id="estonianFront" value="33.3" min="0" max="100" step="0.1">
+                                        </div>
+                                        <div class="col">
+                                            <label for="finnishFront" class="form-label">Finnish Front (%)</label>
+                                            <input type="number" class="form-control front-percent" id="finnishFront" value="16.7" min="0" max="100" step="0.1">
+                                        </div>
                                     </div>
-                                    <div class="col">
-                                        <label for="estonianFront" class="form-label">Estonian Front (%)</label>
-                                        <input type="number" class="form-control front-percent" id="estonianFront" value="33.3" min="0" max="100" step="0.1">
-                                    </div>
-                                    <div class="col">
-                                        <label for="finnishFront" class="form-label">Finnish Front (%)</label>
-                                        <input type="number" class="form-control front-percent" id="finnishFront" value="16.7" min="0" max="100" step="0.1">
-                                    </div>
+                                    <div class="form-text text-danger hidden" id="frontPercentError">Percentages must add up to 100%</div>
                                 </div>
-                                <div class="form-text text-danger hidden" id="frontPercentError">Percentages must add up to 100%</div>
                             </div>
                             
                             <div class="mb-3">
@@ -395,6 +401,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Configuration Panel Bundle -->
+    <script src="/static/dist/configuration-panel.js" defer></script> 
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -410,15 +418,53 @@
             
             // Job card template
             const jobCardTemplate = document.getElementById('jobCardTemplate').innerHTML;
+            const basicFrontDistributionUIDiv = document.getElementById('basicFrontDistributionUI');
+            let staticFrontsAreActive = false;
+
+            // Fetch static fronts to adjust UI
+            async function checkStaticFrontsConfig() {
+                try {
+                    const response = await fetch('/api/v1/configurations/reference/static-fronts/', {
+                        headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' } // Assuming API key needed
+                    });
+                    if (response.ok) {
+                        const staticFronts = await response.json();
+                        if (staticFronts && staticFronts.length > 0) {
+                            staticFrontsAreActive = true;
+                            if (basicFrontDistributionUIDiv) {
+                                basicFrontDistributionUIDiv.innerHTML = `
+                                    <div class="alert alert-info" role="alert">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Front distribution is currently managed by the static <code>fronts_config.json</code> file on the server.
+                                        These settings will be used for generation. See "Advanced Configuration" for details.
+                                    </div>`;
+                            }
+                            document.querySelectorAll('.front-percent').forEach(input => input.disabled = true);
+                        } else {
+                            staticFrontsAreActive = false;
+                            document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
+                        }
+                    } else {
+                        console.warn("Could not fetch static fronts config status, basic UI will remain active.");
+                        staticFrontsAreActive = false;
+                        document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
+                    }
+                } catch (error) {
+                    console.error("Error checking static fronts config:", error);
+                    staticFrontsAreActive = false; 
+                    document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
+                }
+            }
             
-            // Validate front percentages
             function validateFrontPercentages() {
+                if (staticFrontsAreActive) return true; 
+
                 let total = 0;
-                frontPercentInputs.forEach(input => {
-                    total += parseFloat(input.value);
+                document.querySelectorAll('.front-percent:not([disabled])').forEach(input => {
+                    total += parseFloat(input.value) || 0;
                 });
                 
-                if (Math.abs(total - 100) > 0.1) {
+                if (Math.abs(total - 100) > 0.1 && total > 0) { 
                     frontPercentError.classList.remove('hidden');
                     return false;
                 } else {
@@ -427,7 +473,6 @@
                 }
             }
             
-            // Validate injury percentages
             function validateInjuryPercentages() {
                 let total = 0;
                 injuryPercentInputs.forEach(input => {
@@ -443,8 +488,7 @@
                 }
             }
             
-            // Add validation on input change
-            frontPercentInputs.forEach(input => {
+            document.querySelectorAll('.front-percent').forEach(input => {
                 input.addEventListener('input', validateFrontPercentages);
             });
             
@@ -452,16 +496,13 @@
                 input.addEventListener('input', validateInjuryPercentages);
             });
             
-            // Form submission handler
             generatorForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
-                // Validate percentages
                 if (!validateFrontPercentages() || !validateInjuryPercentages()) {
                     return;
                 }
                 
-                // Collect selected formats
                 const formats = [];
                 if (document.getElementById('formatJson').checked) formats.push('json');
                 if (document.getElementById('formatXml').checked) formats.push('xml');
@@ -471,65 +512,178 @@
                     return;
                 }
                 
-                // Disable form during submission
                 const generateBtn = document.getElementById('generateBtn');
                 generateBtn.disabled = true;
                 generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
                 
-                // Build configuration object
-                const config = {
+                const defaultFacilityConfigs = [
+                    { id: "POI", name: "Point of Injury", kia_rate: 0.01, rtd_rate: 0.0 },
+                    { id: "R1", name: "Role 1", kia_rate: 0.02, rtd_rate: 0.1 },
+                    { id: "R2", name: "Role 2", kia_rate: 0.03, rtd_rate: 0.2 },
+                    { id: "R3", name: "Role 3", kia_rate: 0.04, rtd_rate: 0.3 },
+                    { id: "R4", name: "Role 4", kia_rate: 0.05, rtd_rate: 0.0 } 
+                ];
+
+                let adHocFrontConfigs = [];
+
+                if (staticFrontsAreActive) {
+                    try {
+                        const staticFrontsResponse = await fetch('/api/v1/configurations/reference/static-fronts/', {
+                            headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' }
+                        });
+                        if (!staticFrontsResponse.ok) {
+                            throw new Error(`Failed to fetch static fronts: ${staticFrontsResponse.statusText} (${staticFrontsResponse.status})`);
+                        }
+                        const staticFrontsData = await staticFrontsResponse.json();
+
+                        if (staticFrontsData && staticFrontsData.length > 0) {
+                            adHocFrontConfigs = staticFrontsData.map(frontDef => {
+                                let nationalityDistributionList = [];
+                                if (frontDef.nations && frontDef.nations.length > 0) {
+                                    // The API /api/v1/configurations/reference/static-fronts/
+                                    // now returns nations with nationality_code and percentage (0-100)
+                                    // due to previous schema and fronts_config.json updates.
+                                    nationalityDistributionList = frontDef.nations.map(nation => {
+                                        return {
+                                            nationality_code: nation.nationality_code, 
+                                            percentage: nation.percentage 
+                                        };
+                                    });
+                                } else {
+                                    // Fallback if a static front has no nations defined
+                                    nationalityDistributionList.push({ nationality_code: "USA", percentage: 100.0 });
+                                }
+                                
+                                return {
+                                    id: `static_${frontDef.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
+                                    name: frontDef.name,
+                                    description: `Static front definition: ${frontDef.name}`,
+                                    nationality_distribution: nationalityDistributionList,
+                                    casualty_rate: frontDef.ratio 
+                                };
+                            });
+                        } else {
+                            console.warn("Static fronts were indicated as active, but no data was returned from the API. Using a fallback front config to ensure validation passes.");
+                            adHocFrontConfigs.push({
+                                id: "fallback_static_front_api_empty", name: "Fallback Static Front (API Empty)",
+                                nationality_distribution: { "USA": 100.0 },
+                                casualty_rate: 1.0
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error fetching or processing static fronts:", error);
+                        alert(`Error fetching static front configurations: ${error.message}. Ad-hoc generation cannot proceed reliably.`);
+                        generateBtn.disabled = false;
+                        generateBtn.innerHTML = '<i class="fas fa-play me-2"></i>Generate Patients';
+                        return; 
+                    }
+                } else {
+                    const polishFrontInput = document.getElementById('polishFront');
+                    const estonianFrontInput = document.getElementById('estonianFront');
+                    const finnishFrontInput = document.getElementById('finnishFront');
+
+                    const polishFrontPercent = polishFrontInput ? parseFloat(polishFrontInput.value) : 0;
+                    const estonianFrontPercent = estonianFrontInput ? parseFloat(estonianFrontInput.value) : 0;
+                    const finnishFrontPercent = finnishFrontInput ? parseFloat(finnishFrontInput.value) : 0;
+
+                    if (polishFrontPercent > 0) {
+                        adHocFrontConfigs.push({
+                            id: "polish_front_basic_ui", name: "Polish Front (Basic UI)",
+                            nationality_distribution: [{ nationality_code: "POL", percentage: 100.0 }], 
+                            casualty_rate: polishFrontPercent / 100.0 
+                        });
+                    }
+                    if (estonianFrontPercent > 0) {
+                         adHocFrontConfigs.push({
+                            id: "estonian_front_basic_ui", name: "Estonian Front (Basic UI)",
+                            nationality_distribution: [{ nationality_code: "EST", percentage: 100.0 }],
+                            casualty_rate: estonianFrontPercent / 100.0
+                        });
+                    }
+                    if (finnishFrontPercent > 0) {
+                        adHocFrontConfigs.push({
+                            id: "finnish_front_basic_ui", name: "Finnish Front (Basic UI)",
+                            nationality_distribution: [{ nationality_code: "FIN", percentage: 100.0 }],
+                            casualty_rate: finnishFrontPercent / 100.0
+                        });
+                    }
+                }
+
+                // Ensure adHocFrontConfigs is not empty to pass backend validation
+                if (adHocFrontConfigs.length === 0) {
+                    console.warn("No front configurations were derived from static data or UI inputs. Using a global fallback front.");
+                    adHocFrontConfigs.push({
+                        id: "global_fallback_front", name: "Global Fallback Front",
+                        nationality_distribution: [{ nationality_code: "USA", percentage: 100.0 }],
+                        casualty_rate: 1.0 // This front will receive all patients
+                    });
+                }
+
+
+                const adHocConfiguration = {
+                    name: staticFrontsAreActive ? "Scenario using Static Fronts" : "Ad-hoc Scenario from Basic UI",
+                    description: `Generated on ${new Date().toISOString()}. ${staticFrontsAreActive ? "Static fronts from API were used." : "Basic UI inputs were used for fronts."}`,
+                    front_configs: adHocFrontConfigs,
+                    facility_configs: defaultFacilityConfigs,
                     total_patients: parseInt(document.getElementById('totalPatients').value),
-                    polish_front_percent: parseFloat(document.getElementById('polishFront').value),
-                    estonian_front_percent: parseFloat(document.getElementById('estonianFront').value),
-                    finnish_front_percent: parseFloat(document.getElementById('finnishFront').value),
-                    disease_percent: parseFloat(document.getElementById('diseasePercent').value),
-                    non_battle_percent: parseFloat(document.getElementById('nonBattlePercent').value),
-                    battle_trauma_percent: parseFloat(document.getElementById('battleTraumaPercent').value),
-                    formats: formats,
+                    injury_distribution: {
+                        "Disease": parseFloat(document.getElementById('diseasePercent').value),
+                        "Non-Battle Injury": parseFloat(document.getElementById('nonBattlePercent').value),
+                        "Battle Injury": parseFloat(document.getElementById('battleTraumaPercent').value)
+                    }
+                };
+
+                const payload = {
+                    configuration: adHocConfiguration,
+                    output_formats: formats,
                     use_compression: document.getElementById('useCompression').checked,
                     use_encryption: document.getElementById('useEncryption').checked,
-                    base_date: document.getElementById('baseDate').value,
-                    encryption_password: document.getElementById('encryptionPassword').value
+                    encryption_password: document.getElementById('encryptionPassword').value || null
                 };
                 
                 try {
-                    // Submit job request
                     const response = await fetch('/api/generate', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(config)
+                        body: JSON.stringify(payload)
                     });
                     
                     if (!response.ok) {
-                        throw new Error('Failed to submit job');
+                        // Try to parse error details from FastAPI
+                        let errorDetail = 'Failed to submit job';
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.detail) {
+                                if (Array.isArray(errorData.detail)) {
+                                    errorDetail = errorData.detail.map(err => `${err.loc.join(' -> ')}: ${err.msg}`).join('; ');
+                                } else if (typeof errorData.detail === 'string') {
+                                    errorDetail = errorData.detail;
+                                }
+                            }
+                        } catch (e) { /* Ignore if error response is not JSON */ }
+                        throw new Error(errorDetail);
                     }
                     
                     const data = await response.json();
                     console.log('Job submitted:', data);
                     
-                    // Add job to list and start polling
                     addJobToList(data.job_id);
                     document.getElementById('noJobsMessage').classList.add('hidden');
-                    
-                    // Start polling this job
                     pollJobStatus(data.job_id);
                     
                 } catch (error) {
                     console.error('Error submitting job:', error);
                     alert('Failed to submit job: ' + error.message);
                 } finally {
-                    // Re-enable form
                     generateBtn.disabled = false;
                     generateBtn.innerHTML = '<i class="fas fa-play me-2"></i>Generate Patients';
                 }
             });
             
-            // Job tracking
             const jobPollingIntervals = {};
             
-            // Format time in seconds to a readable format
             function formatTimeRemaining(seconds) {
                 if (seconds === null || seconds === undefined) {
                     return 'Calculating...';
@@ -548,38 +702,25 @@
                 }
             }
             
-            // Add a job to the UI list
             function addJobToList(jobId) {
                 const jobsList = document.getElementById('jobsList');
-                
-                // Clone template with job ID
                 let jobCardHtml = jobCardTemplate.replaceAll('{job_id}', jobId);
-                
-                // Create a temporary div to hold the HTML
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = jobCardHtml;
-                
-                // Extract the job card element
                 const jobCard = tempDiv.firstElementChild;
-                
-                // Add to the beginning of the list
                 jobsList.prepend(jobCard);
                 
-                // Add download button handler
                 const downloadBtn = jobCard.querySelector('.download-btn');
                 downloadBtn.addEventListener('click', function() {
                     window.location.href = `/api/download/${jobId}`;
                 });
             }
             
-            // Poll job status
             function pollJobStatus(jobId) {
-                // Clear any existing interval
                 if (jobPollingIntervals[jobId]) {
                     clearInterval(jobPollingIntervals[jobId]);
                 }
                 
-                // Set up polling interval
                 jobPollingIntervals[jobId] = setInterval(async function() {
                     try {
                         const response = await fetch(`/api/jobs/${jobId}`);
@@ -590,7 +731,6 @@
                         const jobData = await response.json();
                         updateJobUI(jobId, jobData);
                         
-                        // Stop polling if job is completed or failed
                         if (jobData.status === 'completed' || jobData.status === 'failed') {
                             clearInterval(jobPollingIntervals[jobId]);
                             delete jobPollingIntervals[jobId];
@@ -599,18 +739,14 @@
                     } catch (error) {
                         console.error(`Error polling job ${jobId}:`, error);
                     }
-                }, 1000); // Poll every second
+                }, 1000); 
             }
             
-            // Create a chart
             function createChart(canvasId, type, labels, data, colors) {
                 const ctx = document.getElementById(canvasId).getContext('2d');
-                
-                // Destroy existing chart if it exists
                 if (charts[canvasId]) {
                     charts[canvasId].destroy();
                 }
-                
                 charts[canvasId] = new Chart(ctx, {
                     type: type,
                     data: {
@@ -629,193 +765,130 @@
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: {
-                                    font: {
-                                        size: 10
-                                    }
-                                }
+                                labels: { font: { size: 10 } }
                             }
                         }
                     }
                 });
-                
                 return charts[canvasId];
             }
             
-            // Update job UI with latest data
             function updateJobUI(jobId, jobData) {
                 const jobCard = document.querySelector(`.job-card[id="job-${jobId}"]`);
                 if (!jobCard) return;
                 
-                // Update status badge
                 const statusSpan = jobCard.querySelector('.job-status');
                 statusSpan.textContent = jobData.status.charAt(0).toUpperCase() + jobData.status.slice(1);
+                statusSpan.className = 'badge status-badge'; 
+                if (jobData.status === 'queued') statusSpan.classList.add('bg-info');
+                else if (jobData.status === 'running') statusSpan.classList.add('bg-primary');
+                else if (jobData.status === 'completed') statusSpan.classList.add('bg-success');
+                else if (jobData.status === 'failed') statusSpan.classList.add('bg-danger');
                 
-                // Update badge color based on status
-                statusSpan.className = 'badge status-badge'; // Reset classes
-                if (jobData.status === 'queued') {
-                    statusSpan.classList.add('bg-info');
-                } else if (jobData.status === 'running') {
-                    statusSpan.classList.add('bg-primary');
-                } else if (jobData.status === 'completed') {
-                    statusSpan.classList.add('bg-success');
-                } else if (jobData.status === 'failed') {
-                    statusSpan.classList.add('bg-danger');
-                }
-                
-                // Update overall progress bar
-                const overallProgressBar = jobCard.querySelector('#overall-progress-' + jobId);
-
-                // DEBUGGING: Log the elements
-                // console.log(`[Job ${jobId}] jobCard:`, jobCard);
-                // console.log(`[Job ${jobId}] overallProgressBar found by querySelector:`, overallProgressBar);
-
-                if (!overallProgressBar) {
-                    console.error(`[Job ${jobId}] CRITICAL: overallProgressBar element not found within jobCard! Template ID: #overall-progress-${jobId}. Job card HTML:`, jobCard.innerHTML);
-                    // Potentially stop further processing for this job if critical element is missing
-                    // return; 
-                } else {
+                const overallProgressBar = jobCard.querySelector(`#overall-progress-${jobId}`);
+                if (overallProgressBar) {
                     overallProgressBar.style.width = `${jobData.progress}%`;
                     overallProgressBar.setAttribute('aria-valuenow', jobData.progress);
                     overallProgressBar.textContent = `${jobData.progress}%`;
+                } else {
+                    console.error(`[Job ${jobId}] overallProgressBar element not found!`);
                 }
                 
-                // Update detailed progress info if available
                 if (jobData.progress_details) {
-                    const progressDetails = jobData.progress_details;
+                    const pd = jobData.progress_details;
+                    document.getElementById(`phase-name-${jobId}`).textContent = pd.current_phase;
+                    document.getElementById(`phase-description-${jobId}`).textContent = pd.phase_description;
+                    document.getElementById(`phase-progress-${jobId}`).style.width = `${pd.phase_progress}%`;
+                    document.getElementById(`phase-progress-${jobId}`).setAttribute('aria-valuenow', pd.phase_progress);
+                    document.getElementById(`phase-progress-counter-${jobId}`).textContent = `Phase: ${pd.phase_progress}%`;
                     
-                    document.getElementById(`phase-name-${jobId}`).textContent = progressDetails.current_phase;
-                    document.getElementById(`phase-description-${jobId}`).textContent = progressDetails.phase_description;
+                    const timeEstEl = document.getElementById(`time-estimate-${jobId}`);
+                    timeEstEl.textContent = (pd.time_estimates && pd.time_estimates.total !== null) ? formatTimeRemaining(pd.time_estimates.total) : 'Estimating...';
                     
-                    const phaseProgressBar = document.getElementById(`phase-progress-${jobId}`);
-                    phaseProgressBar.style.width = `${progressDetails.phase_progress}%`;
-                    phaseProgressBar.setAttribute('aria-valuenow', progressDetails.phase_progress);
-                    
-                    document.getElementById(`phase-progress-counter-${jobId}`).textContent = `Phase: ${progressDetails.phase_progress}%`;
-                    
-                    const timeEstimateElement = document.getElementById(`time-estimate-${jobId}`);
-                    if (progressDetails.time_estimates && progressDetails.time_estimates.total !== null) {
-                        timeEstimateElement.textContent = formatTimeRemaining(progressDetails.time_estimates.total);
+                    const patientCounterEl = document.getElementById(`patient-counter-${jobId}`);
+                    if (pd.total_patients) {
+                        patientCounterEl.classList.remove('hidden');
+                        patientCounterEl.textContent = pd.processed_patients !== undefined ? `Processing patient ${pd.processed_patients} of ${pd.total_patients}` : `Total patients: ${pd.total_patients}`;
                     } else {
-                        timeEstimateElement.textContent = 'Estimating time remaining...';
-                    }
-                    
-                    const patientCounterElement = document.getElementById(`patient-counter-${jobId}`);
-                    if (progressDetails.total_patients) {
-                        patientCounterElement.classList.remove('hidden');
-                        if (progressDetails.processed_patients !== undefined) {
-                            patientCounterElement.textContent = `Processing patient ${progressDetails.processed_patients} of ${progressDetails.total_patients}`;
-                        } else {
-                            patientCounterElement.textContent = `Total patients: ${progressDetails.total_patients}`;
-                        }
-                    } else {
-                        patientCounterElement.classList.add('hidden');
+                        patientCounterEl.classList.add('hidden');
                     }
                     
                     const progressIcon = jobCard.querySelector('.progress-icon i');
                     if (jobData.status === 'completed') {
                         progressIcon.className = 'fas fa-check-circle';
-                        const downloadBtn = jobCard.querySelector('.download-btn');
-                        downloadBtn.classList.remove('hidden');
-                        overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
-                        overallProgressBar.classList.add('bg-success');
-
-                        // Add Show Visualization button
+                        jobCard.querySelector('.download-btn').classList.remove('hidden');
+                        if(overallProgressBar) {
+                            overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                            overallProgressBar.classList.add('bg-success');
+                        }
                         const actionsDiv = jobCard.querySelector('.job-actions');
                         if (actionsDiv && !actionsDiv.querySelector('.show-viz-btn')) {
                             const vizBtn = document.createElement('a');
-                            vizBtn.href = `static/visualizations.html?job_id=${jobId}`;
-                            vizBtn.className = 'btn btn-info btn-sm show-viz-btn ms-2'; // Added ms-2 for spacing
+                            vizBtn.href = `/visualizations?job_id=${jobId}`; // Corrected URL
+                            vizBtn.className = 'btn btn-info btn-sm show-viz-btn ms-2';
                             vizBtn.innerHTML = '<i class="fas fa-chart-bar me-1"></i> Show Visualization';
-                            vizBtn.target = '_blank'; // Open in new tab
+                            vizBtn.target = '_blank';
                             actionsDiv.appendChild(vizBtn);
                         }
                     } else if (jobData.status === 'failed') {
                         progressIcon.className = 'fas fa-exclamation-circle';
-                        const errorMsg = document.createElement('div');
-                        errorMsg.className = 'alert alert-danger mt-2';
-                        errorMsg.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>' + (jobData.error || 'An error occurred during generation');
+                        const errorMsgDiv = document.createElement('div');
+                        errorMsgDiv.className = 'alert alert-danger mt-2';
+                        errorMsgDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${jobData.error || 'Error during generation'}`;
                         if (!jobCard.querySelector('.alert-danger')) {
-                            jobCard.querySelector('.card-body').appendChild(errorMsg);
+                            jobCard.querySelector('.card-body').appendChild(errorMsgDiv);
                         }
-                        overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
-                        overallProgressBar.classList.add('bg-danger');
+                        if(overallProgressBar) {
+                            overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
+                            overallProgressBar.classList.add('bg-danger');
+                        }
                     } else {
                         progressIcon.className = 'fas fa-sync-alt fa-spin';
                     }
                 }
                 
-                // Update summary data if available
                 if (jobData.summary && Object.keys(jobData.summary).length > 0) {
                     const summaryDiv = document.getElementById(`job-summary-${jobId}`);
                     summaryDiv.classList.remove('hidden');
                     
-                    if (jobData.summary.total_patients) {
-                        document.getElementById(`job-total-patients-${jobId}`).textContent = jobData.summary.total_patients;
-                    }
-                    if (jobData.summary.rtd_count !== undefined) {
-                        document.getElementById(`job-rtd-count-${jobId}`).textContent = jobData.summary.rtd_count;
-                    }
-                    if (jobData.summary.kia_count !== undefined) {
-                        document.getElementById(`job-kia-count-${jobId}`).textContent = jobData.summary.kia_count;
-                    }
+                    if (jobData.summary.total_patients) document.getElementById(`job-total-patients-${jobId}`).textContent = jobData.summary.total_patients;
+                    if (jobData.summary.rtd_count !== undefined) document.getElementById(`job-rtd-count-${jobId}`).textContent = jobData.summary.rtd_count;
+                    if (jobData.summary.kia_count !== undefined) document.getElementById(`job-kia-count-${jobId}`).textContent = jobData.summary.kia_count;
                     
-                    if (jobData.summary.nationalities) {
-                        createChart(`nationality-chart-${jobId}`, 'pie', Object.keys(jobData.summary.nationalities), Object.values(jobData.summary.nationalities));
-                    }
+                    if (jobData.summary.nationalities) createChart(`nationality-chart-${jobId}`, 'pie', Object.keys(jobData.summary.nationalities), Object.values(jobData.summary.nationalities));
                     if (jobData.summary.injury_types) {
-                        const labels = Object.keys(jobData.summary.injury_types).map(key => ({
-                            'DISEASE': 'Disease',
-                            'NON_BATTLE': 'Non-Battle',
-                            'BATTLE_TRAUMA': 'Battle Trauma'
-                        }[key] || key));
-                        const colors = ['#36b9cc', '#1cc88a', '#e74a3b'];
-                        createChart(`injury-chart-${jobId}`, 'pie', labels, Object.values(jobData.summary.injury_types), colors);
+                        const labels = Object.keys(jobData.summary.injury_types).map(k => ({'DISEASE':'Disease','NON_BATTLE':'Non-Battle','BATTLE_TRAUMA':'Battle Trauma'}[k]||k));
+                        createChart(`injury-chart-${jobId}`, 'pie', labels, Object.values(jobData.summary.injury_types), ['#36b9cc', '#1cc88a', '#e74a3b']);
                     }
-                    if (jobData.summary.final_status) {
-                        createChart(`status-chart-${jobId}`, 'pie', Object.keys(jobData.summary.final_status), Object.values(jobData.summary.final_status));
-                    }
+                    if (jobData.summary.final_status) createChart(`status-chart-${jobId}`, 'pie', Object.keys(jobData.summary.final_status), Object.values(jobData.summary.final_status));
                     
                     if (jobData.output_files && jobData.output_files.length > 0) {
                         const outputSummary = document.getElementById(`job-output-summary-${jobId}`);
                         let summaryHtml = '';
                         if (jobData.file_types) {
                             summaryHtml += '<tr><th scope="row">File Types</th><td>';
-                            for (const [ext, count] of Object.entries(jobData.file_types)) {
-                                summaryHtml += `${ext}: ${count} files<br>`;
-                            }
+                            for (const [ext, count] of Object.entries(jobData.file_types)) summaryHtml += `${ext}: ${count} files<br>`;
                             summaryHtml += '</td></tr>';
                         }
-                        if (jobData.total_size_formatted) {
-                            summaryHtml += `<tr><th scope="row">Total Size</th><td>${jobData.total_size_formatted}</td></tr>`;
-                        }
-                        if (jobData.created_at) {
-                            summaryHtml += `<tr><th scope="row">Created</th><td>${new Date(jobData.created_at).toLocaleString()}</td></tr>`;
-                        }
-                        if (jobData.completed_at) {
-                            summaryHtml += `<tr><th scope="row">Completed</th><td>${new Date(jobData.completed_at).toLocaleString()}</td></tr>`;
-                        }
+                        if (jobData.total_size_formatted) summaryHtml += `<tr><th scope="row">Total Size</th><td>${jobData.total_size_formatted}</td></tr>`;
+                        if (jobData.created_at) summaryHtml += `<tr><th scope="row">Created</th><td>${new Date(jobData.created_at).toLocaleString()}</td></tr>`;
+                        if (jobData.completed_at) summaryHtml += `<tr><th scope="row">Completed</th><td>${new Date(jobData.completed_at).toLocaleString()}</td></tr>`;
                         outputSummary.innerHTML = summaryHtml;
                     }
                 }
-            } // Closes updateJobUI
+            } 
 
-            // Function to load existing jobs on page load
             async function loadExistingJobs() {
                 try {
                     const response = await fetch('/api/jobs');
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch existing jobs');
-                    }
+                    if (!response.ok) throw new Error('Failed to fetch existing jobs');
                     const existingJobs = await response.json();
                     
                     if (existingJobs && existingJobs.length > 0) {
                         document.getElementById('noJobsMessage').classList.add('hidden');
                         existingJobs.forEach(jobData => {
-                            addJobToList(jobData.job_id); // Add the card structure
-                            updateJobUI(jobData.job_id, jobData); // Populate with data
-                            
-                            // If the job is still running or queued, start polling
+                            addJobToList(jobData.job_id); 
+                            updateJobUI(jobData.job_id, jobData); 
                             if (jobData.status === 'running' || jobData.status === 'queued') {
                                 pollJobStatus(jobData.job_id);
                             }
@@ -825,14 +898,32 @@
                     }
                 } catch (error) {
                     console.error('Error loading existing jobs:', error);
-                    // Optionally, display an error to the user
                 }
             }
 
-            // Load existing jobs when the DOM is ready
             loadExistingJobs();
+            checkStaticFrontsConfig();
 
-        }); // Closes DOMContentLoaded listener
+        }); 
     </script>
+
+    <div class="modal fade" id="configurationModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configModalLabel">Advanced Scenario Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reactConfigurationPanelRoot">
+                        <p>Loading Advanced Configuration Panel...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
