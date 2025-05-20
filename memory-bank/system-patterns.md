@@ -173,10 +173,10 @@ Based on a recent technical review, the following areas have been identified for
     *   Need for standardized custom exceptions, structured logging, and robust error recovery mechanisms (e.g., React Error Boundaries).
 
 3.  **Frontend Architecture**:
-    *   Mix of traditional JavaScript (`static/index.html`) and modern React/TypeScript (`enhanced-visualization-dashboard.tsx`).
-    *   Duplicate visualization logic between the two frontend interfaces.
-    *   Large bundle size for the enhanced dashboard.
-    *   Inconsistent state management in the React application.
+    *   Mix of traditional JavaScript (`static/index.html` for basic job submission) and modern React/TypeScript (for `enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, etc.).
+    *   Visualization Consolidation: `static/index.html` provides basic job status and textual summaries, and links to `static/visualizations.html` (hosting the `ExerciseDashboard` React component) for comprehensive graphical visualizations. This ensures graphical chart rendering is centralized in React components using Recharts, avoiding duplication of charting libraries or logic.
+    *   Large bundle size for the enhanced dashboard and other React components remains a concern (addressed by TD-002).
+    *   Inconsistent state management in the React application (if applicable beyond current components, to be reviewed).
 
 4.  **Configuration Management (Now an Architectural Pillar)**:
     *   The new system centralizes configuration via the `ConfigurationManager`, API, and PostgreSQL database.

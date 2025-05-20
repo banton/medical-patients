@@ -70,7 +70,7 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 4.  **Bootstrap (5.3.0+)**: Used for overall styling and layout, loaded via CDN in HTML.
 5.  **FontAwesome (6.4.0+)**: Used for iconography, loaded via CDN in HTML.
 6.  **Testing Library (`@testing-library/react`, `@testing-library/jest-dom`)**: For testing React components.
-7.  **Chart.js**: (No longer directly used in `static/index.html`; comprehensive visualizations are in `enhanced-visualization-dashboard.tsx` using Recharts).
+7.  **Chart.js**: Previously used in `static/index.html`. This page now links to `static/visualizations.html` (which uses Recharts via `enhanced-visualization-dashboard.tsx`) for comprehensive graphical visualizations. Chart.js is not an active rendering dependency for `static/index.html`.
 
 ### Development Environment
 
@@ -135,8 +135,9 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 ### Technical Constraints
 
 1. **Browser Compatibility**:
-   - Modern browsers with ES6 support
-   - Chart.js and Bootstrap 5 requirements
+   - Modern browsers with ES6 support.
+   - Bootstrap 5 requirements for styling.
+   - Recharts (via React components) for advanced visualizations.
 
 2. **Security Considerations**:
    - CORS configuration in FastAPI

@@ -111,15 +111,9 @@ The project will follow a phased approach to implement the enhanced configurabil
 *   **Epic 4.1: Address Remaining Technical Debt**
     *   Task 4.1.1: Security - Fix Encryption Salt in `formatter.py`. (Completed)
     *   Task 4.1.2: Frontend Architecture Consolidation (visualization logic).
-        *   **Concrete Description:** Consolidate Visualization Logic into React Components.
-            *   **Objective:** Eliminate duplicate visualization logic by migrating any remaining Chart.js visualizations in `static/index.html` (if any are still actively used for job summaries or similar) to use the React-based `ExerciseDashboard` component or new, smaller, reusable React chart components.
-            *   **Steps:**
-                1.  Identify any active visualization code in `static/index.html` that is not already superseded by `static/visualizations.html` or the new `ConfigurationPanel`.
-                2.  If such logic exists (e.g., for displaying a summary after a basic generation job from `index.html`), refactor it.
-                3.  This might involve creating smaller, reusable React chart components (using Recharts, as in `enhanced-visualization-dashboard.tsx`) that can be embedded or linked from `index.html`, or adapting `index.html` to redirect/load the `ExerciseDashboard` for viewing results.
-                4.  Ensure the main generation flow from `static/index.html` (if still intended to be used independently of the advanced config panel for some default scenario) can display its results using the consolidated React-based visualization components.
-                5.  Update any relevant API endpoints if data fetching for these consolidated components needs to change.
-        *   **Status:** Pending.
+        *   **Objective:** Verify and document the consolidation of visualization logic, ensuring `static/index.html` correctly links to the React-based `ExerciseDashboard` for graphical charts and that no legacy Chart.js rendering remains active in `static/index.html`.
+        *   **Summary of Findings (TD-001):** Analysis confirmed that `static/index.html` does not contain active Chart.js rendering. It appropriately links to `static/visualizations.html` (hosting the Recharts-based `ExerciseDashboard`) for comprehensive graphical visualizations. The main task involves updating documentation to reflect this consolidated state.
+        *   **Status:** In Progress (Documentation phase for TD-001)
     *   Task 4.1.3: Frontend Bundle Size Optimization (externalize libraries/code splitting).
         *   **Status:** Pending.
     *   Task 4.1.4: Docker Optimization (Multi-stage builds).

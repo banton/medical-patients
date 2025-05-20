@@ -73,7 +73,7 @@ The project is currently in **Phase 4: Hardening, Technical Debt, and Final Touc
 ### What's Left to Build/Improve (Focus of Phase 4)
 
 1.  **Technical Debt Resolution**:
-    *   Frontend Architecture Consolidation (Task 4.1.2): Review and potentially unify visualization logic.
+    *   Frontend Architecture Consolidation (Task 4.1.2): Verify and document the existing consolidation of visualization logic, where `static/index.html` links to the React-based `ExerciseDashboard` for graphical charts.
     *   Frontend Bundle Size Optimization (Task 4.1.3): Optimize bundles for all React components.
     *   Docker Optimization (Task 4.1.4): Implement multi-stage builds, review container security.
 2.  **Testing Expansion**:
@@ -115,14 +115,10 @@ The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**. 
 
 **Current Considerations / Known Issues (Focus of Phase 4):**
 
-1.  **Frontend Architecture & Performance:** Bundle sizes for React components and potential duplication in visualization logic (Tasks 4.1.2, 4.1.3).
+1.  **Frontend Architecture & Performance:** Bundle sizes for React components (Task 4.1.3). The concern about duplicated visualization logic (previously part of Task 4.1.2) has been clarified; `static/index.html` correctly links to the centralized React dashboard for graphical charts.
 2.  **Testing Coverage:** API integration tests and E2E tests are needed (Task 4.2.1, 4.2.2). Existing Python unit tests need review.
 3.  **API Key Management:** Current hardcoded API key is a placeholder and needs a secure solution.
-4.  **Pylance Type Errors & Warnings (Ongoing):**
-    *   Most Pylance errors in `patient_generator/database.py` and `patient_generator/formatter.py` have been addressed.
-    *   Persistent Pylance errors in `app.py` remain.
-    *   "Possibly unbound" warnings for cryptography components in `patient_generator/formatter.py` persist.
-    *   Import warnings for `slowapi` and `requests` should be resolved by environment updates.
+4.  **Pylance Type Errors & Warnings (Ongoing):** Some persistent Pylance static analysis warnings in `app.py` and `patient_generator/formatter.py` may need further investigation or suppression if benign (Tracked by LINT-001).
 5.  **Memory Management (Backend):** While initial improvements were made in Phase 1, ongoing monitoring and potential optimization for very large, complex configurations may be needed.
 6.  **Error Handling Standardization:** Continue to ensure consistent and user-friendly error handling across all new components and APIs.
 
