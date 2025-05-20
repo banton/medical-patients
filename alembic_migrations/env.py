@@ -65,11 +65,25 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    # Get the database URL from the environment variable first
+    db_url = os.getenv("DATABASE_URL")
+    
+    # If DATABASE_URL is not set, fall back to alembic.ini configuration
+    if db_url is None:
+        ini_section = config.get_section(config.config_ini_section, {})
+        # Ensure 'sqlalchemy.url' is present in the ini_section or handle its absence
+        if "sqlalchemy.url" not in ini_section:
+            raise ValueError("sqlalchemy.url not found in alembic.ini and DATABASE_URL environment variable is not set.")
+        connectable = engine_from_config(
+            ini_section,
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        )
+    else:
+        # If DATABASE_URL is set, create engine configuration directly
+        # This assumes DATABASE_URL is a complete SQLAlchemy URL
+        from sqlalchemy import create_engine
+        connectable = create_engine(db_url)
 
     with connectable.connect() as connection:
         context.configure(

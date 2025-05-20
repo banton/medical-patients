@@ -186,13 +186,22 @@ class PatientFlowSimulator:
             if selected_front_config:
                 patient.front = selected_front_config.get("name", front_id) # Use name if available
                 # Nationality distribution from the selected front
-                current_front_nat_dist = selected_front_config.get("nationality_distribution", {})
-                if current_front_nat_dist:
-                    patient.nationality = self._select_weighted_item(current_front_nat_dist)
+                # It's now a List[Dict[str, Any]] like [{'nationality_code': 'USA', 'percentage': 100.0}]
+                current_front_nat_dist_list = selected_front_config.get("nationality_distribution", [])
+                if current_front_nat_dist_list:
+                    # Convert List[Dict] to Dict[str, float] for _select_weighted_item
+                    weights_for_selection: Dict[str, float] = {
+                        item['nationality_code']: item['percentage']
+                        for item in current_front_nat_dist_list if 'nationality_code' in item and 'percentage' in item
+                    }
+                    if weights_for_selection:
+                        patient.nationality = self._select_weighted_item(weights_for_selection)
+                    else:
+                        patient.nationality = "N/A" # Fallback if list was empty or items malformed
                 else:
                     patient.nationality = "N/A" # Default if a front has no nationality distribution
             else: # Should not happen if front_distribution is derived from front_configs
-                patient.front = "ErrorFront" 
+                patient.front = "ErrorFront"
                 patient.nationality = "N/A"
 
         patient.gender = random.choice(['male', 'female'])

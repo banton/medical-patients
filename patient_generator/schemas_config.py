@@ -5,24 +5,29 @@ from datetime import datetime
 
 # Forward declaration for recursive models if needed, though not immediately apparent here.
 
+class NationalityDistributionItem(BaseModel):
+    nationality_code: str = Field(..., description="ISO 3166-1 alpha-3 country code")
+    percentage: float = Field(..., ge=0, le=100, description="Percentage for this nationality")
+
 class FrontConfig(BaseModel):
     id: str = Field(..., description="Unique identifier for the front")
     name: str = Field(..., description="Display name of the front")
     description: Optional[str] = Field(None, description="Optional description of the front")
-    nationality_distribution: Dict[str, float] = Field(..., description="Distribution of nationalities (ISO codes to percentages summing to 100)")
+    nationality_distribution: List[NationalityDistributionItem] = Field(..., description="List of nationality distributions, percentages should sum to 100")
     casualty_rate: Optional[float] = Field(None, description="Overall casualty rate from this front (e.g., 0.1 for 10%)")
     # additional_params: Dict[str, Any] = {} # For future extensibility
 
     @validator('nationality_distribution')
-    def validate_distribution_sum(cls, v: Dict[str, float]):
-        if not v: 
-            return v # Allow empty if appropriate, or raise error if it must be non-empty
-        total = sum(v.values())
-        if abs(total - 100.0) > 0.1: # Tolerance for float sum
+    def validate_distribution_sum(cls, v: List[NationalityDistributionItem]):
+        if not v:
+            # Depending on requirements, an empty list might be valid or not.
+            # If it must be non-empty, raise ValueError here.
+            # For now, assume it can be empty, or the UI/creation logic ensures it's not.
+            return v
+        total_percentage = sum(item.percentage for item in v)
+        if abs(total_percentage - 100.0) > 0.1: # Tolerance for float sum
             raise ValueError("Nationality distribution percentages must sum to 100")
-        for percentage in v.values():
-            if not (0 <= percentage <= 100):
-                raise ValueError("Nationality distribution percentages must be between 0 and 100")
+        # Individual item.percentage validation (0-100) is handled by NationalityDistributionItem's Field definition.
         return v
 
     @validator('casualty_rate')
@@ -165,9 +170,11 @@ class ConfigurationTemplateCreate(BaseModel): # Model for creating a new templat
 
 
 class ConfigurationTemplateDB(ConfigurationTemplate): # Model for representing template from DB
-    id: str = Field(..., description="Unique identifier for the saved configuration") 
-    created_at: datetime = Field(..., description="Timestamp of creation")
-    updated_at: datetime = Field(..., description="Timestamp of last update")
+    id: str = Field(..., description="Unique identifier for the saved configuration")
+    # Override fields from parent. Since parent had default_factory, child must specify a default.
+    # Using default=... marks them as required, expecting values from DB.
+    created_at: datetime = Field(default=..., description="Timestamp of creation")
+    updated_at: datetime = Field(default=..., description="Timestamp of last update")
     # version and parent_config_id are inherited from ConfigurationTemplate
 
     class Config:

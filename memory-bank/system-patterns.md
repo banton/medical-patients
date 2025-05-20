@@ -8,10 +8,12 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
 
 1. **Frontend Layer**:
    - **Main Application (`static/index.html`)**:
-     - Single-page HTML/JavaScript application.
-     - Uses Bootstrap for styling and Chart.js for basic visualizations.
+     - Single-page HTML/JavaScript application for job submission and basic status tracking.
+     - Uses Bootstrap for styling.
      - AJAX communication with the backend API.
+     - Links to the Advanced Visualization Dashboard for detailed per-job visualizations.
    - **Enhanced Visualization Dashboard (`static/visualizations.html`)**:
+     - Primary access point for comprehensive exercise visualizations.
      - Hosts the `ExerciseDashboard` React component (`enhanced-visualization-dashboard.tsx`).
      - Compiled to `static/dist/bundle.js`.
      - Uses React, Recharts, Lucide-React.

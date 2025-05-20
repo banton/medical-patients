@@ -9,8 +9,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for visualizations -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         .hidden {
@@ -355,28 +353,7 @@
                     </div>
                     
                     <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h6>Nationality Distribution</h6>
-                            <div class="chart-container">
-                                <canvas id="nationality-chart-{job_id}"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Injury Types</h6>
-                            <div class="chart-container">
-                                <canvas id="injury-chart-{job_id}"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Final Status Distribution</h6>
-                            <div class="chart-container">
-                                <canvas id="status-chart-{job_id}"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <h6>Output Summary</h6>
                             <table class="table table-sm summary-table">
                                 <tbody id="job-output-summary-{job_id}">
@@ -403,9 +380,6 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Store chart objects
-            const charts = {};
-            
             // Form validation and submission
             const generatorForm = document.getElementById('generatorForm');
             const frontPercentInputs = document.querySelectorAll('.front-percent');
@@ -607,46 +581,6 @@
                 }, 1000); // Poll every second
             }
             
-            // Create a chart
-            function createChart(canvasId, type, labels, data, colors) {
-                const ctx = document.getElementById(canvasId).getContext('2d');
-                
-                // Destroy existing chart if it exists
-                if (charts[canvasId]) {
-                    charts[canvasId].destroy();
-                }
-                
-                charts[canvasId] = new Chart(ctx, {
-                    type: type,
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: colors || [
-                                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
-                                '#5a5c69', '#858796', '#6f42c1', '#e83e8c', '#fd7e14'
-                            ]
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                                labels: {
-                                    font: {
-                                        size: 10
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-                
-                return charts[canvasId];
-            }
-            
             // Update job UI with latest data
             function updateJobUI(jobId, jobData) {
                 const jobCard = document.querySelector(`.job-card[id="job-${jobId}"]`);
@@ -763,22 +697,6 @@
                     }
                     if (jobData.summary.kia_count !== undefined) {
                         document.getElementById(`job-kia-count-${jobId}`).textContent = jobData.summary.kia_count;
-                    }
-                    
-                    if (jobData.summary.nationalities) {
-                        createChart(`nationality-chart-${jobId}`, 'pie', Object.keys(jobData.summary.nationalities), Object.values(jobData.summary.nationalities));
-                    }
-                    if (jobData.summary.injury_types) {
-                        const labels = Object.keys(jobData.summary.injury_types).map(key => ({
-                            'DISEASE': 'Disease',
-                            'NON_BATTLE': 'Non-Battle',
-                            'BATTLE_TRAUMA': 'Battle Trauma'
-                        }[key] || key));
-                        const colors = ['#36b9cc', '#1cc88a', '#e74a3b'];
-                        createChart(`injury-chart-${jobId}`, 'pie', labels, Object.values(jobData.summary.injury_types), colors);
-                    }
-                    if (jobData.summary.final_status) {
-                        createChart(`status-chart-${jobId}`, 'pie', Object.keys(jobData.summary.final_status), Object.values(jobData.summary.final_status));
                     }
                     
                     if (jobData.output_files && jobData.output_files.length > 0) {

@@ -74,7 +74,7 @@ class Database:
             except Exception as e:
                 print(f"Error releasing connection to pool: {e}")
 
-    def _execute_query(self, query: str, params: Union[tuple, Dict[str, Any]] = None, fetch_one: bool = False, fetch_all: bool = False, commit: bool = False):
+    def _execute_query(self, query: str, params: Union[tuple, Dict[str, Any]] = (), fetch_one: bool = False, fetch_all: bool = False, commit: bool = False):
         conn = None
         try:
             conn = self.get_connection()
@@ -152,11 +152,17 @@ class Database:
         row = self._execute_query(query, (job_id,), fetch_one=True)
         if row is None: return None
         job_data = dict(row)
-        job_data['config'] = json.loads(job_data['config']) if job_data.get('config') else {}
-        job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') else {}
-        job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') else {}
-        job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') else []
-        job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') else {}
+        for field_name, default_value in [
+            ('config', {}), ('summary', {}), ('progress_details', {}),
+            ('output_files', []), ('file_types', {})
+        ]:
+            if job_data.get(field_name) and isinstance(job_data[field_name], str):
+                try:
+                    job_data[field_name] = json.loads(job_data[field_name])
+                except json.JSONDecodeError:
+                    job_data[field_name] = default_value
+            elif not job_data.get(field_name): # Handles None or empty string if not already dict/list
+                job_data[field_name] = default_value
         return job_data
 
     def get_all_jobs(self, limit: Optional[int] = 50, status: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -178,11 +184,17 @@ class Database:
         if rows:
             for row in rows:
                 job_data = dict(row)
-                job_data['config'] = json.loads(job_data['config']) if job_data.get('config') else {}
-                job_data['summary'] = json.loads(job_data['summary']) if job_data.get('summary') else {}
-                job_data['progress_details'] = json.loads(job_data['progress_details']) if job_data.get('progress_details') else {}
-                job_data['output_files'] = json.loads(job_data['output_files']) if job_data.get('output_files') else []
-                job_data['file_types'] = json.loads(job_data['file_types']) if job_data.get('file_types') else {}
+                for field_name, default_value in [
+                    ('config', {}), ('summary', {}), ('progress_details', {}),
+                    ('output_files', []), ('file_types', {})
+                ]:
+                    if job_data.get(field_name) and isinstance(job_data[field_name], str):
+                        try:
+                            job_data[field_name] = json.loads(job_data[field_name])
+                        except json.JSONDecodeError:
+                            job_data[field_name] = default_value
+                    elif not job_data.get(field_name): # Handles None or empty string if not already dict/list
+                         job_data[field_name] = default_value
                 jobs.append(job_data)
         return jobs
 

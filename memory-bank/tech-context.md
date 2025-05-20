@@ -70,6 +70,7 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 4.  **Bootstrap (5.3.0+)**: Used for overall styling and layout, loaded via CDN in HTML.
 5.  **FontAwesome (6.4.0+)**: Used for iconography, loaded via CDN in HTML.
 6.  **Testing Library (`@testing-library/react`, `@testing-library/jest-dom`)**: For testing React components.
+7.  **Chart.js**: (No longer directly used in `static/index.html`; comprehensive visualizations are in `enhanced-visualization-dashboard.tsx` using Recharts).
 
 ### Development Environment
 

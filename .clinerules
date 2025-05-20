@@ -47,14 +47,22 @@
     *   `docker compose -f docker-compose.dev.yml up --build -d` (Starts Docker services in detached mode).
     *   A robust wait loop to ensure the `app` service (FastAPI backend) is "healthy" (using Docker healthcheck).
     *   Alembic database migrations (`docker compose -f docker-compose.dev.yml exec app alembic upgrade head`).
-        *   Note: `alembic_migrations/env.py` is configured to use the `DATABASE_URL` env var from the `app` container, ensuring it connects to the `db` service correctly.
+        *   Note: `alembic_migrations/env.py` has been updated to prioritize the `DATABASE_URL` environment variable (set in `docker-compose.dev.yml` for the `app` service to point to the `db` service). If `DATABASE_URL` is not set, it falls back to the `sqlalchemy.url` from `alembic.ini`.
     This script is the recommended and most reliable way to start the development environment.
 
 ### User Preferences & Workflow:
 
 *   **Backend Server Restarts:** When changes are made to Python backend code (`app.py` or imported modules), the Uvicorn server (especially if running in Docker without live reload for Python, or if not using `--reload` flag locally) MUST be restarted for changes to take effect.
 *   User manually verifies application behavior in the browser after changes.
-*   Clean install for PostgreSQL (no data migration from SQLite).
+    *   Clean install for PostgreSQL (no data migration from SQLite).
+
+### Ticket Management:
+
+*   **Open Tickets File:** All active development tasks, technical debt, and hardening items are tracked in `memory-bank/open-tickets.md`.
+    *   Each ticket includes a unique ID, title, epic, description, and clear acceptance criteria.
+    *   This file is the source of truth for current work.
+    *   New tasks identified during development must be added to this file as new tickets with acceptance criteria before work begins.
+    *   Cline will always consult this file to determine the next task.
 
 ### Known Challenges & Considerations (Many being addressed by new plan):
 
