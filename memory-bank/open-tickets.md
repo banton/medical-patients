@@ -1,15 +1,3 @@
-__Ticket ID:__ TD-001 (Corresponds to Task 4.1.2) __Title:__ Frontend Architecture Consolidation: Unify Visualization Logic __Epic:__ 4.1 Address Remaining Technical Debt __Description:__ The current frontend has visualization logic present in both the older static JavaScript (`static/index.html` using Chart.js) and the newer React-based `ExerciseDashboard` component (`enhanced-visualization-dashboard.tsx` using Recharts). This task aims to consolidate visualization efforts, likely by migrating or ensuring all key visualizations are handled by the React components to reduce redundancy and improve maintainability. __Acceptance Criteria:__
-
-1. Analyze visualization capabilities of the legacy `static/index.html` (Chart.js) and the `ExerciseDashboard` React component.
-2. Identify any unique or critical visualizations in the legacy view that are not present or adequately represented in the React dashboard.
-3. If gaps exist, implement the missing/required visualizations within the `ExerciseDashboard` React component or a new dedicated React visualization component.
-4. Ensure the React-based visualizations are configurable and can display data relevant to the new dynamic configuration system.
-5. Update `static/visualizations.html` to be the primary access point for comprehensive visualizations, potentially deprecating or simplifying visualizations in `static/index.html`.
-6. Relevant Memory Bank documents (e.g., `system-patterns.md`, `tech-context.md`) are updated to reflect the consolidated architecture.
-7. Code is reviewed and merged into the `develop` branch.
-
----
-
 __Ticket ID:__ TD-002 (Corresponds to Task 4.1.3) __Title:__ Frontend Bundle Size Optimization __Epic:__ 4.1 Address Remaining Technical Debt __Description:__ The JavaScript bundles for React components (`enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, `MilitaryMedicalDashboard.tsx`) may be large, impacting load times. This task involves investigating and implementing optimization techniques such as code splitting, lazy loading, and externalizing common libraries. __Acceptance Criteria:__
 
 1. Analyze the current bundle sizes for `static/dist/bundle.js`, `static/dist/configuration-panel.js`, and `static/dist/military-dashboard.js` using tools like `source-map-explorer` or `webpack-bundle-analyzer` (if applicable to `esbuild` outputs, or similar alternatives).
@@ -127,3 +115,37 @@ __Ticket ID:__ LINT-002 __Title:__ Alembic Migration - Specify Constraint Name i
 2. Update the `op.drop_constraint` call in the `downgrade` function of `2b84a220e9ac` to use the identified constraint name.
 3. The Pylance error on line 33 of `alembic_migrations/versions/2b84a220e9ac_add_version_and_parent_to_config_.py` is resolved.
 4. Code is reviewed and merged into the `develop` branch.
+
+---
+
+__Ticket ID:__ FEA-001
+__Title:__ Enhanced Service Management Script
+__Epic:__ Developer Experience / Operations
+__Description:__ Create a unified script (e.g., `manage-services.sh`) to provide `start`, `stop`, `restart`, `status`, and potentially `reload` functionality for all relevant project services. This script aims to improve upon the existing `start-dev.sh` by offering more granular control and clear operational commands. It should manage Docker containers (FastAPI app, PostgreSQL DB) and include necessary frontend build steps for a complete service lifecycle management.
+__Acceptance Criteria:__
+1. A new script (e.g., `manage-services.sh` or similar, to be decided) is created in the project root and is executable.
+2. The script accepts commands: `start`, `stop`, `restart`, `status`.
+3. `start` command:
+    *   Ensures frontend dependencies are installed (e.g., `npm install` if `node_modules` is missing or `package-lock.json` is newer).
+    *   Builds all frontend assets (e.g., `npm run build:all-frontend`).
+    *   Starts all necessary Docker services using the development Docker Compose file (e.g., `docker compose -f docker-compose.dev.yml up --build -d`).
+    *   Includes a robust wait mechanism for the backend `app` service to be healthy.
+    *   Applies database migrations (e.g., `docker compose -f docker-compose.dev.yml exec app alembic upgrade head`).
+    *   Provides clear success or failure messages for each major step.
+4. `stop` command:
+    *   Stops all relevant Docker services defined in the development Docker Compose file (e.g., `docker compose -f docker-compose.dev.yml down`).
+    *   Provides clear output.
+5. `restart` command:
+    *   Effectively performs a `stop` operation followed by a `start` operation, ensuring services are cleanly shut down and restarted.
+6. `status` command:
+    *   Displays the current status of relevant Docker services (e.g., using `docker compose -f docker-compose.dev.yml ps`).
+7. (Optional Bonus) `reload` command:
+    *   If feasible, implement a `reload` command that attempts to reload services with minimal downtime (e.g., sending SIGHUP to Uvicorn, triggering frontend rebuilds if watched). If full reload isn't practical for all parts, this can be a partial implementation or documented as such.
+8. The script is well-documented with usage instructions, either via in-script comments or updates to `README.md` or a relevant Memory Bank file (e.g., `cli-commands.md`).
+9. The existing `start-dev.sh` script should be evaluated: either deprecated if its functionality is fully superseded and improved upon by the new script, or integrated/called by the new script.
+10. The script handles common error conditions gracefully (e.g., Docker not running, command failures) and provides informative error messages.
+11. Code is reviewed and merged into the `develop` branch.
+__Status:__ Not Started
+__Branch:__
+
+---
