@@ -2,110 +2,128 @@
 
 ## Current Status
 
-The Military Medical Exercise Patient Generator is embarking on a major architectural overhaul to introduce comprehensive configurability, support for all NATO nations, a new API layer, and migration to a PostgreSQL database.
+The Military Medical Exercise Patient Generator has undergone a major architectural overhaul, completing Phases 0-3 of the enhanced configurability initiative. This includes:
+*   Migration to a PostgreSQL database with Alembic for schema management.
+*   A new backend architecture for dynamic configuration of scenarios (fronts, facilities, nationalities, injury distributions).
+*   A comprehensive RESTful API for managing configurations and patient generation jobs.
+*   An initial frontend UI (React-based modal) for advanced scenario configuration.
+*   A Python SDK for programmatic API interaction.
 
-The project is currently at the **beginning of Phase 0: Foundation & Setup** of this new initiative. This phase focuses on establishing the necessary groundwork, including setting up the Git branching model, configuring PostgreSQL, integrating Alembic for database migrations, and refactoring the database interaction layer.
+The project is currently in **Phase 4: Hardening, Technical Debt, and Final Touches**.
 
-### What Works (Prior to New Initiative)
+### What Works (After Phases 0-3 of New Initiative)
 
-(This section describes the state of the application *before* the new architectural changes. It will be updated as new capabilities from the phased plan are completed.)
-
-1.  **Core Patient Generation**:
-    *   Patient flow simulation through medical facilities (POI, R1-R4) - *to be refactored for configurability*.
-    *   Realistic demographics generation based on nationality - *to be expanded for all NATO nations and made configurable*.
-    *   Medical condition generation using SNOMED CT codes, with support for multiple primary conditions.
+1.  **Core Patient Generation (Now Configurable)**:
+    *   Patient flow simulation through dynamically configured medical facility chains.
+    *   Demographics generation supporting all NATO nations (via `demographics.json`, driven by `NationalityDataProvider`).
+    *   Configurable front definitions, casualty rates, and per-front nationality distributions (managed via API and DB).
+    *   Configurable overall injury type distribution and total patient counts.
+    *   Medical condition generation (SNOMED CT, multiple primary conditions) driven by configurable inputs.
     *   HL7 FHIR R4 bundle creation.
 
-2.  **Web Interface**:
-    *   Configuration form for generation parameters (`static/index.html`) - *to be supplemented/replaced by new advanced configuration UI*.
-    *   Job management system (`static/index.html`).
-    *   Progress tracking (`static/index.html`).
-    *   Data visualization of generation results (basic visualizations in `static/index.html`).
-    *   **Enhanced Visualization Dashboard (`static/visualizations.html`)**:
-        *   Successfully loads and displays advanced visualizations using React, Recharts, and Lucide-React.
-        *   Fetches data from backend API endpoints (`/api/visualizations/job-list`, `/api/visualizations/dashboard-data`).
-        *   The TSX component (`enhanced-visualization-dashboard.tsx`) is compiled using `esbuild` into `static/dist/bundle.js`.
-    *   File download functionality.
+2.  **Database & Configuration**:
+    *   PostgreSQL backend database.
+    *   Alembic for database schema migrations (initial tables for jobs and configurations created and versioned).
+    *   Configuration templates can be created, read, updated, deleted, and validated via the API (`/api/v1/configurations/`).
+    *   Configuration versioning (basic fields `version` and `parent_config_id` in DB and Pydantic models).
 
-3.  **Output Options**:
-    *   JSON and XML formatting
-    *   Compression with gzip
-    *   Encryption with AES-256-GCM
-    *   NDEF formatting for NFC tags
+3.  **API Layer (`/api/v1/`)**:
+    *   RESTful API for CRUD operations on configuration templates.
+    *   API endpoint for validating configurations.
+    *   Reference data API endpoints for nationalities and condition types.
+    *   Main generation API (`/api/generate/`) accepts `configuration_id` or ad-hoc configuration.
+    *   Job status, results summary, and download APIs are functional.
+    *   Basic API key authentication and rate limiting applied to configuration API.
+    *   Auto-generated OpenAPI (Swagger) documentation.
 
-4.  **Command Line Support**:
-    *   Demo script for direct usage
-    *   Configuration via JSON - *to be updated for new configuration structure*.
+4.  **Web Interface**:
+    *   Existing main UI (`static/index.html`) for basic generation (needs adaptation to use new config system).
+    *   **New Advanced Configuration Panel**: A React-based modal (`ConfigurationPanel.tsx`) integrated into `static/index.html` for creating, loading, and editing detailed scenario configurations.
+        *   Supports management of fronts (including ordered nationality distribution per front) and facilities.
+        *   Handles overall injury distribution (fixed categories: Battle Injury, Disease, Non-Battle Injury).
+        *   Basic API error display.
+    *   Enhanced Visualization Dashboard (`static/visualizations.html`) remains functional.
 
-5.  **Testing**:
-    *   Unit tests for core Python components.
+5.  **Python SDK (`patient_generator_sdk.py`)**:
+    *   A client library for interacting with the new configuration and generation APIs.
+    *   Includes basic examples.
+
+6.  **Output Options**:
+    *   JSON and XML formatting.
+    *   Compression with gzip.
+    *   Encryption with AES-256-GCM (now using unique salts per encryption via PBKDF2 - Task 4.1.1 Completed).
+
+7.  **Command Line Support**:
+    *   Demo script (`demo.py`) - *needs update to use SDK or new configuration methods*.
+    *   Configuration via JSON - *needs update for new configuration structure*.
+
+8.  **Testing**:
+    *   Unit tests for core Python components (ongoing relevance to be checked against refactored code).
     *   Frontend tests for `enhanced-visualization-dashboard.tsx` using Jest and React Testing Library.
-    *   All existing unit tests (Python and frontend) were passing prior to this new initiative.
 
-6.  **Docker Development Environment**:
-    *   `Dockerfile` and `docker-compose.dev.yml` were functional for the previous SQLite-based setup. *Will be updated for PostgreSQL.*
+9.  **Docker Development Environment**:
+    *   Docker Compose files (`docker-compose.dev.yml`, etc.) updated for PostgreSQL.
+    *   `start-dev.sh` script automates:
+        *   Frontend dependency installation (`npm install`).
+        *   Frontend asset building (`npm run build:all-frontend`).
+        *   Docker service startup (FastAPI app, PostgreSQL DB).
+        *   DB health checks before applying Alembic migrations.
+        *   Alembic migrations (`alembic upgrade head`).
 
-### What's Left to Build/Improve (Focus of the New Initiative)
+### What's Left to Build/Improve (Focus of Phase 4)
 
-The primary focus is the implementation of the new configurability architecture, broken down into phases:
-
-1.  **Phase 0: Foundation & Setup (Current)**
-    *   Git branching model.
-    *   PostgreSQL setup (clean install, replacing SQLite).
-    *   Alembic integration for schema migrations.
-    *   Refactor `database.py` for PostgreSQL and connection pooling.
-2.  **Phase 1: Backend Configuration Abstraction & Core Logic**
-    *   Database models and schema for configurations (fronts, nationalities, facilities).
-    *   `ConfigurationRepository` for DB interaction.
-    *   NATO nations data repository and integration.
-    *   Refactor `PatientFlowSimulator`, `DemographicsGenerator`, `PatientGeneratorApp` to use the new configuration system.
-    *   Implement configuration versioning and default/backward compatibility.
-    *   Address memory management during refactoring.
-3.  **Phase 2: API Enhancement**
-    *   RESTful API for CRUD operations on configurations.
-    *   API for initiating generation jobs with specific configurations.
-    *   API for job status, results, and downloads.
-    *   Reference data API endpoints.
-    *   API security (authentication, rate limiting) and documentation.
-4.  **Phase 3: Frontend Enhancement & SDK**
-    *   New React-based `ConfigurationPanel` for advanced scenario configuration (fronts, nationalities, facilities, medical parameters).
-    *   Integration of this panel into `static/index.html` via a modal.
-    *   Python SDK for programmatic interaction with the new API.
-5.  **Phase 4: Hardening, Technical Debt, and Final Touches**
-    *   Address remaining technical debt (encryption salt, frontend architecture consolidation, bundle size optimization, Docker multi-stage builds).
-    *   Expand testing coverage (API integration, E2E).
-    *   Finalize all documentation.
+1.  **Technical Debt Resolution**:
+    *   Frontend Architecture Consolidation (Task 4.1.2): Review and potentially unify visualization logic.
+    *   Frontend Bundle Size Optimization (Task 4.1.3): Optimize bundles for all React components.
+    *   Docker Optimization (Task 4.1.4): Implement multi-stage builds, review container security.
+2.  **Testing Expansion**:
+    *   API Integration Tests (Task 4.2.1): Develop comprehensive tests for the new API.
+    *   End-to-End (E2E) Tests (Task 4.2.2): Implement E2E tests for key user flows.
+    *   Review and update existing Python unit tests for compatibility with refactored code.
+3.  **Documentation Finalization (Current Task - 4.3.2)**:
+    *   Update User Guides for new configuration panel and API (Task 4.3.1).
+    *   Update all Technical Documentation (Memory Bank, READMEs, SDK docs).
+4.  **UI/UX Refinements & Enhancements**:
+    *   UI for Static Fronts Configuration (Task 4.4.1): View/edit `patient_generator/fronts_config.json` parameters via `ConfigurationPanel.tsx`.
+    *   More robust error handling and user feedback in `ConfigurationPanel.tsx`.
+    *   Potential enhancements like drag-and-drop for reordering facilities.
+5.  **Default Configuration Seeding**:
+    *   Create and execute a script to seed the database with a "Default Scenario (Legacy)" configuration template.
+6.  **Main UI (`static/index.html`) Adaptation**:
+    *   Update the main generation form to use a default `configuration_id` or allow selection from saved templates.
+7.  **Command Line Support Update**:
+    *   Update `demo.py` and guidance for CLI usage to align with the new SDK/API and configuration system.
+8.  **API Key Management**:
+    *   Replace placeholder API key with a more secure management solution.
 
 ### Overall Status
 
-The project is at a pivotal point, transitioning from a functional application with some hardcoded limitations to a highly flexible, API-driven, and database-configurable system. The immediate next steps are foundational (database migration, Git setup) before tackling the core architectural changes.
+Phases 0-3 of the enhanced configurability initiative are complete. The system now boasts a flexible PostgreSQL-backed backend, a comprehensive API, an initial UI for advanced configuration, and a Python SDK. The development environment is streamlined with Docker and the `start-dev.sh` script.
+
+The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**. This involves refining the system, addressing remaining technical debt, significantly improving test coverage, completing all documentation, and adding final UI enhancements.
 
 ### Known Issues
 
-**Resolved Recently (Prior to New Initiative):**
-*   Initial loading errors for the Enhanced Visualization Dashboard.
-*   404 errors for visualization API endpoints.
-*   500 Internal Server Error for `/api/visualizations/dashboard-data`.
-*   React Testing Library `act()` warnings in frontend tests.
-*   Implemented generation of multiple primary medical conditions.
+**Recently Resolved:**
+*   **Security - Encryption Salt (Task 4.1.1):** Fixed salt in `formatter.py` addressed by implementing PBKDF2 with unique salts. (Completed)
+*   **Alembic Multiple Heads:** Resolved by user, allowing migrations to proceed. (Completed by User)
+*   **Missing DB Columns for Versioning:** `version` and `parent_config_id` columns added to `configuration_templates` via migration `2b84a220e9ac`. (Completed)
+*   **UI - Nationality Distribution (Task 4.1.5):** Updated to ordered list of dropdowns. (Completed)
+*   **UI - Injury Distribution (Task 4.1.6):** Reverted to simpler fixed categories. (Completed)
+*   **DB - `parent_config_id` usage (Task 4.1.7):** Corrected in database queries. (Completed)
+*   Issues from before the new initiative (Enhanced Viz Dashboard loading, API errors, `act()` warnings) are considered superseded or resolved by the new architecture and subsequent fixes.
 
-**Current Considerations / Known Issues (To be addressed by new plan):**
+**Current Considerations / Known Issues (Focus of Phase 4):**
 
-1.  **Database System:** Currently SQLite, migrating to PostgreSQL. This addresses SQLite's limitations (connection pooling, migration management).
-2.  **Configuration Hardcoding:** Core limitation being addressed by the new architecture.
-3.  **Memory Management:** High memory usage with large datasets remains a concern; will be addressed during backend refactoring (Phase 1).
-4.  **Error Handling:** Inconsistent error handling; will be standardized during new component development.
-5.  **Frontend Architecture:** Mix of JS/React, bundle sizes; will be reviewed in Phase 4.
-6.  **Security - Encryption Salt:** Fixed salt in `formatter.py`; scheduled for Phase 4.
-7.  **Testing Coverage:** Needs expansion for new API and configuration logic.
+1.  **Frontend Architecture & Performance:** Bundle sizes for React components and potential duplication in visualization logic (Tasks 4.1.2, 4.1.3).
+2.  **Testing Coverage:** API integration tests and E2E tests are needed (Task 4.2.1, 4.2.2). Existing Python unit tests need review.
+3.  **API Key Management:** Current hardcoded API key is a placeholder and needs a secure solution.
+4.  **Pylance Type Errors & Warnings (Ongoing):** Some persistent Pylance static analysis warnings in `app.py` and `patient_generator/formatter.py` may need further investigation or suppression if benign.
+5.  **Memory Management (Backend):** While initial improvements were made in Phase 1, ongoing monitoring and potential optimization for very large, complex configurations may be needed.
+6.  **Error Handling Standardization:** Continue to ensure consistent and user-friendly error handling across all new components and APIs.
 
 ### Next Steps
 
-The project is currently executing **Phase 0: Foundation & Setup** as detailed in `memory-bank/active-context.md`. This involves:
-*   Task 0.1: Update Memory Bank - Initial Plan (Completed)
-*   Task 0.2: Establish Git Branching Model
-*   Task 0.3: Setup PostgreSQL Database
-*   Task 0.4: Integrate Alembic for Database Migrations
-*   Task 0.5: Refactor `patient_generator/database.py` for PostgreSQL
-
-Subsequent phases (1-4) will follow as outlined in `active-context.md`, focusing on backend abstraction, API development, frontend enhancements, and finally, hardening and documentation.
+The project is currently executing **Phase 4: Hardening, Technical Debt, and Final Touches**, as detailed in `memory-bank/active-context.md`.
+The immediate task is **Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK)**, which is currently in progress.
+Following this, other Phase 4 tasks such as testing expansion, remaining UI enhancements, and technical debt items will be addressed.

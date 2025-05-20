@@ -12,26 +12,44 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
      - Uses Bootstrap for styling and Chart.js for basic visualizations.
      - AJAX communication with the backend API.
    - **Enhanced Visualization Dashboard (`static/visualizations.html`)**:
-     - Hosts the `ExerciseDashboard` React component.
-     - The component is written in TSX (`enhanced-visualization-dashboard.tsx`).
-     - Compiled into a JavaScript bundle (`static/dist/bundle.js`) using `esbuild`.
-     - Uses React, Recharts for advanced charting, and Lucide-React for icons.
-     - Also communicates with the backend API for data.
+     - Hosts the `ExerciseDashboard` React component (`enhanced-visualization-dashboard.tsx`).
+     - Compiled to `static/dist/bundle.js`.
+     - Uses React, Recharts, Lucide-React.
+   - **Advanced Configuration Panel (`ConfigurationPanel.tsx`)**:
+     - React component integrated into `static/index.html` as a modal.
+     - Allows detailed creation, editing, and management of generation scenarios.
+     - Compiled to `static/dist/configuration-panel.js`.
+   - **Military Medical Dashboard (`MilitaryMedicalDashboard.tsx`)**:
+     - Another React TSX component, likely for specific visualizations or operational views.
+     - Compiled to its own bundle (e.g., `static/dist/military-dashboard.js`).
 
-2. **Backend API Layer**:
-   - FastAPI web server (`app.py`)
-   - RESTful endpoints for job management
-   - Background task processing for generation jobs
-   - Static file serving
+2. **Backend API Layer (FastAPI - `app.py`)**:
+   - **Versioned RESTful API (e.g., `/api/v1/`)**:
+     - Endpoints for CRUD operations on configuration templates (`/configurations/`).
+     - Endpoint for validating configurations (`/configurations/validate/`).
+     - Endpoints for patient generation jobs, now accepting `configuration_id` or ad-hoc configurations.
+     - Endpoints for job status, results, and downloading generated data.
+     - Reference data endpoints (nationalities, condition types).
+   - **Pydantic Models**: Used extensively for request/response validation and data structuring.
+   - Background task processing for generation jobs.
+   - Static file serving for frontend assets.
+   - API Authentication (e.g., API Key) and Rate Limiting.
 
-3. **Core Generation Engine**:
-   - Modular Python package (`patient_generator/`)
-   - Configurable through a central application class (`PatientGeneratorApp`)
-   - Component-based design with specialized generators
+3. **Core Generation Engine (`patient_generator/`)**:
+   - **`ConfigurationManager` (`patient_generator/config_manager.py`)**: Central component for loading, interpreting, and providing specific configuration details (fronts, facilities, nationalities, injury distributions, etc.) to the various generator modules.
+   - **`PatientGeneratorApp` (`patient_generator/app.py` module, distinct from FastAPI `app.py`)**: Orchestrates generation, now heavily reliant on `ConfigurationManager`.
+   - Specialized generator modules (`flow_simulator.py`, `demographics.py`, `medical.py`) are now driven by configurations supplied by `ConfigurationManager`.
 
-4. **Database Layer**:
-    - SQLite for job persistence (`patient_generator/database.py`).
-    - Singleton pattern for database connection management.
+4. **Database Layer (PostgreSQL)**:
+    - **PostgreSQL**: Backend database for storing:
+        - Patient generation job metadata.
+        - Configuration templates (fronts, facilities, nationalities, medical flows, injury distributions, etc.).
+    - **Alembic**: Manages database schema migrations for PostgreSQL.
+    - **`patient_generator/database.py`**: Contains database interaction logic, including:
+        - `ConfigurationRepository` for CRUD operations on configuration data.
+        - Functions for job data management.
+    - Connection pooling for efficient database access.
+    - SQLAlchemy might be used for ORM capabilities or with Alembic.
 
 5. **Output Handling**:
    - Multiple format support (JSON, XML)
@@ -59,30 +77,35 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
    - `PatientGeneratorApp` provides a simplified interface to the complex generation system.
 
 7. **Singleton Pattern**:
-   - Used in `patient_generator/database.py` for managing the database connection, ensuring only one instance is created and shared.
+   - May still be used in `patient_generator/database.py` for managing the PostgreSQL connection pool.
+
+8. **Repository Pattern**:
+   - Implemented in `patient_generator/database.py` (e.g., `ConfigurationRepository`) to abstract data persistence logic for configuration templates and other database entities.
 
 ### Component Relationships
 
-1. **Patient Generator Core** (`patient_generator/app.py`):
-   - Orchestrates the overall generation process
-   - Manages configuration
-   - Coordinates between components
-   - Reports progress
-
-2. **Patient Flow Simulator** (`flow_simulator.py`):
-   - Creates initial patients with basic attributes
-   - Simulates movement through medical facilities
-   - Applies statistical models for outcomes (RTD, KIA)
-
-3. **Demographics Generator** (`demographics.py`):
-   - Generates realistic person data based on nationality
-   - Produces names, birthdates, ID numbers
-   - Manages country-specific data formats
-
-4. **Medical Condition Generator** (`medical.py`):
-   - Creates appropriate medical conditions based on injury type
-   - Manages SNOMED CT codes for conditions
-   - Generates related conditions, allergies, and medications
+1.  **`ConfigurationPanel.tsx` / API / SDK**: User defines/selects a configuration.
+2.  **FastAPI `app.py` (API Layer)**:
+    *   Receives requests for configuration management or patient generation.
+    *   Interacts with `ConfigurationRepository` (via `patient_generator/database.py`) to save/load configurations from PostgreSQL.
+    *   For generation, passes `configuration_id` or ad-hoc config to `PatientGeneratorApp`.
+3.  **`PatientGeneratorApp` (`patient_generator/app.py` module)**:
+    *   Orchestrates the generation process.
+    *   Initializes and uses `ConfigurationManager`.
+4.  **`ConfigurationManager` (`patient_generator/config_manager.py`)**:
+    *   Loads the specified configuration (from DB via `ConfigurationRepository` or uses ad-hoc).
+    *   Provides parsed and validated configuration details to other generator components.
+5.  **`ConfigurationRepository` (`patient_generator/database.py`)**:
+    *   Handles all database interactions for configuration templates (CRUD operations against PostgreSQL).
+6.  **`PatientFlowSimulator` (`flow_simulator.py`)**:
+    *   Receives scenario parameters (facility chain, casualty rates, etc.) from `ConfigurationManager`.
+    *   Simulates patient flow based on these dynamic configurations.
+7.  **`DemographicsGenerator` (`demographics.py`)**:
+    *   Receives nationality lists and distributions from `ConfigurationManager`.
+    *   Generates demographic data accordingly.
+8.  **`MedicalConditionGenerator` (`medical.py`)**:
+    *   Receives injury type distributions and severity parameters from `ConfigurationManager`.
+    *   Generates medical conditions.
 
 5. **FHIR Generator** (`fhir_generator.py`):
    - Converts patient objects to HL7 FHIR R4 bundles
@@ -94,23 +117,36 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
    - Handles compression and encryption
    - Creates NDEF-formatted data for NFC tags
 
-7. **Patient Class** (`patient.py`):
-   - Core data model representing a patient
-   - Tracks demographics, medical history, and status
-   - Provides methods for adding treatments
+9.  **`FHIRGenerator` (`fhir_generator.py`)**:
+    *   Converts patient objects (now with dynamically generated attributes) to HL7 FHIR R4 bundles.
+10. **`OutputFormatter` (`formatter.py`)**:
+    *   Formats data (JSON, XML), handles compression/encryption.
+11. **`Patient` Class (`patient.py`)**:
+    *   Core data model, largely unchanged but populated based on dynamic configurations.
 
 ### Data Flow
 
-1. User configures generation parameters via web UI
-2. Backend creates a generation job and starts background processing
-3. `PatientGeneratorApp` orchestrates the generation process:
-   - Patient flow simulation creates basic patients with statuses
-   - Demographics and medical conditions are added to patients
-   - Patients are converted to FHIR bundles
-   - Bundles are formatted for output in requested formats
-4. Generated files are stored for download
-5. UI updates with progress and summary statistics
-6. User downloads the completed files
+1.  **Configuration Phase**:
+    *   User interacts with `ConfigurationPanel.tsx` (UI) or uses the Python SDK/API.
+    *   A detailed scenario configuration (fronts, facilities, nationalities, injury types, etc.) is created or selected.
+    *   This configuration is sent to the backend API (`/api/v1/configurations/`).
+    *   The API, using `ConfigurationRepository`, saves or retrieves the configuration from the PostgreSQL database. Configurations can be validated, versioned (conceptually), and listed.
+2.  **Generation Phase**:
+    *   User initiates a generation job via UI or API/SDK, providing a `configuration_id` or an ad-hoc configuration object.
+    *   The backend API (`/api/generate/`) receives the request and starts a background task.
+    *   `PatientGeneratorApp` is instantiated.
+    *   `PatientGeneratorApp` uses `ConfigurationManager` to load and parse the specified scenario configuration (from DB or ad-hoc).
+    *   `ConfigurationManager` provides specific parameters to:
+        *   `PatientFlowSimulator`: To set up facility chains, patient numbers per front, etc.
+        *   `DemographicsGenerator`: To define nationality mixes and data sources.
+        *   `MedicalConditionGenerator`: To set injury distributions and severities.
+    *   These generators create patient data according to the loaded configuration.
+    *   `FHIRGenerator` converts patient objects to FHIR bundles.
+    *   `OutputFormatter` produces files in requested formats (JSON, XML), with optional compression/encryption.
+3.  **Results & Download**:
+    *   Generated files are stored.
+    *   Job status and summary statistics are updated (and accessible via API).
+    *   User downloads the completed files via UI or API.
 
 ### Concurrency Model
 
@@ -126,10 +162,12 @@ The Military Medical Exercise Patient Generator follows a modular architecture w
 
 ### Extensibility Points
 
-- New nationality support can be added to the demographics generator
-- Additional medical conditions can be added to the condition generator
-- New output formats can be implemented in the formatter
-- The flow simulator can be adjusted for different exercise scenarios
+The new architecture significantly enhances extensibility:
+-   **Dynamic Configurations**: New scenarios (fronts, facilities, nationalities, medical flows, injury patterns) can be defined and stored in the database via the API or UI without code changes.
+-   **Nationality Support**: Adding new NATO nations involves updating the `demographics.json` (or future DB table) and ensuring `DemographicsGenerator` can handle them. The system aims for all 32.
+-   **Medical Conditions**: New condition types or patterns can be incorporated into the configuration.
+-   **API Expansion**: New API endpoints can be added to expose more granular control or data.
+-   **Output Formats**: Still possible to add new formatters in `formatter.py`.
 
 ### Identified Technical Debt Areas
 
@@ -149,18 +187,19 @@ Based on a recent technical review, the following areas have been identified for
     *   Large bundle size for the enhanced dashboard.
     *   Inconsistent state management in the React application.
 
-4.  **Configuration Management**:
-    *   Potential for redundant configuration definitions.
-    *   Opportunity to centralize configuration using a dedicated module (e.g., `config.py` with Pydantic) and environment variables.
+4.  **Configuration Management (Now an Architectural Pillar)**:
+    *   The new system centralizes configuration via the `ConfigurationManager`, API, and PostgreSQL database.
+    *   Ongoing considerations include UI/UX for managing complex configurations, versioning strategies, and ensuring consistency between UI, API, and backend logic.
 
 5.  **Testing Coverage**:
     *   Uneven test coverage, particularly for some frontend components and API integration aspects.
     *   Need for expanded unit, integration, and potentially end-to-end tests.
 
-6.  **Database Implementation**:
-    *   Limited connection pooling.
-    *   Potential for SQL injection if queries are not consistently parameterized.
-    *   Lack of a migration management system for schema changes.
+6.  **Database Implementation (PostgreSQL & Alembic)**:
+    *   The migration to PostgreSQL and use of Alembic addresses previous schema management and some SQLite limitations.
+    *   Ensuring efficient connection pooling for PostgreSQL is important.
+    *   Parameterized queries remain crucial to prevent SQL injection.
+    *   Optimizing database queries for performance with potentially complex configuration data.
 
 7.  **Docker Optimization**:
     *   Container images could be large due to unnecessary dependencies.

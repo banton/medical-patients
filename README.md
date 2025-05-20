@@ -1,10 +1,10 @@
 # Military Medical Exercise Patient Generator
 
-A web-based application to generate realistic dummy patient data for military medical exercises, with support for multiple treatment facilities, nationalities, and injury types following NATO medical standards.
+A web-based application to generate realistic dummy patient data for military medical exercises. It features a highly configurable system supporting dynamic scenario definitions (multiple treatment facilities, all 32 NATO nations, varied injury types), a PostgreSQL backend, a comprehensive RESTful API, a Python SDK, and an advanced React-based configuration interface, all following NATO medical standards.
 
 ## Overview
 
-This application generates simulated patient data for military medical exercises, specifically designed to model patient flow through different medical treatment facilities (POI, R1, R2, R3, R4) with realistic progression statistics. The generated data complies with international medical data standards including:
+This application generates simulated patient data for military medical exercises. It models patient flow through dynamically configurable medical treatment facility chains (e.g., POI, R1, R2, R3, R4) with realistic progression statistics. The system is built upon a PostgreSQL database, managed with Alembic migrations, and offers extensive control via a RESTful API and a Python SDK. The generated data complies with international medical data standards including:
 
 - Minimal Core Medical Data (AMedP-8.1)
 - Medical Warning tag (AMedP-8.8)
@@ -13,131 +13,179 @@ This application generates simulated patient data for military medical exercises
 
 ## Features
 
-- **Realistic Patient Flow Simulation**: Models 1400+ patients through the full medical evacuation chain
-- **Configurable Nationality Distribution**: Support for multiple nationalities (POL, EST, GBR, FIN, USA, ESP, LIT, NLD)
-- **Medical Condition Generation**: Creates realistic medical conditions using SNOMED CT codes
-- **Treatment Facility Progression**: Simulates patient flow through POI, R1, R2, R3, and R4 facilities
-- **Multiple Output Formats**: Generates data in JSON, XML and other formats
-- **Data Security Options**: Supports gzip compression and AES-256-GCM encryption
-- **NFC-Ready Formatting**: Prepares data for NDEF/NFC smarttag deployment
-- **Web-based Interface**: Simple single-page application for configuring and generating patient data
+- **Highly Configurable Scenarios**: Define and manage complex exercise scenarios including:
+    - Dynamic medical facility chains (e.g., POI, R1-R4) with custom parameters.
+    - Multiple configurable fronts with specific casualty rates.
+    - Detailed nationality distributions per front (goal: all 32 NATO nations).
+    - Overall injury type distributions (Disease, Non-Battle Injury, Battle Injury).
+- **Advanced Configuration Panel**: A React-based UI (`ConfigurationPanel.tsx`) for creating, editing, saving, and loading scenario templates.
+- **Database-Backed Configurations**: Scenarios are stored and versioned in a PostgreSQL database.
+- **Comprehensive RESTful API**: Programmatic control over configuration management and patient generation.
+- **Python SDK**: Simplifies interaction with the API for automation and integration.
+- **Realistic Patient Data**:
+    - Demographics generation for a wide range of nationalities.
+    - Medical conditions using SNOMED CT codes.
+    - HL7 FHIR R4 compliant bundles.
+- **Multiple Output Formats**: JSON, XML, with NDEF for NFC tags.
+- **Data Security Options**: gzip compression and AES-256-GCM encryption (using unique salts per encryption).
+- **Dockerized Development Environment**: Easy setup and consistent environment using Docker and `start-dev.sh` script.
+- **Database Schema Management**: Alembic for robust PostgreSQL schema migrations.
+- **Enhanced Visualization Dashboard**: React-based dashboard for visualizing generated data.
 
 ## Architecture
 
-The application follows a modular design with these main components:
+The application features a modular architecture:
 
-1. **Web Interface**: Single-page application for configuration and batch processing
-2. **Backend API**: FastAPI-based server handling job management and file generation 
-3. **Generator Engine**: Core Python modules for creating patient data:
-   - Patient flow simulator
-   - Demographics generator
-   - Medical condition generator
-   - FHIR bundle generator
-   - Output formatter
+1.  **Frontend Layer**:
+    *   Main application shell (`static/index.html`).
+    *   Advanced Configuration Panel (`ConfigurationPanel.tsx`): React component for scenario design.
+    *   Enhanced Visualization Dashboard (`enhanced-visualization-dashboard.tsx`): React component for data display.
+    *   Military Medical Dashboard (`MilitaryMedicalDashboard.tsx`): Additional specialized React component.
+    *   Bundled using `esbuild`.
+2.  **Backend API Layer (FastAPI)**:
+    *   Versioned RESTful API (`/api/v1/`) for configurations, generation, job status, and reference data.
+    *   Uses Pydantic for data validation.
+3.  **Core Generation Engine (`patient_generator/`)**:
+    *   `ConfigurationManager`: Loads and provides scenario configurations.
+    *   `PatientGeneratorApp`: Orchestrates patient generation based on loaded configurations.
+    *   Specialized generators (flow simulation, demographics, medical conditions) driven by `ConfigurationManager`.
+4.  **Database Layer (PostgreSQL)**:
+    *   Stores configuration templates and job metadata.
+    *   `ConfigurationRepository` handles DB interactions for configurations.
+    *   Alembic manages schema migrations.
+5.  **Python SDK (`patient_generator_sdk.py`)**:
+    *   Client library for easy interaction with the backend API.
 
-## Installation
+## Getting Started (Development Environment)
 
-### Requirements
+The recommended way to set up and run the development environment is using Docker and the provided helper script.
 
-- Python 3.8+
-- Required Python packages (see `requirements.txt`)
+### Prerequisites
 
-### Setup
+-   Git
+-   Docker Desktop (or Docker Engine + Docker Compose)
+-   Node.js and npm (for frontend development, if making changes to React components)
+-   Python 3.8+ (if running backend components outside Docker, not recommended for primary dev)
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yourusername/military-patient-generator.git
-   cd military-patient-generator
-   ```
+### Setup & Running
 
-2. Create a virtual environment and install dependencies:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository_url>
+    cd military-patient-generator
+    ```
 
-3. Run the application:
-   ```bash
-   python app.py
-   ```
+2.  **Ensure `start-dev.sh` is executable**:
+    ```bash
+    chmod +x start-dev.sh
+    ```
 
-4. Access the web interface at http://localhost:8000
+3.  **Run the development environment startup script**:
+    ```bash
+    ./start-dev.sh
+    ```
+    This script will:
+    *   Install/update frontend Node.js dependencies (`npm install`).
+    *   Build all frontend React components (`npm run build:all-frontend`).
+    *   Start the Docker services defined in `docker-compose.dev.yml` (FastAPI application, PostgreSQL database) in detached mode.
+    *   Wait for the application service to be healthy.
+    *   Apply any pending database migrations using Alembic.
 
-### Docker Deployment
+4.  **Access the application**:
+    *   Main UI (including Advanced Configuration Panel): `http://localhost:8000/static/index.html`
+    *   Enhanced Visualization Dashboard: `http://localhost:8000/static/visualizations.html`
+    *   API (e.g., Swagger docs): `http://localhost:8000/docs`
 
-For containerized deployment, refer to the [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) guide for detailed instructions on building and running the application using Docker and Docker Compose. Various configurations (development, production, Traefik, etc.) are provided.
+For more details on Docker configurations for different environments (production, Traefik), see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
 
 ## Usage
 
-1. **Configure Generation Parameters**:
-   - Set the total number of patients (default: 1400)
-   - Adjust the distribution across fronts (Polish, Estonian, Finnish)
-   - Configure injury type distribution (Disease, Non-battle, Battle trauma)
-   - Select output formats (JSON, XML)
-   - Enable/disable compression and encryption
+The application offers multiple ways to define scenarios and generate patient data:
 
-2. **Generate Patients**:
-   - Click "Generate Patients" to start a generation job
-   - View progress in the Jobs panel
-   - Download results as a ZIP archive when complete
+1.  **Advanced Configuration Panel (Web UI)**:
+    *   Access via `http://localhost:8000/static/index.html`.
+    *   Use the "Advanced Configuration" modal to:
+        *   Create new scenario templates.
+        *   Load, edit, and save existing templates.
+        *   Define fronts, facility chains, nationality distributions, injury patterns, and other parameters.
+    *   Once a configuration is active, use the main UI to initiate patient generation.
 
-3. **Use Generated Data**:
-   - Import into exercise management systems
-   - Deploy to NFC smarttags
-   - Use in medical treatment facility simulations
+2.  **Python SDK (`patient_generator_sdk.py`)**:
+    *   Provides a `PatientGeneratorClient` class to interact with the API.
+    *   Allows programmatic creation, retrieval, and management of configuration templates.
+    *   Enables scripting of patient generation jobs.
+    *   See examples within the SDK file and future documentation.
 
-## Data Structure
+3.  **Direct API Interaction**:
+    *   The RESTful API (Swagger docs at `http://localhost:8000/docs`) can be used directly with any HTTP client.
 
-The generated patient data follows the HL7 FHIR R4 standard with the following key components:
+Generated data can be used for:
+-   Importing into exercise management systems.
+-   Deploying to NFC smarttags.
+-   Medical treatment facility simulations.
 
-- **Patient Resources**: Demographics, identification, nationality
-- **Condition Resources**: Medical conditions using SNOMED CT codes
-- **Observation Resources**: Vital signs and measurements with LOINC codes
-- **Procedure Resources**: Treatments performed at each facility
-- **Bundle Resources**: Complete patient records with timestamps
+## Data Structure and Configuration
 
-## Configuration Options
+Patient data adheres to HL7 FHIR R4 standards, including Patient, Condition, Observation, and Procedure resources.
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| Total Patients | Number of patients to generate | 1440 |
-| Polish Front % | Percentage of casualties from Polish front | 50.0% |
-| Estonian Front % | Percentage of casualties from Estonian front | 33.3% |
-| Finnish Front % | Percentage of casualties from Finnish front | 16.7% |
-| Disease % | Percentage of patients with disease | 52.0% |
-| Non-Battle % | Percentage with non-battle injuries | 33.0% |
-| Battle Trauma % | Percentage with battle trauma | 15.0% |
-| Base Date | Starting date for the exercise scenario | 2025-06-01 |
-| Output Formats | Available formats (JSON, XML) | Both |
-| Compression | Generate compressed files | Enabled |
-| Encryption | Generate encrypted files | Enabled |
+Scenario configurations are complex objects managed via the API and stored in the database. They define all aspects of the generation, such as:
+-   Overall exercise parameters (total patients, base date).
+-   Front definitions (name, casualty rates, nationality mix).
+-   Facility definitions (type, capabilities, progression statistics) arranged in chains.
+-   Injury distributions (battle, non-battle, disease percentages).
+
+Refer to the API documentation (`/docs`) or the `ConfigurationPanel.tsx` UI for details on the structure of configuration templates.
 
 ## Security
 
-The application supports AES-256-GCM encryption for sensitive patient data. You can either:
-- Provide a password (which will be used with PBKDF2 to derive a key)
-- Let the system generate a random key (suitable for testing)
+-   **Data Encryption**: Supports AES-256-GCM encryption for output files. Unique salts are generated for each encryption using PBKDF2 with a user-provided password.
+-   **API Security**: Basic API key authentication is implemented for configuration management endpoints. (Note: The default API key is for development and should be changed for production).
 
 ## Project Structure
 
+A simplified overview of the project structure:
+
 ```
 military-patient-generator/
-├── app.py                      # Main FastAPI application
-├── requirements.txt            # Python dependencies
-├── static/                     # Static web files
-│   └── index.html              # Single page interface
+├── .clinerules
+├── .dockerignore
+├── .gitignore
+├── alembic.ini
+├── app.py                              # Main FastAPI application
+├── ConfigurationPanel.tsx              # React component for advanced config UI
+├── Dockerfile
+├── docker-compose.dev.yml              # Docker Compose for development
+├── enhanced-visualization-dashboard.tsx
+├── jest.config.js
+├── package.json                        # Frontend dependencies and scripts
+├── patient_generator_sdk.py            # Python SDK
+├── README.md
+├── requirements.txt                    # Python dependencies
+├── start-dev.sh                        # Dev environment startup script
+├── tsconfig.json
 │
-└── patient_generator/          # Core generation modules
-    ├── __init__.py
-    ├── app.py                  # PatientGeneratorApp
-    ├── patient.py              # Patient class
-    ├── flow_simulator.py       # Patient flow simulator
-    ├── demographics.py         # Demographics generator
-    ├── medical.py              # Medical condition generator
-    ├── fhir_generator.py       # FHIR bundle generator
-    └── formatter.py            # Output formatter
+├── alembic_migrations/                 # Alembic migration scripts
+│   └── versions/
+│
+├── patient_generator/                  # Core Python generation module
+│   ├── __init__.py
+│   ├── app.py                          # PatientGeneratorApp class
+│   ├── config_manager.py
+│   ├── database.py                     # PostgreSQL interaction, ConfigurationRepository
+│   ├── models_db.py                    # SQLAlchemy DB models
+│   ├── schemas_config.py               # Pydantic schemas for configurations
+│   └── ... (other generator modules)
+│
+├── static/                             # Static web files
+│   ├── index.html
+│   ├── visualizations.html
+│   └── dist/                           # Compiled JS bundles
+│       ├── bundle.js
+│       └── configuration-panel.js
+│
+└── ... (other configuration files, test files, etc.)
 ```
+For a more detailed structure, see `memory-bank/tech-context.md`.
 
 ## Standards Compliance
 
