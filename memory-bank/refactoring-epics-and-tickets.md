@@ -4,13 +4,13 @@
 **Goal**: Ensure the UI remains fully functional after backend refactoring
 
 ### Ticket UI-001: Test and Fix API Endpoints
-**Status**: In Progress
+**Status**: Completed
 **Priority**: High
 **Acceptance Criteria**:
-- [ ] All UI pages load without errors
-- [ ] API endpoints respond correctly with expected data format
-- [ ] Authentication headers are properly handled
-- [ ] Error messages display appropriately
+- [x] All UI pages load without errors
+- [x] API endpoints respond correctly with expected data format
+- [x] Authentication headers are properly handled
+- [x] Error messages display appropriately
 **Test Plan**:
 1. Test index.html configuration panel
 2. Test visualizations.html dashboard
@@ -18,16 +18,32 @@
 4. Check all CRUD operations work
 
 ### Ticket UI-002: Fix CORS and API Integration Issues
-**Status**: Pending
+**Status**: Completed
 **Priority**: High
 **Acceptance Criteria**:
-- [ ] CORS configured correctly for frontend-backend communication
-- [ ] API base URL properly configured in static/js/api-config.js
-- [ ] All fetch requests include proper authentication headers
+- [x] CORS configured correctly for frontend-backend communication
+- [x] API base URL properly configured in static/js/api-config.js
+- [x] All fetch requests include proper authentication headers
 **Test Plan**:
 1. Verify CORS settings in FastAPI
 2. Test cross-origin requests from UI
 3. Check browser console for CORS errors
+
+### Ticket UI-003: Implement Dynamic Front Configuration
+**Status**: Completed
+**Priority**: High
+**Acceptance Criteria**:
+- [x] Remove React dependencies from main UI
+- [x] Implement dynamic add/remove fronts functionality
+- [x] Per-front nationality distribution configuration
+- [x] Real-time validation of casualty rates (sum to 100%)
+- [x] Real-time validation of nationality percentages per front
+- [x] Duplicate nationality prevention within fronts
+**Test Plan**:
+1. Users can add/remove fronts dynamically
+2. Validation prevents invalid configurations
+3. Form submission generates correct API payload
+4. UI remains responsive with multiple fronts
 
 ## Epic 2: Async Patient Generation Pipeline (High Priority)
 **Goal**: Replace synchronous threading with async/await for better scalability
@@ -97,44 +113,74 @@
 2. Monitor database connections
 3. Check for connection leaks
 
-## Epic 4: Frontend Modernization (Medium Priority)
-**Goal**: Unify frontend architecture with modern React and state management
+## Epic 4: Frontend Enhancement (Medium Priority)
+**Goal**: Enhance vanilla JavaScript architecture for better maintainability and user experience
 
-### Ticket FE-001: Create Unified React Application
+### Ticket FE-001: Modularize JavaScript Architecture
 **Status**: Pending
 **Priority**: Medium
 **Acceptance Criteria**:
-- [ ] Single React app replaces mixed vanilla JS/React
-- [ ] React Router for navigation
-- [ ] Consistent component structure
+- [ ] Separate concerns into modules (config, validation, api, ui)
+- [ ] Use ES6 modules with proper imports/exports
+- [ ] Implement event-driven architecture for component communication
+- [ ] Create reusable UI component functions
+- [ ] Document module interfaces and dependencies
 **Test Plan**:
-1. All pages render correctly in React
-2. Navigation works without page reloads
-3. State persists across route changes
+1. Each module can be tested in isolation
+2. No global variable pollution
+3. Module dependencies are explicit and minimal
+4. UI updates work through event system
 
-### Ticket FE-002: Implement State Management
+### Ticket FE-002: Add Configuration Persistence
 **Status**: Pending
 **Priority**: Medium
 **Acceptance Criteria**:
-- [ ] Zustand or Redux store implemented
-- [ ] Configuration state managed centrally
-- [ ] Job state updates reflected in UI
+- [ ] Save/load front configurations to localStorage
+- [ ] Import/export configurations as JSON files
+- [ ] Configuration templates (preset scenarios)
+- [ ] Undo/redo for configuration changes
+- [ ] Auto-save draft configurations
 **Test Plan**:
-1. State changes reflect across components
-2. State persists to localStorage
-3. State hydration on page reload
+1. Configurations persist across browser sessions
+2. Export produces valid JSON matching schema
+3. Import validates and loads configurations correctly
+4. Undo/redo maintains consistent state
+5. Auto-save recovers from browser crashes
 
-### Ticket FE-003: Build Component Library
+### Ticket FE-003: Enhance Accessibility and UX
+**Status**: Pending
+**Priority**: Medium
+**Acceptance Criteria**:
+- [ ] Full keyboard navigation support
+- [ ] ARIA labels and roles for all interactive elements
+- [ ] Screen reader compatible
+- [ ] Loading states and progress indicators
+- [ ] Tooltip help for complex fields
+- [ ] Form validation with inline error messages
+- [ ] Responsive design for mobile/tablet
+**Test Plan**:
+1. Tab navigation works through all form elements
+2. Screen reader announces all actions correctly
+3. Color contrast meets WCAG AA standards
+4. Works on mobile devices (iOS/Android)
+5. Loading states prevent duplicate submissions
+
+### Ticket FE-004: Improve Performance and Error Handling
 **Status**: Pending
 **Priority**: Low
 **Acceptance Criteria**:
-- [ ] Reusable UI components created
-- [ ] Consistent styling system
-- [ ] Storybook for component documentation
+- [ ] Debounce validation on input fields
+- [ ] Lazy load nationality data
+- [ ] Implement request retry logic with exponential backoff
+- [ ] Graceful degradation when API is unavailable
+- [ ] Client-side caching of reference data
+- [ ] Performance monitoring and metrics
 **Test Plan**:
-1. All components render in isolation
-2. Props validation works
-3. Accessibility standards met
+1. Page loads in under 2 seconds
+2. Input validation doesn't block typing
+3. API failures show user-friendly messages
+4. Offline mode shows cached data
+5. Memory usage stays constant during long sessions
 
 ## Epic 5: Developer Experience (Low Priority)
 **Goal**: Improve development workflow and tooling
@@ -205,18 +251,31 @@
 
 ## Implementation Order
 
-1. **Immediate (This Session)**:
-   - UI-001: Test and Fix API Endpoints
-   - UI-002: Fix CORS and API Integration Issues
+1. **Completed**:
+   - ✅ UI-001: Test and Fix API Endpoints
+   - ✅ UI-002: Fix CORS and API Integration Issues
+   - ✅ UI-003: Implement Dynamic Front Configuration
 
-2. **Next Priority**:
+2. **High Priority (Next Session)**:
    - ASYNC-001: Create Async Patient Generation Service
    - ASYNC-002: Refactor Background Tasks to Use Async
+   - FE-001: Modularize JavaScript Architecture
 
-3. **Following Priorities**:
+3. **Medium Priority**:
    - PERF-001: Add Redis Caching Layer
-   - FE-001: Create Unified React Application
+   - FE-002: Add Configuration Persistence
+   - FE-003: Enhance Accessibility and UX
    - TEST-001: Add Integration Tests
 
-4. **Future Work**:
+4. **Low Priority**:
+   - FE-004: Improve Performance and Error Handling
+   - DX-001: Create Makefile (Note: Already exists, needs review)
+   - DX-002: Set Up CI/CD Pipeline
+   - DX-003: Add Linting and Formatting
    - Remaining tickets as time permits
+
+## Notes on Priority Changes
+
+- **React Migration Cancelled**: Based on successful vanilla JS implementation, React migration (old FE-001/FE-002) has been replaced with vanilla JS enhancements
+- **Frontend Focus**: New FE tickets focus on improving the existing vanilla JS architecture rather than introducing framework complexity
+- **User Experience**: Emphasis on accessibility, persistence, and performance improvements that directly benefit end users
