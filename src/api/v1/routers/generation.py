@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from patient_generator.database import Database, ConfigurationRepository
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB
-from patient_generator.config_manager import ConfigurationManager
 from src.domain.services.job_service import JobService
 from src.domain.services.patient_generation_service import (
     AsyncPatientGenerationService,
@@ -112,32 +111,19 @@ async def run_patient_generation(
             use_compression=use_compression
         )
         
-        # For now, fall back to the synchronous approach wrapped in async
-        # The full async refactoring requires deeper changes to patient_generator module
-        from patient_generator.app import PatientGeneratorApp
+        # Use async patient generation service
+        generation_service = AsyncPatientGenerationService()
+        result = await generation_service.generate_patients(
+            context=context,
+            progress_callback=update_progress
+        )
         
-        # Create configuration manager and load configuration
-        config_manager = ConfigurationManager(database_instance=db)
-        config_manager.load_configuration(config.id)
-        
-        # Run generation in thread pool to avoid blocking
-        def run_sync_generation():
-            generator = PatientGeneratorApp(config_manager)
-            
-            # Run with proper parameters
-            patients, bundles, gen_output_files, gen_summary = generator.run(
-                output_directory=output_dir,
-                output_formats=output_formats,
-                use_compression=use_compression,
-                use_encryption=use_encryption,
-                encryption_password=encryption_password,
-                progress_callback=None  # Could add async callback wrapper here
-            )
-            return gen_output_files
-        
-        # Run in thread pool
-        import asyncio
-        gen_output_files = await asyncio.to_thread(run_sync_generation)
+        # Extract output files and summary
+        gen_output_files = result.get("output_files", [])
+        gen_summary = {
+            "total_patients": result.get("patient_count", config.total_patients),
+            "status": result.get("status", "completed")
+        }
         
         # Update progress
         await update_progress(config.total_patients, config.total_patients)
@@ -155,14 +141,14 @@ async def run_patient_generation(
                 rel_path = os.path.relpath(file_path, output_dir)
                 output_files.append(rel_path)
         
-        # Create summary
-        summary = {
-            "total_patients": config.total_patients,
+        # Use summary from generator and add additional fields
+        summary = gen_summary or {}
+        summary.update({
             "generation_time": datetime.now(timezone.utc).isoformat(),
             "output_formats": output_formats,
             "compressed": use_compression,
             "encrypted": use_encryption is True
-        }
+        })
         
         # Set job results
         await job_service.set_job_results(
@@ -222,7 +208,7 @@ async def generate_patients(
         config_dict = config.model_dump() if config else {}
     else:
         # Use ad-hoc configuration
-        config_dict = request.configuration.model_dump()
+        config_dict = request.configuration.model_dump() if request.configuration else {}
     
     # Create job
     job = await job_service.create_job({

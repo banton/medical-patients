@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import os
 import tempfile
+import gzip
 
 from patient_generator.patient import Patient
 from patient_generator.flow_simulator import PatientFlowSimulator
@@ -26,7 +27,7 @@ class GenerationContext:
     job_id: str
     output_directory: str
     encryption_password: Optional[str] = None
-    output_formats: List[str] = None
+    output_formats: Optional[List[str]] = None
     use_compression: bool = False
     
     def __post_init__(self):
@@ -225,49 +226,88 @@ class AsyncPatientGenerationService:
         output_files = {}
         temp_files = {}
         
-        # Create temporary files for each format
+        # Create output streams for each format
+        output_streams = {}
+        
         for format in context.output_formats:
-            temp_file = tempfile.NamedTemporaryFile(
-                mode='w',
-                suffix=f'.{format}',
-                dir=context.output_directory,
-                delete=False
-            )
-            temp_files[format] = temp_file
-            output_files[format] = temp_file.name
+            if format == 'json':
+                # JSON needs special handling for streaming
+                temp_file = tempfile.NamedTemporaryFile(
+                    mode='w',
+                    suffix='.json',
+                    dir=context.output_directory,
+                    delete=False
+                )
+                temp_file.write('[\n')  # Start JSON array
+                temp_files[format] = temp_file
+                output_files[format] = temp_file.name
+                output_streams[format] = temp_file
+            else:
+                # Other formats can use binary mode
+                temp_file = tempfile.NamedTemporaryFile(
+                    mode='wb',
+                    suffix=f'.{format}',
+                    dir=context.output_directory,
+                    delete=False
+                )
+                temp_files[format] = temp_file
+                output_files[format] = temp_file.name
+                output_streams[format] = temp_file
         
         try:
+            # Initialize formatter
+            formatter = self.pipeline.output_formatter
+            first_patient = True
+            patient_count = 0
+            
             # Stream patients and write to files
-            patients = []
-            bundles = []
-            
             async for patient, bundle in self.pipeline.generate(context, progress_callback):
-                patients.append(patient)
-                bundles.append(bundle)
+                patient_count += 1
                 
-                # Write in batches of 100
-                if len(patients) >= 100:
-                    await self._write_batch(temp_files, patients, bundles, context)
-                    patients.clear()
-                    bundles.clear()
+                # Write to each format
+                for format in context.output_formats:
+                    stream = output_streams[format]
+                    
+                    if format == 'json':
+                        # Handle JSON array formatting
+                        if not first_patient:
+                            stream.write(',\n')
+                        
+                        # Create combined data structure
+                        patient_data = {
+                            "patient": patient.__dict__,
+                            "fhir_bundle": bundle
+                        }
+                        
+                        import json
+                        json.dump(patient_data, stream, indent=2)
+                    elif format == 'xml':
+                        # Use formatter for XML
+                        await asyncio.to_thread(
+                            formatter.format_xml,
+                            [bundle],
+                            stream
+                        )
+                    elif format == 'csv':
+                        # CSV format - write header on first patient
+                        if first_patient:
+                            stream.write('patient_id,name,age,gender,nationality,injury,urgency\n')
+                        stream.write(f'{patient.id},"{patient.first_name} {patient.last_name}",{patient.age},{patient.gender},{patient.nationality_code},{patient.primary_injury},{patient.urgency}\n')
+                
+                first_patient = False
             
-            # Write remaining patients
-            if patients:
-                await self._write_batch(temp_files, patients, bundles, context)
-            
-            # Close temporary files
-            for temp_file in temp_files.values():
+            # Close temporary files properly
+            for format, temp_file in temp_files.items():
+                if format == 'json':
+                    temp_file.write('\n]')  # Close JSON array
                 temp_file.close()
             
-            # Rename temp files to final names
-            final_files = {}
-            for format, temp_path in output_files.items():
-                final_path = os.path.join(
-                    context.output_directory,
-                    f'patients.{format}'
-                )
-                os.rename(temp_path, final_path)
-                final_files[format] = final_path
+            # Finalize files
+            final_files = await self._finalize_files(
+                output_files,
+                context,
+                patient_count
+            )
             
             # Apply compression if needed
             if context.use_compression:
@@ -295,33 +335,31 @@ class AsyncPatientGenerationService:
                     os.unlink(temp_file.name)
             raise e
     
-    async def _write_batch(
+    async def _finalize_files(
         self,
-        temp_files: Dict[str, Any],
-        patients: List[Patient],
-        bundles: List[Dict[str, Any]],
-        context: GenerationContext
-    ) -> None:
-        """Write a batch of patients to files."""
-        # Convert to appropriate format and write
-        for format, temp_file in temp_files.items():
+        output_files: Dict[str, str],
+        context: GenerationContext,
+        patient_count: int
+    ) -> Dict[str, str]:
+        """Finalize output files with proper extensions."""
+        final_files = {}
+        
+        for format, temp_path in output_files.items():
+            # Determine final filename
             if format == 'json':
-                import json
-                data = {
-                    "patients": [p.__dict__ for p in patients],
-                    "bundles": bundles
-                }
-                json.dump(data, temp_file, indent=2)
+                final_name = 'patients.json'
             elif format == 'xml':
-                # Simplified XML output
-                temp_file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-                temp_file.write('<patients>\n')
-                for patient in patients:
-                    temp_file.write(f'  <patient id="{patient.id}">\n')
-                    temp_file.write(f'    <name>{patient.first_name} {patient.last_name}</name>\n')
-                    temp_file.write(f'    <injury>{patient.primary_injury}</injury>\n')
-                    temp_file.write(f'  </patient>\n')
-                temp_file.write('</patients>\n')
+                final_name = 'patients.xml'  
+            elif format == 'csv':
+                final_name = 'patients.csv'
+            else:
+                final_name = f'patients.{format}'
+            
+            final_path = os.path.join(context.output_directory, final_name)
+            os.rename(temp_path, final_path)
+            final_files[format] = final_path
+        
+        return final_files
     
     async def _compress_files(
         self,
