@@ -8,7 +8,6 @@ import atexit
 import shutil
 import logging
 from xml.dom.minidom import parseString
-from typing import Union # Added Union
 import dicttoxml
 
 try:
@@ -98,16 +97,9 @@ class OutputFormatter:
             
             for bundle in bundles:
                 # Convert each bundle to XML
-                bundle_xml_output = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
-                bundle_xml_str: str
-                if isinstance(bundle_xml_output, bytes):
-                    bundle_xml_str = bundle_xml_output.decode('utf-8')
-                elif isinstance(bundle_xml_output, str): # Should ideally be LiteralString if Pylance is right
-                    bundle_xml_str = bundle_xml_output
-                else:
-                    # Fallback or error if type is unexpected
-                    self.logger.error(f"Unexpected type from dicttoxml: {type(bundle_xml_output)}")
-                    bundle_xml_str = str(bundle_xml_output) # Best effort
+                bundle_xml_output: bytes = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                # dicttoxml always returns bytes
+                bundle_xml_str = bundle_xml_output.decode('utf-8')
                 
                 # Write directly to stream
                 stream.write(bundle_xml_str)
@@ -118,16 +110,8 @@ class OutputFormatter:
         else:
             # Standard approach for small datasets
             xml_data_output = dicttoxml.dicttoxml(bundles, custom_root='PatientBundles', attr_type=False)
-            xml_data_to_parse: Union[str, bytes]
-            
-            if isinstance(xml_data_output, bytes):
-                xml_data_to_parse = xml_data_output
-            elif isinstance(xml_data_output, str):
-                xml_data_to_parse = xml_data_output
-            else:
-                self.logger.error(f"Unexpected type from dicttoxml (custom_root): {type(xml_data_output)}")
-                # Fallback: try to convert to string, then encode if parseString needs bytes
-                xml_data_to_parse = str(xml_data_output).encode('utf-8')
+            # dicttoxml always returns bytes
+            xml_data_to_parse = xml_data_output
 
 
             # Format XML for better readability

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "Bash(python -m pytest tests_api.py -v)",
+      "Bash(python -m pylint:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)"
+    ],
+    "deny": []
+  }
+}

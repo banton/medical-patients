@@ -18,6 +18,9 @@ services:
       - PATIENT_GENERATOR_MAX_MEMORY=2048
       - DATABASE_URL=postgresql://medgen_user:medgen_password@db:5432/medgen_db
       - DB_TYPE=postgres
+      - API_KEY=${API_KEY:-your_secret_api_key_here}
+      - DEBUG=${DEBUG:-True}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
     depends_on:
       db:
         condition: service_healthy

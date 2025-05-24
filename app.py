@@ -24,6 +24,9 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+# Import configuration
+from config import get_settings
+
 # Import our patient generator modules
 from patient_generator.app import PatientGeneratorApp
 from patient_generator.visualization_data import transform_job_data_for_visualization
@@ -32,7 +35,10 @@ from patient_generator.config_manager import ConfigurationManager # Added Config
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition as PatientGeneratorFrontDefinition # Added Pydantic models
 from patient_generator.nationality_data import NationalityDataProvider # Added
 
-app = FastAPI(title="Military Medical Exercise Patient Generator")
+# Get settings instance
+settings = get_settings()
+
+app = FastAPI(title=settings.APP_NAME)
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
@@ -42,7 +48,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Enable CORS (should be added after rate limiting middleware if it affects OPTIONS requests)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For development; restrict in production
+    allow_origins=settings.CORS_ORIGINS,  # Configurable via environment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,9 +78,8 @@ visualization_router = APIRouter(prefix="/api/visualizations")
 API_KEY_NAME = "X-API-KEY" # Standard header name for API keys
 api_key_header_auth = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
 
-# THIS IS A PLACEHOLDER - DO NOT USE IN PRODUCTION
-# In a real app, load from env var, secrets manager, or database (hashed)
-EXPECTED_API_KEY = "your_secret_api_key_here" 
+# API key from environment configuration
+EXPECTED_API_KEY = settings.API_KEY 
 
 async def get_api_key(api_key_header: str = Security(api_key_header_auth)):
     if api_key_header == EXPECTED_API_KEY:
@@ -379,7 +384,7 @@ async def get_default_config_info():
 visualization_router = APIRouter(prefix="/api/visualizations")
 
 @visualization_router.get("/dashboard-data")
-async def get_dashboard_data(job_id: str = None): # type: ignore
+async def get_dashboard_data(job_id: Optional[str] = None):
     """Get data for the visualization dashboard"""
     target_job_data = None
     if job_id:
@@ -439,7 +444,7 @@ async def get_visualization_job_list():
     return job_list
 
 @visualization_router.get("/patient-detail/{patient_id}")
-async def get_patient_detail(patient_id: str, job_id: str = None): # type: ignore
+async def get_patient_detail(patient_id: str, job_id: Optional[str] = None):
     """Get detailed data for a specific patient"""
     target_job = None
     if job_id and job_id in jobs and jobs[job_id]["status"] == "completed":
