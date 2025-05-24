@@ -33,7 +33,7 @@ services:
     restart: "on-failure"
     # For a general docker-compose.yml, --reload might be removed for production-like behavior
     # Keeping it for now to match the provided content, assuming it's a dev default.
-    command: uvicorn app:app --reload --host 0.0.0.0 --port 8000
+    command: uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
   db:
     image: postgres:15-alpine

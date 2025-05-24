@@ -34,27 +34,76 @@ This application generates simulated patient data for military medical exercises
 
 ## Architecture
 
-The application features a modular architecture:
+The application features a clean, domain-driven architecture with clear separation of concerns:
 
-1.  **Frontend Layer**:
-    *   Main application shell (`static/index.html`).
-    *   Advanced Configuration Panel (`ConfigurationPanel.tsx`): React component for scenario design.
-    *   Enhanced Visualization Dashboard (`enhanced-visualization-dashboard.tsx`): React component for data display.
-    *   Military Medical Dashboard (`MilitaryMedicalDashboard.tsx`): Additional specialized React component.
-    *   Bundled using `esbuild`.
-2.  **Backend API Layer (FastAPI)**:
-    *   Versioned RESTful API (`/api/v1/`) for configurations, generation, job status, and reference data.
-    *   Uses Pydantic for data validation.
-3.  **Core Generation Engine (`patient_generator/`)**:
-    *   `ConfigurationManager`: Loads and provides scenario configurations.
-    *   `PatientGeneratorApp`: Orchestrates patient generation based on loaded configurations.
-    *   Specialized generators (flow simulation, demographics, medical conditions) driven by `ConfigurationManager`.
-4.  **Database Layer (PostgreSQL)**:
-    *   Stores configuration templates and job metadata.
-    *   `ConfigurationRepository` handles DB interactions for configurations.
-    *   Alembic manages schema migrations.
-5.  **Python SDK (`patient_generator_sdk.py`)**:
-    *   Client library for easy interaction with the backend API.
+### Application Structure
+
+```
+/
+├── src/                        # Modular application code
+│   ├── main.py                # Application entry point
+│   ├── core/                  # Core utilities
+│   │   ├── exceptions.py      # Custom exceptions
+│   │   └── security.py        # API key authentication
+│   ├── domain/                # Business domain layer
+│   │   ├── models/            # Domain models
+│   │   ├── repositories/      # Data access interfaces
+│   │   └── services/          # Business logic services
+│   └── api/v1/               # API layer
+│       ├── routers/          # API endpoints
+│       └── dependencies/     # Shared dependencies
+├── patient_generator/         # Core generation logic
+│   ├── app.py                # Patient generator application
+│   ├── config_manager.py     # Configuration management
+│   ├── database.py           # Database connection and repositories
+│   ├── demographics.py       # Demographics generation
+│   ├── medical.py            # Medical condition generation
+│   ├── flow_simulator.py     # Patient flow simulation
+│   ├── fhir_generator.py     # FHIR bundle generation
+│   └── formatter.py          # Output formatting
+├── static/                   # Frontend assets
+├── alembic_migrations/       # Database migrations
+└── config.py                 # Application configuration
+
+### Key Components
+
+1. **API Layer** (`src/api/v1/`):
+   - **Routers**: Modular endpoints for configurations, generation, jobs, downloads, and visualizations
+   - **Dependencies**: Shared dependencies for database sessions and services
+   - **Security**: API key authentication for protected endpoints
+
+2. **Domain Layer** (`src/domain/`):
+   - **Models**: Business entities (Job, JobStatus, etc.)
+   - **Services**: Business logic (JobService)
+   - **Repositories**: Data access interfaces
+
+3. **Core Layer** (`src/core/`):
+   - **Security**: Authentication and authorization
+   - **Exceptions**: Custom exception hierarchy
+
+4. **Patient Generator** (`patient_generator/`):
+   - **ConfigurationManager**: Manages active scenario configurations
+   - **Database**: PostgreSQL connection pool and data access
+   - **Flow Simulator**: Models patient progression through facilities
+   - **Generators**: Demographics, medical conditions, and FHIR bundles
+   - **PatientGeneratorApp**: Orchestrates patient generation
+   - **Specialized Generators**: Demographics, medical conditions, flow simulation
+
+5. **Frontend Layer**:
+   - **Main Shell** (`static/index.html`): Entry point
+   - **Configuration Panel** (`ConfigurationPanel.tsx`): React component for scenario design
+   - **Visualization Dashboard** (`enhanced-visualization-dashboard.tsx`): Data visualization
+   - **Build System**: esbuild for TypeScript/React compilation
+
+6. **Database Layer**:
+   - **PostgreSQL**: Configuration storage with versioning
+   - **Alembic**: Schema migrations
+   - **SQLAlchemy**: ORM for database operations
+
+7. **Python SDK** (`patient_generator_sdk.py`):
+   - Client library for programmatic API interaction
+
+For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Getting Started (Development Environment)
 
@@ -72,16 +121,12 @@ The recommended way to set up and run the development environment is using Docke
 1.  **Clone the repository**:
     ```bash
     git clone <repository_url>
-    cd military-patient-generator
+    cd medical-patients
     ```
 
-2.  **Ensure `start-dev.sh` is executable**:
+2.  **Using Docker (Recommended)**:
     ```bash
     chmod +x start-dev.sh
-    ```
-
-3.  **Run the development environment startup script**:
-    ```bash
     ./start-dev.sh
     ```
     This script will:
@@ -91,10 +136,25 @@ The recommended way to set up and run the development environment is using Docke
     *   Wait for the application service to be healthy.
     *   Apply any pending database migrations using Alembic.
 
+3.  **Manual Setup (Alternative)**:
+    ```bash
+    # Start PostgreSQL (via Docker or local installation)
+    docker compose up -d db
+    
+    # Install Python dependencies
+    pip install -r requirements.txt
+    
+    # Run database migrations
+    alembic upgrade head
+    
+    # Start the application
+    PYTHONPATH=. python src/main.py
+    ```
+
 4.  **Access the application**:
     *   Main UI (including Advanced Configuration Panel): `http://localhost:8000/static/index.html`
     *   Enhanced Visualization Dashboard: `http://localhost:8000/static/visualizations.html`
-    *   API (e.g., Swagger docs): `http://localhost:8000/docs`
+    *   API Documentation: `http://localhost:8000/docs`
 
 For more details on Docker configurations for different environments (production, Traefik), see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
 
@@ -147,45 +207,39 @@ A simplified overview of the project structure:
 
 ```
 military-patient-generator/
-├── .clinerules
-├── .dockerignore
-├── .gitignore
-├── alembic.ini
-├── app.py                              # Main FastAPI application
-├── ConfigurationPanel.tsx              # React component for advanced config UI
-├── Dockerfile
-├── docker-compose.dev.yml              # Docker Compose for development
-├── enhanced-visualization-dashboard.tsx
-├── jest.config.js
-├── package.json                        # Frontend dependencies and scripts
-├── patient_generator_sdk.py            # Python SDK
-├── README.md
+├── src/                                # Modularized application code
+│   ├── api/v1/                         # API layer
+│   │   ├── dependencies/               # Dependency injection
+│   │   └── routers/                    # API endpoints
+│   ├── core/                           # Core utilities
+│   │   ├── exceptions.py               # Custom exceptions
+│   │   └── security.py                 # Authentication
+│   ├── domain/                         # Business logic
+│   │   ├── models/                     # Domain models
+│   │   ├── repositories/               # Data access
+│   │   └── services/                   # Business services
+│   └── main.py                         # Application entry point
+│
+├── patient_generator/                  # Core generation module
+│   ├── app.py                          # PatientGeneratorApp
+│   ├── config_manager.py               # Configuration management
+│   ├── database.py                     # Database operations
+│   └── ... (generators)
+│
+├── static/                             # Frontend files
+│   ├── index.html                      # Main UI
+│   ├── js/                             # JavaScript files
+│   └── dist/                           # Compiled bundles
+│
+├── tests/                              # Test files
+├── config.py                           # Environment configuration
+├── Dockerfile                          # Container definition
+├── docker-compose.dev.yml              # Development environment
 ├── requirements.txt                    # Python dependencies
-├── start-dev.sh                        # Dev environment startup script
-├── tsconfig.json
-│
-├── alembic_migrations/                 # Alembic migration scripts
-│   └── versions/
-│
-├── patient_generator/                  # Core Python generation module
-│   ├── __init__.py
-│   ├── app.py                          # PatientGeneratorApp class
-│   ├── config_manager.py
-│   ├── database.py                     # PostgreSQL interaction, ConfigurationRepository
-│   ├── models_db.py                    # SQLAlchemy DB models
-│   ├── schemas_config.py               # Pydantic schemas for configurations
-│   └── ... (other generator modules)
-│
-├── static/                             # Static web files
-│   ├── index.html
-│   ├── visualizations.html
-│   └── dist/                           # Compiled JS bundles
-│       ├── bundle.js
-│       └── configuration-panel.js
-│
-└── ... (other configuration files, test files, etc.)
+└── package.json                        # Frontend dependencies
 ```
-For a more detailed structure, see `memory-bank/tech-context.md`.
+
+For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Standards Compliance
 

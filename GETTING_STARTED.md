@@ -40,18 +40,43 @@ Patients can also reach these end states:
 
 ## Using the Command Line
 
-For scripted or batch operations, use the command-line interface:
+For scripted or batch operations, first ensure your environment is set up:
 
 ```bash
-# Generate a fixed number of patients
-python -m patient_generator.cli --patients 1000 --output my_output
+# Set Python path (required for modular imports)
+export PYTHONPATH=/path/to/medical-patients
 
-# Use a configuration file
-python -m patient_generator.cli --config my_config.json
+# Run the generator directly
+python src/main.py
+
+# Or use Docker
+docker compose up
 
 # Generate specific nationality distribution
 python -m patient_generator.cli --polish 60 --estonian 25 --finnish 15
 ```
+
+## Using the API
+
+The REST API provides programmatic access to all functionality:
+
+```bash
+# List all configurations
+curl -H "X-API-Key: your_api_key" http://localhost:8000/api/v1/configurations/
+
+# Create a new configuration
+curl -X POST -H "X-API-Key: your_api_key" -H "Content-Type: application/json" \
+  -d @config.json http://localhost:8000/api/v1/configurations/
+
+# Generate patients
+curl -X POST -H "X-API-Key: your_api_key" -H "Content-Type: application/json" \
+  -d '{"configuration_id": "config-uuid"}' http://localhost:8000/api/generate
+
+# Check job status
+curl -H "X-API-Key: your_api_key" http://localhost:8000/api/jobs/{job_id}
+```
+
+See the [API Documentation](http://localhost:8000/docs) for complete details.
 
 ## Integration with Other Systems
 

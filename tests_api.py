@@ -8,7 +8,7 @@ BASE_URL = "http://localhost:8000"  # Assuming the FastAPI app is running here
 CONFIG_API_URL = f"{BASE_URL}/api/v1/configurations"
 GENERATE_API_URL = f"{BASE_URL}/api/generate"
 JOBS_API_URL = f"{BASE_URL}/api/jobs"
-API_KEY = "your_secret_api_key_here" # Placeholder API key
+API_KEY = "your_secret_api_key_here"  # Should match API_KEY env var or default
 
 HEADERS = {
     "X-API-KEY": API_KEY,

@@ -28,13 +28,16 @@ The Military Medical Exercise Patient Generator is built using modern web techno
 
 1. **FastAPI (0.100.0+)**:
    - Modern, high-performance web framework
-   - Automatic API documentation
-   - Background task support
+   - Automatic API documentation (OpenAPI/Swagger)
+   - Background task support for patient generation
    - Type validation with Pydantic
+   - Dependency injection system
+   - Async/await support throughout
 
 2. **Uvicorn (0.22.0+)**:
    - ASGI server for running the FastAPI application
    - High performance for async operations
+   - Auto-reload in development mode
 
 3. **Cryptography (41.0.1+)**:
    - Secure encryption (AES-256-GCM)
@@ -131,6 +134,34 @@ The Military Medical Exercise Patient Generator is built using modern web techno
    - Containerization possible (though not explicitly included)
    - Should be deployed behind reverse proxy for production
    - Background worker considerations for long-running tasks
+
+### Architecture Updates (Post-Modularization)
+
+The application has been refactored from a monolithic structure to a clean, domain-driven architecture:
+
+1. **Modular Structure**:
+   - `src/main.py`: Application entry point (replaces monolithic `app.py`)
+   - `src/core/`: Core utilities (exceptions, security)
+   - `src/domain/`: Business domain layer (models, services, repositories)
+   - `src/api/v1/`: API endpoints organized by domain
+   - `patient_generator/`: Core generation logic remains separate
+
+2. **Key Improvements**:
+   - Separation of concerns with clear layer boundaries
+   - Dependency injection for better testability
+   - Repository pattern for data access
+   - Service layer for business logic
+   - Proper exception hierarchy
+   - Environment-based configuration
+
+3. **Running the Modular Application**:
+   ```bash
+   # Set PYTHONPATH for proper imports
+   export PYTHONPATH=/path/to/medical-patients
+   
+   # Run the application
+   python src/main.py
+   ```
 
 ### Technical Constraints
 
