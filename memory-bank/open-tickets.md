@@ -1,4 +1,4 @@
-__Ticket ID:__ TD-002 (Corresponds to Task 4.1.3) __Title:__ Frontend Bundle Size Optimization __Epic:__ 4.1 Address Remaining Technical Debt __Description:__ The JavaScript bundles for React components (`enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, `MilitaryMedicalDashboard.tsx`) may be large, impacting load times. This task involves investigating and implementing optimization techniques such as code splitting, lazy loading, and externalizing common libraries. __Acceptance Criteria:__
+__Ticket ID:__ TD-002 (Corresponds to Task 4.1.3) __Title:__ Frontend Bundle Size Optimization __Epic:__ 4.1 Address Remaining Technical Debt __Description:__ The JavaScript bundles for React components (`enhanced-visualization-dashboard.tsx`, `ConfigurationPanel.tsx`, `MilitaryMedicalDashboard.tsx`) may be large, impacting load times. This task involves investigating and implementing optimization techniques such as code splitting, lazy loading, and externalizing common libraries. The visualisation dashboard will now reside within the main generation screen, replacing the separate advanced visualisation module. Optimisation should ensure efficient rendering of integrated charts such as Sankey diagrams, pie charts, and summary tables. __Acceptance Criteria:__
 
 1. Analyze the current bundle sizes for `static/dist/bundle.js`, `static/dist/configuration-panel.js`, and `static/dist/military-dashboard.js` using tools like `source-map-explorer` or `webpack-bundle-analyzer` (if applicable to `esbuild` outputs, or similar alternatives).
 
@@ -18,6 +18,8 @@ __Ticket ID:__ TD-002 (Corresponds to Task 4.1.3) __Title:__ Frontend Bundle Siz
 6. Document the optimization strategies applied in `memory-bank/tech-context.md`.
 
 7. Code is reviewed and merged into the `develop` branch.
+
+8. Refactor dashboard components to be integrated in the main screen with optimised load behaviour.
 
 ---
 
@@ -62,7 +64,7 @@ __Ticket ID:__ TST-001 (Corresponds to Task 4.2.1) __Title:__ API Integration Te
 
 ---
 
-__Ticket ID:__ TST-002 (Corresponds to Task 4.2.2) __Title:__ End-to-End (E2E) Tests for Key User Flows __Epic:__ 4.2 Testing Expansion __Description:__ Implement End-to-End tests for critical user flows, such as creating a new configuration scenario via the `ConfigurationPanel.tsx`, saving it, initiating a patient generation job with it, and verifying basic output or job completion. __Acceptance Criteria:__
+__Ticket ID:__ TST-002 (Corresponds to Task 4.2.2) __Title:__ End-to-End (E2E) Tests for Key User Flows __Epic:__ 4.2 Testing Expansion __Description:__ Implement End-to-End tests for critical user flows, such as creating a new configuration scenario via the `ConfigurationPanel.tsx`, saving it, initiating a patient generation job with it, and verifying basic output or job completion. Basic generation from main UI, now featuring a linear step-based scenario builder with saved local configurations and embedded output visualisation. __Acceptance Criteria:__
 
 1. Select an E2E testing framework (e.g., Selenium, Playwright, Cypress).
 
@@ -70,9 +72,7 @@ __Ticket ID:__ TST-002 (Corresponds to Task 4.2.2) __Title:__ End-to-End (E2E) T
 
 3. Identify 2-3 critical user flows to be covered by E2E tests. Examples:
 
-   - Full scenario creation: Open `ConfigurationPanel`, define fronts, facilities, nationalities, save configuration.
-   - Generation from saved config: Load a saved configuration, initiate generation, check for job completion status.
-   - Basic generation from main UI (once adapted to new config system).
+   - Full scenario creation: Define fronts with nationalities and injury ratios, configure Role 1–4 chains with facility counts and bed numbers, initiate generation.
 
 4. Implement E2E tests for the selected flows.
 
@@ -132,6 +132,7 @@ __Acceptance Criteria:__
     *   Includes a robust wait mechanism for the backend `app` service to be healthy.
     *   Applies database migrations (e.g., `docker compose -f docker-compose.dev.yml exec app alembic upgrade head`).
     *   Provides clear success or failure messages for each major step.
+    *   Verifies that scenario configuration data persists locally for reuse in the UI, if applicable.
 4. `stop` command:
     *   Stops all relevant Docker services defined in the development Docker Compose file (e.g., `docker compose -f docker-compose.dev.yml down`).
     *   Provides clear output.
@@ -147,5 +148,34 @@ __Acceptance Criteria:__
 11. Code is reviewed and merged into the `develop` branch.
 __Status:__ Not Started
 __Branch:__
+
+---
+
+__Ticket ID:__ FEA-002
+__Title:__ Local Scenario Configuration Storage
+__Epic:__ UI Enhancements
+__Description:__ Implement local storage of scenario configurations for reuse in the UI. Users should be able to load previous front/nationality/injury setups without requiring API interaction or login. Data should be stored in browser-local storage with optional timestamp tagging.
+__Acceptance Criteria:__
+1. Implement localStorage support for saving and retrieving named scenario configurations.
+2. Allow UI users to list, load, and optionally delete saved configurations.
+3. Ensure local data does not interfere with live API calls.
+4. Add UI buttons for “Save Configuration” and “Load Previous Configuration.”
+5. No sensitive information is stored in local configuration.
+6. Document feature in user onboarding or tooltips.
+7. Code is reviewed and merged into the `develop` branch.
+
+---
+
+__Ticket ID:__ FEA-003
+__Title:__ Front-Based Medical Facility Chain Configuration
+__Epic:__ Scenario Generator
+__Description:__ Extend the front editor to include per-front configuration of Role 1–4 chains, including number of facilities and beds per role.
+__Acceptance Criteria:__
+1. Update scenario UI to include numeric inputs for Role 1–4: facilities and beds.
+2. Store this data as part of the configuration object for generation.
+3. Integrate values into patient flow simulation.
+4. Display facility counts and capacity in the output visualisation.
+5. Include validation and default values where needed.
+6. Code is reviewed and merged into the `develop` branch.
 
 ---

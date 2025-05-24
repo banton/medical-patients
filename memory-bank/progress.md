@@ -73,16 +73,16 @@ The project is currently in **Phase 4: Hardening, Technical Debt, and Final Touc
 ### What's Left to Build/Improve (Focus of Phase 4)
 
 1.  **Technical Debt Resolution**:
-    *   Frontend Architecture Consolidation (Task 4.1.2): Verify and document the existing consolidation of visualization logic, where `static/index.html` links to the React-based `ExerciseDashboard` for graphical charts.
-    *   Frontend Bundle Size Optimization (Task 4.1.3): Optimize bundles for all React components.
-    *   Docker Optimization (Task 4.1.4): Implement multi-stage builds, review container security.
+    *   Frontend Architecture Consolidation (Task 4.1.2 / TD-001): (Completed) Verification and documentation of consolidated visualization logic are complete.
+    *   Frontend Bundle Size Optimization (Task 4.1.3 / TD-002): Optimize bundles for all React components. (Status: Pending)
+    *   Docker Optimization (Task 4.1.4 / TD-003): Implement multi-stage builds, review container security. (Status: Pending)
 2.  **Testing Expansion**:
-    *   API Integration Tests (Task 4.2.1): Develop comprehensive tests for the new API.
-    *   End-to-End (E2E) Tests (Task 4.2.2): Implement E2E tests for key user flows.
-    *   Review and update existing Python unit tests for compatibility with refactored code.
-3.  **Documentation Finalization (Current Task - 4.3.2)**:
-    *   Update User Guides for new configuration panel and API (Task 4.3.1).
-    *   Update all Technical Documentation (Memory Bank, READMEs, SDK docs).
+    *   API Integration Tests (Task 4.2.1 / TST-001): Develop comprehensive tests for the new API. (Status: Pending)
+    *   End-to-End (E2E) Tests (Task 4.2.2 / TST-002): Implement E2E tests for key user flows. (Status: Pending)
+    *   Review and update existing Python unit tests for compatibility with refactored code. (Status: Pending)
+3.  **Documentation Finalization**:
+    *   Update User Guides for new configuration panel and API (Task 4.3.1). (Status: Pending)
+    *   Update all Technical Documentation (Memory Bank, READMEs, SDK docs) (Task 4.3.2). (Status: In Progress - Currently being executed)
 4.  **UI/UX Refinements & Enhancements**:
     *   UI for Static Fronts Configuration (Task 4.4.1): View/edit `patient_generator/fronts_config.json` parameters via `ConfigurationPanel.tsx`.
     *   More robust error handling and user feedback in `ConfigurationPanel.tsx`.
@@ -115,8 +115,8 @@ The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**. 
 
 **Current Considerations / Known Issues (Focus of Phase 4):**
 
-1.  **Frontend Architecture & Performance:** Bundle sizes for React components (Task 4.1.3). The concern about duplicated visualization logic (previously part of Task 4.1.2) has been clarified; `static/index.html` correctly links to the centralized React dashboard for graphical charts.
-2.  **Testing Coverage:** API integration tests and E2E tests are needed (Task 4.2.1, 4.2.2). Existing Python unit tests need review.
+1.  **Frontend Performance:** Bundle sizes for React components (Task 4.1.3 / TD-002) need optimization.
+2.  **Testing Coverage:** API integration tests (Task 4.2.1 / TST-001) and E2E tests (Task 4.2.2 / TST-002) are needed. Existing Python unit tests need review.
 3.  **API Key Management:** Current hardcoded API key is a placeholder and needs a secure solution.
 4.  **Pylance Type Errors & Warnings (Ongoing):** Some persistent Pylance static analysis warnings in `app.py` and `patient_generator/formatter.py` may need further investigation or suppression if benign (Tracked by LINT-001).
 5.  **Memory Management (Backend):** While initial improvements were made in Phase 1, ongoing monitoring and potential optimization for very large, complex configurations may be needed.
@@ -125,5 +125,5 @@ The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**. 
 ### Next Steps
 
 The project is currently executing **Phase 4: Hardening, Technical Debt, and Final Touches**, as detailed in `memory-bank/active-context.md`.
-The immediate task is **Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK)**, which is currently in progress.
-Following this, other Phase 4 tasks such as testing expansion, remaining UI enhancements, and technical debt items will be addressed.
+The immediate task is **Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK)**, which is currently being executed.
+Following this, other Phase 4 tasks such as testing expansion (TST-001, TST-002), remaining UI enhancements (Task 4.4.1), and technical debt items (TD-002, TD-003, GEN-001, LINT-001, LINT-002) will be addressed based on priority from `open-tickets.md`.

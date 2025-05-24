@@ -46,7 +46,12 @@ The Military Medical Exercise Patient Generator is a web-based application desig
    - Password-based key derivation
 
 4. **User Interface**:
-   - Web-based interface for basic generation.
+   - Web-based interface with guided, step-by-step scenario creation:
+     - Define battle fronts and assign nationalities with percentage distributions.
+     - Configure patient type ratios (disease, NBI, battle trauma) with defaults.
+     - Specify Role 1–4 medical facility counts and capacities per front.
+     - Support saved scenario configurations (local browser history, not affecting API).
+     - Inline visualisation after generation: Sankey diagram, pie charts, data table.
    - Advanced web-based configuration panel for detailed scenario definition and management.
    - Job management for batch processing.
    - Visual summaries of generated data, including an enhanced visualization dashboard.
@@ -54,3 +59,4 @@ The Military Medical Exercise Patient Generator is a web-based application desig
 5. **Programmatic Access & Automation**:
    - Command Line Support for scripted/batch operations (configuration via JSON files, adapting to new system).
    - Python SDK for interacting with the backend API, enabling programmatic control over configuration and generation.
+   - API reference provided via REDOC SDK for developer-friendly documentation.

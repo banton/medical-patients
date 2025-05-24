@@ -4,10 +4,12 @@
 
 The project has completed the primary implementation phases (0-3) for the new enhanced configurability architecture. This includes the migration to PostgreSQL, a new API layer, refactored core generation logic, an initial frontend configuration panel, and a Python SDK.
 
-The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**. This involves:
+The current focus is **Phase 4: Hardening, Technical Debt, and Final Touches**.
+The immediate task being executed is **Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK)**.
+Overall Phase 4 involves:
 1.  Addressing identified technical debt (frontend architecture, bundle sizes, Docker optimization).
 2.  Expanding testing coverage (API integration, E2E tests).
-3.  Finalizing all user and technical documentation (Current Task: 4.3.2).
+3.  Finalizing all user and technical documentation.
 4.  Ensuring overall system stability and performance.
 5.  Implementing UI enhancements for static configurations (Task 4.4.1).
 
@@ -110,10 +112,10 @@ The project will follow a phased approach to implement the enhanced configurabil
 **Phase 4: Hardening, Technical Debt, and Final Touches (Current Focus)**
 *   **Epic 4.1: Address Remaining Technical Debt**
     *   Task 4.1.1: Security - Fix Encryption Salt in `formatter.py`. (Completed)
-    *   Task 4.1.2: Frontend Architecture Consolidation (visualization logic).
+    *   Task 4.1.2: Frontend Architecture Consolidation (visualization logic). (Completed - Corresponds to TD-001)
         *   **Objective:** Verify and document the consolidation of visualization logic, ensuring `static/index.html` correctly links to the React-based `ExerciseDashboard` for graphical charts and that no legacy Chart.js rendering remains active in `static/index.html`.
-        *   **Summary of Findings (TD-001):** Analysis confirmed that `static/index.html` does not contain active Chart.js rendering. It appropriately links to `static/visualizations.html` (hosting the Recharts-based `ExerciseDashboard`) for comprehensive graphical visualizations. The main task involves updating documentation to reflect this consolidated state.
-        *   **Status:** In Progress (Documentation phase for TD-001)
+        *   **Summary of Findings (TD-001):** Analysis confirmed that `static/index.html` does not contain active Chart.js rendering. It appropriately links to `static/visualizations.html` (hosting the Recharts-based `ExerciseDashboard`) for comprehensive graphical visualizations. Documentation was updated to reflect this consolidated state.
+        *   **Status:** Completed
     *   Task 4.1.3: Frontend Bundle Size Optimization (externalize libraries/code splitting).
         *   **Status:** Pending.
     *   Task 4.1.4: Docker Optimization (Multi-stage builds).
@@ -132,7 +134,7 @@ The project will follow a phased approach to implement the enhanced configurabil
 *   **Epic 4.3: Documentation Finalization**
     *   Task 4.3.1: Update User Guides for new features.
         *   **Status:** Pending.
-    *   Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK). (Current Task)
+    *   Task 4.3.2: Update all Technical Documentation (Memory Bank, READMEs, SDK). (In Progress - Currently being executed)
 *   **Epic 4.4: UI Enhancements for Static Configurations**
     *   Task 4.4.1: UI for Static Fronts Configuration.
         *   **Objective:** Create a UI section within the advanced configuration panel (`ConfigurationPanel.tsx`) to allow users to view and eventually edit the parameters currently defined in `patient_generator/fronts_config.json`.
