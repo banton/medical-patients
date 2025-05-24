@@ -9,12 +9,14 @@ from patient_generator.visualization_data import transform_job_data_for_visualiz
 from src.domain.services.job_service import JobService
 from src.domain.models.job import JobStatus
 from src.api.v1.dependencies.services import get_job_service
+from src.core.security import verify_api_key
 
 
 # Router configuration
 router = APIRouter(
     prefix="/api/visualizations",
-    tags=["visualizations"]
+    tags=["visualizations"],
+    dependencies=[Depends(verify_api_key)]
 )
 
 

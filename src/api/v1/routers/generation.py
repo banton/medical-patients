@@ -3,19 +3,23 @@ API router for patient generation.
 """
 import os
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from patient_generator.app import PatientGeneratorApp
-from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import Database, ConfigurationRepository
-from patient_generator.schemas_config import ConfigurationTemplateCreate
+from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB
+from patient_generator.config_manager import ConfigurationManager
 from src.domain.services.job_service import JobService
+from src.domain.services.patient_generation_service import (
+    AsyncPatientGenerationService,
+    GenerationContext
+)
 from src.domain.models.job import JobStatus, JobProgressDetails
 from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service
+from src.core.security import verify_api_key
 from config import get_settings
 
 
@@ -40,7 +44,8 @@ class GenerationResponse(BaseModel):
 # Router configuration
 router = APIRouter(
     prefix="/api",
-    tags=["generation"]
+    tags=["generation"],
+    dependencies=[Depends(verify_api_key)]
 )
 
 
@@ -54,7 +59,7 @@ async def run_patient_generation(
     encryption_password: Optional[str],
     config_id: Optional[str] = None
 ) -> None:
-    """Background task for patient generation."""
+    """Background task for patient generation using async pipeline."""
     settings = get_settings()
     
     try:
@@ -66,8 +71,10 @@ async def run_patient_generation(
         os.makedirs(output_dir, exist_ok=True)
         
         # Create progress callback
-        async def update_progress(current: int, total: int, phase: str = "Generating patients"):
+        async def update_progress(current: int, total: int):
             progress = int((current / total) * 100) if total > 0 else 0
+            phase = "Generating patients" if current < total else "Finalizing output"
+            
             await job_service.update_job_progress(
                 job_id,
                 progress,
@@ -77,48 +84,85 @@ async def run_patient_generation(
                     phase_progress=progress,
                     total_patients=total,
                     processed_patients=current,
-                    time_estimates={"total": 0.0}  # Set to 0.0 instead of None
+                    time_estimates={"total": 0.0}
                 )
             )
         
-        # Create configuration manager and load the configuration
-        config_manager = ConfigurationManager()
+        # Get or create configuration
+        db = Database()
+        repo = ConfigurationRepository(db)
         
-        # If we have a configuration_id, use it. Otherwise create a temporary one
         if config_id:
-            config_manager.load_configuration(config_id)
+            # Load existing configuration
+            config = repo.get_configuration(config_id)
+            if not config:
+                raise ValueError(f"Configuration {config_id} not found")
         else:
-            # For ad-hoc configurations, we need to create a temporary config in the database
-            # This is a limitation of the current design that expects configs to be in the database
-            db = Database()
-            repo = ConfigurationRepository(db)
-            from patient_generator.schemas_config import ConfigurationTemplateCreate
-            
-            # Convert config_dict back to ConfigurationTemplateCreate
+            # Create temporary configuration for ad-hoc generation
             temp_config_create = ConfigurationTemplateCreate(**config_dict)
-            temp_config = repo.create_configuration(temp_config_create)
-            config_manager.load_configuration(temp_config.id)
+            config = repo.create_configuration(temp_config_create)
         
-        # Initialize and run generator
-        generator = PatientGeneratorApp(config_manager)
-        
-        # Note: This is still synchronous - we'll address async in a later task
-        # The run method returns (patients, bundles, output_files, summary)
-        patients, bundles, output_files_from_gen, summary = generator.run()
-        
-        # Update final progress
-        await update_progress(
-            config_dict.get("total_patients", 0),
-            config_dict.get("total_patients", 0),
-            "Finalizing output"
+        # Create generation context
+        context = GenerationContext(
+            config=config,
+            job_id=job_id,
+            output_directory=output_dir,
+            encryption_password=encryption_password,
+            output_formats=output_formats,
+            use_compression=use_compression
         )
         
-        # Get list of output files
+        # For now, fall back to the synchronous approach wrapped in async
+        # The full async refactoring requires deeper changes to patient_generator module
+        from patient_generator.app import PatientGeneratorApp
+        
+        # Create configuration manager and load configuration
+        config_manager = ConfigurationManager(database_instance=db)
+        config_manager.load_configuration(config.id)
+        
+        # Run generation in thread pool to avoid blocking
+        def run_sync_generation():
+            generator = PatientGeneratorApp(config_manager)
+            
+            # Run with proper parameters
+            patients, bundles, gen_output_files, gen_summary = generator.run(
+                output_directory=output_dir,
+                output_formats=output_formats,
+                use_compression=use_compression,
+                use_encryption=use_encryption,
+                encryption_password=encryption_password,
+                progress_callback=None  # Could add async callback wrapper here
+            )
+            return gen_output_files
+        
+        # Run in thread pool
+        import asyncio
+        gen_output_files = await asyncio.to_thread(run_sync_generation)
+        
+        # Update progress
+        await update_progress(config.total_patients, config.total_patients)
+        
+        result = {
+            "status": "completed",
+            "output_files": gen_output_files,
+            "patient_count": config.total_patients
+        }
+        
+        # Extract output files from result
         output_files = []
-        for root, _, files in os.walk(output_dir):
-            for file in files:
-                rel_path = os.path.relpath(os.path.join(root, file), output_dir)
+        if "output_files" in result:
+            for file_path in result["output_files"]:
+                rel_path = os.path.relpath(file_path, output_dir)
                 output_files.append(rel_path)
+        
+        # Create summary
+        summary = {
+            "total_patients": config.total_patients,
+            "generation_time": datetime.now(timezone.utc).isoformat(),
+            "output_formats": output_formats,
+            "compressed": use_compression,
+            "encrypted": use_encryption is True
+        }
         
         # Set job results
         await job_service.set_job_results(
@@ -130,6 +174,10 @@ async def run_patient_generation(
         
         # Mark job as completed
         await job_service.update_job_status(job_id, JobStatus.COMPLETED)
+        
+        # Clean up temporary configuration if created
+        if not config_id:
+            repo.delete_configuration(config.id)
         
     except Exception as e:
         # Mark job as failed
@@ -171,7 +219,7 @@ async def generate_patients(
                 detail=f"Configuration {request.configuration_id} not found"
             )
         
-        config_dict = config.model_dump()
+        config_dict = config.model_dump() if config else {}
     else:
         # Use ad-hoc configuration
         config_dict = request.configuration.model_dump()

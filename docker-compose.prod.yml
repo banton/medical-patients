@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app: # Renamed from web
     build:
@@ -22,7 +20,7 @@ services:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/config/defaults"] # May need adjustment
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -37,7 +35,7 @@ services:
           cpus: '2'
           memory: 4G
     command: >
-      uvicorn app:app --host 0.0.0.0
+      uvicorn src.main:app --host 0.0.0.0
       --port 8000
       --workers 4
       --proxy-headers

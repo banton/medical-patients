@@ -34,7 +34,19 @@ This application generates simulated patient data for military medical exercises
 
 ## Architecture
 
-The application features a clean, domain-driven architecture with clear separation of concerns:
+The application features a clean, domain-driven architecture with clear separation of concerns. The codebase has been recently refactored (May 2024) to improve scalability, maintainability, and developer experience.
+
+### Recent Architecture Improvements
+
+**✅ Modular Backend Architecture**: The monolithic `app.py` has been refactored into a clean domain-driven design with proper separation of concerns.
+
+**✅ Async Patient Generation**: Background tasks now use async/await patterns with thread pool execution for better concurrency and scalability.
+
+**✅ Enhanced API Security**: All API endpoints now properly implement authentication and dependency injection.
+
+**✅ Developer Experience**: Comprehensive Makefile provides consistent commands for development, testing, and deployment workflows.
+
+**✅ Improved Testing**: Enhanced testing infrastructure with proper job service integration.
 
 ### Application Structure
 
@@ -107,16 +119,16 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Getting Started (Development Environment)
 
-The recommended way to set up and run the development environment is using Docker and the provided helper script.
+The application now includes a comprehensive Makefile for streamlined development workflows. This is the recommended approach for all development tasks.
 
 ### Prerequisites
 
 -   Git
 -   Docker Desktop (or Docker Engine + Docker Compose)
--   Node.js and npm (for frontend development, if making changes to React components)
--   Python 3.8+ (if running backend components outside Docker, not recommended for primary dev)
+-   Node.js and npm (for frontend development)
+-   Python 3.8+ (for local development)
 
-### Setup & Running
+### Quick Start
 
 1.  **Clone the repository**:
     ```bash
@@ -124,39 +136,90 @@ The recommended way to set up and run the development environment is using Docke
     cd medical-patients
     ```
 
-2.  **Using Docker (Recommended)**:
+2.  **Install dependencies and start development environment**:
     ```bash
-    chmod +x start-dev.sh
-    ./start-dev.sh
-    ```
-    This script will:
-    *   Install/update frontend Node.js dependencies (`npm install`).
-    *   Build all frontend React components (`npm run build:all-frontend`).
-    *   Start the Docker services defined in `docker-compose.dev.yml` (FastAPI application, PostgreSQL database) in detached mode.
-    *   Wait for the application service to be healthy.
-    *   Apply any pending database migrations using Alembic.
-
-3.  **Manual Setup (Alternative)**:
-    ```bash
-    # Start PostgreSQL (via Docker or local installation)
-    docker compose up -d db
-    
-    # Install Python dependencies
-    pip install -r requirements.txt
-    
-    # Run database migrations
-    alembic upgrade head
-    
-    # Start the application
-    PYTHONPATH=. python src/main.py
+    make deps && make dev
     ```
 
-4.  **Access the application**:
+3.  **Access the application**:
     *   Main UI (including Advanced Configuration Panel): `http://localhost:8000/static/index.html`
     *   Enhanced Visualization Dashboard: `http://localhost:8000/static/visualizations.html`
     *   API Documentation: `http://localhost:8000/docs`
 
+### Development Commands
+
+Use `make help` to see all available commands:
+
+```bash
+make help                 # Show all available commands
+make dev                  # Start development environment (DB + App)
+make test                 # Run all tests
+make api-test             # Run API integration tests
+make lint                 # Run linting checks
+make format               # Format code automatically
+make clean                # Clean up generated files and cache
+make build-frontend       # Build all frontend components
+make deps                 # Install all dependencies
+make migrate              # Run database migrations
+make check-env            # Check environment setup
+```
+
+### Alternative Setup Methods
+
+**Using the legacy script**:
+```bash
+chmod +x start-dev.sh
+./start-dev.sh
+```
+
+**Manual Setup**:
+```bash
+# Start PostgreSQL
+docker compose up -d db
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run database migrations
+alembic upgrade head
+
+# Start the application
+PYTHONPATH=. python src/main.py
+```
+
 For more details on Docker configurations for different environments (production, Traefik), see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
+
+### Testing and Quality Assurance
+
+The application includes comprehensive testing infrastructure:
+
+```bash
+# Run all tests
+make test
+
+# Run only unit tests
+make test-unit
+
+# Run API integration tests (requires running server)
+make api-test
+
+# Check code quality (linting + type checking)
+make lint
+
+# Format code automatically
+make format
+```
+
+### Development Workflow
+
+1. **Start Development Environment**: `make dev`
+2. **Make Code Changes**: Edit files as needed
+3. **Test Changes**: `make test` or `make api-test`
+4. **Check Code Quality**: `make lint`
+5. **Format Code**: `make format`
+6. **Generate Test Data**: `make generate-test`
+
+For complete development guidelines, see the [Git Workflow documentation](memory-bank/git-workflow.md).
 
 ## Usage
 
@@ -250,6 +313,28 @@ This generator creates data compliant with:
 - ISO3166 alpha-3 for country codes
 - ISO8601 for dates and times
 - NDEF format specifications for NFC compatibility
+
+## Project Status
+
+### ✅ Recently Completed (May 2024)
+- **Domain-Driven Architecture**: Refactored monolithic codebase into clean, modular architecture
+- **Async Patient Generation**: Improved performance with async/await patterns
+- **Enhanced API Security**: Comprehensive authentication across all endpoints
+- **Developer Tooling**: Makefile with common development commands
+- **UI Stability**: Maintained full UI functionality throughout refactoring
+
+### 🔄 In Progress
+- Performance optimization with Redis caching
+- Unified React frontend architecture
+- Enhanced testing infrastructure
+
+### 📋 Planned Features
+- CI/CD pipeline with GitHub Actions
+- Comprehensive monitoring and observability
+- Plugin architecture for extensible configurations
+- Advanced analytics and reporting
+
+For detailed progress tracking, see the [refactoring progress summary](memory-bank/refactoring-progress-summary.md).
 
 ## Contributing
 

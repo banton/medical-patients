@@ -12,7 +12,11 @@
       "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 src/main.py)",
       "Bash(docker-compose ps:*)",
       "Bash(docker compose:*)",
-      "Bash(DATABASE_URL=postgresql://medgen_user:medgen_password@localhost:5432/medgen_db python3 -m pytest tests_api.py -xvs)"
+      "Bash(DATABASE_URL=postgresql://medgen_user:medgen_password@localhost:5432/medgen_db python3 -m pytest tests_api.py -xvs)",
+      "Bash(open:*)",
+      "Bash(ls:*)",
+      "Bash(make:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

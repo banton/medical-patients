@@ -9,9 +9,11 @@ from slowapi.util import get_remote_address
 from patient_generator.database import Database, ConfigurationRepository
 from patient_generator.schemas_config import (
     ConfigurationTemplateCreate,
-    ConfigurationTemplateDB
+    ConfigurationTemplateDB,
+    FrontDefinition
 )
 from patient_generator.nationality_data import NationalityDataProvider
+from patient_generator.config_manager import ConfigurationManager
 from src.core.security import verify_api_key
 from src.api.v1.dependencies.database import get_database
 
@@ -164,3 +166,16 @@ async def get_facility_types() -> List[Dict[str, str]]:
         {"id": "R3", "name": "Role 3"},
         {"id": "R4", "name": "Role 4"}
     ]
+
+
+@reference_router.get("/static-fronts/")
+async def get_static_front_definitions(
+    db: Database = Depends(get_database)
+) -> Optional[List[FrontDefinition]]:
+    """
+    Get static front definitions from fronts_config.json.
+    Returns None if file not found or invalid.
+    """
+    config_manager = ConfigurationManager(database_instance=db)
+    front_defs = config_manager.get_static_front_definitions()
+    return front_defs

@@ -7,12 +7,14 @@ from fastapi.responses import StreamingResponse
 from src.domain.services.job_service import JobService
 from src.core.exceptions import JobNotFoundError, StorageError
 from src.api.v1.dependencies.services import get_job_service
+from src.core.security import verify_api_key
 
 
 # Router configuration
 router = APIRouter(
     prefix="/api",
-    tags=["downloads"]
+    tags=["downloads"],
+    dependencies=[Depends(verify_api_key)]
 )
 
 
