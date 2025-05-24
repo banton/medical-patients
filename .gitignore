@@ -75,3 +75,18 @@ yarn-error.log*
 # Log files
 *.log
 .vscode/claudesync.json
+
+# Backup files
+*.backup
+*.bak
+*~
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Temporary UI analysis files (keep main memory-bank files)
+memory-bank/stashed-*.md
+memory-bank/ui-*.md
+
+# Database files
+*.db
