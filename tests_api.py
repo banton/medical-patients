@@ -196,8 +196,8 @@ class TestAPIIntegration(unittest.TestCase):
             "use_compression": False,
             "use_encryption": False
         }
-        # Note: /api/generate does not require X-API-KEY based on current app.py structure
-        generate_headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        # Generate endpoint now requires authentication
+        generate_headers = {"Content-Type": "application/json", "Accept": "application/json", "X-API-Key": API_KEY}
         response = requests.post(GENERATE_API_URL, headers=generate_headers, data=json.dumps(payload))
         self.assertEqual(response.status_code, 200, f"Response content: {response.text}")
         data = response.json()
@@ -210,7 +210,7 @@ class TestAPIIntegration(unittest.TestCase):
         job_id = data["job_id"]
         time.sleep(2) # Give a moment for the job to potentially start
         
-        status_response = requests.get(f"{JOBS_API_URL}/{job_id}")
+        status_response = requests.get(f"{JOBS_API_URL}/{job_id}", headers=HEADERS)
         self.assertEqual(status_response.status_code, 200)
         status_data = status_response.json()
         self.assertIn(status_data["status"], ["initializing", "running", "completed", "failed"])
@@ -229,14 +229,14 @@ class TestAPIIntegration(unittest.TestCase):
             "configuration_id": saved_config_id,
             "output_formats": ["json"],
         }
-        generate_headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        generate_headers = {"Content-Type": "application/json", "Accept": "application/json", "X-API-Key": API_KEY}
         response = requests.post(GENERATE_API_URL, headers=generate_headers, data=json.dumps(generation_payload))
         self.assertEqual(response.status_code, 200, f"Response content: {response.text}")
         data = response.json()
         self.assertIn("job_id", data)
 
     def test_16_get_job_status_not_found(self):
-        response = requests.get(f"{JOBS_API_URL}/non_existent_job_id")
+        response = requests.get(f"{JOBS_API_URL}/non_existent_job_id", headers=HEADERS)
         self.assertEqual(response.status_code, 404)
 
     # test_get_job_results would require a fully completed job.
@@ -248,13 +248,13 @@ class TestAPIIntegration(unittest.TestCase):
         # Submit a job
         ad_hoc_config = create_default_config_payload("ResultsIncomplete")
         payload = {"configuration": ad_hoc_config}
-        generate_headers = {"Content-Type": "application/json", "Accept": "application/json"}
+        generate_headers = {"Content-Type": "application/json", "Accept": "application/json", "X-API-Key": API_KEY}
         response = requests.post(GENERATE_API_URL, headers=generate_headers, data=json.dumps(payload))
         self.assertEqual(response.status_code, 200)
         job_id = response.json()["job_id"]
 
         # Try to get results immediately (job should not be complete)
-        results_response = requests.get(f"{JOBS_API_URL}/{job_id}/results")
+        results_response = requests.get(f"{JOBS_API_URL}/{job_id}/results", headers=HEADERS)
         # The API might return 200 with empty/partial results or error status codes
         # Check the actual response to determine the behavior
         if results_response.status_code == 200:
