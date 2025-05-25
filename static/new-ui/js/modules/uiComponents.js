@@ -654,9 +654,11 @@ export class UIComponents {
                         <button class="btn btn-sm btn-primary" onclick="window.downloadJob('${job.job_id}')">
                             <i class="bi bi-download"></i> Download
                         </button>
+                        <!-- View button hidden for future development
                         <button class="btn btn-sm btn-info" onclick="window.viewJob('${job.job_id}')">
                             <i class="bi bi-eye"></i> View
                         </button>
+                        -->
                     ` : ''}
                     
                     ${['completed', 'failed', 'cancelled'].includes(job.status) ? `

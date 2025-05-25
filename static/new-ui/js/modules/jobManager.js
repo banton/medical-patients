@@ -5,23 +5,33 @@ export class JobManager {
         this.apiClient = apiClient;
         this.activeJobs = new Map();
         this.pollingInterval = null;
-        this.pollingRate = 2000; // 2 seconds
+        this.pollingRate = 5000; // 5 seconds - more reasonable
+        this.lastPollTime = 0;
+        this.minPollInterval = 1000; // Don't poll more than once per second
     }
 
     startPolling() {
         if (this.pollingInterval) return;
         
-        this.pollingInterval = setInterval(() => {
+        // Use adaptive polling rate
+        const poll = () => {
             this.pollActiveJobs();
-        }, this.pollingRate);
+            
+            // Adjust polling rate based on active jobs
+            const nextInterval = this.activeJobs.size > 0 ? 
+                this.pollingRate : // 5 seconds when active
+                30000; // 30 seconds when idle
+            
+            this.pollingInterval = setTimeout(poll, nextInterval);
+        };
         
         // Initial poll
-        this.pollActiveJobs();
+        poll();
     }
 
     stopPolling() {
         if (this.pollingInterval) {
-            clearInterval(this.pollingInterval);
+            clearTimeout(this.pollingInterval);
             this.pollingInterval = null;
         }
     }
@@ -46,9 +56,17 @@ export class JobManager {
     }
 
     async pollActiveJobs() {
+        // Rate limiting
+        const now = Date.now();
+        if (now - this.lastPollTime < this.minPollInterval) {
+            return;
+        }
+        this.lastPollTime = now;
+
+        // Only poll if we have active jobs
         if (this.activeJobs.size === 0) {
-            // No active jobs to poll, but still load job list
-            await this.loadActiveJobs();
+            // Don't constantly reload the job list if there are no active jobs
+            // The list will be refreshed when a new job is added via trackJob()
             return;
         }
 
@@ -105,6 +123,22 @@ export class JobManager {
         
         // Ensure polling is active
         this.startPolling();
+        
+        // Trigger an immediate poll for this job
+        this.pollSingleJob(jobId);
+    }
+    
+    async pollSingleJob(jobId) {
+        try {
+            const status = await this.apiClient.getJobStatus(jobId);
+            this.activeJobs.set(jobId, status);
+            
+            document.dispatchEvent(new CustomEvent('job-status-update', {
+                detail: status
+            }));
+        } catch (error) {
+            console.error(`Failed to poll job ${jobId}:`, error);
+        }
     }
 
     async getActiveJobs() {

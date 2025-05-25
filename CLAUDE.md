@@ -247,3 +247,16 @@ The application follows a clean domain-driven architecture with clear separation
 - Business logic requires unit tests
 - Frontend components need Jest tests
 - Maintain existing test patterns for consistency
+
+## Feature Development Workflow
+
+When deferring or hiding features for later development:
+1. Comment out the UI element with a note: `<!-- Hidden for future development -->`
+2. Add the feature to `memory-bank/backlog.md` with:
+   - Current status (hidden, planned, partially implemented)
+   - File locations where code exists
+   - What functionality already exists
+   - What needs to be specified before implementation
+3. When ready to implement, create specification and move to tickets
+
+This ensures unfinished features are tracked and not forgotten.

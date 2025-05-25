@@ -318,15 +318,44 @@ class MilitaryPatientGeneratorApp {
             }
         }
         
-        // Update jobs panel
-        this.updateJobsPanel();
+        // Only update jobs panel if we don't already have the job data
+        // The job status update already contains the job info
+        if (!this.state.activeJobs.has(jobStatus.job_id) || 
+            ['completed', 'failed', 'cancelled'].includes(jobStatus.status)) {
+            // Only refresh full list when job completes or is new
+            this.updateJobsPanel();
+        } else {
+            // Just update the single job card in the UI
+            this.updateSingleJobCard(jobStatus);
+        }
     }
 
     async updateJobsPanel(jobs = null) {
         if (!jobs) {
             jobs = await this.jobManager.getActiveJobs();
         }
+        
+        // Track jobs in state
+        jobs.forEach(job => {
+            this.state.activeJobs.set(job.job_id, job);
+        });
+        
         this.uiComponents.renderJobsPanel('jobsPanel', jobs);
+    }
+    
+    updateSingleJobCard(jobStatus) {
+        // Update the specific job card without re-rendering everything
+        const jobCard = document.getElementById(`job-${jobStatus.job_id}`);
+        if (jobCard) {
+            // Update the job in our state
+            this.state.activeJobs.set(jobStatus.job_id, jobStatus);
+            
+            // Get all jobs from state for rendering
+            const jobs = Array.from(this.state.activeJobs.values());
+            
+            // Re-render just the jobs panel with updated data
+            this.uiComponents.renderJobsPanel('jobsPanel', jobs);
+        }
     }
 
     async cancelJob(jobId) {
