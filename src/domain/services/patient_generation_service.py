@@ -111,19 +111,19 @@ class PatientGenerationPipeline:
 
     async def _add_demographics(self, patient: Patient, context: GenerationContext) -> Patient:
         """Add demographics to patient asynchronously."""
-        # Get nationality from patient's front
-        nationality = patient.nationality_code or "USA"
-        gender = "M" if patient.id % 2 == 0 else "F"  # Simple distribution
+        # Get nationality from patient
+        nationality = patient.nationality or "USA"
+        gender = "male" if patient.id % 2 == 0 else "female"  # Simple distribution
 
         # Generate demographics
         person_data = await asyncio.to_thread(self.demographics_generator.generate_person, nationality, gender)
 
-        # Apply demographics to patient
-        patient.first_name = person_data.get("first_name")
-        patient.last_name = person_data.get("last_name")
-        patient.age = person_data.get("age", 25)
-        patient.gender = gender
-        patient.military_id = f"MIL{patient.id:06d}"
+        # Apply demographics to patient using set_demographics method
+        patient.set_demographics(person_data)
+        
+        # Set gender if not already set
+        if not patient.gender:
+            patient.gender = gender
 
         return patient
 
@@ -141,18 +141,34 @@ class PatientGenerationPipeline:
         else:
             condition_type = "BATTLE_TRAUMA"
 
-        # Generate condition
-        condition = await asyncio.to_thread(self.medical_generator.generate_condition, condition_type)
-
-        patient.primary_injury = condition.get("name", "Unknown Condition")
+        # Set the injury type on the patient
         patient.injury_type = condition_type
-        patient.urgency = condition.get("urgency", "ROUTINE")
+        
+        # Generate triage category based on simple logic
+        triage_rand = patient.id % 10
+        if triage_rand < 2:
+            patient.triage_category = "T1"
+        elif triage_rand < 5:
+            patient.triage_category = "T2"
+        else:
+            patient.triage_category = "T3"
+
+        # Generate condition using the medical generator
+        condition = await asyncio.to_thread(
+            self.medical_generator.generate_condition, 
+            patient.injury_type, 
+            patient.triage_category
+        )
+        
+        # Set primary condition on patient
+        patient.primary_condition = condition
+        patient.primary_conditions = [condition] if condition else []
 
         return patient
 
     async def _create_fhir_bundle(self, patient: Patient) -> Dict[str, Any]:
         """Create FHIR bundle asynchronously."""
-        return await asyncio.to_thread(self.fhir_generator.create_bundle, patient)
+        return await asyncio.to_thread(self.fhir_generator.create_patient_bundle, patient)
 
 
 class AsyncPatientGenerationService:
