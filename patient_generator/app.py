@@ -70,7 +70,8 @@ class PatientGeneratorApp:
         self.flow_simulator = PatientFlowSimulator(self.config_manager)
 
         self.logger.info(
-            f"Initialized PatientGeneratorApp with {self.num_workers} workers, batch size {self.batch_size} for {self.total_patients} patients."
+            "Initialized PatientGeneratorApp with %s workers, batch size %s for %s patients.",
+            self.num_workers, self.batch_size, self.total_patients
         )
 
     def _cleanup_temp_files(self):

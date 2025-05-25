@@ -5,7 +5,7 @@ Handles environment variables and application settings.
 
 from functools import lru_cache
 import os
-from typing import Optional
+from typing import List, Optional
 
 
 class Settings:
@@ -25,7 +25,7 @@ class Settings:
     DEBUG: bool = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 
     # CORS
-    CORS_ORIGINS: list[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
+    CORS_ORIGINS: List[str] = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000").split(",")
 
     # File paths
     OUTPUT_DIRECTORY: str = os.getenv("OUTPUT_DIRECTORY", "output")

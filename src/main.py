@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
             await initialize_cache(settings.REDIS_URL, settings.CACHE_TTL)
             logger.info("Redis cache initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize Redis cache: {e}")
+            logger.error("Failed to initialize Redis cache: %s", e)
             logger.warning("Application will continue without caching")
 
     yield

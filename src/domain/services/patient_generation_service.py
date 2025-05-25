@@ -3,11 +3,23 @@ Async patient generation service for stream-based processing.
 """
 
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 import gzip
 import os
+import sys
 import tempfile
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
+
+# Compatibility for Python < 3.9
+if sys.version_info >= (3, 9):
+    to_thread = asyncio.to_thread
+else:
+    async def to_thread(func, *args, **kwargs):
+        """Backport of asyncio.to_thread for Python < 3.9."""
+        loop = asyncio.get_running_loop()
+        with ThreadPoolExecutor() as executor:
+            return await loop.run_in_executor(executor, func, *args, **kwargs)
 
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import Database
@@ -119,7 +131,7 @@ class PatientGenerationPipeline:
         """Create a single patient asynchronously."""
         # Create patient using the flow simulator's method
         # The flow simulator already has access to the config via config_manager
-        return await asyncio.to_thread(self.flow_simulator._create_initial_patient, patient_id)
+        return await to_thread(self.flow_simulator._create_initial_patient, patient_id)
 
     async def _add_demographics(self, patient: Patient, context: GenerationContext) -> Patient:
         """Add demographics to patient asynchronously."""
@@ -128,7 +140,7 @@ class PatientGenerationPipeline:
         gender = "male" if patient.id % 2 == 0 else "female"  # Simple distribution
 
         # Generate demographics
-        person_data = await asyncio.to_thread(self.demographics_generator.generate_person, nationality, gender)
+        person_data = await to_thread(self.demographics_generator.generate_person, nationality, gender)
 
         # Apply demographics to patient using set_demographics method
         patient.set_demographics(person_data)
@@ -166,7 +178,7 @@ class PatientGenerationPipeline:
             patient.triage_category = "T3"
 
         # Generate condition using the medical generator
-        condition = await asyncio.to_thread(
+        condition = await to_thread(
             self.medical_generator.generate_condition, patient.injury_type, patient.triage_category
         )
 
@@ -178,7 +190,7 @@ class PatientGenerationPipeline:
 
     async def _create_fhir_bundle(self, patient: Patient) -> Dict[str, Any]:
         """Create FHIR bundle asynchronously."""
-        return await asyncio.to_thread(self.fhir_generator.create_patient_bundle, patient)
+        return await to_thread(self.fhir_generator.create_patient_bundle, patient)
 
 
 class AsyncPatientGenerationService:
@@ -276,7 +288,7 @@ class AsyncPatientGenerationService:
                         json.dump(patient_data, stream, indent=2)
                     elif format == "xml":
                         # Use formatter for XML
-                        await asyncio.to_thread(formatter.format_xml, [bundle], stream)
+                        await to_thread(formatter.format_xml, [bundle], stream)
                     elif format == "csv":
                         # CSV format - write header on first patient
                         if first_patient:
@@ -355,7 +367,7 @@ class AsyncPatientGenerationService:
         for format, filepath in files.items():
             compressed_path = f"{filepath}.gz"
 
-            await asyncio.to_thread(self._gzip_file, filepath, compressed_path)
+            await to_thread(self._gzip_file, filepath, compressed_path)
 
             # Remove uncompressed file
             os.unlink(filepath)

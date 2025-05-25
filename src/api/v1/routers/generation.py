@@ -4,7 +4,7 @@ API router for patient generation.
 
 from datetime import datetime, timezone
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -26,7 +26,7 @@ class GenerationRequest(BaseModel):
 
     configuration_id: Optional[str] = None
     configuration: Optional[ConfigurationTemplateCreate] = None
-    output_formats: list[str] = ["json"]
+    output_formats: List[str] = ["json"]
     use_compression: bool = False
     use_encryption: bool = False
     encryption_password: Optional[str] = None
@@ -48,7 +48,7 @@ async def run_patient_generation(
     job_id: str,
     job_service: JobService,
     config_dict: Dict[str, Any],
-    output_formats: list[str],
+    output_formats: List[str],
     use_compression: bool,
     use_encryption: bool,
     encryption_password: Optional[str],
