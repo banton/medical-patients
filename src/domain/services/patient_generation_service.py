@@ -83,14 +83,16 @@ class PatientGenerationPipeline:
                 # Calculate progress percentage
                 progress = patient_count / context.config.total_patients
                 phase_description = f"Generated {patient_count} of {context.config.total_patients} patients"
-                
-                await progress_callback({
-                    'progress': progress,
-                    'processed_patients': patient_count,
-                    'total_patients': context.config.total_patients,
-                    'phase_description': phase_description,
-                    'current_phase': 'generating_patients'
-                })
+
+                await progress_callback(
+                    {
+                        "progress": progress,
+                        "processed_patients": patient_count,
+                        "total_patients": context.config.total_patients,
+                        "phase_description": phase_description,
+                        "current_phase": "generating_patients",
+                    }
+                )
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
@@ -130,7 +132,7 @@ class PatientGenerationPipeline:
 
         # Apply demographics to patient using set_demographics method
         patient.set_demographics(person_data)
-        
+
         # Set gender if not already set
         if not patient.gender:
             patient.gender = gender
@@ -153,7 +155,7 @@ class PatientGenerationPipeline:
 
         # Set the injury type on the patient
         patient.injury_type = condition_type
-        
+
         # Generate triage category based on simple logic
         triage_rand = patient.id % 10
         if triage_rand < 2:
@@ -165,11 +167,9 @@ class PatientGenerationPipeline:
 
         # Generate condition using the medical generator
         condition = await asyncio.to_thread(
-            self.medical_generator.generate_condition, 
-            patient.injury_type, 
-            patient.triage_category
+            self.medical_generator.generate_condition, patient.injury_type, patient.triage_category
         )
-        
+
         # Set primary condition on patient
         patient.primary_condition = condition
         patient.primary_conditions = [condition] if condition else []
@@ -281,12 +281,12 @@ class AsyncPatientGenerationService:
                         # CSV format - write header on first patient
                         if first_patient:
                             stream.write("patient_id,name,age,gender,nationality,injury,triage\n")
-                        
+
                         # Extract patient data from demographics and attributes
                         first_name = patient.demographics.get("first_name", "Unknown")
-                        last_name = patient.demographics.get("last_name", "Unknown") 
-                        age = patient.get_age() if hasattr(patient, 'get_age') else "Unknown"
-                        
+                        last_name = patient.demographics.get("last_name", "Unknown")
+                        age = patient.get_age() if hasattr(patient, "get_age") else "Unknown"
+
                         stream.write(
                             f'{patient.id},"{first_name} {last_name}",{age},{patient.gender},{patient.nationality},{patient.injury_type},{patient.triage_category}\n'
                         )

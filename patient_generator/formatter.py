@@ -94,8 +94,8 @@ class OutputFormatter:
             # For large datasets, process bundles one by one
             root_element = '<?xml version="1.0" encoding="utf-8"?>\n<PatientBundles>\n'
             # Write as bytes if stream is binary mode
-            if hasattr(stream, 'mode') and 'b' in stream.mode:
-                stream.write(root_element.encode('utf-8'))
+            if hasattr(stream, "mode") and "b" in stream.mode:
+                stream.write(root_element.encode("utf-8"))
             else:
                 stream.write(root_element)
 
@@ -110,15 +110,15 @@ class OutputFormatter:
 
                 # Write directly to stream
                 # Check if stream is binary mode
-                if hasattr(stream, 'mode') and 'b' in stream.mode:
-                    stream.write(bundle_xml_str.encode('utf-8'))
+                if hasattr(stream, "mode") and "b" in stream.mode:
+                    stream.write(bundle_xml_str.encode("utf-8"))
                     stream.write(b"\n")
                 else:
                     stream.write(bundle_xml_str)
                     stream.write("\n")
 
             # Close the root element
-            if hasattr(stream, 'mode') and 'b' in stream.mode:
+            if hasattr(stream, "mode") and "b" in stream.mode:
                 stream.write(b"</PatientBundles>")
             else:
                 stream.write("</PatientBundles>")

@@ -5,6 +5,7 @@ These tests ensure that UI changes don't break the API contract.
 
 import time
 from typing import Any, Dict
+
 import pytest
 import requests
 from requests.exceptions import RequestException
@@ -44,7 +45,7 @@ class TestUIAPIIntegration:
             "/static/js/modules/uiComponents.js",
             "/static/js/modules/apiClient.js",
         ]
-        
+
         for file in files:
             response = requests.get(f"{BASE_URL}{file}")
             assert response.status_code == 200, f"Failed to access {file}"
@@ -56,7 +57,7 @@ class TestUIAPIIntegration:
             "/api/v1/configurations/reference/condition-types/",
             "/api/v1/configurations/reference/facility-types/",
         ]
-        
+
         for endpoint in endpoints:
             response = requests.get(f"{BASE_URL}{endpoint}")
             assert response.status_code == 200, f"Failed to access {endpoint}"
@@ -66,11 +67,11 @@ class TestUIAPIIntegration:
         """Test that nationalities endpoint returns expected format."""
         response = requests.get(f"{BASE_URL}/api/v1/configurations/reference/nationalities/")
         assert response.status_code == 200
-        
+
         nationalities = response.json()
         assert isinstance(nationalities, list)
         assert len(nationalities) > 0
-        
+
         # Check format
         for nationality in nationalities:
             assert "code" in nationality
@@ -84,12 +85,12 @@ class TestUIAPIIntegration:
             "/api/jobs/",
             "/api/v1/configurations/",
         ]
-        
+
         for endpoint in endpoints:
             # Without API key
             response = requests.get(f"{BASE_URL}{endpoint}")
             assert response.status_code == 403
-            
+
             # With API key
             response = requests.get(f"{BASE_URL}{endpoint}", headers=HEADERS)
             assert response.status_code == 200
@@ -107,9 +108,7 @@ class TestUIAPIIntegration:
                         "id": "test_front_1",
                         "name": "Test Front",
                         "casualty_rate": 1.0,
-                        "nationality_distribution": [
-                            {"nationality_code": "USA", "percentage": 100.0}
-                        ]
+                        "nationality_distribution": [{"nationality_code": "USA", "percentage": 100.0}],
                     }
                 ],
                 "facility_configs": [
@@ -119,7 +118,7 @@ class TestUIAPIIntegration:
                         "description": None,
                         "capacity": None,
                         "kia_rate": 0.025,
-                        "rtd_rate": 0.10
+                        "rtd_rate": 0.10,
                     },
                     {
                         "id": "ROLE_1",
@@ -127,7 +126,7 @@ class TestUIAPIIntegration:
                         "description": None,
                         "capacity": 10,
                         "kia_rate": 0.01,
-                        "rtd_rate": 0.15
+                        "rtd_rate": 0.15,
                     },
                     {
                         "id": "ROLE_2",
@@ -135,7 +134,7 @@ class TestUIAPIIntegration:
                         "description": None,
                         "capacity": 50,
                         "kia_rate": 0.005,
-                        "rtd_rate": 0.30
+                        "rtd_rate": 0.30,
                     },
                     {
                         "id": "ROLE_3",
@@ -143,7 +142,7 @@ class TestUIAPIIntegration:
                         "description": None,
                         "capacity": 200,
                         "kia_rate": 0.002,
-                        "rtd_rate": 0.25
+                        "rtd_rate": 0.25,
                     },
                     {
                         "id": "ROLE_4",
@@ -151,31 +150,23 @@ class TestUIAPIIntegration:
                         "description": None,
                         "capacity": 500,
                         "kia_rate": 0.001,
-                        "rtd_rate": 0.40
-                    }
+                        "rtd_rate": 0.40,
+                    },
                 ],
-                "injury_distribution": {
-                    "Disease": 50.0,
-                    "Battle Injury": 10.0,
-                    "Non-Battle Injury": 40.0
-                }
+                "injury_distribution": {"Disease": 50.0, "Battle Injury": 10.0, "Non-Battle Injury": 40.0},
             },
             "output_formats": ["json"],
             "use_compression": False,
-            "use_encryption": False
+            "use_encryption": False,
         }
-        
-        response = requests.post(
-            f"{BASE_URL}/api/generate",
-            headers=HEADERS,
-            json=ui_config
-        )
-        
+
+        response = requests.post(f"{BASE_URL}/api/generate", headers=HEADERS, json=ui_config)
+
         assert response.status_code == 200
         result = response.json()
         assert "job_id" in result
         assert "message" in result
-        
+
         # Clean up - cancel the job
         job_id = result["job_id"]
         requests.post(f"{BASE_URL}/api/jobs/{job_id}/cancel", headers=HEADERS)
@@ -184,14 +175,10 @@ class TestUIAPIIntegration:
         """Test complete job lifecycle from UI perspective."""
         # 1. Create a job
         config = self._get_test_config()
-        response = requests.post(
-            f"{BASE_URL}/api/generate",
-            headers=HEADERS,
-            json=config
-        )
+        response = requests.post(f"{BASE_URL}/api/generate", headers=HEADERS, json=config)
         assert response.status_code == 200
         job_id = response.json()["job_id"]
-        
+
         try:
             # 2. Check job status
             response = requests.get(f"{BASE_URL}/api/jobs/{job_id}", headers=HEADERS)
@@ -199,29 +186,26 @@ class TestUIAPIIntegration:
             job_data = response.json()
             assert job_data["job_id"] == job_id
             assert job_data["status"] in ["pending", "running", "completed", "failed"]
-            
+
             # 3. List jobs
             response = requests.get(f"{BASE_URL}/api/jobs/", headers=HEADERS)
             assert response.status_code == 200
             jobs = response.json()
             assert any(job["job_id"] == job_id for job in jobs)
-            
+
             # 4. Wait a bit for progress
             time.sleep(2)
-            
+
             # 5. Check progress update
             response = requests.get(f"{BASE_URL}/api/jobs/{job_id}", headers=HEADERS)
             assert response.status_code == 200
             job_data = response.json()
             assert "progress" in job_data
             assert 0 <= job_data["progress"] <= 100
-            
+
         finally:
             # 6. Cancel job (cleanup)
-            response = requests.post(
-                f"{BASE_URL}/api/jobs/{job_id}/cancel",
-                headers=HEADERS
-            )
+            response = requests.post(f"{BASE_URL}/api/jobs/{job_id}/cancel", headers=HEADERS)
             # Cancel might fail if job already completed, that's ok
             assert response.status_code in [200, 404]
 
@@ -239,77 +223,52 @@ class TestUIAPIIntegration:
                     "casualty_rate": 1.0,
                     "nationality_distribution": [
                         {"nationality_code": "USA", "percentage": 50.0},
-                        {"nationality_code": "GBR", "percentage": 50.0}
-                    ]
+                        {"nationality_code": "GBR", "percentage": 50.0},
+                    ],
                 }
             ],
             "facility_configs": self._get_default_facilities(),
-            "injury_distribution": {
-                "Disease": 40.0,
-                "Battle Injury": 20.0,
-                "Non-Battle Injury": 40.0
-            }
+            "injury_distribution": {"Disease": 40.0, "Battle Injury": 20.0, "Non-Battle Injury": 40.0},
         }
-        
-        response = requests.post(
-            f"{BASE_URL}/api/v1/configurations/",
-            headers=HEADERS,
-            json=config
-        )
+
+        response = requests.post(f"{BASE_URL}/api/v1/configurations/", headers=HEADERS, json=config)
         assert response.status_code == 201
         created = response.json()
         config_id = created["id"]
-        
+
         try:
             # 2. Read configuration
-            response = requests.get(
-                f"{BASE_URL}/api/v1/configurations/{config_id}",
-                headers=HEADERS
-            )
+            response = requests.get(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS)
             assert response.status_code == 200
             fetched = response.json()
             assert fetched["name"] == config["name"]
-            
+
             # 3. List configurations
-            response = requests.get(
-                f"{BASE_URL}/api/v1/configurations/",
-                headers=HEADERS
-            )
+            response = requests.get(f"{BASE_URL}/api/v1/configurations/", headers=HEADERS)
             assert response.status_code == 200
             configs = response.json()
             assert any(c["id"] == config_id for c in configs)
-            
+
             # 4. Update configuration
             config["name"] = "E2E Test Template Updated"
-            response = requests.put(
-                f"{BASE_URL}/api/v1/configurations/{config_id}",
-                headers=HEADERS,
-                json=config
-            )
+            response = requests.put(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS, json=config)
             assert response.status_code == 200
-            
+
         finally:
             # 5. Delete configuration (cleanup)
-            response = requests.delete(
-                f"{BASE_URL}/api/v1/configurations/{config_id}",
-                headers=HEADERS
-            )
+            response = requests.delete(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS)
             assert response.status_code == 204
 
     def test_validation_endpoint(self):
         """Test configuration validation endpoint."""
         # Valid configuration
         valid_config = self._get_test_config()["configuration"]
-        response = requests.post(
-            f"{BASE_URL}/api/v1/configurations/validate/",
-            headers=HEADERS,
-            json=valid_config
-        )
+        response = requests.post(f"{BASE_URL}/api/v1/configurations/validate/", headers=HEADERS, json=valid_config)
         assert response.status_code == 200
         result = response.json()
         assert result["valid"] is True
         assert result["errors"] == []
-        
+
         # Invalid configuration should return 422 (Unprocessable Entity)
         invalid_config = {
             "name": "Invalid Config",
@@ -319,14 +278,10 @@ class TestUIAPIIntegration:
             "injury_distribution": {
                 "Disease": 50.0,
                 "Battle Injury": 60.0,  # Sum > 100%
-                "Non-Battle Injury": 40.0
-            }
+                "Non-Battle Injury": 40.0,
+            },
         }
-        response = requests.post(
-            f"{BASE_URL}/api/v1/configurations/validate/",
-            headers=HEADERS,
-            json=invalid_config
-        )
+        response = requests.post(f"{BASE_URL}/api/v1/configurations/validate/", headers=HEADERS, json=invalid_config)
         # FastAPI returns 422 for validation errors
         assert response.status_code == 422
         error_detail = response.json()
@@ -340,10 +295,10 @@ class TestUIAPIIntegration:
         response = requests.get(f"{BASE_URL}/api/v1/configurations/reference/nationalities/")
         assert response.status_code == 200
         nationalities = response.json()
-        
+
         # Create mapping
         name_to_code = {n["name"]: n["code"] for n in nationalities}
-        
+
         # Test common mappings used in UI
         assert name_to_code.get("United States") == "USA"
         assert name_to_code.get("United Kingdom") == "GBR"
@@ -353,36 +308,29 @@ class TestUIAPIIntegration:
     def test_concurrent_job_handling(self):
         """Test that UI can handle multiple concurrent jobs."""
         job_ids = []
-        
+
         try:
             # Start multiple jobs
             for i in range(3):
                 config = self._get_test_config()
-                config["configuration"]["name"] = f"Concurrent Test {i+1}"
-                
-                response = requests.post(
-                    f"{BASE_URL}/api/generate",
-                    headers=HEADERS,
-                    json=config
-                )
+                config["configuration"]["name"] = f"Concurrent Test {i + 1}"
+
+                response = requests.post(f"{BASE_URL}/api/generate", headers=HEADERS, json=config)
                 assert response.status_code == 200
                 job_ids.append(response.json()["job_id"])
-            
+
             # Check all jobs are listed
             response = requests.get(f"{BASE_URL}/api/jobs/", headers=HEADERS)
             assert response.status_code == 200
             jobs = response.json()
-            
+
             for job_id in job_ids:
                 assert any(job["job_id"] == job_id for job in jobs)
-            
+
         finally:
             # Clean up all jobs
             for job_id in job_ids:
-                requests.post(
-                    f"{BASE_URL}/api/jobs/{job_id}/cancel",
-                    headers=HEADERS
-                )
+                requests.post(f"{BASE_URL}/api/jobs/{job_id}/cancel", headers=HEADERS)
 
     # Helper methods
     def _get_test_config(self) -> Dict[str, Any]:
@@ -397,21 +345,15 @@ class TestUIAPIIntegration:
                         "id": "test_front",
                         "name": "Test Front",
                         "casualty_rate": 1.0,
-                        "nationality_distribution": [
-                            {"nationality_code": "USA", "percentage": 100.0}
-                        ]
+                        "nationality_distribution": [{"nationality_code": "USA", "percentage": 100.0}],
                     }
                 ],
                 "facility_configs": self._get_default_facilities(),
-                "injury_distribution": {
-                    "Disease": 50.0,
-                    "Battle Injury": 10.0,
-                    "Non-Battle Injury": 40.0
-                }
+                "injury_distribution": {"Disease": 50.0, "Battle Injury": 10.0, "Non-Battle Injury": 40.0},
             },
             "output_formats": ["json"],
             "use_compression": False,
-            "use_encryption": False
+            "use_encryption": False,
         }
 
     def _get_default_facilities(self) -> list:
@@ -423,23 +365,16 @@ class TestUIAPIIntegration:
                 "description": None,
                 "capacity": None,
                 "kia_rate": 0.025,
-                "rtd_rate": 0.10
+                "rtd_rate": 0.10,
             },
-            {
-                "id": "ROLE_1",
-                "name": "Role 1",
-                "description": None,
-                "capacity": 10,
-                "kia_rate": 0.01,
-                "rtd_rate": 0.15
-            },
+            {"id": "ROLE_1", "name": "Role 1", "description": None, "capacity": 10, "kia_rate": 0.01, "rtd_rate": 0.15},
             {
                 "id": "ROLE_2",
                 "name": "Role 2",
                 "description": None,
                 "capacity": 50,
                 "kia_rate": 0.005,
-                "rtd_rate": 0.30
+                "rtd_rate": 0.30,
             },
             {
                 "id": "ROLE_3",
@@ -447,7 +382,7 @@ class TestUIAPIIntegration:
                 "description": None,
                 "capacity": 200,
                 "kia_rate": 0.002,
-                "rtd_rate": 0.25
+                "rtd_rate": 0.25,
             },
             {
                 "id": "ROLE_4",
@@ -455,8 +390,8 @@ class TestUIAPIIntegration:
                 "description": None,
                 "capacity": 500,
                 "kia_rate": 0.001,
-                "rtd_rate": 0.40
-            }
+                "rtd_rate": 0.40,
+            },
         ]
 
 

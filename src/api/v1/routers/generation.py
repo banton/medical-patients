@@ -68,12 +68,12 @@ async def run_patient_generation(
         # Create progress callback
         async def update_progress(progress_data: Dict[str, Any]):
             # Extract progress information
-            progress = progress_data.get('progress', 0)
-            current = progress_data.get('processed_patients', 0)
-            total = progress_data.get('total_patients', 0)
-            phase_desc = progress_data.get('phase_description', f"Processing patient {current} of {total}")
-            current_phase = progress_data.get('current_phase', 'generating_patients')
-            
+            progress = progress_data.get("progress", 0)
+            current = progress_data.get("processed_patients", 0)
+            total = progress_data.get("total_patients", 0)
+            phase_desc = progress_data.get("phase_description", f"Processing patient {current} of {total}")
+            current_phase = progress_data.get("current_phase", "generating_patients")
+
             # Convert to percentage
             progress_percent = int(progress * 100) if progress <= 1 else int(progress)
 
@@ -127,13 +127,15 @@ async def run_patient_generation(
         }
 
         # Update final progress
-        await update_progress({
-            'progress': 1.0,
-            'processed_patients': config.total_patients,
-            'total_patients': config.total_patients,
-            'phase_description': f"Completed generating {config.total_patients} patients",
-            'current_phase': 'completed'
-        })
+        await update_progress(
+            {
+                "progress": 1.0,
+                "processed_patients": config.total_patients,
+                "total_patients": config.total_patients,
+                "phase_description": f"Completed generating {config.total_patients} patients",
+                "current_phase": "completed",
+            }
+        )
 
         result = {"status": "completed", "output_files": gen_output_files, "patient_count": config.total_patients}
 

@@ -1,8 +1,9 @@
-import unittest
-import requests
 import json
-from typing import Dict, Any, List
 import time
+from typing import Any, Dict, List
+import unittest
+
+import requests
 
 BASE_URL = "http://localhost:8000"  # Assuming the FastAPI app is running here
 CONFIG_API_URL = f"{BASE_URL}/api/v1/configurations"
@@ -10,11 +11,8 @@ GENERATE_API_URL = f"{BASE_URL}/api/generate"
 JOBS_API_URL = f"{BASE_URL}/api/jobs"
 API_KEY = "your_secret_api_key_here"  # Should match API_KEY env var or default
 
-HEADERS = {
-    "X-API-KEY": API_KEY,
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-}
+HEADERS = {"X-API-KEY": API_KEY, "Content-Type": "application/json", "Accept": "application/json"}
+
 
 # Helper to create a valid default configuration for testing
 def create_default_config_payload(name_suffix: str = "") -> Dict[str, Any]:
@@ -27,25 +25,19 @@ def create_default_config_payload(name_suffix: str = "") -> Dict[str, Any]:
                 "id": "front_test_1",
                 "name": "Test Front Alpha",
                 "casualty_rate": 1.0,
-                "nationality_distribution": [
-                    {"nationality_code": "USA", "percentage": 100.0}
-                ]
+                "nationality_distribution": [{"nationality_code": "USA", "percentage": 100.0}],
             }
         ],
         "facility_configs": [
             {"id": "POI", "name": "Point of Injury", "kia_rate": 0.01, "rtd_rate": 0.0},
-            {"id": "R1", "name": "Role 1", "kia_rate": 0.02, "rtd_rate": 0.1}
+            {"id": "R1", "name": "Role 1", "kia_rate": 0.02, "rtd_rate": 0.1},
         ],
-        "injury_distribution": {
-            "Disease": 50.0,
-            "Non-Battle Injury": 30.0,
-            "Battle Injury": 20.0
-        }
+        "injury_distribution": {"Disease": 50.0, "Non-Battle Injury": 30.0, "Battle Injury": 20.0},
     }
 
-class TestAPIIntegration(unittest.TestCase):
 
-    created_config_ids: List[str] = [] # Keep track of created configs to clean up
+class TestAPIIntegration(unittest.TestCase):
+    created_config_ids: List[str] = []  # Keep track of created configs to clean up
 
     @classmethod
     def tearDownClass(cls):
@@ -62,7 +54,7 @@ class TestAPIIntegration(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data.get("status"), "healthy")
-        
+
         # Check Redis health if cache is enabled
         if "services" in data:
             self.assertIn("redis", data["services"])
@@ -84,8 +76,8 @@ class TestAPIIntegration(unittest.TestCase):
         data = response.json()
         self.assertIsInstance(data, list)
         self.assertIn("DISEASE", data)
-        self.assertIn("NON_BATTLE", data) # Based on current app.py, it's NON_BATTLE
-        self.assertIn("BATTLE_TRAUMA", data) # Based on current app.py
+        self.assertIn("NON_BATTLE", data)  # Based on current app.py, it's NON_BATTLE
+        self.assertIn("BATTLE_TRAUMA", data)  # Based on current app.py
 
     def test_03_config_validate_valid_syntax(self):
         payload = create_default_config_payload("ValidateValid")
@@ -96,9 +88,9 @@ class TestAPIIntegration(unittest.TestCase):
 
     def test_04_config_validate_invalid_syntax(self):
         payload = create_default_config_payload("ValidateInvalid")
-        payload["total_patients"] = "not_an_integer" # Invalid data type
+        payload["total_patients"] = "not_an_integer"  # Invalid data type
         response = requests.post(f"{CONFIG_API_URL}/validate/", headers=HEADERS, data=json.dumps(payload))
-        self.assertEqual(response.status_code, 422) # Unprocessable Entity for Pydantic validation error
+        self.assertEqual(response.status_code, 422)  # Unprocessable Entity for Pydantic validation error
 
     def test_05_config_create_valid(self):
         payload = create_default_config_payload("CreateValid")
@@ -107,13 +99,13 @@ class TestAPIIntegration(unittest.TestCase):
         data = response.json()
         self.assertIn("id", data)
         self.assertEqual(data["name"], payload["name"])
-        self.created_config_ids.append(data["id"]) # Save for cleanup
+        self.created_config_ids.append(data["id"])  # Save for cleanup
 
     def test_06_config_create_invalid_payload(self):
         payload = create_default_config_payload("CreateInvalid")
-        del payload["total_patients"] # Missing required field
+        del payload["total_patients"]  # Missing required field
         response = requests.post(CONFIG_API_URL + "/", headers=HEADERS, data=json.dumps(payload))
-        self.assertEqual(response.status_code, 422) # Pydantic validation error
+        self.assertEqual(response.status_code, 422)  # Pydantic validation error
 
     def test_07_config_list_all(self):
         # Create a config first to ensure list is not empty
@@ -160,12 +152,12 @@ class TestAPIIntegration(unittest.TestCase):
         update_payload["description"] = "This configuration has been updated."
         # Pydantic model for update might be same as create, or a different one.
         # Assuming ConfigurationTemplateCreate is used for PUT body as well.
-        
+
         response = requests.put(f"{CONFIG_API_URL}/{created_id}", headers=HEADERS, data=json.dumps(update_payload))
         self.assertEqual(response.status_code, 200, f"Response content: {response.text}")
         data = response.json()
         self.assertEqual(data["id"], created_id)
-        self.assertEqual(data["name"], update_payload["name"]) # Name can be updated
+        self.assertEqual(data["name"], update_payload["name"])  # Name can be updated
         self.assertEqual(data["description"], "This configuration has been updated.")
         # Version should increment if versioning is implemented and returned by PUT
         if "version" in created_config and "version" in data:
@@ -174,10 +166,11 @@ class TestAPIIntegration(unittest.TestCase):
             self.assertIsInstance(data["version"], int)
             self.assertGreaterEqual(data["version"], created_config.get("version", 0))
 
-
     def test_11_config_update_not_found(self):
         update_payload = create_default_config_payload("UpdateNotFound")
-        response = requests.put(f"{CONFIG_API_URL}/non_existent_id_456", headers=HEADERS, data=json.dumps(update_payload))
+        response = requests.put(
+            f"{CONFIG_API_URL}/non_existent_id_456", headers=HEADERS, data=json.dumps(update_payload)
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_12_config_delete_valid(self):
@@ -207,7 +200,7 @@ class TestAPIIntegration(unittest.TestCase):
             "configuration": ad_hoc_config,
             "output_formats": ["json"],
             "use_compression": False,
-            "use_encryption": False
+            "use_encryption": False,
         }
         # Generate endpoint now requires authentication
         generate_headers = {"Content-Type": "application/json", "Accept": "application/json", "X-API-Key": API_KEY}
@@ -216,18 +209,17 @@ class TestAPIIntegration(unittest.TestCase):
         data = response.json()
         self.assertIn("job_id", data)
         self.assertIn("status", data)
-        self.assertIn(data["status"], ["initializing", "queued"]) # Initial status
-        
+        self.assertIn(data["status"], ["initializing", "queued"])  # Initial status
+
         # Store job_id for potential status check later, though full polling is complex for unit test
         # For a simple check, we can try to get status once.
         job_id = data["job_id"]
-        time.sleep(2) # Give a moment for the job to potentially start
-        
+        time.sleep(2)  # Give a moment for the job to potentially start
+
         status_response = requests.get(f"{JOBS_API_URL}/{job_id}", headers=HEADERS)
         self.assertEqual(status_response.status_code, 200)
         status_data = status_response.json()
         self.assertIn(status_data["status"], ["initializing", "running", "completed", "failed"])
-
 
     def test_15_generate_with_config_id(self):
         # 1. Create and save a configuration template
@@ -275,15 +267,15 @@ class TestAPIIntegration(unittest.TestCase):
             data = results_response.json()
             # Check if there's an indication that results aren't ready
             self.assertTrue(
-                data.get("summary") is None or 
-                data.get("status") in ["running", "queued", "initializing"] or
-                len(data.get("output_files", [])) == 0,
-                "Expected incomplete results for a just-submitted job"
+                data.get("summary") is None
+                or data.get("status") in ["running", "queued", "initializing"]
+                or len(data.get("output_files", [])) == 0,
+                "Expected incomplete results for a just-submitted job",
             )
         else:
             # Otherwise expect 400 or 404 for incomplete job
             self.assertIn(results_response.status_code, [400, 404])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

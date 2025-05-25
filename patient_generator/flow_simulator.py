@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 try:
     from .config_manager import ConfigurationManager
     from .patient import Patient
-    from .schemas_config import FacilityConfig
 except ImportError:
     from patient_generator.config_manager import ConfigurationManager
     from patient_generator.patient import Patient
