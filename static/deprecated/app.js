@@ -77,19 +77,28 @@ class MilitaryPatientGeneratorApp {
 
     setupEventListeners() {
         // Generate button
-        document.getElementById('generateBtn').addEventListener('click', () => {
-            this.handleGenerate();
-        });
+        const generateBtn = document.getElementById('generateBtn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                this.handleGenerate();
+            });
+        }
         
         // Reset button
-        document.getElementById('resetAllBtn').addEventListener('click', () => {
-            this.handleReset();
-        });
+        const resetAllBtn = document.getElementById('resetAllBtn');
+        if (resetAllBtn) {
+            resetAllBtn.addEventListener('click', () => {
+                this.handleReset();
+            });
+        }
         
         // Quick start button
-        document.getElementById('quickStartBtn').addEventListener('click', () => {
-            this.showTemplateModal();
-        });
+        const quickStartBtn = document.getElementById('quickStartBtn');
+        if (quickStartBtn) {
+            quickStartBtn.addEventListener('click', () => {
+                this.showTemplateModal();
+            });
+        }
         
         // Template system events
         document.addEventListener('template-selected', (e) => {

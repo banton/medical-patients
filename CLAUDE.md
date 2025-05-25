@@ -260,3 +260,7 @@ When deferring or hiding features for later development:
 3. When ready to implement, create specification and move to tickets
 
 This ensures unfinished features are tracked and not forgotten.
+
+## Additional Memory Entries
+
+- When changing HTML files, always confirm that no dependencies from API, JS or CSS, or other assets remain.

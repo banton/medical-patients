@@ -3,7 +3,6 @@ End-to-end tests for the new UI and API integration.
 These tests ensure that UI changes don't break the API contract.
 """
 
-import json
 import time
 from typing import Any, Dict
 import pytest
@@ -29,19 +28,21 @@ class TestUIAPIIntegration:
         except RequestException:
             pytest.skip("Server not running. Start with 'make dev'")
 
-    def test_ui_endpoint_accessible(self):
-        """Test that the new UI endpoint is accessible."""
-        response = requests.get(f"{BASE_URL}/ui", allow_redirects=False)
+    def test_root_endpoint_redirects_to_ui(self):
+        """Test that the root endpoint redirects to UI."""
+        response = requests.get(f"{BASE_URL}/", allow_redirects=False)
         assert response.status_code == 307  # Redirect
-        assert "/static/new-ui/index.html" in response.headers.get("location", "")
+        assert "/static/index.html" in response.headers.get("location", "")
 
     def test_ui_static_files_accessible(self):
         """Test that UI static files are accessible."""
         files = [
-            "/static/new-ui/index.html",
-            "/static/new-ui/css/app.css",
-            "/static/new-ui/js/app.js",
-            "/static/new-ui/js/globals.js",
+            "/static/index.html",
+            "/static/css/app.css",
+            "/static/js/app.js",
+            "/static/js/globals.js",
+            "/static/js/modules/uiComponents.js",
+            "/static/js/modules/apiClient.js",
         ]
         
         for file in files:
@@ -213,7 +214,7 @@ class TestUIAPIIntegration:
             assert response.status_code == 200
             job_data = response.json()
             assert "progress" in job_data
-            assert 0 <= job_data["progress"] <= 1
+            assert 0 <= job_data["progress"] <= 100
             
         finally:
             # 6. Cancel job (cleanup)
@@ -309,17 +310,29 @@ class TestUIAPIIntegration:
         assert result["valid"] is True
         assert result["errors"] == []
         
-        # Invalid configuration (missing required fields)
-        invalid_config = {"name": "Invalid"}
+        # Invalid configuration should return 422 (Unprocessable Entity)
+        invalid_config = {
+            "name": "Invalid Config",
+            "total_patients": -10,  # Invalid negative value
+            "front_configs": [],  # Empty fronts
+            "facility_configs": self._get_default_facilities(),
+            "injury_distribution": {
+                "Disease": 50.0,
+                "Battle Injury": 60.0,  # Sum > 100%
+                "Non-Battle Injury": 40.0
+            }
+        }
         response = requests.post(
             f"{BASE_URL}/api/v1/configurations/validate/",
             headers=HEADERS,
             json=invalid_config
         )
-        assert response.status_code == 200
-        result = response.json()
-        # The endpoint returns 200 even for invalid configs
-        # It's up to the UI to handle the validation result
+        # FastAPI returns 422 for validation errors
+        assert response.status_code == 422
+        error_detail = response.json()
+        assert "detail" in error_detail
+        # Check that it caught the negative total_patients
+        assert any("total_patients" in str(err) for err in error_detail["detail"])
 
     def test_ui_nationality_mapping(self):
         """Test that UI nationality names map correctly to codes."""

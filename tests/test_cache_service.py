@@ -2,6 +2,7 @@
 
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
+from contextlib import asynccontextmanager
 import json
 import redis.asyncio as redis
 
@@ -200,7 +201,12 @@ class TestCacheIntegration:
         service = CacheService("redis://localhost:6379/0")
         service._pool = mock_pool
         
-        with patch.object(service, '_get_client', return_value=mock_client):
+        # Create a proper async context manager
+        @asynccontextmanager
+        async def mock_get_client():
+            yield mock_client
+            
+        with patch.object(service, '_get_client', mock_get_client):
             result = await service.get("test:key")
             assert result is None
             
@@ -217,6 +223,11 @@ class TestCacheIntegration:
         service = CacheService("redis://localhost:6379/0")
         service._pool = mock_pool
         
-        with patch.object(service, '_get_client', return_value=mock_client):
+        # Create a proper async context manager
+        @asynccontextmanager
+        async def mock_get_client():
+            yield mock_client
+            
+        with patch.object(service, '_get_client', mock_get_client):
             result = await service.set("test:key", "value")
             assert result is False

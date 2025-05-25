@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from patient_generator.database import Database
 from patient_generator.config_manager import ConfigurationManager
-from patient_generator.models_db import ConfigTemplate
+from patient_generator.models_db import ConfigurationTemplateDBModel
 from src.domain.services.job_service import JobService
 from src.domain.models.job import Job, JobStatus
 from src.core.cache import CacheService
@@ -304,30 +304,34 @@ class TestCacheServiceIntegration:
         # Override Redis URL
         os.environ['REDIS_URL'] = test_redis_url
         
-        cache = CacheService()
+        cache = CacheService(test_redis_url)
+        await cache.initialize()
         
-        # Test set and get
-        await cache.set("test_key", {"data": "test"})
-        result = await cache.get("test_key")
-        assert result == {"data": "test"}
-        
-        # Test TTL
-        await cache.set("ttl_test", "value", ttl=5)
-        assert await cache.get("ttl_test") == "value"
-        
-        # Test delete
-        await cache.delete("test_key")
-        assert await cache.get("test_key") is None
-        
-        # Test clear pattern
-        await cache.set("pattern:1", "value1")
-        await cache.set("pattern:2", "value2")
-        await cache.set("other:1", "other")
-        
-        await cache.clear_pattern("pattern:*")
-        assert await cache.get("pattern:1") is None
-        assert await cache.get("pattern:2") is None
-        assert await cache.get("other:1") == "other"
+        try:
+            # Test set and get
+            await cache.set("test_key", {"data": "test"})
+            result = await cache.get("test_key")
+            assert result == {"data": "test"}
+            
+            # Test TTL
+            await cache.set("ttl_test", "value", ttl=5)
+            assert await cache.get("ttl_test") == "value"
+            
+            # Test delete
+            await cache.delete("test_key")
+            assert await cache.get("test_key") is None
+            
+            # Test clear pattern
+            await cache.set("pattern:1", "value1")
+            await cache.set("pattern:2", "value2")
+            await cache.set("other:1", "other")
+            
+            await cache.invalidate_pattern("pattern:*")
+            assert await cache.get("pattern:1") is None
+            assert await cache.get("pattern:2") is None
+            assert await cache.get("other:1") == "other"
+        finally:
+            await cache.close()
 
 
 class TestDatabaseWithCache:

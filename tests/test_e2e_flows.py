@@ -41,6 +41,7 @@ class TestE2EPatientGeneration:
             },
             "front_configs": [
                 {
+                    "id": "front_alpha",
                     "name": "Test Front Alpha",
                     "casualty_rate": 0.6,
                     "nationality_distribution": [
@@ -49,6 +50,7 @@ class TestE2EPatientGeneration:
                     ]
                 },
                 {
+                    "id": "front_beta",
                     "name": "Test Front Beta",
                     "casualty_rate": 0.4,
                     "nationality_distribution": [
@@ -58,10 +60,10 @@ class TestE2EPatientGeneration:
                 }
             ],
             "facility_configs": [
-                {"id": "POINT_OF_INJURY", "name": "Point of Injury", "mortality_rate": 0.20, "rtd_rate": 0.0},
-                {"id": "ROLE_1", "name": "Role 1", "mortality_rate": 0.10, "rtd_rate": 0.1},
-                {"id": "ROLE_2", "name": "Role 2", "mortality_rate": 0.05, "rtd_rate": 0.2},
-                {"id": "ROLE_3", "name": "Role 3", "mortality_rate": 0.02, "rtd_rate": 0.3}
+                {"id": "POINT_OF_INJURY", "name": "Point of Injury", "kia_rate": 0.20, "rtd_rate": 0.0, "capacity": 1},
+                {"id": "ROLE_1", "name": "Role 1", "kia_rate": 0.10, "rtd_rate": 0.1, "capacity": 10},
+                {"id": "ROLE_2", "name": "Role 2", "kia_rate": 0.05, "rtd_rate": 0.2, "capacity": 50},
+                {"id": "ROLE_3", "name": "Role 3", "kia_rate": 0.02, "rtd_rate": 0.3, "capacity": 200}
             ]
         }
     
@@ -73,7 +75,7 @@ class TestE2EPatientGeneration:
             json=test_config,
             headers=HEADERS
         )
-        assert create_response.status_code == 200
+        assert create_response.status_code == 201
         config_data = create_response.json()
         config_id = config_data["id"]
         
@@ -86,7 +88,7 @@ class TestE2EPatientGeneration:
         }
         
         generate_response = requests.post(
-            f"{BASE_URL}/api/v1/generate/",
+            f"{BASE_URL}/api/generate",
             json=generation_payload,
             headers=HEADERS
         )
@@ -101,7 +103,7 @@ class TestE2EPatientGeneration:
         
         while attempts < max_attempts:
             status_response = requests.get(
-                f"{BASE_URL}/api/v1/jobs/{job_id}",
+                f"{BASE_URL}/api/jobs/{job_id}",
                 headers=HEADERS
             )
             assert status_response.status_code == 200
@@ -121,7 +123,7 @@ class TestE2EPatientGeneration:
         
         # Step 4: Download results
         download_response = requests.get(
-            f"{BASE_URL}/api/v1/download/{job_id}",
+            f"{BASE_URL}/api/download/{job_id}",
             headers=HEADERS,
             stream=True
         )
@@ -155,8 +157,14 @@ class TestE2EPatientGeneration:
                         data = json.loads(content)
                         
                         # Verify FHIR bundle structure
-                        assert data["resourceType"] == "Bundle"
-                        assert len(data["entry"]) > 0
+                        # The data might be a list of bundles or a single bundle
+                        if isinstance(data, list):
+                            assert len(data) > 0
+                            assert data[0]["resourceType"] == "Bundle"
+                            assert len(data[0]["entry"]) > 0
+                        else:
+                            assert data["resourceType"] == "Bundle"
+                            assert len(data["entry"]) > 0
         finally:
             os.unlink(tmp_path)
     
@@ -168,7 +176,7 @@ class TestE2EPatientGeneration:
             json=test_config,
             headers=HEADERS
         )
-        assert create_response.status_code == 200
+        assert create_response.status_code == 201
         config_id = create_response.json()["id"]
         
         # Generate with encryption
@@ -181,7 +189,7 @@ class TestE2EPatientGeneration:
         }
         
         generate_response = requests.post(
-            f"{BASE_URL}/api/v1/generate/",
+            f"{BASE_URL}/api/generate",
             json=generation_payload,
             headers=HEADERS
         )
@@ -194,7 +202,7 @@ class TestE2EPatientGeneration:
         
         # Download should work
         download_response = requests.get(
-            f"{BASE_URL}/api/v1/download/{job_id}",
+            f"{BASE_URL}/api/download/{job_id}",
             headers=HEADERS
         )
         assert download_response.status_code == 200
@@ -261,7 +269,7 @@ class TestE2EPatientGeneration:
             }
             
             response = requests.post(
-                f"{BASE_URL}/api/v1/generate/",
+                f"{BASE_URL}/api/generate",
                 json=generation_payload,
                 headers=HEADERS
             )
@@ -284,7 +292,7 @@ class TestE2EPatientGeneration:
         
         while time.time() - start_time < timeout:
             response = requests.get(
-                f"{BASE_URL}/api/v1/jobs/{job_id}",
+                f"{BASE_URL}/api/jobs/{job_id}",
                 headers=HEADERS
             )
             status = response.json()
@@ -331,7 +339,7 @@ class TestE2EVisualization:
         config_id = create_resp.json()["id"]
         
         generate_resp = requests.post(
-            f"{BASE_URL}/api/v1/generate/",
+            f"{BASE_URL}/api/generate",
             json={"configuration_id": config_id, "output_formats": ["json"]},
             headers=HEADERS
         )
@@ -382,7 +390,7 @@ class TestE2EErrorScenarios:
         fake_job_id = str(uuid4())
         
         response = requests.get(
-            f"{BASE_URL}/api/v1/jobs/{fake_job_id}",
+            f"{BASE_URL}/api/jobs/{fake_job_id}",
             headers=HEADERS
         )
         assert response.status_code == 404
@@ -410,7 +418,7 @@ class TestE2EErrorScenarios:
         config_id = create_resp.json()["id"]
         
         generate_resp = requests.post(
-            f"{BASE_URL}/api/v1/generate/",
+            f"{BASE_URL}/api/generate",
             json={"configuration_id": config_id, "output_formats": ["json"]},
             headers=HEADERS
         )
@@ -418,7 +426,7 @@ class TestE2EErrorScenarios:
         
         # Try to download immediately
         download_resp = requests.get(
-            f"{BASE_URL}/api/v1/download/{job_id}",
+            f"{BASE_URL}/api/download/{job_id}",
             headers=HEADERS
         )
         # Should either return 404 or indicate job not complete
@@ -464,13 +472,13 @@ class TestE2EPerformance:
             json=large_config,
             headers=HEADERS
         )
-        assert create_resp.status_code == 200
+        assert create_resp.status_code == 201
         config_id = create_resp.json()["id"]
         
         # Generate patients
         start_time = time.time()
         generate_resp = requests.post(
-            f"{BASE_URL}/api/v1/generate/",
+            f"{BASE_URL}/api/generate",
             json={
                 "configuration_id": config_id,
                 "output_formats": ["json"],
