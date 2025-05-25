@@ -49,24 +49,44 @@ dev-fast:
 	@chmod +x start-dev.sh && ./start-dev.sh --skip-tests
 
 # Run all tests
-test: test-unit test-cache api-test
-	@echo "All tests completed!"
+test:
+	@echo "Running all tests..."
+	./run_tests.sh all
 
-# Run unit tests
+# Run unit tests only
 test-unit:
 	@echo "Running unit tests..."
-	python -m pytest tests/ -xvs
+	./run_tests.sh unit
+
+# Run integration tests (database + API)
+test-integration:
+	@echo "Running integration tests..."
+	./run_tests.sh integration
+
+# Run end-to-end tests
+test-e2e:
+	@echo "Running end-to-end tests..."
+	./run_tests.sh e2e
+
+# Run database tests with testcontainers
+test-db:
+	@echo "Running database tests..."
+	./run_tests.sh db
+
+# Run API tests
+test-api:
+	@echo "Running API tests..."
+	./run_tests.sh api
+
+# Run quick tests (no external dependencies)
+test-quick:
+	@echo "Running quick tests..."
+	./run_tests.sh quick
 
 # Run cache-specific tests
 test-cache:
 	@echo "Running cache tests..."
 	python -m pytest tests/test_cache_service.py tests/test_cached_services.py -xvs
-
-# Run API integration tests (requires running server)
-api-test:
-	@echo "Running API integration tests..."
-	@echo "Ensure the server is running (make dev in another terminal)"
-	python -m pytest tests_api.py -xvs
 
 # Run linting
 lint:
