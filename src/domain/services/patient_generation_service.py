@@ -107,7 +107,7 @@ class PatientGenerationPipeline:
         """Create a single patient asynchronously."""
         # Create patient using the flow simulator's method
         # The flow simulator already has access to the config via config_manager
-        return await asyncio.to_thread(self.flow_simulator.create_patient, patient_id)
+        return await asyncio.to_thread(self.flow_simulator._create_initial_patient, patient_id)
 
     async def _add_demographics(self, patient: Patient, context: GenerationContext) -> Patient:
         """Add demographics to patient asynchronously."""
