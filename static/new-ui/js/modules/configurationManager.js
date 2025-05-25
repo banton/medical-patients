@@ -252,22 +252,39 @@ export class ConfigurationManager {
 
     prepareForAPI(config) {
         // Transform configuration for API submission
-        const apiConfig = {
+        // The API expects either configuration_id or configuration object
+        
+        // First, prepare the configuration in the format expected by the API
+        const configTemplate = {
+            name: config.exercise_name || `Scenario from Dynamic Front Configuration`,
+            description: config.description || `Generated on ${new Date().toISOString()} using dynamic front configuration.`,
             total_patients: config.total_patients,
-            exercise_name: config.exercise_name || undefined,
-            exercise_base_date: config.exercise_base_date,
-            description: config.description || undefined,
             
-            fronts: config.fronts.map(front => ({
+            // Convert fronts to front_configs format
+            front_configs: config.fronts.map((front, index) => ({
+                id: front.id || `front_${index + 1}_${Date.now()}`,
                 name: front.name,
-                type: front.type,
                 casualty_rate: front.casualty_rate,
-                nationality_distribution: this.convertNationalityDistribution(front.nationality_distribution),
-                medical_facilities: front.medical_facilities || config.medical_facility_defaults
+                nationality_distribution: Object.entries(front.nationality_distribution || {}).map(([code, percentage]) => ({
+                    nationality_code: this.getCountryCode(code),
+                    percentage: percentage
+                }))
             })),
             
-            injury_distribution: this.convertInjuryDistribution(config.injury_distribution),
+            // Convert medical facilities to facility_configs format
+            facility_configs: this.convertFacilitiesToAPI(config.medical_facility_defaults),
             
+            // Convert injury distribution
+            injury_distribution: {
+                'Disease': config.injury_distribution['Disease'],
+                'Battle Injury': config.injury_distribution['Battle Trauma'] || config.injury_distribution['Battle Injury'],
+                'Non-Battle Injury': config.injury_distribution['Non-Battle Injury']
+            }
+        };
+        
+        // Wrap in generation request format
+        const generationRequest = {
+            configuration: configTemplate,
             output_formats: config.output_formats,
             use_compression: config.use_compression,
             use_encryption: config.use_encryption,
@@ -275,7 +292,68 @@ export class ConfigurationManager {
         };
         
         // Remove undefined values
-        return JSON.parse(JSON.stringify(apiConfig));
+        return JSON.parse(JSON.stringify(generationRequest));
+    }
+    
+    convertFacilitiesToAPI(facilities) {
+        const facilityMap = {
+            'point_of_injury': 'POINT_OF_INJURY',
+            'role_1': 'ROLE_1', 
+            'role_2': 'ROLE_2',
+            'role_3': 'ROLE_3',
+            'role_4': 'ROLE_4'
+        };
+        
+        return Object.entries(facilities).map(([key, facility]) => ({
+            id: facilityMap[key] || key.toUpperCase(),
+            name: facility.name,
+            description: facility.description || null,
+            capacity: facility.capacity || null,
+            kia_rate: facility.kia_rate,
+            rtd_rate: facility.rtd_rate
+        }));
+    }
+    
+    getCountryCode(countryName) {
+        // Map country names to codes
+        const countryMap = {
+            'United States': 'USA',
+            'United Kingdom': 'GBR',
+            'Germany': 'DEU',
+            'France': 'FRA',
+            'Canada': 'CAN',
+            'Poland': 'POL',
+            'Netherlands': 'NLD',
+            'Denmark': 'DNK',
+            'Norway': 'NOR',
+            'Belgium': 'BEL',
+            'Italy': 'ITA',
+            'Spain': 'ESP',
+            'Portugal': 'PRT',
+            'Czech Republic': 'CZE',
+            'Slovakia': 'SVK',
+            'Hungary': 'HUN',
+            'Romania': 'ROU',
+            'Bulgaria': 'BGR',
+            'Greece': 'GRC',
+            'Turkey': 'TUR',
+            'Estonia': 'EST',
+            'Latvia': 'LVA',
+            'Lithuania': 'LTU',
+            'Slovenia': 'SVN',
+            'Croatia': 'HRV',
+            'Albania': 'ALB',
+            'Montenegro': 'MNE',
+            'North Macedonia': 'MKD',
+            'Luxembourg': 'LUX',
+            'Iceland': 'ISL',
+            'Finland': 'FIN',
+            'Sweden': 'SWE',
+            'Local Population': 'LOCAL',
+            'International Aid Workers': 'INTL'
+        };
+        
+        return countryMap[countryName] || countryName.substring(0, 3).toUpperCase();
     }
 
     convertNationalityDistribution(distribution) {

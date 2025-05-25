@@ -78,6 +78,17 @@ test-api:
 	@echo "Running API tests..."
 	./run_tests.sh api
 
+# Run UI integration tests
+test-ui:
+	@echo "Running UI integration tests..."
+	npm run test:ui
+
+# Run UI end-to-end tests (requires running server)
+test-ui-e2e:
+	@echo "Running UI end-to-end tests..."
+	@echo "NOTE: Requires server running (make dev)"
+	python -m pytest tests/test_ui_e2e.py -v
+
 # Run quick tests (no external dependencies)
 test-quick:
 	@echo "Running quick tests..."

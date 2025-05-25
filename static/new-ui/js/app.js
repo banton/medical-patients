@@ -143,8 +143,11 @@ class MilitaryPatientGeneratorApp {
             // Get current configuration
             const config = this.getCurrentConfiguration();
             
+            // Prepare configuration for API
+            const apiRequest = this.configManager.prepareForAPI(config);
+            
             // Start generation
-            const response = await this.apiClient.startGeneration(config);
+            const response = await this.apiClient.startGeneration(apiRequest);
             
             // Show progress modal
             this.showProgressModal(response.job_id);

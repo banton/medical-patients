@@ -65,7 +65,7 @@ export class APIClient {
 
     // Patient Generation
     async startGeneration(config) {
-        return this.request('POST', '/api/generation/async-generate', config);
+        return this.request('POST', '/api/generate', config);
     }
 
     async getJobStatus(jobId) {
