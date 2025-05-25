@@ -1,16 +1,17 @@
 """
 Custom exceptions for the application.
 """
-from typing import Optional, Dict, Any
+
+from typing import Any, Dict, Optional
 
 
 class PatientGeneratorException(Exception):
     """Base exception for the patient generator application."""
-    pass
 
 
 class ConfigurationNotFoundError(PatientGeneratorException):
     """Raised when a configuration template is not found."""
+
     def __init__(self, config_id: str):
         self.config_id = config_id
         super().__init__(f"Configuration template not found: {config_id}")
@@ -18,6 +19,7 @@ class ConfigurationNotFoundError(PatientGeneratorException):
 
 class JobNotFoundError(PatientGeneratorException):
     """Raised when a job is not found."""
+
     def __init__(self, job_id: str):
         self.job_id = job_id
         super().__init__(f"Job not found: {job_id}")
@@ -25,6 +27,7 @@ class JobNotFoundError(PatientGeneratorException):
 
 class InvalidConfigurationError(PatientGeneratorException):
     """Raised when a configuration is invalid."""
+
     def __init__(self, message: str, errors: Optional[Dict[str, Any]] = None):
         self.errors = errors
         super().__init__(message)
@@ -32,9 +35,7 @@ class InvalidConfigurationError(PatientGeneratorException):
 
 class GenerationError(PatientGeneratorException):
     """Raised when patient generation fails."""
-    pass
 
 
 class StorageError(PatientGeneratorException):
     """Raised when file storage operations fail."""
-    pass

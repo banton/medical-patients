@@ -1,14 +1,16 @@
 """
 Domain models for job management.
 """
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Any, Optional, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class JobStatus(str, Enum):
     """Job status enumeration."""
+
     INITIALIZING = "initializing"
     QUEUED = "queued"
     RUNNING = "running"
@@ -19,6 +21,7 @@ class JobStatus(str, Enum):
 @dataclass
 class JobProgressDetails:
     """Details about job progress."""
+
     current_phase: str
     phase_description: str
     phase_progress: int
@@ -30,6 +33,7 @@ class JobProgressDetails:
 @dataclass
 class Job:
     """Domain model for a generation job."""
+
     job_id: str
     status: JobStatus
     created_at: datetime
@@ -41,7 +45,7 @@ class Job:
     output_directory: Optional[str] = None
     progress_details: Optional[JobProgressDetails] = None
     summary: Optional[Dict[str, Any]] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert job to dictionary representation."""
         data = {
@@ -49,21 +53,21 @@ class Job:
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),
             "progress": self.progress,
-            "config": self.config
+            "config": self.config,
         }
-        
+
         if self.completed_at:
             data["completed_at"] = self.completed_at.isoformat()
-        
+
         if self.error:
             data["error"] = self.error
-            
+
         if self.result_files:
             data["output_files"] = self.result_files
-            
+
         if self.output_directory:
             data["output_directory"] = self.output_directory
-            
+
         if self.progress_details:
             data["progress_details"] = {
                 "current_phase": self.progress_details.current_phase,
@@ -71,10 +75,10 @@ class Job:
                 "phase_progress": self.progress_details.phase_progress,
                 "total_patients": self.progress_details.total_patients,
                 "processed_patients": self.progress_details.processed_patients,
-                "time_estimates": self.progress_details.time_estimates
+                "time_estimates": self.progress_details.time_estimates,
             }
-            
+
         if self.summary:
             data["summary"] = self.summary
-            
+
         return data

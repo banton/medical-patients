@@ -20,7 +20,9 @@
       "Bash(git push:*)",
       "Bash(awk:*)",
       "Bash(npm run build:all-frontend:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)"
     ],
     "deny": []
   }

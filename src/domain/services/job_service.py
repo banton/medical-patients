@@ -1,123 +1,114 @@
 """
 Service layer for job management.
 """
-import os
-import shutil
-import zipfile
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any, Optional, List
-from io import BytesIO
 
-from src.domain.models.job import Job, JobStatus, JobProgressDetails
-from src.domain.repositories.job_repository import JobRepositoryInterface
-from src.core.exceptions import JobNotFoundError, StorageError
+from datetime import datetime
+from io import BytesIO
+import os
+from pathlib import Path
+import shutil
+from typing import Any, Dict, List, Optional
+import zipfile
+
 from config import get_settings
+from src.core.exceptions import StorageError
+from src.domain.models.job import Job, JobProgressDetails, JobStatus
+from src.domain.repositories.job_repository import JobRepositoryInterface
 
 
 class JobService:
     """Service for managing patient generation jobs."""
-    
+
     def __init__(self, repository: JobRepositoryInterface):
         self.repository = repository
         self.settings = get_settings()
-    
+
     async def create_job(self, config: Dict[str, Any]) -> Job:
         """Create a new generation job."""
         return await self.repository.create(config)
-    
+
     async def get_job(self, job_id: str) -> Job:
         """Get a job by ID."""
         return await self.repository.get(job_id)
-    
+
     async def list_jobs(self) -> List[Job]:
         """List all jobs."""
         return await self.repository.list_all()
-    
-    async def update_job_status(
-        self, 
-        job_id: str, 
-        status: JobStatus,
-        error: Optional[str] = None
-    ) -> None:
+
+    async def update_job_status(self, job_id: str, status: JobStatus, error: Optional[str] = None) -> None:
         """Update job status."""
         job = await self.repository.get(job_id)
         job.status = status
-        
+
         if error:
             job.error = error
-            
+
         if status == JobStatus.COMPLETED:
             job.completed_at = datetime.utcnow()
-            
+
         await self.repository.update(job)
-    
+
     async def update_job_progress(
-        self,
-        job_id: str,
-        progress: int,
-        progress_details: Optional[JobProgressDetails] = None
+        self, job_id: str, progress: int, progress_details: Optional[JobProgressDetails] = None
     ) -> None:
         """Update job progress."""
         job = await self.repository.get(job_id)
         job.progress = progress
-        
+
         if progress_details:
             job.progress_details = progress_details
-            
+
         await self.repository.update(job)
-    
+
     async def set_job_results(
-        self,
-        job_id: str,
-        output_directory: str,
-        result_files: List[str],
-        summary: Optional[Dict[str, Any]] = None
+        self, job_id: str, output_directory: str, result_files: List[str], summary: Optional[Dict[str, Any]] = None
     ) -> None:
         """Set job results."""
         job = await self.repository.get(job_id)
         job.output_directory = output_directory
         job.result_files = result_files
-        
+
         if summary:
             job.summary = summary
-            
+
         await self.repository.update(job)
-    
+
     async def create_download_archive(self, job_id: str) -> BytesIO:
         """Create a ZIP archive of job results."""
         job = await self.repository.get(job_id)
-        
+
         if job.status != JobStatus.COMPLETED:
-            raise StorageError(f"Job {job_id} is not completed")
-            
+            msg = f"Job {job_id} is not completed"
+            raise StorageError(msg)
+
         if not job.output_directory or not os.path.exists(job.output_directory):
-            raise StorageError(f"Output directory not found for job {job_id}")
-        
+            msg = f"Output directory not found for job {job_id}"
+            raise StorageError(msg)
+
         # Create in-memory ZIP
         zip_buffer = BytesIO()
-        
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
             output_path = Path(job.output_directory)
-            
-            for file_path in output_path.rglob('*'):
+
+            for file_path in output_path.rglob("*"):
                 if file_path.is_file():
                     arcname = file_path.relative_to(output_path)
                     zipf.write(file_path, arcname)
-        
+
         zip_buffer.seek(0)
         return zip_buffer
-    
+
     async def cleanup_job_files(self, job_id: str) -> None:
         """Clean up job output files."""
         try:
             job = await self.repository.get(job_id)
-            
+
             if job.output_directory and os.path.exists(job.output_directory):
                 shutil.rmtree(job.output_directory)
-                
+
             await self.repository.delete(job_id)
-            
+
         except Exception as e:
             # Log error but don't raise - cleanup is best effort
             print(f"Error cleaning up job {job_id}: {e}")

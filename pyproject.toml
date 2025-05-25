@@ -6,6 +6,29 @@ readme = "README.md"
 requires-python = ">=3.8"
 
 [tool.ruff]
+# Python version target
+target-version = "py38"
+
+# Line length (matching Black)
+line-length = 120
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+    ".mypy_cache",
+    ".pytest_cache",
+    "htmlcov",
+    "output",
+    "temp",
+]
+
+[tool.ruff.lint]
 # Enable specific rule sets
 select = [
     "E",   # pycodestyle errors
@@ -46,35 +69,13 @@ ignore = [
     "PLR2004", # magic value comparison
 ]
 
-# Python version target
-target-version = "py38"
-
-# Line length (matching Black)
-line-length = 120
-
-# Exclude directories
-exclude = [
-    ".git",
-    ".venv",
-    "venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "node_modules",
-    ".mypy_cache",
-    ".pytest_cache",
-    "htmlcov",
-    "output",
-    "temp",
-]
-
 # Allow unused variables when underscore-prefixed
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 # Allow certain confusables
 allowed-confusables = ["'", "'", "–", "—"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Ignore import violations in __init__.py files
 "__init__.py" = ["F401", "F403"]
 # Ignore missing docstrings in tests
@@ -83,15 +84,15 @@ allowed-confusables = ["'", "'", "–", "—"]
 # Allow assert in tests
 "test_*.py" = ["S101"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["patient_generator", "src"]
 combine-as-imports = true
 force-sort-within-sections = true
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = true
 mark-parentheses = true
 

@@ -1,30 +1,29 @@
 """
 API router for patient generation.
 """
-import os
-import tempfile
+
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+import os
+from typing import Any, Dict, Optional
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from patient_generator.database import Database, ConfigurationRepository
-from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB
-from src.domain.services.job_service import JobService
-from src.domain.services.patient_generation_service import (
-    AsyncPatientGenerationService,
-    GenerationContext
-)
-from src.domain.models.job import JobStatus, JobProgressDetails
+from config import get_settings
+from patient_generator.database import ConfigurationRepository, Database
+from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service
 from src.core.security import verify_api_key
-from config import get_settings
+from src.domain.models.job import JobProgressDetails, JobStatus
+from src.domain.services.job_service import JobService
+from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext
 
 
 # Request/Response models
 class GenerationRequest(BaseModel):
     """Request model for patient generation."""
+
     configuration_id: Optional[str] = None
     configuration: Optional[ConfigurationTemplateCreate] = None
     output_formats: list[str] = ["json"]
@@ -35,17 +34,14 @@ class GenerationRequest(BaseModel):
 
 class GenerationResponse(BaseModel):
     """Response model for patient generation."""
+
     job_id: str
     status: str
     message: str
 
 
 # Router configuration
-router = APIRouter(
-    prefix="/api",
-    tags=["generation"],
-    dependencies=[Depends(verify_api_key)]
-)
+router = APIRouter(prefix="/api", tags=["generation"], dependencies=[Depends(verify_api_key)])
 
 
 async def run_patient_generation(
@@ -56,24 +52,24 @@ async def run_patient_generation(
     use_compression: bool,
     use_encryption: bool,
     encryption_password: Optional[str],
-    config_id: Optional[str] = None
+    config_id: Optional[str] = None,
 ) -> None:
     """Background task for patient generation using async pipeline."""
     settings = get_settings()
-    
+
     try:
         # Update job status to running
         await job_service.update_job_status(job_id, JobStatus.RUNNING)
-        
+
         # Create output directory
         output_dir = os.path.join(settings.OUTPUT_DIRECTORY, f"job_{job_id}")
         os.makedirs(output_dir, exist_ok=True)
-        
+
         # Create progress callback
         async def update_progress(current: int, total: int):
             progress = int((current / total) * 100) if total > 0 else 0
             phase = "Generating patients" if current < total else "Finalizing output"
-            
+
             await job_service.update_job_progress(
                 job_id,
                 progress,
@@ -83,24 +79,25 @@ async def run_patient_generation(
                     phase_progress=progress,
                     total_patients=total,
                     processed_patients=current,
-                    time_estimates={"total": 0.0}
-                )
+                    time_estimates={"total": 0.0},
+                ),
             )
-        
+
         # Get or create configuration
         db = Database()
         repo = ConfigurationRepository(db)
-        
+
         if config_id:
             # Load existing configuration
             config = repo.get_configuration(config_id)
             if not config:
-                raise ValueError(f"Configuration {config_id} not found")
+                msg = f"Configuration {config_id} not found"
+                raise ValueError(msg)
         else:
             # Create temporary configuration for ad-hoc generation
             temp_config_create = ConfigurationTemplateCreate(**config_dict)
             config = repo.create_configuration(temp_config_create)
-        
+
         # Create generation context
         context = GenerationContext(
             config=config,
@@ -108,70 +105,56 @@ async def run_patient_generation(
             output_directory=output_dir,
             encryption_password=encryption_password,
             output_formats=output_formats,
-            use_compression=use_compression
+            use_compression=use_compression,
         )
-        
+
         # Use async patient generation service
         generation_service = AsyncPatientGenerationService()
-        result = await generation_service.generate_patients(
-            context=context,
-            progress_callback=update_progress
-        )
-        
+        result = await generation_service.generate_patients(context=context, progress_callback=update_progress)
+
         # Extract output files and summary
         gen_output_files = result.get("output_files", [])
         gen_summary = {
             "total_patients": result.get("patient_count", config.total_patients),
-            "status": result.get("status", "completed")
+            "status": result.get("status", "completed"),
         }
-        
+
         # Update progress
         await update_progress(config.total_patients, config.total_patients)
-        
-        result = {
-            "status": "completed",
-            "output_files": gen_output_files,
-            "patient_count": config.total_patients
-        }
-        
+
+        result = {"status": "completed", "output_files": gen_output_files, "patient_count": config.total_patients}
+
         # Extract output files from result
         output_files = []
         if "output_files" in result:
             for file_path in result["output_files"]:
                 rel_path = os.path.relpath(file_path, output_dir)
                 output_files.append(rel_path)
-        
+
         # Use summary from generator and add additional fields
         summary = gen_summary or {}
-        summary.update({
-            "generation_time": datetime.now(timezone.utc).isoformat(),
-            "output_formats": output_formats,
-            "compressed": use_compression,
-            "encrypted": use_encryption is True
-        })
-        
-        # Set job results
-        await job_service.set_job_results(
-            job_id,
-            output_dir,
-            output_files,
-            summary
+        summary.update(
+            {
+                "generation_time": datetime.now(timezone.utc).isoformat(),
+                "output_formats": output_formats,
+                "compressed": use_compression,
+                "encrypted": use_encryption is True,
+            }
         )
-        
+
+        # Set job results
+        await job_service.set_job_results(job_id, output_dir, output_files, summary)
+
         # Mark job as completed
         await job_service.update_job_status(job_id, JobStatus.COMPLETED)
-        
+
         # Clean up temporary configuration if created
         if not config_id:
             repo.delete_configuration(config.id)
-        
+
     except Exception as e:
         # Mark job as failed
-        await job_service.update_job_status(
-            job_id,
-            JobStatus.FAILED,
-            error=str(e)
-        )
+        await job_service.update_job_status(job_id, JobStatus.FAILED, error=str(e))
         raise
 
 
@@ -180,44 +163,44 @@ async def generate_patients(
     request: GenerationRequest,
     background_tasks: BackgroundTasks,
     job_service: JobService = Depends(get_job_service),
-    db: Database = Depends(get_database)
+    db: Database = Depends(get_database),
 ) -> GenerationResponse:
     """Generate patients with specified configuration."""
-    
+
     # Validate request
     if not request.configuration_id and not request.configuration:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either configuration_id or configuration must be provided"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Either configuration_id or configuration must be provided"
         )
-    
+
     # Get configuration
     config_dict = None
-    
+
     if request.configuration_id:
         # Load from database
         repo = ConfigurationRepository(db)
         config = repo.get_configuration(request.configuration_id)
-        
+
         if not config:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Configuration {request.configuration_id} not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {request.configuration_id} not found"
             )
-        
+
         config_dict = config.model_dump() if config else {}
     else:
         # Use ad-hoc configuration
         config_dict = request.configuration.model_dump() if request.configuration else {}
-    
+
     # Create job
-    job = await job_service.create_job({
-        "configuration": config_dict,
-        "output_formats": request.output_formats,
-        "use_compression": request.use_compression,
-        "use_encryption": request.use_encryption
-    })
-    
+    job = await job_service.create_job(
+        {
+            "configuration": config_dict,
+            "output_formats": request.output_formats,
+            "use_compression": request.use_compression,
+            "use_encryption": request.use_encryption,
+        }
+    )
+
     # Queue background task
     background_tasks.add_task(
         run_patient_generation,
@@ -228,11 +211,7 @@ async def generate_patients(
         request.use_compression,
         request.use_encryption,
         request.encryption_password,
-        request.configuration_id  # Pass the config_id if available
+        request.configuration_id,  # Pass the config_id if available
     )
-    
-    return GenerationResponse(
-        job_id=job.job_id,
-        status=job.status.value,
-        message="Job queued for processing"
-    )
+
+    return GenerationResponse(job_id=job.job_id, status=job.status.value, message="Job queued for processing")
