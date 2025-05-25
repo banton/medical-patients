@@ -19,7 +19,8 @@
       "Bash(find:*)",
       "Bash(git push:*)",
       "Bash(awk:*)",
-      "Bash(npm run build:all-frontend:*)"
+      "Bash(npm run build:all-frontend:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }

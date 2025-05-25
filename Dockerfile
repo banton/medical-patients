@@ -10,6 +10,33 @@ COPY requirements.txt .
 # Install dependencies into a wheel directory
 RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
+# Test stage - for running tests in CI
+FROM python:3.11-bookworm AS test
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH="/app"
+
+WORKDIR /app
+
+# Install system dependencies for testing
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install all dependencies including dev
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir pytest pytest-cov pytest-asyncio testcontainers[postgres,redis]
+
+# Copy all application code
+COPY . /app/
+
+# Run tests by default in test stage
+CMD ["pytest", "tests/", "-v", "--cov=src", "--cov=patient_generator"]
+
 # Final stage
 FROM python:3.11-bookworm
 

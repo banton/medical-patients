@@ -88,18 +88,70 @@ test-cache:
 	@echo "Running cache tests..."
 	python -m pytest tests/test_cache_service.py tests/test_cached_services.py -xvs
 
+# Run tests in Docker containers
+test-docker:
+	@echo "Running tests in Docker containers..."
+	docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-runner
+
+# Run integration tests in Docker
+test-docker-integration:
+	@echo "Starting test environment..."
+	docker compose -f docker-compose.test.yml up -d test-db test-redis test-integration
+	@echo "Waiting for services to be ready..."
+	@sleep 10
+	@echo "Running integration tests..."
+	python -m pytest tests_api.py tests/test_e2e_flows.py -v --base-url=http://localhost:8001
+	@echo "Cleaning up..."
+	docker compose -f docker-compose.test.yml down
+
+# Clean test containers and volumes
+test-clean:
+	@echo "Cleaning test containers and volumes..."
+	docker compose -f docker-compose.test.yml down -v
+
 # Run linting
 lint:
 	@echo "Running linting checks..."
-	@command -v ruff >/dev/null 2>&1 && ruff check src/ patient_generator/ || echo "Ruff not installed, skipping Python linting"
-	@command -v mypy >/dev/null 2>&1 && mypy src/ patient_generator/ --ignore-missing-imports || echo "Mypy not installed, skipping type checking"
-	@command -v npx >/dev/null 2>&1 && npx tsc --noEmit || echo "TypeScript not installed, skipping TS checking"
+	@echo "Python linting with Ruff..."
+	@ruff check src/ patient_generator/ || true
+	@echo "Python type checking with mypy..."
+	@mypy src/ patient_generator/ --ignore-missing-imports || true
+	@echo "JavaScript linting with ESLint..."
+	@npm run lint:check || true
+	@echo "TypeScript checking..."
+	@npx tsc --noEmit || true
 
 # Format code
 format:
 	@echo "Formatting code..."
-	@command -v ruff >/dev/null 2>&1 && ruff format src/ patient_generator/ || echo "Ruff not installed, skipping Python formatting"
-	@command -v npx >/dev/null 2>&1 && npx prettier --write "static/**/*.{js,jsx,ts,tsx,json,css,html}" || echo "Prettier not installed, skipping JS/TS formatting"
+	@echo "Python formatting with Ruff..."
+	@ruff format src/ patient_generator/
+	@echo "JavaScript/CSS/HTML formatting with Prettier..."
+	@npm run format
+
+# Run all linting and formatting checks (CI mode)
+lint-ci:
+	@echo "Running CI linting checks..."
+	@ruff check src/ patient_generator/ --exit-non-zero-on-fix
+	@mypy src/ patient_generator/ --ignore-missing-imports
+	@npm run lint:check
+	@npm run format:check
+	@npx tsc --noEmit
+
+# Install linting and formatting tools
+install-lint-tools:
+	@echo "Installing Python linting tools..."
+	@pip install ruff mypy types-requests
+	@echo "Installing JavaScript linting tools..."
+	@npm install
+	@echo "Installing pre-commit hooks..."
+	@pip install pre-commit
+	@pre-commit install
+
+# Run pre-commit on all files
+pre-commit-all:
+	@echo "Running pre-commit on all files..."
+	@pre-commit run --all-files
 
 # Clean up generated files
 clean:

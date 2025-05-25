@@ -1,0 +1,94 @@
+version: '3.8'
+
+# Test-specific Docker Compose configuration
+# Used for running tests in isolated containers
+
+services:
+  test-db:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+      POSTGRES_DB: test_db
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"  # Different port to avoid conflicts
+    command: redis-server --appendonly yes
+    volumes:
+      - test_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test  # Multi-stage build target for testing
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://test_user:test_pass@test-db:5432/test_db
+      REDIS_URL: redis://test-redis:6379/0
+      API_KEY: test_api_key
+      PYTHONPATH: /app
+      PYTEST_TIMEOUT: 300
+    volumes:
+      - .:/app
+      - /app/.venv  # Exclude virtual environment
+      - /app/node_modules  # Exclude node modules
+    command: |
+      sh -c "
+        alembic upgrade head &&
+        pytest tests/ -v --cov=src --cov=patient_generator --cov-report=xml --cov-report=html --cov-report=term
+      "
+
+  test-integration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://test_user:test_pass@test-db:5432/test_db
+      REDIS_URL: redis://test-redis:6379/0
+      API_KEY: test_api_key
+      PYTHONPATH: /app
+    ports:
+      - "8001:8000"  # Different port for test server
+    volumes:
+      - .:/app
+      - /app/.venv
+      - /app/node_modules
+    command: |
+      sh -c "
+        alembic upgrade head &&
+        python src/main.py
+      "
+
+volumes:
+  test_postgres_data:
+  test_redis_data:
+
+networks:
+  default:
+    name: test_network
