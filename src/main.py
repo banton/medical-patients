@@ -8,6 +8,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -112,6 +113,12 @@ def create_app() -> FastAPI:
         """Readiness check endpoint."""
         # Could check database connection, etc.
         return {"status": "ready"}
+
+    # New UI endpoint
+    @app.get("/ui")
+    async def new_ui():
+        """Redirect to new UI."""
+        return RedirectResponse(url="/static/new-ui/index.html")
 
     return app
 
