@@ -1,0 +1,274 @@
+/**
+ * Front Configuration Module - Manages dynamic front configuration
+ */
+import { validationManager } from './validation.js';
+import { eventBus } from './events.js';
+
+export class FrontConfigManager {
+    constructor() {
+        this.availableNationalities = [];
+        this.defaultFrontNames = ["Polish Front", "Estonian Front", "Finnish Front"];
+        this.frontCounter = 0;
+        this.frontsContainer = null;
+        this.initialized = false;
+    }
+
+    /**
+     * Initialize the front configuration manager
+     */
+    async initialize(nationalities) {
+        this.availableNationalities = nationalities;
+        this.frontsContainer = document.getElementById('frontsContainer');
+        this.initialized = true;
+        
+        // Add first front if container is empty
+        if (this.frontsContainer && this.frontsContainer.children.length === 0) {
+            this.addNewFront();
+        }
+    }
+
+    /**
+     * Add a new front configuration
+     */
+    addNewFront() {
+        if (!this.initialized) {
+            console.error('FrontConfigManager not initialized');
+            return;
+        }
+
+        this.frontCounter++;
+        const frontId = `front-${this.frontCounter}`;
+        const frontBlock = this.createFrontBlock(frontId);
+        
+        this.frontsContainer.appendChild(frontBlock);
+        
+        // Emit event
+        eventBus.emit('front:added', { frontId, frontBlock });
+        
+        // Add initial nationality
+        const nationalitiesContainer = frontBlock.querySelector('.nationalities-container');
+        const initialNatId = `nat-${frontId}-${Date.now()}-initial`;
+        nationalitiesContainer.appendChild(this.createNationalityDistributionElement(frontId, initialNatId));
+        
+        // Setup event handlers
+        this.setupFrontEventHandlers(frontBlock, frontId);
+        
+        return frontBlock;
+    }
+
+    /**
+     * Create front block HTML element
+     */
+    createFrontBlock(frontId) {
+        const frontBlock = document.createElement('div');
+        frontBlock.className = 'front-block';
+        frontBlock.id = frontId;
+
+        const defaultName = this.frontsContainer.children.length < this.defaultFrontNames.length ? 
+                            this.defaultFrontNames[this.frontsContainer.children.length] : 
+                            `Front ${this.frontsContainer.children.length + 1}`;
+
+        frontBlock.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Front ${this.frontsContainer.children.length + 1}</h6>
+                <button type="button" class="btn btn-danger btn-sm remove-front-btn"><i class="fas fa-trash"></i> Remove Front</button>
+            </div>
+            <div class="mb-2">
+                <label for="${frontId}-name" class="form-label form-label-sm">Front Name</label>
+                <input type="text" class="form-control form-control-sm front-name" id="${frontId}-name" value="${defaultName}">
+            </div>
+            <div class="mb-2">
+                <label for="${frontId}-casualtyRate" class="form-label form-label-sm">Casualty Rate (%)</label>
+                <input type="number" class="form-control form-control-sm front-casualty-rate" id="${frontId}-casualtyRate" placeholder="e.g. 30 for 30%" min="0" max="100" step="0.1">
+            </div>
+            <h6>Nationality Distribution for this Front</h6>
+            <div class="nationalities-container mb-2">
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm add-nationality-btn mb-2"><i class="fas fa-plus me-1"></i>Add Nationality to Front</button>
+            <div class="form-text text-danger hidden" id="${frontId}-natPercentError">Nationality percentages for this front must sum to 100%.</div>
+        `;
+        
+        return frontBlock;
+    }
+
+    /**
+     * Create nationality distribution element
+     */
+    createNationalityDistributionElement(frontId, natId) {
+        const natBlock = document.createElement('div');
+        natBlock.className = 'nationality-block mb-2';
+        natBlock.dataset.id = natId;
+
+        const selectNat = document.createElement('select');
+        selectNat.className = 'form-select form-select-sm me-2 nationality-code';
+        selectNat.dataset.frontId = frontId;
+        selectNat.dataset.natId = natId;
+        
+        // Get already selected nationalities in this front
+        const parentFrontBlock = document.getElementById(frontId);
+        const selectedCodesInThisFront = new Set();
+        if (parentFrontBlock) {
+            parentFrontBlock.querySelectorAll('.nationality-code').forEach(existingSelect => {
+                if (existingSelect.value && existingSelect.dataset.natId !== natId) {
+                    selectedCodesInThisFront.add(existingSelect.value);
+                }
+            });
+        }
+        
+        // Add empty option
+        const emptyOption = document.createElement('option');
+        emptyOption.value = "";
+        emptyOption.textContent = "Select nationality...";
+        selectNat.appendChild(emptyOption);
+        
+        // Add nationality options
+        this.availableNationalities.forEach(nat => {
+            const option = document.createElement('option');
+            option.value = nat.code;
+            option.textContent = `${nat.name} (${nat.code})`;
+            if (selectedCodesInThisFront.has(nat.code)) {
+                option.disabled = true;
+            }
+            selectNat.appendChild(option);
+        });
+        
+        selectNat.onchange = () => {
+            this.handleNationalitySelectionChange(frontId);
+            validationManager.validateFrontNationalityPercentages(document.getElementById(frontId));
+        };
+
+        const inputPercent = document.createElement('input');
+        inputPercent.type = 'number';
+        inputPercent.className = 'form-control form-control-sm me-2 nationality-percentage';
+        inputPercent.placeholder = '%';
+        inputPercent.min = "0";
+        inputPercent.max = "100";
+        inputPercent.step = "0.1";
+        inputPercent.style.width = '80px';
+        inputPercent.oninput = () => validationManager.validateFrontNationalityPercentages(document.getElementById(frontId));
+
+        const removeNatBtn = document.createElement('button');
+        removeNatBtn.type = 'button';
+        removeNatBtn.className = 'btn btn-danger btn-sm remove-nationality-btn';
+        removeNatBtn.innerHTML = '<i class="fas fa-minus"></i>';
+        removeNatBtn.onclick = () => this.removeNationality(natBlock, frontId);
+        
+        natBlock.appendChild(selectNat);
+        natBlock.appendChild(inputPercent);
+        natBlock.appendChild(removeNatBtn);
+        
+        return natBlock;
+    }
+
+    /**
+     * Setup event handlers for a front block
+     */
+    setupFrontEventHandlers(frontBlock, frontId) {
+        // Remove front button
+        frontBlock.querySelector('.remove-front-btn').onclick = () => {
+            if (this.frontsContainer.children.length > 1) {
+                frontBlock.remove();
+                validationManager.validateOverallFrontCasualtyRates();
+                eventBus.emit('front:removed', { frontId });
+            } else {
+                alert("At least one front must be configured.");
+            }
+        };
+
+        // Add nationality button
+        const addNationalityBtn = frontBlock.querySelector('.add-nationality-btn');
+        const nationalitiesContainer = frontBlock.querySelector('.nationalities-container');
+        
+        addNationalityBtn.onclick = () => {
+            const natId = `nat-${frontId}-${Date.now()}`;
+            nationalitiesContainer.appendChild(this.createNationalityDistributionElement(frontId, natId));
+        };
+
+        // Casualty rate input
+        const casualtyRateInput = frontBlock.querySelector('.front-casualty-rate');
+        if (casualtyRateInput) {
+            casualtyRateInput.addEventListener('input', () => {
+                validationManager.validateOverallFrontCasualtyRates();
+            });
+        }
+    }
+
+    /**
+     * Handle nationality selection change
+     */
+    handleNationalitySelectionChange(frontId) {
+        const frontBlockElement = document.getElementById(frontId);
+        if (!frontBlockElement) return;
+
+        const selectedCodesInThisFront = new Set();
+        frontBlockElement.querySelectorAll('.nationality-code').forEach(selectElement => {
+            if (selectElement.value) {
+                selectedCodesInThisFront.add(selectElement.value);
+            }
+        });
+
+        // Update all selects in this front to disable/enable options
+        frontBlockElement.querySelectorAll('.nationality-code').forEach(selectElement => {
+            const currentSelectedValue = selectElement.value;
+            for (let i = 0; i < selectElement.options.length; i++) {
+                const option = selectElement.options[i];
+                if (option.value === "") continue;
+
+                if (selectedCodesInThisFront.has(option.value) && option.value !== currentSelectedValue) {
+                    option.disabled = true;
+                } else {
+                    option.disabled = false;
+                }
+            }
+        });
+    }
+
+    /**
+     * Remove nationality from front
+     */
+    removeNationality(natBlock, frontId) {
+        const parentFrontBlock = natBlock.closest('.front-block');
+        if (parentFrontBlock.querySelectorAll('.nationality-block').length > 1) {
+            natBlock.remove();
+            this.handleNationalitySelectionChange(frontId);
+            validationManager.validateFrontNationalityPercentages(parentFrontBlock); 
+        } else {
+            alert("At least one nationality must be present in a front's distribution.");
+        }
+    }
+
+    /**
+     * Get front configurations for submission
+     */
+    getFrontConfigurations() {
+        const adHocFrontConfigs = [];
+        
+        document.querySelectorAll('#frontsContainer .front-block').forEach(frontBlock => {
+            const frontName = frontBlock.querySelector('.front-name').value || 'Unnamed Front';
+            const casualtyRate = parseFloat(frontBlock.querySelector('.front-casualty-rate').value) / 100.0 || 0;
+            
+            const nationality_distribution = [];
+            frontBlock.querySelectorAll('.nationality-block').forEach(natBlock => {
+                const code = natBlock.querySelector('.nationality-code').value;
+                const percent = parseFloat(natBlock.querySelector('.nationality-percentage').value) || 0;
+                if (code && percent > 0) {
+                    nationality_distribution.push({ nationality_code: code, percentage: percent });
+                }
+            });
+
+            if (casualtyRate > 0 && nationality_distribution.length > 0) {
+                adHocFrontConfigs.push({
+                    id: frontName.replace(/\s+/g, '_').toLowerCase() + `_${Date.now()}`,
+                    name: frontName,
+                    nationality_distribution: nationality_distribution,
+                    casualty_rate: casualtyRate
+                });
+            }
+        });
+        
+        return adHocFrontConfigs;
+    }
+}
+
+// Export singleton instance
+export const frontConfigManager = new FrontConfigManager();
