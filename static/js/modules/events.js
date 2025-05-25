@@ -108,5 +108,23 @@ export const Events = {
     UI_LOADING_START: 'ui:loading:start',
     UI_LOADING_END: 'ui:loading:end',
     UI_ERROR_SHOW: 'ui:error:show',
-    UI_ERROR_HIDE: 'ui:error:hide'
+    UI_ERROR_HIDE: 'ui:error:hide',
+    
+    // Persistence events
+    CONFIG_SAVED: 'config:saved',
+    CONFIG_LOADED: 'config:loaded',
+    CONFIG_AUTOSAVED: 'config:autosaved',
+    
+    // Validation events
+    VALIDATION_ERROR: 'validation:error',
+    VALIDATION_SUCCESS: 'validation:success',
+    
+    // Generation events
+    GENERATION_STARTED: 'generation:started',
+    GENERATION_COMPLETED: 'generation:completed',
+    
+    // Nationality events
+    NATIONALITY_ADDED: 'nationality:added',
+    NATIONALITY_REMOVED: 'nationality:removed',
+    NATIONALITY_UPDATED: 'nationality:updated'
 };

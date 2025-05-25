@@ -16,7 +16,10 @@
       "Bash(open:*)",
       "Bash(ls:*)",
       "Bash(make:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git push:*)",
+      "Bash(awk:*)",
+      "Bash(npm run build:all-frontend:*)"
     ],
     "deny": []
   }

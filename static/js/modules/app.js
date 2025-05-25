@@ -8,6 +8,7 @@ import { jobManager } from './jobManager.js';
 import { uiManager } from './ui.js';
 import { eventBus, Events } from './events.js';
 import { configPersistence } from './persistence.js';
+import { AccessibilityManager } from './accessibility.js';
 
 class PatientGeneratorApp {
     constructor() {
@@ -19,6 +20,7 @@ class PatientGeneratorApp {
             {id: "ROLE_3", name: "Role 3", mortality_rate: 0.02, rtd_rate: 0.3},
             {id: "ROLE_4", name: "Role 4", mortality_rate: 0.01, rtd_rate: 0.0}
         ];
+        this.accessibilityManager = null;
     }
 
     /**
@@ -28,6 +30,10 @@ class PatientGeneratorApp {
         try {
             // Initialize UI manager
             uiManager.initialize();
+            
+            // Initialize accessibility manager
+            this.accessibilityManager = new AccessibilityManager(eventBus);
+            this.accessibilityManager.init();
             
             // Setup event listeners
             this.setupEventListeners();
@@ -69,6 +75,7 @@ class PatientGeneratorApp {
         eventBus.on(Events.JOB_COMPLETED, (data) => {
             console.log('Job completed:', data.jobId);
             uiManager.showSuccess('Patient generation completed successfully!');
+            eventBus.emit('generation-completed');
         });
         
         eventBus.on(Events.JOB_FAILED, (data) => {
@@ -162,6 +169,7 @@ class PatientGeneratorApp {
             
             // Emit success event
             eventBus.emit(Events.FORM_SUBMITTED, { configuration, response });
+            eventBus.emit('generation-started');
             
         } catch (error) {
             console.error('Error submitting form:', error);

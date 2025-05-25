@@ -42,13 +42,20 @@ export class FrontConfigManager {
         
         this.frontsContainer.appendChild(frontBlock);
         
+        // Set data attribute for accessibility
+        const frontIndex = this.frontsContainer.children.length - 1;
+        frontBlock.setAttribute('data-front-index', frontIndex);
+        
         // Emit event
         eventBus.emit('front:added', { frontId, frontBlock });
+        eventBus.emit('front-added', { index: frontIndex });
         
         // Add initial nationality
         const nationalitiesContainer = frontBlock.querySelector('.nationalities-container');
         const initialNatId = `nat-${frontId}-${Date.now()}-initial`;
-        nationalitiesContainer.appendChild(this.createNationalityDistributionElement(frontId, initialNatId, true));
+        const initialNatBlock = this.createNationalityDistributionElement(frontId, initialNatId, true);
+        initialNatBlock.setAttribute('data-nationality-index', 0);
+        nationalitiesContainer.appendChild(initialNatBlock);
         
         // Setup event handlers
         this.setupFrontEventHandlers(frontBlock, frontId);
@@ -181,6 +188,7 @@ export class FrontConfigManager {
                     frontBlock.remove();
                     validationManager.validateOverallFrontCasualtyRates();
                     eventBus.emit('front:removed', { frontId });
+                    eventBus.emit('front-removed');
                 } else {
                     alert("At least one front must be configured.");
                 }
@@ -193,7 +201,13 @@ export class FrontConfigManager {
         
         addNationalityBtn.onclick = () => {
             const natId = `nat-${frontId}-${Date.now()}`;
-            nationalitiesContainer.appendChild(this.createNationalityDistributionElement(frontId, natId));
+            const natBlock = this.createNationalityDistributionElement(frontId, natId);
+            const nationalityIndex = nationalitiesContainer.querySelectorAll('.nationality-block').length;
+            natBlock.setAttribute('data-nationality-index', nationalityIndex);
+            nationalitiesContainer.appendChild(natBlock);
+            
+            const frontIndex = Array.from(this.frontsContainer.children).indexOf(frontBlock);
+            eventBus.emit('nationality-added', { frontIndex, nationalityIndex });
         };
 
         // Casualty rate input
@@ -243,7 +257,8 @@ export class FrontConfigManager {
         if (parentFrontBlock.querySelectorAll('.nationality-block').length > 1) {
             natBlock.remove();
             this.handleNationalitySelectionChange(frontId);
-            validationManager.validateFrontNationalityPercentages(parentFrontBlock); 
+            validationManager.validateFrontNationalityPercentages(parentFrontBlock);
+            eventBus.emit('nationality-removed');
         } else {
             alert("At least one nationality must be present in a front's distribution.");
         }
