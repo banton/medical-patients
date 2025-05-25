@@ -14,11 +14,11 @@ class PatientGeneratorApp {
     constructor() {
         this.initialized = false;
         this.defaultFacilityConfigs = [
-            {id: "POINT_OF_INJURY", name: "Point of Injury", mortality_rate: 0.20, rtd_rate: 0.0},
-            {id: "ROLE_1", name: "Role 1", mortality_rate: 0.10, rtd_rate: 0.1},
-            {id: "ROLE_2", name: "Role 2", mortality_rate: 0.05, rtd_rate: 0.2},
-            {id: "ROLE_3", name: "Role 3", mortality_rate: 0.02, rtd_rate: 0.3},
-            {id: "ROLE_4", name: "Role 4", mortality_rate: 0.01, rtd_rate: 0.0}
+            {id: "POINT_OF_INJURY", name: "Point of Injury", kia_rate: 0.20, rtd_rate: 0.0},
+            {id: "ROLE_1", name: "Role 1", kia_rate: 0.10, rtd_rate: 0.1},
+            {id: "ROLE_2", name: "Role 2", kia_rate: 0.05, rtd_rate: 0.2},
+            {id: "ROLE_3", name: "Role 3", kia_rate: 0.02, rtd_rate: 0.3},
+            {id: "ROLE_4", name: "Role 4", kia_rate: 0.01, rtd_rate: 0.0}
         ];
         this.accessibilityManager = null;
     }
