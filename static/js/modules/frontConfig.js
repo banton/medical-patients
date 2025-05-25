@@ -280,6 +280,69 @@ export class FrontConfigManager {
         
         return adHocFrontConfigs;
     }
+
+    /**
+     * Load front configurations into the form
+     */
+    loadFrontConfigurations(frontConfigs) {
+        // Clear existing fronts
+        this.frontsContainer.innerHTML = '';
+        this.frontCounter = 0;
+
+        // Add each front configuration
+        frontConfigs.forEach((frontConfig, index) => {
+            const frontBlock = this.addNewFront();
+            
+            // Set front name
+            const frontNameInput = frontBlock.querySelector('.front-name');
+            if (frontNameInput) {
+                frontNameInput.value = frontConfig.name || `Front ${index + 1}`;
+            }
+
+            // Set casualty rate
+            const casualtyRateInput = frontBlock.querySelector('.front-casualty-rate');
+            if (casualtyRateInput) {
+                casualtyRateInput.value = (frontConfig.casualty_rate * 100).toFixed(1);
+            }
+
+            // Clear default nationality and add configured ones
+            const nationalitiesContainer = frontBlock.querySelector('.nationalities-container');
+            nationalitiesContainer.innerHTML = '';
+
+            // Add nationalities
+            frontConfig.nationality_distribution.forEach((natDist, natIndex) => {
+                const natId = `nat-${frontBlock.id}-${Date.now()}-${natIndex}`;
+                const natBlock = this.createNationalityDistributionElement(
+                    frontBlock.id, 
+                    natId, 
+                    natIndex === 0 // First nationality
+                );
+
+                // Set nationality code
+                const codeSelect = natBlock.querySelector('.nationality-code');
+                if (codeSelect) {
+                    codeSelect.value = natDist.nationality_code;
+                }
+
+                // Set percentage
+                const percentInput = natBlock.querySelector('.nationality-percentage');
+                if (percentInput) {
+                    percentInput.value = natDist.percentage;
+                }
+
+                nationalitiesContainer.appendChild(natBlock);
+            });
+
+            // Update nationality selections
+            this.handleNationalitySelectionChange(frontBlock.id);
+
+            // Validate the loaded front
+            validationManager.validateFrontNationalityPercentages(frontBlock);
+        });
+
+        // Validate overall casualty rates
+        validationManager.validateOverallFrontCasualtyRates();
+    }
 }
 
 // Export singleton instance

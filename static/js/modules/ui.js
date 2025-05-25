@@ -160,6 +160,14 @@ export class UIManager {
     }
 
     /**
+     * Show info message
+     */
+    showInfo(message) {
+        // You could implement a toast notification system here
+        console.log('Info:', message);
+    }
+
+    /**
      * Set loading state
      */
     setLoading(isLoading) {

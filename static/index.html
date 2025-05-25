@@ -182,8 +182,38 @@
         <div class="row">
             <div class="col-lg-5">
                 <div class="card">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h4><i class="fas fa-cog me-2"></i>Generator Configuration</h4>
+                    <div class="card-header bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4 class="mb-0"><i class="fas fa-cog me-2"></i>Generator Configuration</h4>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary" id="saveConfigBtn" title="Save Configuration">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" id="loadConfigBtn" title="Load Configuration">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" id="templatesBtn" title="Templates">
+                                    <i class="fas fa-file-alt"></i>
+                                </button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" id="importConfigBtn"><i class="fas fa-file-import me-2"></i>Import JSON</a></li>
+                                        <li><a class="dropdown-item" href="#" id="exportConfigBtn"><i class="fas fa-file-export me-2"></i>Export JSON</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" id="undoBtn"><i class="fas fa-undo me-2"></i>Undo</a></li>
+                                        <li><a class="dropdown-item" href="#" id="redoBtn"><i class="fas fa-redo me-2"></i>Redo</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" id="clearConfigBtn"><i class="fas fa-trash me-2"></i>Clear All</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="autoSaveStatus" class="text-muted small text-end" style="display: none;">
+                            <i class="fas fa-check-circle text-success me-1"></i>Auto-saved
+                        </div>
                     </div>
                     <div class="card-body">
                         <form id="generatorForm">
@@ -378,6 +408,74 @@
             </div>
         </div>
     </template>
+
+    <!-- Save Configuration Modal -->
+    <div class="modal fade" id="saveConfigModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-save me-2"></i>Save Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="configName" class="form-label">Configuration Name</label>
+                        <input type="text" class="form-control" id="configName" placeholder="My Configuration">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmSaveBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Configuration Modal -->
+    <div class="modal fade" id="loadConfigModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-folder-open me-2"></i>Load Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group" id="savedConfigsList">
+                        <!-- Saved configurations will be listed here -->
+                    </div>
+                    <div class="alert alert-info mt-3" id="noSavedConfigs" style="display: none;">
+                        <i class="fas fa-info-circle me-2"></i>No saved configurations found.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates Modal -->
+    <div class="modal fade" id="templatesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Configuration Templates</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row" id="templatesList">
+                        <!-- Templates will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Configuration Hidden Input -->
+    <input type="file" id="importConfigInput" accept=".json" style="display: none;">
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
