@@ -6,38 +6,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development Setup
 
-**Enhanced start-dev.sh** (Recommended - includes hardening and self-testing):
+**Quick Start** (Recommended):
 ```bash
-# Quick start - recommended
+# Start development environment with Docker
 make dev
 
-# Alternative direct usage
-chmod +x start-dev.sh
-./start-dev.sh
+# Check if services are running
+curl http://localhost:8000/health
 
-# Options available:
-./start-dev.sh --help           # Show all options
-./start-dev.sh --test-data      # Generate test data after setup
-./start-dev.sh --clean          # Clean Docker cache before build
-./start-dev.sh --skip-tests     # Skip self-testing phase
-./start-dev.sh --python-deps    # Install Python deps locally
+# View application at
+# - API: http://localhost:8000
+# - Interactive docs: http://localhost:8000/docs  
+# - UI: http://localhost:8000/static/index.html
 ```
 
 **Manual setup** (if needed):
 ```bash
-docker compose up -d db          # Start PostgreSQL
-pip install -r requirements.txt  # Install Python dependencies
-alembic upgrade head            # Run database migrations
-PYTHONPATH=. python src/main.py # Start application (note: PYTHONPATH is required)
+docker compose -f docker-compose.dev.yml up -d  # Start all services
+docker compose -f docker-compose.dev.yml logs   # View logs
 ```
 
-**Makefile commands** (preferred workflow):
+**Troubleshooting**:
 ```bash
-make help                       # Show all available commands
-make dev                        # Standard development setup
-make dev-with-data             # Setup with test data generation
-make dev-clean                 # Clean build from scratch
-make dev-fast                  # Skip self-tests for faster startup
+# If startup fails, check logs
+docker compose -f docker-compose.dev.yml logs app
+
+# Restart services 
+docker compose -f docker-compose.dev.yml restart
+
+# Full cleanup and restart
+make dev-clean
 ```
 
 ### Running Tests

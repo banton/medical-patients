@@ -182,7 +182,7 @@ build_frontend() {
     fi
     
     # Check for key build artifacts
-    local expected_files=("static/dist/config-panel.js" "static/dist/visualization-dashboard.js")
+    local expected_files=("static/dist/configuration-panel.js" "static/dist/bundle.js" "static/dist/military-dashboard-bundle.js")
     for file in "${expected_files[@]}"; do
         if [[ ! -f "$file" ]]; then
             log_warning "Expected build artifact not found: $file"
