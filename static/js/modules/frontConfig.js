@@ -48,7 +48,7 @@ export class FrontConfigManager {
         // Add initial nationality
         const nationalitiesContainer = frontBlock.querySelector('.nationalities-container');
         const initialNatId = `nat-${frontId}-${Date.now()}-initial`;
-        nationalitiesContainer.appendChild(this.createNationalityDistributionElement(frontId, initialNatId));
+        nationalitiesContainer.appendChild(this.createNationalityDistributionElement(frontId, initialNatId, true));
         
         // Setup event handlers
         this.setupFrontEventHandlers(frontBlock, frontId);
@@ -64,14 +64,20 @@ export class FrontConfigManager {
         frontBlock.className = 'front-block';
         frontBlock.id = frontId;
 
+        const frontNumber = this.frontsContainer.children.length + 1;
         const defaultName = this.frontsContainer.children.length < this.defaultFrontNames.length ? 
                             this.defaultFrontNames[this.frontsContainer.children.length] : 
-                            `Front ${this.frontsContainer.children.length + 1}`;
+                            `Front ${frontNumber}`;
+
+        // Hide remove button for the first front
+        const isFirstFront = this.frontsContainer.children.length === 0;
+        const removeButtonHtml = isFirstFront ? '' : 
+            '<button type="button" class="btn btn-danger btn-sm remove-front-btn"><i class="fas fa-trash"></i> Remove Front</button>';
 
         frontBlock.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0">Front ${this.frontsContainer.children.length + 1}</h6>
-                <button type="button" class="btn btn-danger btn-sm remove-front-btn"><i class="fas fa-trash"></i> Remove Front</button>
+                <h6 class="mb-0">Front ${frontNumber}</h6>
+                ${removeButtonHtml}
             </div>
             <div class="mb-2">
                 <label for="${frontId}-name" class="form-label form-label-sm">Front Name</label>
@@ -94,7 +100,7 @@ export class FrontConfigManager {
     /**
      * Create nationality distribution element
      */
-    createNationalityDistributionElement(frontId, natId) {
+    createNationalityDistributionElement(frontId, natId, isFirstNationality = false) {
         const natBlock = document.createElement('div');
         natBlock.className = 'nationality-block mb-2';
         natBlock.dataset.id = natId;
@@ -147,15 +153,18 @@ export class FrontConfigManager {
         inputPercent.style.width = '80px';
         inputPercent.oninput = () => validationManager.validateFrontNationalityPercentages(document.getElementById(frontId));
 
-        const removeNatBtn = document.createElement('button');
-        removeNatBtn.type = 'button';
-        removeNatBtn.className = 'btn btn-danger btn-sm remove-nationality-btn';
-        removeNatBtn.innerHTML = '<i class="fas fa-minus"></i>';
-        removeNatBtn.onclick = () => this.removeNationality(natBlock, frontId);
-        
         natBlock.appendChild(selectNat);
         natBlock.appendChild(inputPercent);
-        natBlock.appendChild(removeNatBtn);
+        
+        // Only add remove button if it's not the first nationality
+        if (!isFirstNationality) {
+            const removeNatBtn = document.createElement('button');
+            removeNatBtn.type = 'button';
+            removeNatBtn.className = 'btn btn-danger btn-sm remove-nationality-btn';
+            removeNatBtn.innerHTML = '<i class="fas fa-minus"></i>';
+            removeNatBtn.onclick = () => this.removeNationality(natBlock, frontId);
+            natBlock.appendChild(removeNatBtn);
+        }
         
         return natBlock;
     }
@@ -164,16 +173,19 @@ export class FrontConfigManager {
      * Setup event handlers for a front block
      */
     setupFrontEventHandlers(frontBlock, frontId) {
-        // Remove front button
-        frontBlock.querySelector('.remove-front-btn').onclick = () => {
-            if (this.frontsContainer.children.length > 1) {
-                frontBlock.remove();
-                validationManager.validateOverallFrontCasualtyRates();
-                eventBus.emit('front:removed', { frontId });
-            } else {
-                alert("At least one front must be configured.");
-            }
-        };
+        // Remove front button (if it exists)
+        const removeFrontBtn = frontBlock.querySelector('.remove-front-btn');
+        if (removeFrontBtn) {
+            removeFrontBtn.onclick = () => {
+                if (this.frontsContainer.children.length > 1) {
+                    frontBlock.remove();
+                    validationManager.validateOverallFrontCasualtyRates();
+                    eventBus.emit('front:removed', { frontId });
+                } else {
+                    alert("At least one front must be configured.");
+                }
+            };
+        }
 
         // Add nationality button
         const addNationalityBtn = frontBlock.querySelector('.add-nationality-btn');
