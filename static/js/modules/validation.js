@@ -1,9 +1,29 @@
 /**
  * Validation Module - Handles all form validation logic
  */
+import { debounce } from './utils.js';
+import { eventBus } from './events.js';
+
 export class ValidationManager {
     constructor() {
         this.errors = new Map();
+        this.validationDelay = 300; // milliseconds
+        
+        // Create debounced versions of validation methods
+        this.debouncedValidateInjury = debounce(
+            this.validateInjuryPercentages.bind(this),
+            this.validationDelay
+        );
+        
+        this.debouncedValidateFrontCasualty = debounce(
+            this.validateOverallFrontCasualtyRates.bind(this),
+            this.validationDelay
+        );
+        
+        this.debouncedValidateFrontNationality = debounce(
+            this.validateFrontNationalityPercentages.bind(this),
+            this.validationDelay
+        );
     }
 
     /**

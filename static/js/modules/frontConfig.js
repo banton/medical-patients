@@ -147,7 +147,7 @@ export class FrontConfigManager {
         
         selectNat.onchange = () => {
             this.handleNationalitySelectionChange(frontId);
-            validationManager.validateFrontNationalityPercentages(document.getElementById(frontId));
+            validationManager.debouncedValidateFrontNationality(document.getElementById(frontId));
         };
 
         const inputPercent = document.createElement('input');
@@ -158,7 +158,7 @@ export class FrontConfigManager {
         inputPercent.max = "100";
         inputPercent.step = "0.1";
         inputPercent.style.width = '80px';
-        inputPercent.oninput = () => validationManager.validateFrontNationalityPercentages(document.getElementById(frontId));
+        inputPercent.oninput = () => validationManager.debouncedValidateFrontNationality(document.getElementById(frontId));
 
         natBlock.appendChild(selectNat);
         natBlock.appendChild(inputPercent);
@@ -214,7 +214,7 @@ export class FrontConfigManager {
         const casualtyRateInput = frontBlock.querySelector('.front-casualty-rate');
         if (casualtyRateInput) {
             casualtyRateInput.addEventListener('input', () => {
-                validationManager.validateOverallFrontCasualtyRates();
+                validationManager.debouncedValidateFrontCasualty();
             });
         }
     }

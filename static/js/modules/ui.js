@@ -146,8 +146,7 @@ export class UIManager {
      * Show general error message
      */
     showError(message) {
-        // You could implement a toast notification system here
-        alert(message);
+        this.showToast(message, 'error');
         eventBus.emit(Events.UI_ERROR_SHOW, { message });
     }
 
@@ -155,16 +154,65 @@ export class UIManager {
      * Show success message
      */
     showSuccess(message) {
-        // You could implement a toast notification system here
-        console.log('Success:', message);
+        this.showToast(message, 'success');
     }
 
     /**
      * Show info message
      */
     showInfo(message) {
-        // You could implement a toast notification system here
-        console.log('Info:', message);
+        this.showToast(message, 'info');
+    }
+    
+    /**
+     * Show warning message
+     */
+    showWarning(message) {
+        this.showToast(message, 'warning');
+    }
+    
+    /**
+     * Show toast notification
+     */
+    showToast(message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999;';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${this.getAlertType(type)} alert-dismissible fade show`;
+        toast.style.cssText = 'min-width: 250px; margin-bottom: 10px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 150);
+        }, 5000);
+    }
+    
+    /**
+     * Get Bootstrap alert type from message type
+     */
+    getAlertType(type) {
+        const types = {
+            'success': 'success',
+            'error': 'danger',
+            'warning': 'warning',
+            'info': 'info'
+        };
+        return types[type] || 'info';
     }
 
     /**

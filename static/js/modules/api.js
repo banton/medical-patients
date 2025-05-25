@@ -1,50 +1,96 @@
 /**
  * API Module - Handles all API communication
  */
+import { retryWithBackoff } from './utils.js';
+import { clientCache } from './cache.js';
+
 export class APIClient {
     constructor(config = window.API_CONFIG) {
         this.config = config;
         this.baseURL = config.API_BASE_URL;
         this.headers = config.getHeaders();
+        this.maxRetries = 3;
+        this.baseRetryDelay = 1000;
+        this.nationalitiesCache = null;
+        this.nationalitiesPromise = null;
+        this.cache = clientCache;
     }
 
     /**
-     * Fetch nationalities from the API
+     * Fetch nationalities from the API with lazy loading and caching
      */
     async fetchNationalities() {
-        try {
+        const cacheKey = 'nationalities';
+        
+        // Check browser cache first
+        const cached = this.cache.get(cacheKey);
+        if (cached) {
+            this.nationalitiesCache = cached;
+            return cached;
+        }
+        
+        // Return in-memory cache if available
+        if (this.nationalitiesCache) {
+            return this.nationalitiesCache;
+        }
+        
+        // Return existing promise if request is in progress
+        if (this.nationalitiesPromise) {
+            return this.nationalitiesPromise;
+        }
+        
+        // Create new request with retry logic
+        this.nationalitiesPromise = retryWithBackoff(async () => {
             const response = await fetch(`${this.baseURL}/api/v1/configurations/reference/nationalities/`, {
                 headers: this.headers
             });
             if (!response.ok) throw new Error('Failed to fetch nationalities');
             return await response.json();
+        }, this.maxRetries, this.baseRetryDelay);
+        
+        try {
+            this.nationalitiesCache = await this.nationalitiesPromise;
+            // Cache in browser for 24 hours
+            this.cache.set(cacheKey, this.nationalitiesCache, 86400000);
+            return this.nationalitiesCache;
         } catch (error) {
             console.error("Error fetching nationalities:", error);
             throw error;
+        } finally {
+            this.nationalitiesPromise = null;
         }
     }
 
     /**
-     * Fetch existing configurations
+     * Fetch existing configurations with caching
      */
     async fetchConfigurations() {
-        try {
+        const cacheKey = 'configurations';
+        
+        // Check browser cache first (short TTL for configurations)
+        const cached = this.cache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+        
+        return retryWithBackoff(async () => {
             const response = await fetch(`${this.baseURL}/api/v1/configurations/`, {
                 headers: this.headers
             });
             if (!response.ok) throw new Error('Failed to fetch configurations');
-            return await response.json();
-        } catch (error) {
-            console.error("Error fetching configurations:", error);
-            throw error;
-        }
+            const data = await response.json();
+            
+            // Cache for 5 minutes
+            this.cache.set(cacheKey, data, 300000);
+            return data;
+        }, this.maxRetries, this.baseRetryDelay);
     }
 
     /**
-     * Generate patients with configuration
+     * Generate patients with configuration and retry logic
      */
     async generatePatients(payload) {
-        try {
+        return retryWithBackoff(async () => {
             const response = await fetch(`${this.baseURL}/api/generate`, {
                 method: 'POST',
                 headers: this.headers,
@@ -57,26 +103,20 @@ export class APIClient {
             }
 
             return await response.json();
-        } catch (error) {
-            console.error("Error generating patients:", error);
-            throw error;
-        }
+        }, this.maxRetries, this.baseRetryDelay);
     }
 
     /**
-     * Get job status
+     * Get job status with retry logic
      */
     async getJobStatus(jobId) {
-        try {
+        return retryWithBackoff(async () => {
             const response = await fetch(`${this.baseURL}/api/jobs/${jobId}`, {
                 headers: this.headers
             });
             if (!response.ok) throw new Error('Failed to fetch job status');
             return await response.json();
-        } catch (error) {
-            console.error("Error fetching job status:", error);
-            throw error;
-        }
+        }, this.maxRetries, this.baseRetryDelay);
     }
 
     /**

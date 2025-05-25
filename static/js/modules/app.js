@@ -38,12 +38,25 @@ class PatientGeneratorApp {
             // Setup event listeners
             this.setupEventListeners();
             
-            // Load nationalities and initialize front config
-            const nationalities = await apiClient.fetchNationalities();
+            // Try to load nationalities with graceful degradation
+            let nationalities = [];
+            try {
+                nationalities = await apiClient.fetchNationalities();
+            } catch (error) {
+                console.warn('Failed to load nationalities from API, using fallback data');
+                // Use fallback nationality data
+                nationalities = this.getFallbackNationalities();
+                uiManager.showWarning('Running in offline mode. Some features may be limited.');
+            }
+            
             await frontConfigManager.initialize(nationalities);
             
-            // Load existing jobs
-            await jobManager.loadExistingJobs();
+            // Try to load existing jobs (non-critical)
+            try {
+                await jobManager.loadExistingJobs();
+            } catch (error) {
+                console.warn('Failed to load existing jobs:', error);
+            }
             
             // Setup form handlers
             this.setupFormHandlers();
@@ -106,10 +119,10 @@ class PatientGeneratorApp {
             await this.handleFormSubmission();
         });
         
-        // Injury percentage validation
+        // Injury percentage validation with debouncing
         document.querySelectorAll('.injury-percent').forEach(input => {
             input.addEventListener('input', () => {
-                validationManager.validateInjuryPercentages();
+                validationManager.debouncedValidateInjury();
             });
         });
         
@@ -518,6 +531,24 @@ class PatientGeneratorApp {
         // Track front configuration changes
         eventBus.on('front:added', trackChange);
         eventBus.on('front:removed', trackChange);
+    }
+    
+    /**
+     * Get fallback nationality data for offline mode
+     */
+    getFallbackNationalities() {
+        return [
+            { code: "US", name: "United States" },
+            { code: "UK", name: "United Kingdom" },
+            { code: "PL", name: "Poland" },
+            { code: "DE", name: "Germany" },
+            { code: "FR", name: "France" },
+            { code: "CA", name: "Canada" },
+            { code: "AU", name: "Australia" },
+            { code: "IT", name: "Italy" },
+            { code: "ES", name: "Spain" },
+            { code: "NL", name: "Netherlands" }
+        ];
     }
 }
 
