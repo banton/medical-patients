@@ -80,7 +80,17 @@ class PatientGenerationPipeline:
 
             patient_count += 1
             if progress_callback:
-                await progress_callback(patient_count, context.config.total_patients)
+                # Calculate progress percentage
+                progress = patient_count / context.config.total_patients
+                phase_description = f"Generated {patient_count} of {context.config.total_patients} patients"
+                
+                await progress_callback({
+                    'progress': progress,
+                    'processed_patients': patient_count,
+                    'total_patients': context.config.total_patients,
+                    'phase_description': phase_description,
+                    'current_phase': 'generating_patients'
+                })
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
@@ -230,9 +240,10 @@ class AsyncPatientGenerationService:
                 output_files[format] = temp_file.name
                 output_streams[format] = temp_file
             else:
-                # Other formats can use binary mode
+                # Other formats should use text mode for CSV, binary for others
+                mode = "w" if format == "csv" else "wb"
                 temp_file = tempfile.NamedTemporaryFile(
-                    mode="wb", suffix=f".{format}", dir=context.output_directory, delete=False
+                    mode=mode, suffix=f".{format}", dir=context.output_directory, delete=False
                 )
                 temp_files[format] = temp_file
                 output_files[format] = temp_file.name
@@ -269,9 +280,15 @@ class AsyncPatientGenerationService:
                     elif format == "csv":
                         # CSV format - write header on first patient
                         if first_patient:
-                            stream.write("patient_id,name,age,gender,nationality,injury,urgency\n")
+                            stream.write("patient_id,name,age,gender,nationality,injury,triage\n")
+                        
+                        # Extract patient data from demographics and attributes
+                        first_name = patient.demographics.get("first_name", "Unknown")
+                        last_name = patient.demographics.get("last_name", "Unknown") 
+                        age = patient.get_age() if hasattr(patient, 'get_age') else "Unknown"
+                        
                         stream.write(
-                            f'{patient.id},"{patient.first_name} {patient.last_name}",{patient.age},{patient.gender},{patient.nationality_code},{patient.primary_injury},{patient.urgency}\n'
+                            f'{patient.id},"{first_name} {last_name}",{age},{patient.gender},{patient.nationality},{patient.injury_type},{patient.triage_category}\n'
                         )
 
                 first_patient = False

@@ -199,7 +199,7 @@ class ConfigurationPersistence {
                     {
                         id: 'eastern_front',
                         name: 'Eastern Front',
-                        casualty_rate: 0.3,
+                        casualty_rate: 0.60,  // 60% of casualties from this front
                         nationality_distribution: [
                             { nationality_code: 'POL', percentage: 40 },
                             { nationality_code: 'USA', percentage: 30 },
@@ -209,11 +209,12 @@ class ConfigurationPersistence {
                     {
                         id: 'northern_front',
                         name: 'Northern Front',
-                        casualty_rate: 0.2,
+                        casualty_rate: 0.40,  // 40% of casualties from this front (total: 100%)
                         nationality_distribution: [
-                            { nationality_code: 'FIN', percentage: 50 },
+                            { nationality_code: 'FIN', percentage: 40 },
                             { nationality_code: 'SWE', percentage: 30 },
-                            { nationality_code: 'NOR', percentage: 20 }
+                            { nationality_code: 'NOR', percentage: 20 },
+                            { nationality_code: 'DNK', percentage: 10 }
                         ]
                     }
                 ],
@@ -231,7 +232,7 @@ class ConfigurationPersistence {
                     {
                         id: 'training_area',
                         name: 'Training Area',
-                        casualty_rate: 0.15,
+                        casualty_rate: 1.0,  // 100% of casualties from single front
                         nationality_distribution: [
                             { nationality_code: 'USA', percentage: 100 }
                         ]
@@ -251,7 +252,7 @@ class ConfigurationPersistence {
                     {
                         id: 'relief_zone',
                         name: 'Relief Zone',
-                        casualty_rate: 0.25,
+                        casualty_rate: 1.0,  // 100% of casualties from single front
                         nationality_distribution: [
                             { nationality_code: 'FRA', percentage: 40 },
                             { nationality_code: 'DEU', percentage: 30 },
@@ -264,6 +265,49 @@ class ConfigurationPersistence {
                     'Disease': 70,
                     'Non-Battle Injury': 25,
                     'Battle Injury': 5
+                }
+            },
+            'large-scale-operation': {
+                templateName: 'Large Scale Operation',
+                description: 'Multi-theater joint operation scenario',
+                front_configs: [
+                    {
+                        id: 'eastern_theater',
+                        name: 'Eastern Theater',
+                        casualty_rate: 0.45,  // 45% of casualties
+                        nationality_distribution: [
+                            { nationality_code: 'POL', percentage: 35 },
+                            { nationality_code: 'USA', percentage: 25 },
+                            { nationality_code: 'GBR', percentage: 20 },
+                            { nationality_code: 'CAN', percentage: 20 }
+                        ]
+                    },
+                    {
+                        id: 'southern_theater',
+                        name: 'Southern Theater',
+                        casualty_rate: 0.30,  // 30% of casualties
+                        nationality_distribution: [
+                            { nationality_code: 'ITA', percentage: 40 },
+                            { nationality_code: 'ESP', percentage: 35 },
+                            { nationality_code: 'FRA', percentage: 25 }
+                        ]
+                    },
+                    {
+                        id: 'northern_theater',
+                        name: 'Northern Theater',
+                        casualty_rate: 0.25,  // 25% of casualties (total: 100%)
+                        nationality_distribution: [
+                            { nationality_code: 'NOR', percentage: 35 },
+                            { nationality_code: 'DNK', percentage: 35 },
+                            { nationality_code: 'NLD', percentage: 30 }
+                        ]
+                    }
+                ],
+                total_patients: 1000,
+                injury_distribution: {
+                    'Disease': 45,
+                    'Non-Battle Injury': 30,
+                    'Battle Injury': 25
                 }
             }
         };

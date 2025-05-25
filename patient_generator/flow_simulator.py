@@ -4,22 +4,12 @@ import random
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from patient_generator.schemas_config import (  # Updated imports
-        FrontDefinition,
-    )
-
-    from .schemas_config import (  # Updated imports
-        FrontDefinition,
-    )
+    from patient_generator.schemas_config import FrontDefinition
 
 try:
     from .config_manager import ConfigurationManager
     from .patient import Patient
-    from .schemas_config import (  # Updated imports
-        FacilityConfig,
-        FrontConfig as DBFrontConfig,
-        FrontDefinitionNation,
-    )
+    from .schemas_config import FacilityConfig
 except ImportError:
     from patient_generator.config_manager import ConfigurationManager
     from patient_generator.patient import Patient
@@ -90,7 +80,7 @@ class PatientFlowSimulator:
             self.num_workers = max(2, min(multiprocessing.cpu_count(), 8))
             if self.total_patients_to_generate > 5000:
                 self.batch_size = 250
-        except:
+        except Exception:
             self.num_workers = 4
 
     def _build_transition_matrix(self) -> Dict[str, Dict[str, float]]:

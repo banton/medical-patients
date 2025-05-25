@@ -94,8 +94,14 @@ export class JobManager {
         // Update UI
         uiManager.updateJobCard(jobId, status);
         
-        // Emit event
+        // Emit detailed events for progress tracking
         eventBus.emit(Events.JOB_UPDATED, { jobId, status });
+        eventBus.emit(Events.JOB_STATUS_UPDATE, { 
+            jobId, 
+            status,
+            progress: status.progress || 0,
+            progressDetails: status.progress_details || null
+        });
     }
 
     /**

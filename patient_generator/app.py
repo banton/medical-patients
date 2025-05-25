@@ -3,7 +3,6 @@ from collections import Counter
 import concurrent.futures
 import logging
 
-# from tqdm import tqdm # tqdm might be for CLI, not library use directly unless for debug
 import multiprocessing
 import os
 import random
@@ -16,8 +15,6 @@ import psutil
 
 if TYPE_CHECKING:
     from patient_generator.schemas_config import ConfigurationTemplateDB
-
-    from .schemas_config import ConfigurationTemplateDB
 
 # Use absolute imports
 try:
@@ -104,7 +101,7 @@ class PatientGeneratorApp:
         try:
             cpu_count = multiprocessing.cpu_count()
             return min(8, max(2, int(cpu_count * 0.75)))
-        except:
+        except Exception:
             return 4
 
     def _determine_batch_size(self) -> int:
@@ -116,7 +113,7 @@ class PatientGeneratorApp:
             available_memory = (
                 (max_memory_mb * 1024 * 1024) if max_memory_mb else (psutil.virtual_memory().available * 0.5)
             )
-        except:
+        except Exception:
             available_memory = 1024 * 1024 * 1024  # 1GB default
 
         estimated_memory_per_patient = 50 * 1024  # 50KB

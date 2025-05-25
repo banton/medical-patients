@@ -66,17 +66,24 @@ async def run_patient_generation(
         os.makedirs(output_dir, exist_ok=True)
 
         # Create progress callback
-        async def update_progress(current: int, total: int):
-            progress = int((current / total) * 100) if total > 0 else 0
-            phase = "Generating patients" if current < total else "Finalizing output"
+        async def update_progress(progress_data: Dict[str, Any]):
+            # Extract progress information
+            progress = progress_data.get('progress', 0)
+            current = progress_data.get('processed_patients', 0)
+            total = progress_data.get('total_patients', 0)
+            phase_desc = progress_data.get('phase_description', f"Processing patient {current} of {total}")
+            current_phase = progress_data.get('current_phase', 'generating_patients')
+            
+            # Convert to percentage
+            progress_percent = int(progress * 100) if progress <= 1 else int(progress)
 
             await job_service.update_job_progress(
                 job_id,
-                progress,
+                progress_percent,
                 JobProgressDetails(
-                    current_phase=phase,
-                    phase_description=f"Processing patient {current} of {total}",
-                    phase_progress=progress,
+                    current_phase=current_phase,
+                    phase_description=phase_desc,
+                    phase_progress=progress_percent,
                     total_patients=total,
                     processed_patients=current,
                     time_estimates={"total": 0.0},

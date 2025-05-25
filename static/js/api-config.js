@@ -13,7 +13,7 @@ window.API_CONFIG = {
         return {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-API-KEY': this.API_KEY
+            'X-API-Key': this.API_KEY  // Note: case-sensitive, must match backend
         };
     }
 };

@@ -93,7 +93,11 @@ class OutputFormatter:
         if stream:
             # For large datasets, process bundles one by one
             root_element = '<?xml version="1.0" encoding="utf-8"?>\n<PatientBundles>\n'
-            stream.write(root_element)
+            # Write as bytes if stream is binary mode
+            if hasattr(stream, 'mode') and 'b' in stream.mode:
+                stream.write(root_element.encode('utf-8'))
+            else:
+                stream.write(root_element)
 
             for bundle in bundles:
                 # Convert each bundle to XML
@@ -105,10 +109,19 @@ class OutputFormatter:
                     bundle_xml_str = bundle_xml_output
 
                 # Write directly to stream
-                stream.write(bundle_xml_str)
-                stream.write("\n")
+                # Check if stream is binary mode
+                if hasattr(stream, 'mode') and 'b' in stream.mode:
+                    stream.write(bundle_xml_str.encode('utf-8'))
+                    stream.write(b"\n")
+                else:
+                    stream.write(bundle_xml_str)
+                    stream.write("\n")
 
-            stream.write("</PatientBundles>")
+            # Close the root element
+            if hasattr(stream, 'mode') and 'b' in stream.mode:
+                stream.write(b"</PatientBundles>")
+            else:
+                stream.write("</PatientBundles>")
             return None
         # Standard approach for small datasets
         xml_data_output = dicttoxml.dicttoxml(bundles, custom_root="PatientBundles", attr_type=False)

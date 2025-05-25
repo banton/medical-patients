@@ -22,7 +22,9 @@
       "Bash(npm run build:all-frontend:*)",
       "Bash(chmod:*)",
       "Bash(ruff check:*)",
-      "Bash(ruff format:*)"
+      "Bash(ruff format:*)",
+      "Bash(sed:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

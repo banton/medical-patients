@@ -1,5 +1,6 @@
 """Cache utilities and decorators for the application."""
 
+import asyncio
 import functools
 import hashlib
 import json
@@ -122,6 +123,3 @@ def invalidate_cache_pattern(pattern: str):
         return sync_wrapper
 
     return decorator
-
-
-import asyncio

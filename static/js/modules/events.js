@@ -91,6 +91,7 @@ export const Events = {
     // Job events
     JOB_CREATED: 'job:created',
     JOB_UPDATED: 'job:updated',
+    JOB_STATUS_UPDATE: 'job:status:update',
     JOB_COMPLETED: 'job:completed',
     JOB_FAILED: 'job:failed',
     

@@ -9,6 +9,7 @@ import { uiManager } from './ui.js';
 import { eventBus, Events } from './events.js';
 import { configPersistence } from './persistence.js';
 import { AccessibilityManager } from './accessibility.js';
+import { jobProgressModal } from './jobProgress.js';
 
 class PatientGeneratorApp {
     constructor() {
@@ -89,6 +90,9 @@ class PatientGeneratorApp {
             console.log('Job completed:', data.jobId);
             uiManager.showSuccess('Patient generation completed successfully!');
             eventBus.emit('generation-completed');
+            
+            // Dispatch a window event to notify other components (like visualization dashboard)
+            window.dispatchEvent(new CustomEvent('job-completed', { detail: { jobId: data.jobId } }));
         });
         
         eventBus.on(Events.JOB_FAILED, (data) => {

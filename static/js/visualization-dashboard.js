@@ -24,6 +24,57 @@ const ChevronUp = (props) => <IconPlaceholder name="chevron-up" {...props} />;
 
 
 // Mock data generation function (as a fallback)
+// Transform snake_case API response to camelCase for frontend
+const transformApiResponse = (data) => {
+  if (!data) return data;
+  
+  // Map API field names to frontend field names
+  const fieldMapping = {
+    nationality_distribution: 'nationalityDistribution',
+    injury_distribution: 'injuryDistribution',
+    triage_distribution: 'triageDistribution',
+    patient_flow: 'patient_flow',  // Keep as is
+    facility_stats: 'facility_usage',
+    front_distribution: 'front_comparison',
+    timeline_data: 'timeline_analysis',
+    flow_data: 'patient_flow',
+    casualty_flow_by_day: 'casualtyFlowByDay'
+  };
+  
+  const transformed = {};
+  
+  // Copy and transform fields
+  Object.keys(data).forEach(key => {
+    const mappedKey = fieldMapping[key] || key;
+    transformed[mappedKey] = data[key];
+  });
+  
+  // Transform specific fields to match expected format
+  if (data.nationality_distribution) {
+    transformed.nationalityDistribution = data.nationality_distribution.map(item => ({
+      name: item.nationality || item.name,
+      value: item.count || item.value || item.percentage
+    }));
+  }
+  
+  if (data.injury_distribution) {
+    transformed.injuryDistribution = data.injury_distribution.map(item => ({
+      name: item.injury_type || item.name,
+      value: item.count || item.value || item.percentage
+    }));
+  }
+  
+  if (data.facility_stats) {
+    transformed.facility_usage = Object.entries(data.facility_stats).map(([name, stats]) => ({
+      name,
+      capacity: 100,  // Default capacity, adjust based on actual data
+      used: Math.round((stats.treated || 0) / 100 * 100)  // Percentage
+    }));
+  }
+  
+  return transformed;
+};
+
 const generateMockData = () => {
   console.warn("Using mock data for dashboard.");
   return {
@@ -97,13 +148,19 @@ const ExerciseDashboard = () => {
       setLoading(true);
       setError(null);
       const url = jobIdToFetch ? `/api/visualizations/dashboard-data?job_id=${jobIdToFetch}` : '/api/visualizations/dashboard-data';
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: window.API_CONFIG ? window.API_CONFIG.getHeaders() : {
+          'X-API-Key': 'your_secret_api_key_here'
+        }
+      });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to fetch dashboard data');
       }
       const data = await response.json();
-      setDashboardData(data);
+      // Transform API response to match frontend expectations
+      const transformedData = transformApiResponse(data);
+      setDashboardData(transformedData);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       setError(err.message);
@@ -116,7 +173,12 @@ const ExerciseDashboard = () => {
   // Function to fetch jobs list
   const fetchJobs = async () => {
     try {
-      const response = await fetch('/api/visualizations/job-list');
+      // Use correct API endpoint: /api/jobs/ instead of /api/visualizations/job-list
+      const response = await fetch('/api/jobs/', {
+        headers: window.API_CONFIG ? window.API_CONFIG.getHeaders() : {
+          'X-API-Key': 'your_secret_api_key_here'
+        }
+      });
       if (response.ok) {
         const jobsList = await response.json();
         setJobs(jobsList);
@@ -152,6 +214,19 @@ const ExerciseDashboard = () => {
       // If no job_id in URL, fetch jobs and then data for the latest or general
       fetchJobs();
     }
+    
+    // Listen for job completion events from the main app
+    const handleJobCompletion = () => {
+      console.log('Job completion detected, refreshing job list...');
+      fetchJobs();
+    };
+    
+    window.addEventListener('job-completed', handleJobCompletion);
+    
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener('job-completed', handleJobCompletion);
+    };
   }, []); // Runs once on mount
 
   // Effect to fetch data when selected job changes
@@ -205,7 +280,11 @@ const ExerciseDashboard = () => {
         const patientDetailUrl = selectedJobId 
             ? `/api/visualizations/patient-detail/${id}?job_id=${selectedJobId}`
             : `/api/visualizations/patient-detail/${id}`;
-        const response = await fetch(patientDetailUrl);
+        const response = await fetch(patientDetailUrl, {
+          headers: window.API_CONFIG ? window.API_CONFIG.getHeaders() : {
+            'X-API-Key': 'your_secret_api_key_here'
+          }
+        });
         if (response.ok) {
           const patientData = await response.json();
           setSelectedPatient(patientData);
@@ -479,7 +558,7 @@ const ExerciseDashboard = () => {
         <option value="">{jobs.length > 0 ? "Select a job..." : "No jobs available"}</option>
         {jobs.map(job => (
           <option key={job.job_id} value={job.job_id}>
-            {job.description}
+            {job.config?.name || `Job ${job.job_id} - ${job.status || 'Unknown'}`}
           </option>
         ))}
       </select>

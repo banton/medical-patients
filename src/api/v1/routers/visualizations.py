@@ -40,7 +40,7 @@ async def get_dashboard_data(
                         "bundles": [],  # Bundles not stored in job
                     }
                 )
-        except:
+        except Exception:
             pass
 
     # If no specific job or job not found, use most recent
