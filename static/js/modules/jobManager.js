@@ -1,186 +1,187 @@
-/**
- * Job Management Module - Handles job polling and status updates
- */
-import { apiClient } from './api.js';
-import { eventBus, Events } from './events.js';
-import { uiManager } from './ui.js';
+// Job Manager Module
 
 export class JobManager {
-    constructor() {
+    constructor(apiClient) {
+        this.apiClient = apiClient;
         this.activeJobs = new Map();
-        this.pollingIntervals = new Map();
-        this.POLLING_INTERVAL = 1000; // 1 second
+        this.pollingInterval = null;
+        this.pollingRate = 5000; // 5 seconds - more reasonable
+        this.lastPollTime = 0;
+        this.minPollInterval = 1000; // Don't poll more than once per second
     }
 
-    /**
-     * Create a new job from generation response
-     */
-    async createJob(jobData) {
-        const jobId = jobData.job_id;
+    startPolling() {
+        if (this.pollingInterval) return;
         
-        // Store job info
-        this.activeJobs.set(jobId, {
-            id: jobId,
-            status: jobData.status,
-            createdAt: new Date(),
-            progress: 0
-        });
+        // Use adaptive polling rate
+        const poll = () => {
+            this.pollActiveJobs();
+            
+            // Adjust polling rate based on active jobs
+            const nextInterval = this.activeJobs.size > 0 ? 
+                this.pollingRate : // 5 seconds when active
+                30000; // 30 seconds when idle
+            
+            this.pollingInterval = setTimeout(poll, nextInterval);
+        };
         
-        // Create job card in UI
-        uiManager.createJobCard(jobId);
-        
-        // Start polling
-        this.startPolling(jobId);
-        
-        // Emit event
-        eventBus.emit(Events.JOB_CREATED, { jobId, jobData });
-        
-        return jobId;
+        // Initial poll
+        poll();
     }
 
-    /**
-     * Start polling for job status
-     */
-    startPolling(jobId) {
-        if (this.pollingIntervals.has(jobId)) {
-            return; // Already polling
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearTimeout(this.pollingInterval);
+            this.pollingInterval = null;
+        }
+    }
+
+    async loadActiveJobs() {
+        try {
+            const jobs = await this.apiClient.getJobs();
+            
+            // Clear and repopulate active jobs
+            this.activeJobs.clear();
+            jobs.forEach(job => {
+                if (['pending', 'running'].includes(job.status)) {
+                    this.activeJobs.set(job.job_id, job);
+                }
+            });
+            
+            return jobs;
+        } catch (error) {
+            console.error('Failed to load jobs:', error);
+            return [];
+        }
+    }
+
+    async pollActiveJobs() {
+        // Rate limiting
+        const now = Date.now();
+        if (now - this.lastPollTime < this.minPollInterval) {
+            return;
+        }
+        this.lastPollTime = now;
+
+        // Only poll if we have active jobs
+        if (this.activeJobs.size === 0) {
+            // Don't constantly reload the job list if there are no active jobs
+            // The list will be refreshed when a new job is added via trackJob()
+            return;
         }
 
-        const interval = setInterval(async () => {
+        for (const [jobId, previousStatus] of this.activeJobs.entries()) {
             try {
-                const status = await apiClient.getJobStatus(jobId);
-                this.updateJobStatus(jobId, status);
+                const status = await this.apiClient.getJobStatus(jobId);
                 
-                if (status.status === 'completed' || status.status === 'failed') {
-                    this.stopPolling(jobId);
+                // Check if status changed
+                if (this.hasStatusChanged(previousStatus, status)) {
+                    // Update stored status
+                    this.activeJobs.set(jobId, status);
                     
-                    if (status.status === 'completed') {
-                        await this.handleJobCompletion(jobId, status);
-                    } else {
-                        this.handleJobFailure(jobId, status);
+                    // Dispatch event
+                    document.dispatchEvent(new CustomEvent('job-status-update', {
+                        detail: status
+                    }));
+                    
+                    // Remove from active jobs if completed
+                    if (['completed', 'failed', 'cancelled'].includes(status.status)) {
+                        this.activeJobs.delete(jobId);
+                        
+                        // Special event for completion
+                        if (status.status === 'completed') {
+                            document.dispatchEvent(new CustomEvent('job-completed', {
+                                detail: { jobId, status }
+                            }));
+                        }
                     }
                 }
             } catch (error) {
-                console.error(`Error polling job ${jobId}:`, error);
-                // Continue polling even on error
+                console.error(`Failed to poll job ${jobId}:`, error);
             }
-        }, this.POLLING_INTERVAL);
-        
-        this.pollingIntervals.set(jobId, interval);
-    }
-
-    /**
-     * Stop polling for job status
-     */
-    stopPolling(jobId) {
-        const interval = this.pollingIntervals.get(jobId);
-        if (interval) {
-            clearInterval(interval);
-            this.pollingIntervals.delete(jobId);
         }
     }
 
-    /**
-     * Update job status
-     */
-    updateJobStatus(jobId, status) {
-        const job = this.activeJobs.get(jobId);
-        if (!job) return;
-        
-        job.status = status.status;
-        job.progress = status.progress || 0;
-        job.progressDetails = status.progress_details;
-        
-        // Update UI
-        uiManager.updateJobCard(jobId, status);
-        
-        // Emit detailed events for progress tracking
-        eventBus.emit(Events.JOB_UPDATED, { jobId, status });
-        eventBus.emit(Events.JOB_STATUS_UPDATE, { 
-            jobId, 
-            status,
-            progress: status.progress || 0,
-            progressDetails: status.progress_details || null
+    hasStatusChanged(previous, current) {
+        return (
+            previous.status !== current.status ||
+            previous.progress !== current.progress ||
+            previous.processed_patients !== current.processed_patients ||
+            previous.phase_description !== current.phase_description
+        );
+    }
+
+    trackJob(jobId) {
+        // Add job to active tracking
+        this.activeJobs.set(jobId, {
+            job_id: jobId,
+            status: 'pending',
+            progress: 0,
+            processed_patients: 0,
+            total_patients: 0
         });
+        
+        // Ensure polling is active
+        this.startPolling();
+        
+        // Trigger an immediate poll for this job
+        this.pollSingleJob(jobId);
     }
-
-    /**
-     * Handle job completion
-     */
-    async handleJobCompletion(jobId, status) {
+    
+    async pollSingleJob(jobId) {
         try {
-            const results = await apiClient.getJobResults(jobId);
+            const status = await this.apiClient.getJobStatus(jobId);
+            this.activeJobs.set(jobId, status);
             
-            // Update UI with results
-            uiManager.showJobResults(jobId, results);
-            
-            // Remove from active jobs
-            this.activeJobs.delete(jobId);
-            
-            // Emit event
-            eventBus.emit(Events.JOB_COMPLETED, { jobId, status, results });
+            document.dispatchEvent(new CustomEvent('job-status-update', {
+                detail: status
+            }));
         } catch (error) {
-            console.error(`Error fetching results for job ${jobId}:`, error);
-            uiManager.showJobError(jobId, 'Failed to fetch results');
+            console.error(`Failed to poll job ${jobId}:`, error);
         }
     }
 
-    /**
-     * Handle job failure
-     */
-    handleJobFailure(jobId, status) {
-        // Update UI
-        uiManager.showJobError(jobId, status.error || 'Job failed');
-        
-        // Remove from active jobs
+    async getActiveJobs() {
+        return this.loadActiveJobs();
+    }
+
+    async cancelJob(jobId) {
+        await this.apiClient.cancelJob(jobId);
         this.activeJobs.delete(jobId);
+    }
+
+    getJobDetails(jobId) {
+        return this.activeJobs.get(jobId);
+    }
+
+    // Statistics methods
+    getActiveJobCount() {
+        return this.activeJobs.size;
+    }
+
+    getTotalProgress() {
+        if (this.activeJobs.size === 0) return 0;
         
-        // Emit event
-        eventBus.emit(Events.JOB_FAILED, { jobId, status });
-    }
-
-    /**
-     * Download job results
-     */
-    async downloadResults(jobId) {
-        try {
-            await apiClient.downloadJobResults(jobId);
-        } catch (error) {
-            console.error(`Error downloading results for job ${jobId}:`, error);
-            uiManager.showError('Failed to download results');
-        }
-    }
-
-    /**
-     * Load existing jobs on page load
-     */
-    async loadExistingJobs() {
-        // This would typically fetch active jobs from the API
-        // For now, we'll just clear any orphaned intervals
-        this.pollingIntervals.forEach((interval, jobId) => {
-            clearInterval(interval);
+        let totalProgress = 0;
+        this.activeJobs.forEach(job => {
+            totalProgress += job.progress || 0;
         });
-        this.pollingIntervals.clear();
-        this.activeJobs.clear();
+        
+        return totalProgress / this.activeJobs.size;
     }
 
-    /**
-     * Get all active jobs
-     */
-    getActiveJobs() {
-        return Array.from(this.activeJobs.values());
-    }
-
-    /**
-     * Stop all polling
-     */
-    stopAllPolling() {
-        this.pollingIntervals.forEach((interval) => {
-            clearInterval(interval);
+    getEstimatedCompletionTime() {
+        let latestETA = null;
+        
+        this.activeJobs.forEach(job => {
+            if (job.estimated_completion) {
+                const eta = new Date(job.estimated_completion);
+                if (!latestETA || eta > latestETA) {
+                    latestETA = eta;
+                }
+            }
         });
-        this.pollingIntervals.clear();
+        
+        return latestETA;
     }
 }
-
-// Export singleton instance
-export const jobManager = new JobManager();

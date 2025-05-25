@@ -85,11 +85,11 @@ def create_app() -> FastAPI:
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
-    # Root endpoint
+    # Root endpoint - redirect to UI
     @app.get("/")
     async def root():
-        """Root endpoint."""
-        return {"name": settings.APP_NAME, "version": settings.VERSION, "docs": "/docs"}
+        """Root endpoint - redirect to main UI."""
+        return RedirectResponse(url="/static/index.html")
 
     # Health check endpoint
     @app.get("/health")
@@ -113,12 +113,6 @@ def create_app() -> FastAPI:
         """Readiness check endpoint."""
         # Could check database connection, etc.
         return {"status": "ready"}
-
-    # New UI endpoint
-    @app.get("/ui")
-    async def new_ui():
-        """Redirect to new UI."""
-        return RedirectResponse(url="/static/new-ui/index.html")
 
     return app
 

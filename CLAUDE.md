@@ -15,9 +15,9 @@ make dev
 curl http://localhost:8000/health
 
 # View application at
-# - API: http://localhost:8000
-# - Interactive docs: http://localhost:8000/docs  
-# - UI: http://localhost:8000/static/index.html
+# - UI: http://localhost:8000
+# - API docs: http://localhost:8000/docs  
+# - Advanced visualizations: http://localhost:8000/static/visualizations.html
 ```
 
 **Manual setup** (if needed):
