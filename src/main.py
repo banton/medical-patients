@@ -2,14 +2,17 @@
 Main application entry point.
 Creates and configures the FastAPI application.
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import logging
 
 from config import get_settings
+from src.core.cache import initialize_cache, close_cache, get_cache_service
 from src.api.v1.routers import (
     configurations,
     generation,
@@ -21,6 +24,36 @@ from src.api.v1.routers import (
 # Get settings
 settings = get_settings()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager."""
+    # Startup
+    logger.info("Starting up application...")
+    
+    # Initialize cache if enabled
+    if settings.CACHE_ENABLED:
+        try:
+            await initialize_cache(settings.REDIS_URL, settings.CACHE_TTL)
+            logger.info("Redis cache initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize Redis cache: {e}")
+            logger.warning("Application will continue without caching")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down application...")
+    
+    # Close cache connection
+    if settings.CACHE_ENABLED:
+        await close_cache()
+        logger.info("Redis cache connection closed")
+
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
@@ -30,7 +63,8 @@ def create_app() -> FastAPI:
         title=settings.APP_NAME,
         version=settings.VERSION,
         docs_url="/docs",
-        redoc_url="/redoc"
+        redoc_url="/redoc",
+        lifespan=lifespan
     )
     
     # Initialize rate limiter
@@ -72,7 +106,17 @@ def create_app() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Health check endpoint."""
-        return {"status": "healthy"}
+        health_status = {"status": "healthy", "services": {}}
+        
+        # Check cache health if enabled
+        if settings.CACHE_ENABLED:
+            cache_service = get_cache_service()
+            if cache_service:
+                health_status["services"]["redis"] = await cache_service.health_check()
+            else:
+                health_status["services"]["redis"] = False
+                
+        return health_status
     
     # Ready check endpoint
     @app.get("/ready")

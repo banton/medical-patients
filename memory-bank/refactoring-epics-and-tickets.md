@@ -89,13 +89,13 @@
 **Goal**: Add caching and optimize resource usage
 
 ### Ticket PERF-001: Add Redis Caching Layer
-**Status**: Pending
+**Status**: Completed
 **Priority**: Medium
 **Acceptance Criteria**:
-- [ ] Redis integrated via docker-compose
-- [ ] CacheService implemented with get/set/invalidate
-- [ ] Demographics data cached appropriately
-- [ ] Medical conditions cached with TTL
+- [x] Redis integrated via docker-compose
+- [x] CacheService implemented with get/set/invalidate
+- [x] Demographics data cached appropriately
+- [x] Medical conditions cached with TTL
 **Test Plan**:
 1. Test cache hit/miss rates
 2. Verify TTL expiration works
@@ -266,13 +266,15 @@
    - ✅ PERF-002: Implement Database Connection Pooling
    - ✅ DX-001: Create Makefile
 
-4. **Next Priority (Medium)**:
-   - PERF-001: Add Redis Caching Layer
+4. **Completed (This Session - Part 2)**:
+   - ✅ PERF-001: Add Redis Caching Layer
+
+5. **Next Priority (Medium)**:
    - FE-002: Add Configuration Persistence
    - FE-003: Enhance Accessibility and UX (Partial)
    - TEST-001: Add Integration Tests (Partial)
 
-5. **Low Priority**:
+6. **Low Priority**:
    - FE-004: Improve Performance and Error Handling
    - DX-002: Set Up CI/CD Pipeline
    - DX-003: Add Linting and Formatting

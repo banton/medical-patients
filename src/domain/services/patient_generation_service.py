@@ -18,6 +18,8 @@ from patient_generator.formatter import OutputFormatter
 from patient_generator.schemas_config import ConfigurationTemplateDB
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import Database
+from src.domain.services.cached_demographics_service import CachedDemographicsService
+from src.domain.services.cached_medical_service import CachedMedicalService
 
 
 @dataclass
@@ -193,6 +195,8 @@ class AsyncPatientGenerationService:
         self.pipeline = None
         self.config_manager = None
         self.db = Database()
+        self.cached_demographics = CachedDemographicsService()
+        self.cached_medical = CachedMedicalService()
     
     def _initialize_pipeline(self, config_id: str):
         """Initialize the generation pipeline with required components."""
@@ -201,10 +205,11 @@ class AsyncPatientGenerationService:
         self.config_manager.load_configuration(config_id)
         
         # Initialize components with config manager
+        # Use cached services' generators
         self.pipeline = PatientGenerationPipeline(
             flow_simulator=PatientFlowSimulator(self.config_manager),
-            demographics_generator=DemographicsGenerator(),
-            medical_generator=MedicalConditionGenerator(),
+            demographics_generator=self.cached_demographics.get_demographics_generator(),
+            medical_generator=self.cached_medical._get_condition_generator(),
             fhir_generator=FHIRBundleGenerator(),
             output_formatter=OutputFormatter()
         )
@@ -215,6 +220,10 @@ class AsyncPatientGenerationService:
         progress_callback: Optional[Callable] = None
     ) -> Dict[str, Any]:
         """Generate patients and save to files."""
+        
+        # Warm up caches before generation
+        await self.cached_demographics.warm_cache()
+        await self.cached_medical.warm_cache()
         
         # Initialize pipeline with configuration
         self._initialize_pipeline(context.config.id)

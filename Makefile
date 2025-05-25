@@ -13,6 +13,7 @@ help:
 	@echo "  make dev-clean    - Start development environment (clean build)"
 	@echo "  make dev-fast     - Start development environment (skip tests)"
 	@echo "  make test         - Run all tests"
+	@echo "  make test-cache   - Run cache-specific tests"
 	@echo "  make api-test     - Run API integration tests"
 	@echo "  make lint         - Run linting checks"
 	@echo "  make format       - Format code automatically"
@@ -20,6 +21,10 @@ help:
 	@echo "  make build-frontend - Build all frontend components"
 	@echo "  make deps         - Install all dependencies"
 	@echo "  make migrate      - Run database migrations"
+	@echo "  make services     - Start database and Redis services"
+	@echo "  make cache-flush  - Flush Redis cache"
+	@echo "  make cache-info   - Show Redis cache information"
+	@echo "  make verify-redis - Verify Redis integration across all components"
 	@echo ""
 	@echo "Quick start: make deps && make dev"
 
@@ -44,13 +49,18 @@ dev-fast:
 	@chmod +x start-dev.sh && ./start-dev.sh --skip-tests
 
 # Run all tests
-test: test-unit api-test
+test: test-unit test-cache api-test
 	@echo "All tests completed!"
 
 # Run unit tests
 test-unit:
 	@echo "Running unit tests..."
 	python -m pytest tests/ -xvs
+
+# Run cache-specific tests
+test-cache:
+	@echo "Running cache tests..."
+	python -m pytest tests/test_cache_service.py tests/test_cached_services.py -xvs
 
 # Run API integration tests (requires running server)
 api-test:
@@ -128,6 +138,18 @@ db:
 	docker compose up -d db
 	@echo "Database started on localhost:5432"
 
+# Start only Redis
+redis:
+	@echo "Starting Redis..."
+	docker compose up -d redis
+	@echo "Redis started on localhost:6379"
+
+# Start database and Redis
+services:
+	@echo "Starting database and Redis..."
+	docker compose up -d db redis
+	@echo "Services started: database (5432), Redis (6379)"
+
 # Run the application without docker
 run:
 	@echo "Starting application..."
@@ -149,6 +171,17 @@ generate-test:
 # Check code quality
 quality: lint test
 	@echo "Code quality checks passed!"
+
+# Redis cache management
+cache-flush:
+	@echo "Flushing Redis cache..."
+	docker compose exec redis redis-cli FLUSHDB
+	@echo "Cache flushed!"
+
+cache-info:
+	@echo "Redis cache information:"
+	docker compose exec redis redis-cli INFO memory
+	docker compose exec redis redis-cli DBSIZE
 
 # Docker compose shortcuts
 up:
@@ -190,3 +223,8 @@ check-env:
 	@echo ""
 	@echo "Database URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db"
 	@echo "API Key: your_secret_api_key_here"
+
+# Verify Redis integration
+verify-redis:
+	@echo "Verifying Redis integration..."
+	python verify-redis-integration.py

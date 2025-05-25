@@ -78,6 +78,24 @@ alembic downgrade -1
 postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
 ```
 
+### Cache Management
+```bash
+# Start Redis service only
+make redis
+
+# Start both database and Redis
+make services
+
+# Flush Redis cache
+make cache-flush
+
+# View Redis cache information
+make cache-info
+
+# Run cache-specific tests
+make test-cache
+```
+
 ### Docker Commands
 ```bash
 docker compose up -d            # Start all services
@@ -148,6 +166,12 @@ The application follows a clean domain-driven architecture with clear separation
    - Progress updates through job service
    - Async/await pattern for non-blocking operations
 
+5. **Caching Layer**
+   - Redis-based caching for improved performance
+   - Demographics and medical conditions data cached
+   - Automatic cache warming before patient generation
+   - Graceful degradation when Redis is unavailable
+
 ### Critical Integration Points
 
 1. **ConfigurationManager vs Direct Database Access**
@@ -191,6 +215,25 @@ The application follows a clean domain-driven architecture with clear separation
    - Must rebuild after TypeScript changes
    - Bundle outputs to static/dist/
    - Clear browser cache after updates
+
+## Environment Variables
+
+### Core Application
+- `API_KEY`: API authentication key (default: "your_secret_api_key_here")
+- `DEBUG`: Enable debug mode (default: True in dev, False in prod)
+- `CORS_ORIGINS`: Comma-separated list of allowed origins
+
+### Database
+- `DATABASE_URL`: PostgreSQL connection string (default: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db)
+
+### Redis Cache
+- `REDIS_URL`: Redis connection string (default: redis://localhost:6379/0)
+- `CACHE_TTL`: Default cache TTL in seconds (default: 3600)
+- `CACHE_ENABLED`: Enable/disable caching (default: True)
+
+### Patient Generation
+- `PATIENT_GENERATOR_THREADS`: Number of worker threads (default: 4)
+- `PATIENT_GENERATOR_MAX_MEMORY`: Maximum memory in MB (default: 2048)
 
 ## Git Workflow
 

@@ -41,6 +41,11 @@ class Settings:
     # Encryption
     DEFAULT_ENCRYPTION_PASSWORD: Optional[str] = os.getenv("DEFAULT_ENCRYPTION_PASSWORD")
     
+    # Redis Cache
+    REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CACHE_TTL: int = int(os.getenv("CACHE_TTL", "3600"))  # Default 1 hour
+    CACHE_ENABLED: bool = os.getenv("CACHE_ENABLED", "True").lower() in ("true", "1", "yes")
+    
     @classmethod
     def validate(cls) -> None:
         """Validate critical settings."""

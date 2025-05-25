@@ -56,6 +56,19 @@ class TestAPIIntegration(unittest.TestCase):
             except Exception as e:
                 print(f"Error cleaning up config {config_id}: {e}")
 
+    def test_00_health_check_with_redis(self):
+        """Test health endpoint includes Redis status"""
+        response = requests.get(f"{BASE_URL}/health")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get("status"), "healthy")
+        
+        # Check Redis health if cache is enabled
+        if "services" in data:
+            self.assertIn("redis", data["services"])
+            # Redis health should be either True (healthy) or False (unhealthy)
+            self.assertIsInstance(data["services"]["redis"], bool)
+
     def test_01_reference_get_nationalities(self):
         response = requests.get(f"{CONFIG_API_URL}/reference/nationalities/", headers=HEADERS)
         self.assertEqual(response.status_code, 200)

@@ -97,9 +97,12 @@ class OutputFormatter:
             
             for bundle in bundles:
                 # Convert each bundle to XML
-                bundle_xml_output: bytes = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
-                # dicttoxml always returns bytes
-                bundle_xml_str = bundle_xml_output.decode('utf-8')
+                bundle_xml_output = dicttoxml.dicttoxml(bundle, attr_type=False, root=False)
+                # dicttoxml can return either bytes or str
+                if isinstance(bundle_xml_output, bytes):
+                    bundle_xml_str = bundle_xml_output.decode('utf-8')
+                else:
+                    bundle_xml_str = bundle_xml_output
                 
                 # Write directly to stream
                 stream.write(bundle_xml_str)
