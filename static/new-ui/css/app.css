@@ -220,8 +220,6 @@ body {
     background-color: white;
     border: 1px solid #dee2e6;
     border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 1rem;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -229,11 +227,21 @@ body {
 .template-card:hover {
     border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
 }
 
 .template-card.selected {
     border-color: var(--primary-color);
     background-color: rgba(13, 110, 253, 0.05);
+}
+
+.template-card .card-title {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.template-card:hover .card-title {
+    text-decoration: underline;
 }
 
 .template-card h6 {

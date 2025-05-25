@@ -126,8 +126,14 @@ async def run_patient_generation(
             "status": result.get("status", "completed"),
         }
 
-        # Update progress
-        await update_progress(config.total_patients, config.total_patients)
+        # Update final progress
+        await update_progress({
+            'progress': 1.0,
+            'processed_patients': config.total_patients,
+            'total_patients': config.total_patients,
+            'phase_description': f"Completed generating {config.total_patients} patients",
+            'current_phase': 'completed'
+        })
 
         result = {"status": "completed", "output_files": gen_output_files, "patient_count": config.total_patients}
 

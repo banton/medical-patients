@@ -173,6 +173,33 @@ class MilitaryPatientGeneratorApp {
     }
 
     showTemplateModal() {
+        // Populate template list
+        const templateList = document.getElementById('templateList');
+        const builtInTemplates = this.templateManager.getBuiltInTemplates();
+        
+        templateList.innerHTML = builtInTemplates.map(template => `
+            <div class="card mb-3 template-card" role="button" data-template-id="${template.id}">
+                <div class="card-body">
+                    <h5 class="card-title">${template.name}</h5>
+                    <p class="card-text">${template.description}</p>
+                    <div class="d-flex gap-3 text-muted small">
+                        <span><i class="bi bi-flag me-1"></i>${template.configuration.fronts.length} front(s)</span>
+                        <span><i class="bi bi-people me-1"></i>${template.configuration.total_patients} patients</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        // Add click handlers
+        templateList.querySelectorAll('.template-card').forEach(card => {
+            card.addEventListener('click', async (e) => {
+                const templateId = e.currentTarget.dataset.templateId;
+                await this.loadTemplate(templateId);
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('templateModal')).hide();
+            });
+        });
+        
         const modal = new bootstrap.Modal(document.getElementById('templateModal'));
         modal.show();
     }
@@ -229,17 +256,31 @@ class MilitaryPatientGeneratorApp {
     }
 
     showProgressModal(jobId) {
-        const modal = new bootstrap.Modal(document.getElementById('progressModal'));
-        modal.show();
+        // Don't show modal immediately - let the job manager handle updates
+        // Just track the job
+        this.jobManager.trackJob(jobId);
         
-        // Reset progress
-        this.updateProgress(0, 'Initializing...', '0/0', 'Starting generation...');
+        // Show a brief notification instead
+        this.showSuccess('Patient generation started! Check the Jobs panel for progress.');
         
-        // Cancel button handler
-        document.getElementById('cancelJobBtn').onclick = () => {
-            this.cancelJob(jobId);
-            modal.hide();
-        };
+        // Optionally show progress modal after a short delay to avoid blocking
+        setTimeout(() => {
+            // Only show modal if job is still running
+            const job = this.jobManager.getJobDetails(jobId);
+            if (job && ['pending', 'running'].includes(job.status)) {
+                const modal = new bootstrap.Modal(document.getElementById('progressModal'));
+                modal.show();
+                
+                // Reset progress
+                this.updateProgress(0, 'Initializing...', '0/0', 'Starting generation...');
+                
+                // Cancel button handler
+                document.getElementById('cancelJobBtn').onclick = () => {
+                    this.cancelJob(jobId);
+                    modal.hide();
+                };
+            }
+        }, 1000);
     }
 
     updateProgress(percentage, status, patients, phase) {
@@ -256,9 +297,13 @@ class MilitaryPatientGeneratorApp {
         // Update progress modal if visible
         const progressModal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
         if (progressModal && progressModal._isShown) {
-            const percentage = Math.round(jobStatus.progress * 100);
-            const patients = `${jobStatus.processed_patients}/${jobStatus.total_patients}`;
-            this.updateProgress(percentage, jobStatus.status, patients, jobStatus.phase_description);
+            // Progress is already in percentage (0-100) from backend
+            const percentage = Math.round(jobStatus.progress);
+            const processedPatients = jobStatus.progress_details?.processed_patients || jobStatus.processed_patients || 0;
+            const totalPatients = jobStatus.progress_details?.total_patients || jobStatus.total_patients || 0;
+            const patients = `${processedPatients}/${totalPatients}`;
+            const phaseDescription = jobStatus.progress_details?.phase_description || jobStatus.phase_description || 'Processing...';
+            this.updateProgress(percentage, jobStatus.status, patients, phaseDescription);
             
             // Close modal if completed
             if (jobStatus.status === 'completed' || jobStatus.status === 'failed') {
