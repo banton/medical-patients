@@ -24,7 +24,7 @@ from src.core.cache import CacheService
 def postgres_container():
     """Create a PostgreSQL test container"""
     with PostgresContainer(
-        image="postgres:14-alpine", user="test_user", password="test_pass", dbname="test_db"
+        image="postgres:14-alpine", username="test_user", password="test_pass", dbname="test_db"
     ) as postgres:
         yield postgres
 

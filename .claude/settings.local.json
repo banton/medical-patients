@@ -33,7 +33,8 @@
       "Bash(gh api:*)",
       "Bash(npm run format:check:*)",
       "Bash(npx prettier:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(pytest:*)"
     ],
     "deny": []
   }

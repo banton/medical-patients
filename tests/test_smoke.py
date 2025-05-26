@@ -10,20 +10,6 @@ import requests
 pytestmark = [pytest.mark.integration]
 
 
-def pytest_addoption(parser):
-    parser.addoption("--base-url", action="store", default="http://localhost:8000", help="Base URL for the API")
-
-
-@pytest.fixture()
-def base_url(request):
-    return request.config.getoption("--base-url")
-
-
-@pytest.fixture()
-def api_headers():
-    return {"X-API-Key": "your_secret_api_key_here", "Content-Type": "application/json"}
-
-
 class TestSmoke:
     """Basic smoke tests to verify deployment"""
 
