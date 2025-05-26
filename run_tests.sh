@@ -22,8 +22,8 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Check if virtual environment is activated
-if [[ -z "${VIRTUAL_ENV}" ]]; then
+# Check if virtual environment is activated (skip in CI)
+if [[ -z "${VIRTUAL_ENV}" ]] && [[ -z "${CI}" ]]; then
     print_warning "Virtual environment not activated. Activating .venv..."
     if [ -f .venv/bin/activate ]; then
         source .venv/bin/activate
@@ -31,6 +31,8 @@ if [[ -z "${VIRTUAL_ENV}" ]]; then
         print_error "Virtual environment not found. Please run: python -m venv .venv"
         exit 1
     fi
+elif [[ -n "${CI}" ]]; then
+    print_info "Running in CI environment, skipping virtual environment check"
 fi
 
 # Parse command line arguments
