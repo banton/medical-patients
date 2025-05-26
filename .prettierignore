@@ -11,6 +11,9 @@ output/
 temp/
 demo_output/
 
+# Deprecated files
+static/deprecated/
+
 # Caches
 .pytest_cache/
 .mypy_cache/

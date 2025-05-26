@@ -264,3 +264,7 @@ This ensures unfinished features are tracked and not forgotten.
 ## Additional Memory Entries
 
 - When changing HTML files, always confirm that no dependencies from API, JS or CSS, or other assets remain.
+
+## Additional Memory Entries
+
+- Always run proper linting and formatting with each file committing to git

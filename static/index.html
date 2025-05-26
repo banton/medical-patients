@@ -1,147 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Military Patient Generator</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .header {
-            background-color: #1a73e8;
-            color: white;
-            padding: 20px;
-            margin: -20px -20px 20px -20px;
-            text-align: center;
-        }
-        .info-box {
-            background-color: #e3f2fd;
-            border: 1px solid #1976d2;
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        .info-box h2 {
-            margin-top: 0;
-            color: #1976d2;
-        }
-        .file-list {
-            background-color: white;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 10px 0;
-            font-family: monospace;
-        }
-        .generate-button {
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            font-size: 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: block;
-            margin: 0 auto;
-            transition: background-color 0.3s;
-        }
-        .generate-button:hover {
-            background-color: #45a049;
-        }
-        .generate-button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .status-box {
-            background-color: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 20px;
-            margin-top: 30px;
-            display: none;
-        }
-        .status-box.show {
-            display: block;
-        }
-        .success {
-            color: #4caf50;
-        }
-        .error {
-            color: #f44336;
-        }
-        .progress {
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            height: 20px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            background-color: #1a73e8;
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        .download-link {
-            display: inline-block;
-            background-color: #1a73e8;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-top: 10px;
-        }
-        .download-link:hover {
-            background-color: #1557b0;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Military Patient Generator</h1>
-            <p>Simple Interface for Patient Data Generation</p>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Military Patient Generator</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f5f5f5;
+            }
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                background-color: #1a73e8;
+                color: white;
+                padding: 20px;
+                margin: -20px -20px 20px -20px;
+                text-align: center;
+            }
+            .info-box {
+                background-color: #e3f2fd;
+                border: 1px solid #1976d2;
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+            .info-box h2 {
+                margin-top: 0;
+                color: #1976d2;
+            }
+            .file-list {
+                background-color: white;
+                padding: 15px;
+                border-radius: 4px;
+                margin: 10px 0;
+                font-family: monospace;
+            }
+            .generate-button {
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                padding: 20px 40px;
+                font-size: 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: block;
+                margin: 0 auto;
+                transition: background-color 0.3s;
+            }
+            .generate-button:hover {
+                background-color: #45a049;
+            }
+            .generate-button:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+            .status-box {
+                background-color: white;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 20px;
+                margin-top: 30px;
+                display: none;
+            }
+            .status-box.show {
+                display: block;
+            }
+            .success {
+                color: #4caf50;
+            }
+            .error {
+                color: #f44336;
+            }
+            .progress {
+                background-color: #e0e0e0;
+                border-radius: 4px;
+                height: 20px;
+                margin: 10px 0;
+                overflow: hidden;
+            }
+            .progress-bar {
+                background-color: #1a73e8;
+                height: 100%;
+                width: 0%;
+                transition: width 0.3s;
+            }
+            .download-link {
+                display: inline-block;
+                background-color: #1a73e8;
+                color: white;
+                padding: 10px 20px;
+                text-decoration: none;
+                border-radius: 4px;
+                margin-top: 10px;
+            }
+            .download-link:hover {
+                background-color: #1557b0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Military Patient Generator</h1>
+                <p>Simple Interface for Patient Data Generation</p>
+            </div>
+
+            <div class="info-box">
+                <h2>Configuration Files</h2>
+                <p>The patient generator uses the following JSON configuration files located in the <code>patient_generator/</code> directory:</p>
+
+                <div class="file-list"><strong>demographics.json</strong> - Contains nationality data, names, and ID formats for NATO nations</div>
+
+                <div class="file-list"><strong>fronts_config.json</strong> - Defines battle fronts with casualty ratios and nationality distributions</div>
+
+                <div class="file-list"><strong>injuries.json</strong> - Specifies the distribution of injuries (disease, non-battle injuries, battle injuries)</div>
+
+                <p><strong>To modify the generation parameters, edit these JSON files directly before clicking Generate.</strong></p>
+            </div>
+
+            <button class="generate-button" id="generateBtn">Generate Patients</button>
+
+            <div class="status-box" id="statusBox">
+                <h3>Generation Status</h3>
+                <div id="statusMessage"></div>
+                <div class="progress" id="progressContainer" style="display: none">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="downloadContainer"></div>
+            </div>
         </div>
 
-        <div class="info-box">
-            <h2>Configuration Files</h2>
-            <p>The patient generator uses the following JSON configuration files located in the <code>patient_generator/</code> directory:</p>
-            
-            <div class="file-list">
-                <strong>demographics.json</strong> - Contains nationality data, names, and ID formats for NATO nations
-            </div>
-            
-            <div class="file-list">
-                <strong>fronts_config.json</strong> - Defines battle fronts with casualty ratios and nationality distributions
-            </div>
-            
-            <div class="file-list">
-                <strong>injuries.json</strong> - Specifies the distribution of injuries (disease, non-battle injuries, battle injuries)
-            </div>
-            
-            <p><strong>To modify the generation parameters, edit these JSON files directly before clicking Generate.</strong></p>
-        </div>
-
-        <button class="generate-button" id="generateBtn">Generate Patients</button>
-
-        <div class="status-box" id="statusBox">
-            <h3>Generation Status</h3>
-            <div id="statusMessage"></div>
-            <div class="progress" id="progressContainer" style="display: none;">
-                <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <div id="downloadContainer"></div>
-        </div>
-    </div>
-
-    <script src="/static/js/simple-app.js"></script>
-</body>
+        <script src="/static/js/simple-app.js"></script>
+    </body>
 </html>

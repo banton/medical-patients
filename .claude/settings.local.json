@@ -30,7 +30,10 @@
       "Bash(gh run view:*)",
       "Bash(npm run lint)",
       "Bash(gh pr view:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(npm run format:check:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   }
