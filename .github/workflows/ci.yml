@@ -164,7 +164,16 @@ jobs:
           API_KEY: your_secret_api_key_here
         run: |
           PYTHONPATH=. python src/main.py &
-          sleep 5
+          sleep 10
+          # Wait for server to be ready
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/health 2>/dev/null; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Waiting for server... ($i/30)"
+            sleep 1
+          done
           curl -f http://localhost:8000/health || exit 1
 
       - name: Run integration tests
