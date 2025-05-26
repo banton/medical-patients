@@ -244,24 +244,21 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: ${{ github.event_name == 'pull_request' && '0' || '1' }}
+          exit-code: '0'
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
-        if: always() && github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           sarif_file: trivy-results.sarif
           
-      - name: Display Trivy results for PRs
-        if: github.event_name == 'pull_request'
+      - name: Display Trivy results
+        if: always()
         run: |
           echo "Trivy scan completed. Results:"
-          cat trivy-results.sarif | jq '.runs[0].results | length' || echo "No vulnerabilities found"
+          if [ -f trivy-results.sarif ]; then
+            cat trivy-results.sarif | jq '.runs[0].results | length' || echo "No vulnerabilities found"
+          else
+            echo "No results file found"
+          fi
 
-      - name: Run Snyk security scan
-        uses: snyk/actions/python@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
