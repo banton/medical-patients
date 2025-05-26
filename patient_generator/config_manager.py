@@ -1,20 +1,31 @@
 # patient_generator/config_manager.py
-import json # Added for loading JSON
-from typing import Optional, Dict, Any, List
-from .database import Database, ConfigurationRepository
-from .schemas_config import ConfigurationTemplateDB, FrontsConfiguration, FrontDefinition # Added FrontsConfiguration, FrontDefinition
+import json  # Added for loading JSON
+from typing import Any, Dict, List, Optional
+
+from .database import ConfigurationRepository, Database
+from .schemas_config import (  # Added FrontsConfiguration, FrontDefinition
+    ConfigurationTemplateDB,
+    FrontDefinition,
+    FrontsConfiguration,
+)
+
 
 class ConfigurationManager:
     """
     Manages loading and providing access to the active scenario configuration template
     and the static fronts configuration file.
     """
+
     _active_configuration: Optional[ConfigurationTemplateDB] = None
     _config_id_loaded: Optional[str] = None
     _repository: ConfigurationRepository
-    _static_fronts_config: Optional[FrontsConfiguration] = None # Added for fronts_config.json
+    _static_fronts_config: Optional[FrontsConfiguration] = None  # Added for fronts_config.json
 
-    def __init__(self, database_instance: Optional[Database] = None, static_fronts_config_path: str = "patient_generator/fronts_config.json"):
+    def __init__(
+        self,
+        database_instance: Optional[Database] = None,
+        static_fronts_config_path: str = "patient_generator/fronts_config.json",
+    ):
         """
         Initializes the ConfigurationManager.
         If database_instance is not provided, it gets a default instance.
@@ -31,7 +42,7 @@ class ConfigurationManager:
         Loads the static fronts configuration from the specified JSON file.
         """
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path) as f:
                 data = json.load(f)
             self._static_fronts_config = FrontsConfiguration.model_validate(data)
             print(f"Successfully loaded static fronts configuration from: {file_path}")
@@ -41,10 +52,12 @@ class ConfigurationManager:
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON from {file_path}: {e}. Static fronts will not be used.")
             self._static_fronts_config = None
-        except Exception as e: # Catch Pydantic validation errors too
-            print(f"Error loading or validating static fronts configuration from {file_path}: {e}. Static fronts will not be used.")
+        except Exception as e:  # Catch Pydantic validation errors too
+            print(
+                f"Error loading or validating static fronts configuration from {file_path}: {e}. Static fronts will not be used."
+            )
             self._static_fronts_config = None
-            
+
     def get_static_front_definitions(self) -> Optional[List[FrontDefinition]]:
         """
         Returns the list of FrontDefinition objects from the loaded static fronts_config.json.
@@ -66,11 +79,10 @@ class ConfigurationManager:
                 self._config_id_loaded = config_id
                 print(f"Successfully loaded configuration: {config.name} (ID: {config_id})")
                 return True
-            else:
-                print(f"Configuration with ID '{config_id}' not found.")
-                self._active_configuration = None
-                self._config_id_loaded = None
-                return False
+            print(f"Configuration with ID '{config_id}' not found.")
+            self._active_configuration = None
+            self._config_id_loaded = None
+            return False
         except Exception as e:
             print(f"Error loading configuration ID '{config_id}': {e}")
             self._active_configuration = None
@@ -95,13 +107,13 @@ class ConfigurationManager:
         return default
 
     # Specific getters for commonly accessed configuration parts
-    def get_front_configs(self) -> Optional[List[Dict[str, Any]]]: # Returns list of dicts from Pydantic model
+    def get_front_configs(self) -> Optional[List[Dict[str, Any]]]:  # Returns list of dicts from Pydantic model
         if self._active_configuration:
             # Convert Pydantic FrontConfig models to dicts if downstream code expects dicts
             return [fc.model_dump() for fc in self._active_configuration.front_configs]
         return None
 
-    def get_facility_configs(self) -> Optional[List[Dict[str, Any]]]: # Returns list of dicts
+    def get_facility_configs(self) -> Optional[List[Dict[str, Any]]]:  # Returns list of dicts
         if self._active_configuration:
             return [fc.model_dump() for fc in self._active_configuration.facility_configs]
         return None
@@ -120,6 +132,7 @@ class ConfigurationManager:
         """Checks if a configuration is currently loaded."""
         return self._active_configuration is not None
 
+
 # Example Usage:
 # if __name__ == '__main__':
 #     # This example assumes the DB is up and has some configurations.
@@ -127,7 +140,7 @@ class ConfigurationManager:
 #     try:
 #         db_manager = Database.get_instance() # Initializes DB connection pool
 #         config_manager = ConfigurationManager(db_manager)
-        
+
 #         # Example: Load a configuration (replace 'your_config_id' with an actual ID)
 #         # First, create one if it doesn't exist using ConfigurationRepository directly or an API
 #         # repo = ConfigurationRepository(db_manager)
@@ -146,7 +159,7 @@ class ConfigurationManager:
 #         # your_config_id = created_config.id
 
 #         your_config_id = "some_existing_config_id" # Replace with a real ID from your DB
-        
+
 #         if config_manager.load_configuration(your_config_id):
 #             active_conf = config_manager.get_active_configuration()
 #             if active_conf:
@@ -157,7 +170,7 @@ class ConfigurationManager:
 #                     print(f"First front name: {fronts[0]['name']}")
 #         else:
 #             print(f"Could not load configuration with ID: {your_config_id}")
-            
+
 #     except Exception as e:
 #         print(f"An error occurred in ConfigurationManager example: {e}")
 #     finally:

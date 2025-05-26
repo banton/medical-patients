@@ -1,19 +1,16 @@
 """update_front_config_nationality_distribution_structure
 
 Revision ID: f5e470301516
-Revises: 88eedb601203 
+Revises: 88eedb601203
 Create Date: 2025-05-20 10:11:59.123456
 
 """
+
 from typing import Sequence, Union
 
-from alembic import op
-import sqlalchemy as sa
-
-
 # revision identifiers, used by Alembic.
-revision: str = 'f5e470301516'
-down_revision: Union[str, None] = '88eedb601203' # Ensure this points to the previous migration
+revision: str = "f5e470301516"
+down_revision: Union[str, None] = "88eedb601203"  # Ensure this points to the previous migration
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

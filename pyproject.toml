@@ -1,0 +1,210 @@
+[project]
+name = "military-medical-patient-generator"
+version = "1.0.0"
+description = "Military Medical Exercise Patient Generator"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[tool.ruff]
+# Python version target
+target-version = "py38"
+
+# Line length (matching Black)
+line-length = 120
+
+# Exclude directories
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+    ".mypy_cache",
+    ".pytest_cache",
+    "htmlcov",
+    "output",
+    "temp",
+]
+
+[tool.ruff.lint]
+# Enable specific rule sets
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    "EM",  # flake8-errmsg
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "G",   # flake8-logging
+    "PIE", # flake8-pie
+    "PT",  # flake8-pytest-style
+    "Q",   # flake8-quotes
+    "RSE", # flake8-raise
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "TCH", # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
+    "PD",  # pandas-vet
+    "PL",  # pylint
+    "NPY", # NumPy-specific rules
+    "RUF", # Ruff-specific rules
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "PLR0913", # too many arguments
+    "PLR2004", # magic value comparison
+    "ERA001", # commented-out code (keep for documentation)
+    "PTH123", # builtin-open (pathlib not always better)
+    "PTH118", # os-path-join (pathlib not always better)
+    "PTH110", # os-path-exists (pathlib not always better)
+    "PTH108", # os-unlink (pathlib not always better)
+    "PTH120", # os-path-dirname (pathlib not always better)
+    "PTH100", # os-path-abspath (pathlib not always better)
+    "PTH103", # os-makedirs (pathlib not always better)
+    "PTH104", # os-rename (pathlib not always better)
+    "ARG001", # unused function arguments (often required by frameworks)
+    "ARG002", # unused method arguments (often required by interfaces)
+    "ARG004", # unused static method arguments (often required)
+    "B008",   # function-call-in-default-argument (sometimes necessary)
+    "DTZ005", # call-datetime-now-without-tzinfo (not always needed)
+    "DTZ003", # call-datetime-utcnow (not always needed)
+    "DTZ007", # call-datetime-strptime-without-zone (not always needed)
+    "PLW0603", # global-statement (sometimes necessary)
+    "SIM115", # open-file-with-context-handler (not always applicable)
+    "G004",   # logging-f-string (f-strings are more readable)
+    "B904",   # raise-without-from-inside-except (not always needed)
+    "PLR0912", # too-many-branches (sometimes necessary for business logic)
+    "PLR0915", # too-many-statements (sometimes necessary for business logic)
+    "PLW2901", # redefined-loop-name (not always a problem)
+    "B019",   # cached-instance-method (not always a problem)
+    "DTZ011", # call-date-today (timezone not always needed)
+    "N818",   # error-suffix-on-exception-name (not critical)
+    "RUF012", # mutable-class-default (sometimes intentional)
+    "SIM108", # if-else-block-instead-of-if-exp (readability preference)
+]
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Allow certain confusables
+allowed-confusables = ["'", "'", "–", "—"]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore import violations in __init__.py files
+"__init__.py" = ["F401", "F403"]
+# Ignore missing docstrings in tests
+"tests/*.py" = ["D100", "D101", "D102", "D103"]
+"tests_*.py" = ["D100", "D101", "D102", "D103"]
+# Allow assert in tests
+"test_*.py" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["patient_generator", "src"]
+combine-as-imports = true
+force-sort-within-sections = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = true
+mark-parentheses = true
+
+[tool.ruff.format]
+# Use double quotes
+quote-style = "double"
+
+# Indent with spaces
+indent-style = "space"
+
+# Format docstrings
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+no_implicit_optional = false
+warn_redundant_casts = false
+warn_unused_ignores = false
+warn_no_return = false
+warn_unreachable = false
+strict_equality = false
+follow_imports = "skip"
+
+# Ignore missing imports for third-party libraries
+[[tool.mypy.overrides]]
+module = [
+    "psycopg2.*",
+    "dicttoxml",
+    "faker.*",
+    "tqdm.*",
+    "slowapi.*",
+    "concurrent_log_handler.*",
+    "testcontainers.*",
+    "patient_generator.*",  # Legacy modules with complex typing
+]
+ignore_missing_imports = true
+ignore_errors = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["src", "patient_generator"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.black]
+line-length = 120
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Directories
+  \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | \.venv
+  | build
+  | dist
+  | node_modules
+)/
+'''

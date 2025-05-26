@@ -531,7 +531,7 @@
      "id_generator": "function() { let dd = 1 + Math.floor(Math.random() * 28); let mm = 1 + Math.floor(Math.random() * 12); let yyy = Math.floor(1950 + Math.random() * 70); let rrr = Math.floor(Math.random() * 1000); let zzz = Math.floor(Math.random() * 1000); return dd.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + (yyy % 1000).toString() + rrr.toString().padStart(3, '0') + zzz.toString().padStart(3, '0'); }",
      "language": "sl"
    },
-   "ESP": {
+    "ESP": {
      "name": "Spain",
      "first_names": {
        "male": [
@@ -551,6 +551,26 @@
      "id_generator": "function() { let numbers = Math.floor(10000000 + Math.random() * 90000000); let letters = 'TRWAGMYFPDXBNJZSQVHLCKE'; let checksum = numbers % 23; return numbers.toString() + letters.charAt(checksum); }",
      "language": "es"
    },
+    "SWE": {
+      "name": "Sweden",
+      "first_names": {
+        "male": [
+          "William", "Liam", "Noah", "Elias", "Hugo", "Oliver", "Oscar", "Lucas", "Alexander", "Leo",
+          "Erik", "Karl", "Gustav", "Johan", "Mattias", "Andreas", "Daniel", "Fredrik", "Henrik", "Niklas"
+        ],
+        "female": [
+          "Alice", "Maja", "Elsa", "Ebba", "Wilma", "Olivia", "Agnes", "Emma", "Astrid", "Alma",
+          "Sara", "Anna", "Karin", "Maria", "Helena", "Ingrid", "Linnéa", "Sofia", "Ida", "Johanna"
+        ]
+      },
+      "last_names": [
+        "Johansson", "Andersson", "Karlsson", "Nilsson", "Eriksson", "Larsson", "Olsson", "Persson", "Svensson", "Gustafsson",
+        "Pettersson", "Jonsson", "Jansson", "Hansson", "Bengtsson", "Jakobsson", "Magnusson", "Olofsson", "Lindberg", "Lundberg"
+      ],
+      "id_format": "\\d{6}[-+]\\d{4}",
+      "id_generator": "function() { let yy = Math.floor(Math.random() * 100); let mm = 1 + Math.floor(Math.random() * 12); let dd = 1 + Math.floor(Math.random() * 28); let sep = Math.random() > 0.5 ? '-' : '+'; let nnnn = Math.floor(1000 + Math.random() * 9000); return yy.toString().padStart(2, '0') + mm.toString().padStart(2, '0') + dd.toString().padStart(2, '0') + sep + nnnn.toString(); }",
+      "language": "sv"
+    },
    "TUR": {
      "name": "Turkey",
      "first_names": {

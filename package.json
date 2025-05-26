@@ -6,10 +6,18 @@
   "description": "Frontend components for Medical Patients Data System, potentially including advanced visualizations.",
   "scripts": {
     "test": "jest",
+    "test:ui": "jest static/new-ui/tests/",
+    "test:e2e": "python -m pytest tests/test_ui_e2e.py -v",
+    "test:all": "npm test && npm run test:ui && npm run test:e2e",
     "build:viz-dashboard": "esbuild enhanced-visualization-dashboard.tsx --bundle --outfile=static/dist/bundle.js --platform=browser --format=iife --jsx=automatic --loader:.js=jsx",
     "build:config-panel": "esbuild ConfigurationPanel.tsx --bundle --outfile=static/dist/configuration-panel.js --platform=browser --format=iife --jsx=automatic --loader:.js=jsx",
     "build:military-dashboard": "esbuild MilitaryMedicalDashboard.tsx --bundle --outfile=static/dist/military-dashboard-bundle.js --platform=browser --format=iife --jsx=automatic --loader:.js=jsx",
-    "build:all-frontend": "npm run build:viz-dashboard && npm run build:config-panel && npm run build:military-dashboard"
+    "build:all-frontend": "npm run build:viz-dashboard && npm run build:config-panel && npm run build:military-dashboard",
+    "lint": "eslint static/js/**/*.js --fix",
+    "lint:check": "eslint static/js/**/*.js",
+    "format": "prettier --write \"static/**/*.{js,json,css,html}\"",
+    "format:check": "prettier --check \"static/**/*.{js,json,css,html}\"",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@testing-library/react": "^16.3.0",
@@ -24,6 +32,17 @@
     "@types/react-dom": "^19.1.5",
     "esbuild": "^0.25.4",
     "jest-environment-jsdom": "^29.7.0",
-    "ts-jest": "^29.3.2"
+    "ts-jest": "^29.3.2",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "prettier": "^3.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^14.0.0"
+  },
+  "lint-staged": {
+    "*.js": ["eslint --fix", "prettier --write"],
+    "*.{json,css,html}": ["prettier --write"],
+    "*.py": ["ruff check --fix", "ruff format"]
   }
 }
