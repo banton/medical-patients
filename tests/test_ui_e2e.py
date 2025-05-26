@@ -15,6 +15,8 @@ BASE_URL = "http://localhost:8000"
 API_KEY = "your_secret_api_key_here"
 HEADERS = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
 
+pytestmark = [pytest.mark.integration]
+
 
 class TestUIAPIIntegration:
     """Test suite for UI and API integration."""

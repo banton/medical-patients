@@ -120,7 +120,7 @@ jobs:
           DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
           REDIS_URL: redis://localhost:6379/0
         run: |
-          pytest tests/ -v --cov=src --cov=patient_generator --cov-report=xml
+          pytest tests/ -v -m "not integration and not e2e" --cov=src --cov=patient_generator --cov-report=xml
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -151,7 +151,27 @@ jobs:
           docker compose up -d db redis
           sleep 10
 
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
+        run: |
+          alembic upgrade head
+
+      - name: Start application server
+        env:
+          DATABASE_URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
+          REDIS_URL: redis://localhost:6379/0
+          API_KEY: your_secret_api_key_here
+        run: |
+          PYTHONPATH=. python src/main.py &
+          sleep 5
+          curl -f http://localhost:8000/health || exit 1
+
       - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
+          REDIS_URL: redis://localhost:6379/0
+          API_KEY: your_secret_api_key_here
         run: |
           ./run_tests.sh integration
 

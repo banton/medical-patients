@@ -10,6 +10,8 @@ import requests
 BASE_URL = "http://localhost:8000"
 API_KEY = "your_secret_api_key_here"
 
+pytestmark = [pytest.mark.integration]
+
 
 # Load configuration from JSON files
 def load_json_config():

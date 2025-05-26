@@ -1,8 +1,11 @@
 """Tests for the simplified UI."""
 
+import pytest
 import requests
 
 BASE_URL = "http://localhost:8000"
+
+pytestmark = [pytest.mark.integration]
 
 
 class TestSimpleUI:

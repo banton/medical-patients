@@ -19,6 +19,9 @@ API_KEY = os.getenv("API_KEY", "your_secret_api_key_here")
 # Headers for API requests
 HEADERS = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
 
+# Mark all tests in this module as e2e and integration
+pytestmark = [pytest.mark.e2e, pytest.mark.integration]
+
 
 class TestE2EPatientGeneration:
     """Test complete patient generation workflow"""
