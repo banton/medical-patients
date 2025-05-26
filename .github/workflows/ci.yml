@@ -210,7 +210,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.DOCKER_USERNAME }}/military-patient-generator
+            ${{ github.repository_owner }}/military-patient-generator
           tags: |
             type=ref,event=branch
             type=ref,event=pr
