@@ -76,7 +76,7 @@ The application features a clean, domain-driven architecture with clear separati
 ├── static/                   # Frontend assets
 ├── alembic_migrations/       # Database migrations
 └── config.py                 # Application configuration
-
+```
 ### Key Components
 
 1. **API Layer** (`src/api/v1/`):
