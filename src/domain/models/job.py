@@ -48,7 +48,7 @@ class Job:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert job to dictionary representation."""
-        data = {
+        data: Dict[str, Any] = {
             "job_id": self.job_id,
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),

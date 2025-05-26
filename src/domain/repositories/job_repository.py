@@ -38,7 +38,7 @@ class JobRepositoryInterface(ABC):
 class InMemoryJobRepository(JobRepositoryInterface):
     """In-memory implementation of job repository."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._jobs: Dict[str, Job] = {}
 
     async def create(self, config: Dict[str, Any]) -> Job:

@@ -24,7 +24,8 @@
       "Bash(ruff check:*)",
       "Bash(ruff format:*)",
       "Bash(sed:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(mypy:*)"
     ],
     "deny": []
   }

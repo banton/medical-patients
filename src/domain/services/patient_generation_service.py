@@ -241,7 +241,7 @@ class AsyncPatientGenerationService:
         # Create output streams for each format
         output_streams = {}
 
-        for format in context.output_formats:
+        for format in (context.output_formats or ["json"]):
             if format == "json":
                 # JSON needs special handling for streaming
                 temp_file = tempfile.NamedTemporaryFile(
@@ -272,7 +272,7 @@ class AsyncPatientGenerationService:
                 patient_count += 1
 
                 # Write to each format
-                for format in context.output_formats:
+                for format in (context.output_formats or ["json"]):
                     stream = output_streams[format]
 
                     if format == "json":
