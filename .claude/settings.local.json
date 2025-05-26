@@ -25,7 +25,12 @@
       "Bash(ruff format:*)",
       "Bash(sed:*)",
       "Bash(mv:*)",
-      "Bash(mypy:*)"
+      "Bash(mypy:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run view:*)",
+      "Bash(npm run lint)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)"
     ],
     "deny": []
   }

@@ -7,13 +7,13 @@ window.API_CONFIG = {
     // For development, it uses the default value
     API_KEY: 'your_secret_api_key_here',
     API_BASE_URL: window.location.origin,
-    
+
     // Helper function to get headers with API key
-    getHeaders: function() {
+    getHeaders: function () {
         return {
             'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-API-Key': this.API_KEY  // Note: case-sensitive, must match backend
+            Accept: 'application/json',
+            'X-API-Key': this.API_KEY // Note: case-sensitive, must match backend
         };
     }
 };
