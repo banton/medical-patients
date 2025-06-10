@@ -20,6 +20,9 @@ class AccordionComponent {
         
         // Set initial state - first item expanded
         this.expand(0);
+        
+        // Validate all items with default content on initialization
+        this.validateAllItems();
     }
     
     setupItems() {
@@ -333,6 +336,12 @@ class AccordionComponent {
     
     getAllContent() {
         return this.items.map(item => item.editor?.value || '');
+    }
+    
+    validateAllItems() {
+        this.items.forEach((item, index) => {
+            this.validateItem(index);
+        });
     }
 }
 
