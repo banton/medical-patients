@@ -1,7 +1,8 @@
-import random
+import datetime  # Added import
 import json
-import datetime # Added import
-import os # Added import for path joining
+import os  # Added import for path joining
+import random
+
 
 class DemographicsGenerator:
     """Generates realistic demographics based on nationality"""
@@ -9,10 +10,10 @@ class DemographicsGenerator:
     def __init__(self):
         # Determine the path to the JSON file relative to this script
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        json_path = os.path.join(base_dir, 'demographics.json')
+        json_path = os.path.join(base_dir, "demographics.json")
 
         try:
-            with open(json_path, 'r', encoding='utf-8') as f:
+            with open(json_path, encoding="utf-8") as f:
                 self.demographic_data = json.load(f).get("NATO_NATIONS", {})
         except FileNotFoundError:
             print(f"Error: demographics.json not found at {json_path}")
@@ -20,7 +21,7 @@ class DemographicsGenerator:
         except json.JSONDecodeError:
             print(f"Error: Could not decode JSON from {json_path}")
             self.demographic_data = {}
-        
+
         # Initialize data sources for different nationalities
         self._init_name_data()
         self._init_id_formats()
@@ -48,18 +49,21 @@ class DemographicsGenerator:
         """Generate a complete person profile for the given nationality"""
         # If gender not specified, choose randomly
         if gender is None:
-            gender = random.choice(['male', 'female'])
+            gender = random.choice(["male", "female"])
 
         # Default to USA if nationality not found or data missing
-        if nationality not in self.first_names or \
-           nationality not in self.last_names or \
-           gender not in self.first_names.get(nationality, {}):
-            
+        if (
+            nationality not in self.first_names
+            or nationality not in self.last_names
+            or gender not in self.first_names.get(nationality, {})
+        ):
             # Try to find a fallback with the required gender
-            fallback_nationality = "USA" # Default fallback
-            if fallback_nationality not in self.first_names or \
-               fallback_nationality not in self.last_names or \
-               gender not in self.first_names.get(fallback_nationality, {}):
+            fallback_nationality = "USA"  # Default fallback
+            if (
+                fallback_nationality not in self.first_names
+                or fallback_nationality not in self.last_names
+                or gender not in self.first_names.get(fallback_nationality, {})
+            ):
                 # If USA also doesn't work, find any valid nation/gender
                 found_fallback = False
                 for nat_code, nat_data in self.first_names.items():
@@ -67,8 +71,8 @@ class DemographicsGenerator:
                         fallback_nationality = nat_code
                         found_fallback = True
                         break
-                if not found_fallback: # Absolute last resort, pick any gender from any nation
-                     for nat_code, nat_data in self.first_names.items():
+                if not found_fallback:  # Absolute last resort, pick any gender from any nation
+                    for nat_code, nat_data in self.first_names.items():
                         if nat_code in self.last_names:
                             available_genders = list(nat_data.keys())
                             if available_genders:
@@ -78,13 +82,18 @@ class DemographicsGenerator:
                                 break
                 if not found_fallback:
                     # This should ideally not happen if demographics.json is populated
-                    return { 
-                        "family_name": "Undefined", "given_name": "Undefined", "gender": gender,
-                        "id_number": None, "birthdate": "1900-01-01", "nationality": "UND",
-                        "religion": None, "weight": 0, "blood_type": "O"
+                    return {
+                        "family_name": "Undefined",
+                        "given_name": "Undefined",
+                        "gender": gender,
+                        "id_number": None,
+                        "birthdate": "1900-01-01",
+                        "nationality": "UND",
+                        "religion": None,
+                        "weight": 0,
+                        "blood_type": "O",
                     }
             nationality = fallback_nationality
-
 
         # Generate first and last name
         first_name = random.choice(self.first_names[nationality][gender])
@@ -98,25 +107,25 @@ class DemographicsGenerator:
         # Generate birthdate (between 18-50 years old)
         years_ago = random.randint(18, 50)
         days_variation = random.randint(-180, 180)
-        birthdate_dt = datetime.datetime.now() - datetime.timedelta(days=365.25*years_ago + days_variation)
+        birthdate_dt = datetime.datetime.now() - datetime.timedelta(days=365.25 * years_ago + days_variation)
         birthdate = birthdate_dt.strftime("%Y-%m-%d")
 
         # Generate religion (optional)
         religions = [
-            "1013", # Roman Catholic
-            "1025", # Lutheran
-            "1026", # Protestant
-            "1049", # Anglican
-            "1051", # Baptist
-            "1068", # Orthodox
-            "1077", # Methodist
-            None,   # No religion
-            None    # No religion (weighted to be more common)
+            "1013",  # Roman Catholic
+            "1025",  # Lutheran
+            "1026",  # Protestant
+            "1049",  # Anglican
+            "1051",  # Baptist
+            "1068",  # Orthodox
+            "1077",  # Methodist
+            None,  # No religion
+            None,  # No religion (weighted to be more common)
         ]
         religion = random.choice(religions)
 
         # Generate random weight based on gender (more realistic distribution)
-        if gender == 'male':
+        if gender == "male":
             weight = round(random.normalvariate(80, 12), 1)  # Male: mean 80kg, SD 12kg
         else:
             weight = round(random.normalvariate(65, 10), 1)  # Female: mean 65kg, SD 10kg
@@ -128,10 +137,10 @@ class DemographicsGenerator:
             "family_name": last_name,
             "given_name": first_name,
             "gender": gender,
-            "id_number": id_number, # Will be None
+            "id_number": id_number,  # Will be None
             "birthdate": birthdate,
             "nationality": nationality,
             "religion": religion,
             "weight": weight,
-            "blood_type": blood_type
+            "blood_type": blood_type,
         }

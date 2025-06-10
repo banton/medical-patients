@@ -1,13 +1,12 @@
+from logging.config import fileConfig
 import os
 import sys
-from logging.config import fileConfig
-
-from sqlalchemy import engine_from_config, pool, MetaData
 
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # Ensure the application's modules can be imported by Alembic
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,8 +20,9 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 # Import your models' MetaData object here.
-from patient_generator.models_db import Base # Import Base from our models file
-target_metadata = Base.metadata # Point Alembic to our models' metadata
+from patient_generator.models_db import Base  # Import Base from our models file
+
+target_metadata = Base.metadata  # Point Alembic to our models' metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -63,13 +63,15 @@ def run_migrations_online() -> None:
     """
     # Get the database URL from the environment variable first
     db_url = os.getenv("DATABASE_URL")
-    
+
     # If DATABASE_URL is not set, fall back to alembic.ini configuration
     if db_url is None:
         ini_section = config.get_section(config.config_ini_section, {})
         # Ensure 'sqlalchemy.url' is present in the ini_section or handle its absence
         if "sqlalchemy.url" not in ini_section:
-            raise ValueError("sqlalchemy.url not found in alembic.ini and DATABASE_URL environment variable is not set.")
+            raise ValueError(
+                "sqlalchemy.url not found in alembic.ini and DATABASE_URL environment variable is not set."
+            )
         connectable = engine_from_config(
             ini_section,
             prefix="sqlalchemy.",
@@ -79,12 +81,11 @@ def run_migrations_online() -> None:
         # If DATABASE_URL is set, create engine configuration directly
         # This assumes DATABASE_URL is a complete SQLAlchemy URL
         from sqlalchemy import create_engine
+
         connectable = create_engine(db_url)
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

@@ -10,6 +10,33 @@ COPY requirements.txt .
 # Install dependencies into a wheel directory
 RUN pip wheel --no-cache-dir --wheel-dir /app/wheels -r requirements.txt
 
+# Test stage - for running tests in CI
+FROM python:3.11-bookworm AS test
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH="/app"
+
+WORKDIR /app
+
+# Install system dependencies for testing
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install all dependencies including dev
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir pytest pytest-cov pytest-asyncio testcontainers[postgres,redis]
+
+# Copy all application code
+COPY . /app/
+
+# Run tests by default in test stage
+CMD ["pytest", "tests/", "-v", "--cov=src", "--cov=patient_generator"]
+
 # Final stage
 FROM python:3.11-bookworm
 
@@ -32,13 +59,10 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
     && rm -rf /wheels
 
 # Copy application code
-COPY patient_generator/visualization_data.py /app/patient_generator/visualization_data.py
-COPY static/js/visualization-dashboard.js /app/static/js/visualization-dashboard.js
-COPY static/visualizations.html /app/static/visualizations.html
 COPY patient_generator/ /app/patient_generator/
+COPY src/ /app/src/
 COPY static/ /app/static/
-COPY app.py /app/
-COPY tests.py /app/
+COPY config.py /app/
 COPY setup.py /app/
 COPY run_generator.py /app/
 
@@ -53,4 +77,4 @@ USER patientgen
 EXPOSE 8000
 
 # Default command to run the FastAPI application
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

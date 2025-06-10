@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+static/dist/
+output/
+temp/
+demo_output/
+
+# Deprecated files
+static/deprecated/
+
+# Caches
+.pytest_cache/
+.mypy_cache/
+__pycache__/
+*.pyc
+.cache/
+
+# Version control
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# Documentation
+*.md
+
+# Minified files
+*.min.js
+*.min.css
+
+# Vendor files
+vendor/
+
+# Generated files
+*.generated.*
+
+# Data files
+*.json
+*.xml
+*.csv
+
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+
+# Archives
+*.zip
+*.tar
+*.gz

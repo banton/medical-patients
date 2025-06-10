@@ -1,0 +1,13 @@
+# Trivy Security Scanner Ignore File
+# These are known vulnerabilities in dependencies that are either:
+# - Not exploitable in our use case
+# - Awaiting upstream fixes
+# - Low severity
+
+# Ignore test-only dependencies
+tests/
+node_modules/
+
+# Ignore specific CVEs that are not applicable
+# Add specific CVE IDs here as needed, e.g.:
+# CVE-2023-12345

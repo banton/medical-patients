@@ -1,10 +1,11 @@
 # patient_generator/nationality_data.py
 import json
 import os
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 # Assuming schemas_config.py contains NationalityConfig Pydantic model
 # from .schemas_config import NationalityConfig # Not strictly needed for this data provider class itself
+
 
 class NationalityDataProvider:
     _data: Dict[str, Any] = {}
@@ -12,14 +13,14 @@ class NationalityDataProvider:
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(NationalityDataProvider, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
     def __init__(self, data_file_path: Optional[str] = None):
         if self._initialized:
             return
-        
+
         if data_file_path is None:
             # Default path relative to this file's directory or project root
             # Assuming this file is in patient_generator directory
@@ -43,23 +44,23 @@ class NationalityDataProvider:
             #     raise FileNotFoundError(f"Demographics data file not found at {data_file_path}")
             # For simplicity, if not found at expected path, we'll operate with empty data or raise.
             # Let's raise for now to make it explicit if the file is missing.
-            raise FileNotFoundError(f"Demographics data file not found at {data_file_path}. Ensure 'demographics.json' is in the 'patient_generator' directory.")
-
+            msg = f"Demographics data file not found at {data_file_path}. Ensure 'demographics.json' is in the 'patient_generator' directory."
+            raise FileNotFoundError(msg)
 
         try:
-            with open(data_file_path, 'r', encoding='utf-8') as f:
+            with open(data_file_path, encoding="utf-8") as f:
                 self._data = json.load(f).get("NATO_NATIONS", {})
             print(f"Successfully loaded demographics data from {data_file_path}")
         except FileNotFoundError:
             print(f"Error: Demographics data file not found at {data_file_path}.")
-            self._data = {} # Initialize with empty data
+            self._data = {}  # Initialize with empty data
         except json.JSONDecodeError:
             print(f"Error: Could not decode JSON from {data_file_path}.")
-            self._data = {} # Initialize with empty data
+            self._data = {}  # Initialize with empty data
         except Exception as e:
             print(f"An unexpected error occurred while loading demographics data: {e}")
             self._data = {}
-            
+
         self._initialized = True
 
     def get_nationality_data(self, country_code: str) -> Optional[Dict[str, Any]]:
@@ -111,7 +112,7 @@ class NationalityDataProvider:
         if nation_data:
             return nation_data.get("id_generator")
         return None
-        
+
     def get_language_codes(self, country_code: str) -> Optional[List[str]]:
         """
         Retrieves the language code(s) for a given country code.
@@ -121,8 +122,9 @@ class NationalityDataProvider:
         if nation_data:
             languages_str = nation_data.get("language")
             if languages_str:
-                return [lang.strip() for lang in languages_str.split(',')]
+                return [lang.strip() for lang in languages_str.split(",")]
         return None
+
 
 # Example Usage (for testing or direct use):
 # if __name__ == "__main__":
@@ -137,7 +139,7 @@ class NationalityDataProvider:
 #             print("ID Format:", provider.get_id_format("USA"))
 #             # print("ID Generator Script:", provider.get_id_generator_script("USA"))
 #             print("Languages:", provider.get_language_codes("USA"))
-        
+
 #         bel_data = provider.get_nationality_data("BEL")
 #         if bel_data:
 #             print("\nBelgium Languages:", provider.get_language_codes("BEL"))

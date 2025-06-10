@@ -1,866 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Military Medical Exercise Patient Generator</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        .hidden {
-            display: none;
-        }
-        
-        .progress {
-            height: 25px;
-        }
-        
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .navbar-brand {
-            font-weight: bold;
-        }
-        
-        #jobContainer {
-            max-height: 800px;
-            overflow-y: auto;
-        }
-        
-        .summary-table {
-            font-size: 0.9rem;
-        }
-        
-        .summary-table th {
-            font-weight: 600;
-        }
-        
-        .status-badge {
-            font-size: 1rem;
-        }
-        
-        .chart-container {
-            height: 200px;
-            margin-top: 10px;
-        }
-        
-        .stat-card {
-            text-align: center;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        
-        .stat-card .number {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        
-        .stat-card .label {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-        
-        .bg-light-blue {
-            background-color: #e7f5ff;
-        }
-        
-        .bg-light-green {
-            background-color: #ebfbee;
-        }
-        
-        .bg-light-orange {
-            background-color: #fff9eb;
-        }
-        
-        .bg-light-red {
-            background-color: #ffebeb;
-        }
-        
-        /* Enhanced progress display */
-        .progress-container {
-            margin-bottom: 1rem;
-        }
-        
-        .progress-details {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-        
-        .phase-progress {
-            height: 10px;
-            margin-top: 5px;
-        }
-        
-        .progress-phase-name {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-        
-        .progress-phase-description {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        
-        .time-estimate {
-            text-align: right;
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-        
-        .progress-info-container {
-            background-color: #f8f9fa;
-            border-radius: 0.25rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .progress-icon {
-            font-size: 1.5rem;
-            margin-right: 10px;
-            color: #0d6efd;
-        }
-        
-        .progress-counter {
-            font-size: 0.9rem;
-            margin-top: 5px;
-            color: #6c757d;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-notes-medical me-2"></i>Military Patient Generator
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="mainNavbar">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="/">
-                            <i class="fas fa-home me-1"></i> Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/visualizations">
-                            <i class="fas fa-chart-line me-1"></i> Advanced Visualizations
-                        </a>
-                    </li>
-                </ul>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Military Patient Generator</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 0;
+                padding: 0;
+                background-color: #f5f5f5;
+            }
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                background-color: #1a73e8;
+                color: white;
+                padding: 20px;
+                margin: -20px -20px 20px -20px;
+                text-align: center;
+            }
+            .info-box {
+                background-color: #e3f2fd;
+                border: 1px solid #1976d2;
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 30px;
+            }
+            .info-box h2 {
+                margin-top: 0;
+                color: #1976d2;
+            }
+            .file-list {
+                background-color: white;
+                padding: 15px;
+                border-radius: 4px;
+                margin: 10px 0;
+                font-family: monospace;
+            }
+            .generate-button {
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                padding: 20px 40px;
+                font-size: 20px;
+                border-radius: 4px;
+                cursor: pointer;
+                display: block;
+                margin: 0 auto;
+                transition: background-color 0.3s;
+            }
+            .generate-button:hover {
+                background-color: #45a049;
+            }
+            .generate-button:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+            .status-box {
+                background-color: white;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                padding: 20px;
+                margin-top: 30px;
+                display: none;
+            }
+            .status-box.show {
+                display: block;
+            }
+            .success {
+                color: #4caf50;
+            }
+            .error {
+                color: #f44336;
+            }
+            .progress {
+                background-color: #e0e0e0;
+                border-radius: 4px;
+                height: 20px;
+                margin: 10px 0;
+                overflow: hidden;
+            }
+            .progress-bar {
+                background-color: #1a73e8;
+                height: 100%;
+                width: 0%;
+                transition: width 0.3s;
+            }
+            .download-link {
+                display: inline-block;
+                background-color: #4caf50;
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 4px;
+                margin-top: 10px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                text-decoration: none;
+            }
+            .download-link:hover {
+                background-color: #45a049;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Military Patient Generator</h1>
+                <p>Simple Interface for Patient Data Generation</p>
+            </div>
+
+            <div class="info-box">
+                <h2>Configuration Files</h2>
+                <p>The patient generator uses the following JSON configuration files located in the <code>patient_generator/</code> directory:</p>
+
+                <div class="file-list"><strong>demographics.json</strong> - Contains nationality data, names, and ID formats for NATO nations</div>
+
+                <div class="file-list"><strong>fronts_config.json</strong> - Defines battle fronts with casualty ratios and nationality distributions</div>
+
+                <div class="file-list"><strong>injuries.json</strong> - Specifies the distribution of injuries (disease, non-battle injuries, battle injuries)</div>
+
+                <p><strong>To modify the generation parameters, edit these JSON files directly before clicking Generate.</strong></p>
+            </div>
+
+            <button class="generate-button" id="generateBtn">Generate Patients</button>
+
+            <div class="status-box" id="statusBox">
+                <h3>Generation Status</h3>
+                <div id="statusMessage"></div>
+                <div class="progress" id="progressContainer" style="display: none">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div id="downloadContainer"></div>
             </div>
         </div>
-    </nav>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-5">
-                <div class="card">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h4><i class="fas fa-cog me-2"></i>Generator Configuration</h4>
-                        <button id="advancedConfigBtn" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#configurationModal">
-                            <i class="fas fa-sliders-h me-1"></i>Advanced Configuration
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <form id="generatorForm">
-                            <div class="mb-3">
-                                <label for="totalPatients" class="form-label">Total Patients</label>
-                                <input type="number" class="form-control" id="totalPatients" value="1440" min="1" max="10000">
-                            </div>
-                            
-                            <div class="mb-3">
-                                <h5><i class="fas fa-globe-europe me-2"></i>Front Distribution (Basic UI)</h5>
-                                <div id="basicFrontDistributionUI">
-                                    {/* This content will be replaced if static config is active */}
-                                    <div class="row">
-                                        <div class="col">
-                                            <label for="polishFront" class="form-label">Polish Front (%)</label>
-                                            <input type="number" class="form-control front-percent" id="polishFront" value="50.0" min="0" max="100" step="0.1">
-                                        </div>
-                                        <div class="col">
-                                            <label for="estonianFront" class="form-label">Estonian Front (%)</label>
-                                            <input type="number" class="form-control front-percent" id="estonianFront" value="33.3" min="0" max="100" step="0.1">
-                                        </div>
-                                        <div class="col">
-                                            <label for="finnishFront" class="form-label">Finnish Front (%)</label>
-                                            <input type="number" class="form-control front-percent" id="finnishFront" value="16.7" min="0" max="100" step="0.1">
-                                        </div>
-                                    </div>
-                                    <div class="form-text text-danger hidden" id="frontPercentError">Percentages must add up to 100%</div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <h5><i class="fas fa-kit-medical me-2"></i>Injury Distribution</h5>
-                                <div class="row">
-                                    <div class="col">
-                                        <label for="diseasePercent" class="form-label">Disease (%)</label>
-                                        <input type="number" class="form-control injury-percent" id="diseasePercent" value="52.0" min="0" max="100" step="0.1">
-                                    </div>
-                                    <div class="col">
-                                        <label for="nonBattlePercent" class="form-label">Non-Battle (%)</label>
-                                        <input type="number" class="form-control injury-percent" id="nonBattlePercent" value="33.0" min="0" max="100" step="0.1">
-                                    </div>
-                                    <div class="col">
-                                        <label for="battleTraumaPercent" class="form-label">Battle Trauma (%)</label>
-                                        <input type="number" class="form-control injury-percent" id="battleTraumaPercent" value="15.0" min="0" max="100" step="0.1">
-                                    </div>
-                                </div>
-                                <div class="form-text text-danger hidden" id="injuryPercentError">Percentages must add up to 100%</div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <h5><i class="fas fa-file-export me-2"></i>Output Formats</h5>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="json" id="formatJson" checked>
-                                    <label class="form-check-label" for="formatJson">
-                                        JSON
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="xml" id="formatXml" checked>
-                                    <label class="form-check-label" for="formatXml">
-                                        XML
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <h5><i class="fas fa-sliders me-2"></i>Additional Options</h5>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="useCompression" checked>
-                                    <label class="form-check-label" for="useCompression">
-                                        Generate compressed (gzip) files
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="useEncryption" checked>
-                                    <label class="form-check-label" for="useEncryption">
-                                        Generate encrypted (AES-256-GCM) files
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="baseDate" class="form-label">Exercise Base Date</label>
-                                <input type="date" class="form-control" id="baseDate" value="2025-06-01">
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="encryptionPassword" class="form-label">Encryption Password (optional)</label>
-                                <input type="password" class="form-control" id="encryptionPassword" placeholder="Leave blank for random key">
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary w-100" id="generateBtn">
-                                <i class="fas fa-play me-2"></i>Generate Patients
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-7">
-                <div class="card">
-                    <div class="card-header bg-light">
-                        <h4><i class="fas fa-tasks me-2"></i>Jobs</h4>
-                    </div>
-                    <div class="card-body" id="jobContainer">
-                        <div class="alert alert-info" id="noJobsMessage">
-                            <i class="fas fa-info-circle me-2"></i>No jobs yet. Configure and start a generation job.
-                        </div>
-                        <div id="jobsList"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Job Card Template -->
-    <template id="jobCardTemplate">
-        <div class="card mb-3 job-card" id="job-{job_id}">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 job-title">Job: {job_id}</h5>
-                    <span class="badge bg-info status-badge job-status">Queued</span>
-                </div>
-            </div>
-            <div class="card-body">
-                <!-- Enhanced Progress Display -->
-                <div class="progress-info-container">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="progress-icon">
-                            <i class="fas fa-sync-alt fa-spin"></i>
-                        </div>
-                        <div>
-                            <div class="progress-phase-name" id="phase-name-{job_id}">Initializing</div>
-                            <div class="progress-phase-description" id="phase-description-{job_id}">Setting up simulation environment</div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress mb-2">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                            role="progressbar" style="width: 0%" 
-                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="overall-progress-{job_id}">
-                            0%
-                        </div>
-                    </div>
-                    
-                    <div class="progress-details">
-                        <div class="progress-counter" id="phase-progress-counter-{job_id}">Phase: 0%</div>
-                        <div class="time-estimate" id="time-estimate-{job_id}">Estimating time remaining...</div>
-                    </div>
-                    
-                    <div class="progress phase-progress">
-                        <div class="progress-bar bg-success" 
-                            role="progressbar" style="width: 0%" 
-                            aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="phase-progress-{job_id}">
-                        </div>
-                    </div>
-                    
-                    <!-- Patient counter - shown during relevant phases -->
-                    <div class="progress-counter text-center mt-2 hidden" id="patient-counter-{job_id}">
-                        Processing patient 0 of 0
-                    </div>
-                </div>
-                
-                <div id="job-summary-{job_id}" class="mb-3 hidden">
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <div class="stat-card bg-light-blue">
-                                <div class="number" id="job-total-patients-{job_id}">0</div>
-                                <div class="label">Total Patients</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stat-card bg-light-green">
-                                <div class="number" id="job-rtd-count-{job_id}">0</div>
-                                <div class="label">Returned to Duty</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stat-card bg-light-red">
-                                <div class="number" id="job-kia-count-{job_id}">0</div>
-                                <div class="label">KIA</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <h6>Output Summary</h6>
-                            <table class="table table-sm summary-table">
-                                <tbody id="job-output-summary-{job_id}">
-                                    <tr><td>Preparing files...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="job-actions text-center mt-3">
-                    <button class="btn btn-primary btn-sm download-btn hidden" data-job-id="{job_id}">
-                        <i class="fas fa-download me-1"></i> Download Files
-                    </button>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Configuration Panel Bundle -->
-    <script src="/static/dist/configuration-panel.js" defer></script> 
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Form validation and submission
-            const generatorForm = document.getElementById('generatorForm');
-            const frontPercentInputs = document.querySelectorAll('.front-percent');
-            const injuryPercentInputs = document.querySelectorAll('.injury-percent');
-            const frontPercentError = document.getElementById('frontPercentError');
-            const injuryPercentError = document.getElementById('injuryPercentError');
-            
-            // Job card template
-            const jobCardTemplate = document.getElementById('jobCardTemplate').innerHTML;
-            const basicFrontDistributionUIDiv = document.getElementById('basicFrontDistributionUI');
-            let staticFrontsAreActive = false;
-
-            // Fetch static fronts to adjust UI
-            async function checkStaticFrontsConfig() {
-                try {
-                    const response = await fetch('/api/v1/configurations/reference/static-fronts/', {
-                        headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' } // Assuming API key needed
-                    });
-                    if (response.ok) {
-                        const staticFronts = await response.json();
-                        if (staticFronts && staticFronts.length > 0) {
-                            staticFrontsAreActive = true;
-                            if (basicFrontDistributionUIDiv) {
-                                basicFrontDistributionUIDiv.innerHTML = `
-                                    <div class="alert alert-info" role="alert">
-                                        <i class="fas fa-info-circle me-1"></i>
-                                        Front distribution is currently managed by the static <code>fronts_config.json</code> file on the server.
-                                        These settings will be used for generation. See "Advanced Configuration" for details.
-                                    </div>`;
-                            }
-                            document.querySelectorAll('.front-percent').forEach(input => input.disabled = true);
-                        } else {
-                            staticFrontsAreActive = false;
-                            document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
-                        }
-                    } else {
-                        console.warn("Could not fetch static fronts config status, basic UI will remain active.");
-                        staticFrontsAreActive = false;
-                        document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
-                    }
-                } catch (error) {
-                    console.error("Error checking static fronts config:", error);
-                    staticFrontsAreActive = false; 
-                    document.querySelectorAll('.front-percent').forEach(input => input.disabled = false);
-                }
-            }
-            
-            function validateFrontPercentages() {
-                if (staticFrontsAreActive) return true; 
-
-                let total = 0;
-                document.querySelectorAll('.front-percent:not([disabled])').forEach(input => {
-                    total += parseFloat(input.value) || 0;
-                });
-                
-                if (Math.abs(total - 100) > 0.1 && total > 0) { 
-                    frontPercentError.classList.remove('hidden');
-                    return false;
-                } else {
-                    frontPercentError.classList.add('hidden');
-                    return true;
-                }
-            }
-            
-            function validateInjuryPercentages() {
-                let total = 0;
-                injuryPercentInputs.forEach(input => {
-                    total += parseFloat(input.value);
-                });
-                
-                if (Math.abs(total - 100) > 0.1) {
-                    injuryPercentError.classList.remove('hidden');
-                    return false;
-                } else {
-                    injuryPercentError.classList.add('hidden');
-                    return true;
-                }
-            }
-            
-            document.querySelectorAll('.front-percent').forEach(input => {
-                input.addEventListener('input', validateFrontPercentages);
-            });
-            
-            injuryPercentInputs.forEach(input => {
-                input.addEventListener('input', validateInjuryPercentages);
-            });
-            
-            generatorForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                if (!validateFrontPercentages() || !validateInjuryPercentages()) {
-                    return;
-                }
-                
-                const formats = [];
-                if (document.getElementById('formatJson').checked) formats.push('json');
-                if (document.getElementById('formatXml').checked) formats.push('xml');
-                
-                if (formats.length === 0) {
-                    alert('Please select at least one output format.');
-                    return;
-                }
-                
-                const generateBtn = document.getElementById('generateBtn');
-                generateBtn.disabled = true;
-                generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
-                
-                const defaultFacilityConfigs = [
-                    { id: "POI", name: "Point of Injury", kia_rate: 0.01, rtd_rate: 0.0 },
-                    { id: "R1", name: "Role 1", kia_rate: 0.02, rtd_rate: 0.1 },
-                    { id: "R2", name: "Role 2", kia_rate: 0.03, rtd_rate: 0.2 },
-                    { id: "R3", name: "Role 3", kia_rate: 0.04, rtd_rate: 0.3 },
-                    { id: "R4", name: "Role 4", kia_rate: 0.05, rtd_rate: 0.0 } 
-                ];
-
-                let adHocFrontConfigs = [];
-
-                if (staticFrontsAreActive) {
-                    try {
-                        const staticFrontsResponse = await fetch('/api/v1/configurations/reference/static-fronts/', {
-                            headers: { 'Accept': 'application/json', 'X-API-KEY': 'your_secret_api_key_here' }
-                        });
-                        if (!staticFrontsResponse.ok) {
-                            throw new Error(`Failed to fetch static fronts: ${staticFrontsResponse.statusText} (${staticFrontsResponse.status})`);
-                        }
-                        const staticFrontsData = await staticFrontsResponse.json();
-
-                        if (staticFrontsData && staticFrontsData.length > 0) {
-                            adHocFrontConfigs = staticFrontsData.map(frontDef => {
-                                let nationalityDistributionList = [];
-                                if (frontDef.nations && frontDef.nations.length > 0) {
-                                    // The API /api/v1/configurations/reference/static-fronts/
-                                    // now returns nations with nationality_code and percentage (0-100)
-                                    // due to previous schema and fronts_config.json updates.
-                                    nationalityDistributionList = frontDef.nations.map(nation => {
-                                        return {
-                                            nationality_code: nation.nationality_code, 
-                                            percentage: nation.percentage 
-                                        };
-                                    });
-                                } else {
-                                    // Fallback if a static front has no nations defined
-                                    nationalityDistributionList.push({ nationality_code: "USA", percentage: 100.0 });
-                                }
-                                
-                                return {
-                                    id: `static_${frontDef.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
-                                    name: frontDef.name,
-                                    description: `Static front definition: ${frontDef.name}`,
-                                    nationality_distribution: nationalityDistributionList,
-                                    casualty_rate: frontDef.ratio 
-                                };
-                            });
-                        } else {
-                            console.warn("Static fronts were indicated as active, but no data was returned from the API. Using a fallback front config to ensure validation passes.");
-                            adHocFrontConfigs.push({
-                                id: "fallback_static_front_api_empty", name: "Fallback Static Front (API Empty)",
-                                nationality_distribution: [{ nationality_code: "USA", percentage: 100.0 }], // Ensure list of items
-                                casualty_rate: 1.0
-                            });
-                        }
-                    } catch (error) {
-                        console.error("Error fetching or processing static fronts:", error);
-                        alert(`Error fetching static front configurations: ${error.message}. Ad-hoc generation cannot proceed reliably.`);
-                        generateBtn.disabled = false;
-                        generateBtn.innerHTML = '<i class="fas fa-play me-2"></i>Generate Patients';
-                        return; 
-                    }
-                } else {
-                    const polishFrontInput = document.getElementById('polishFront');
-                    const estonianFrontInput = document.getElementById('estonianFront');
-                    const finnishFrontInput = document.getElementById('finnishFront');
-
-                    const polishFrontPercent = polishFrontInput ? parseFloat(polishFrontInput.value) : 0;
-                    const estonianFrontPercent = estonianFrontInput ? parseFloat(estonianFrontInput.value) : 0;
-                    const finnishFrontPercent = finnishFrontInput ? parseFloat(finnishFrontInput.value) : 0;
-
-                    if (polishFrontPercent > 0) {
-                        adHocFrontConfigs.push({
-                            id: "polish_front_basic_ui", name: "Polish Front (Basic UI)",
-                            nationality_distribution: [{ nationality_code: "POL", percentage: 100.0 }], 
-                            casualty_rate: polishFrontPercent / 100.0 
-                        });
-                    }
-                    if (estonianFrontPercent > 0) {
-                         adHocFrontConfigs.push({
-                            id: "estonian_front_basic_ui", name: "Estonian Front (Basic UI)",
-                            nationality_distribution: [{ nationality_code: "EST", percentage: 100.0 }],
-                            casualty_rate: estonianFrontPercent / 100.0
-                        });
-                    }
-                    if (finnishFrontPercent > 0) {
-                        adHocFrontConfigs.push({
-                            id: "finnish_front_basic_ui", name: "Finnish Front (Basic UI)",
-                            nationality_distribution: [{ nationality_code: "FIN", percentage: 100.0 }],
-                            casualty_rate: finnishFrontPercent / 100.0
-                        });
-                    }
-                }
-
-                // Ensure adHocFrontConfigs is not empty to pass backend validation
-                if (adHocFrontConfigs.length === 0) {
-                    console.warn("No front configurations were derived from static data or UI inputs. Using a global fallback front.");
-                    adHocFrontConfigs.push({
-                        id: "global_fallback_front", name: "Global Fallback Front",
-                        nationality_distribution: [{ nationality_code: "USA", percentage: 100.0 }],
-                        casualty_rate: 1.0 // This front will receive all patients
-                    });
-                }
-
-
-                const adHocConfiguration = {
-                    name: staticFrontsAreActive ? "Scenario using Static Fronts" : "Ad-hoc Scenario from Basic UI",
-                    description: `Generated on ${new Date().toISOString()}. ${staticFrontsAreActive ? "Static fronts from API were used." : "Basic UI inputs were used for fronts."}`,
-                    front_configs: adHocFrontConfigs,
-                    facility_configs: defaultFacilityConfigs,
-                    total_patients: parseInt(document.getElementById('totalPatients').value),
-                    injury_distribution: {
-                        "Disease": parseFloat(document.getElementById('diseasePercent').value),
-                        "Non-Battle Injury": parseFloat(document.getElementById('nonBattlePercent').value),
-                        "Battle Injury": parseFloat(document.getElementById('battleTraumaPercent').value)
-                    }
-                };
-
-                const payload = {
-                    configuration: adHocConfiguration,
-                    output_formats: formats,
-                    use_compression: document.getElementById('useCompression').checked,
-                    use_encryption: document.getElementById('useEncryption').checked,
-                    encryption_password: document.getElementById('encryptionPassword').value || null
-                };
-                
-                try {
-                    const response = await fetch('/api/generate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (!response.ok) {
-                        // Try to parse error details from FastAPI
-                        let errorDetail = 'Failed to submit job';
-                        try {
-                            const errorData = await response.json();
-                            if (errorData.detail) {
-                                if (Array.isArray(errorData.detail)) {
-                                    errorDetail = errorData.detail.map(err => `${err.loc.join(' -> ')}: ${err.msg}`).join('; ');
-                                } else if (typeof errorData.detail === 'string') {
-                                    errorDetail = errorData.detail;
-                                }
-                            }
-                        } catch (e) { /* Ignore if error response is not JSON */ }
-                        throw new Error(errorDetail);
-                    }
-                    
-                    const data = await response.json();
-                    console.log('Job submitted:', data);
-                    
-                    addJobToList(data.job_id);
-                    document.getElementById('noJobsMessage').classList.add('hidden');
-                    pollJobStatus(data.job_id);
-                    
-                } catch (error) {
-                    console.error('Error submitting job:', error);
-                    alert('Failed to submit job: ' + error.message);
-                } finally {
-                    generateBtn.disabled = false;
-                    generateBtn.innerHTML = '<i class="fas fa-play me-2"></i>Generate Patients';
-                }
-            });
-            
-            const jobPollingIntervals = {};
-            
-            function formatTimeRemaining(seconds) {
-                if (seconds === null || seconds === undefined) {
-                    return 'Calculating...';
-                }
-                
-                if (seconds < 60) {
-                    return `${seconds} sec remaining`;
-                } else if (seconds < 3600) {
-                    const minutes = Math.floor(seconds / 60);
-                    const remainingSeconds = seconds % 60;
-                    return `${minutes} min ${remainingSeconds} sec remaining`;
-                } else {
-                    const hours = Math.floor(seconds / 3600);
-                    const minutes = Math.floor((seconds % 3600) / 60);
-                    return `${hours} hr ${minutes} min remaining`;
-                }
-            }
-            
-            function addJobToList(jobId) {
-                const jobsList = document.getElementById('jobsList');
-                let jobCardHtml = jobCardTemplate.replaceAll('{job_id}', jobId);
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = jobCardHtml;
-                const jobCard = tempDiv.firstElementChild;
-                jobsList.prepend(jobCard);
-                
-                const downloadBtn = jobCard.querySelector('.download-btn');
-                downloadBtn.addEventListener('click', function() {
-                    window.location.href = `/api/download/${jobId}`;
-                });
-            }
-            
-            function pollJobStatus(jobId) {
-                if (jobPollingIntervals[jobId]) {
-                    clearInterval(jobPollingIntervals[jobId]);
-                }
-                
-                jobPollingIntervals[jobId] = setInterval(async function() {
-                    try {
-                        const response = await fetch(`/api/jobs/${jobId}`);
-                        if (!response.ok) {
-                            throw new Error('Failed to fetch job status');
-                        }
-                        
-                        const jobData = await response.json();
-                        updateJobUI(jobId, jobData);
-                        
-                        if (jobData.status === 'completed' || jobData.status === 'failed') {
-                            clearInterval(jobPollingIntervals[jobId]);
-                            delete jobPollingIntervals[jobId];
-                        }
-                        
-                    } catch (error) {
-                        console.error(`Error polling job ${jobId}:`, error);
-                    }
-                }, 1000); 
-            }
-            
-            // Update job UI with latest data
-            function updateJobUI(jobId, jobData) {
-                const jobCard = document.querySelector(`.job-card[id="job-${jobId}"]`);
-                if (!jobCard) return;
-                
-                const statusSpan = jobCard.querySelector('.job-status');
-                statusSpan.textContent = jobData.status.charAt(0).toUpperCase() + jobData.status.slice(1);
-                statusSpan.className = 'badge status-badge'; 
-                if (jobData.status === 'queued') statusSpan.classList.add('bg-info');
-                else if (jobData.status === 'running') statusSpan.classList.add('bg-primary');
-                else if (jobData.status === 'completed') statusSpan.classList.add('bg-success');
-                else if (jobData.status === 'failed') statusSpan.classList.add('bg-danger');
-                
-                const overallProgressBar = jobCard.querySelector(`#overall-progress-${jobId}`);
-                if (overallProgressBar) {
-                    overallProgressBar.style.width = `${jobData.progress}%`;
-                    overallProgressBar.setAttribute('aria-valuenow', jobData.progress);
-                    overallProgressBar.textContent = `${jobData.progress}%`;
-                } else {
-                    console.error(`[Job ${jobId}] overallProgressBar element not found!`);
-                }
-                
-                if (jobData.progress_details) {
-                    const pd = jobData.progress_details;
-                    document.getElementById(`phase-name-${jobId}`).textContent = pd.current_phase;
-                    document.getElementById(`phase-description-${jobId}`).textContent = pd.phase_description;
-                    document.getElementById(`phase-progress-${jobId}`).style.width = `${pd.phase_progress}%`;
-                    document.getElementById(`phase-progress-${jobId}`).setAttribute('aria-valuenow', pd.phase_progress);
-                    document.getElementById(`phase-progress-counter-${jobId}`).textContent = `Phase: ${pd.phase_progress}%`;
-                    
-                    const timeEstEl = document.getElementById(`time-estimate-${jobId}`);
-                    timeEstEl.textContent = (pd.time_estimates && pd.time_estimates.total !== null) ? formatTimeRemaining(pd.time_estimates.total) : 'Estimating...';
-                    
-                    const patientCounterEl = document.getElementById(`patient-counter-${jobId}`);
-                    if (pd.total_patients) {
-                        patientCounterEl.classList.remove('hidden');
-                        patientCounterEl.textContent = pd.processed_patients !== undefined ? `Processing patient ${pd.processed_patients} of ${pd.total_patients}` : `Total patients: ${pd.total_patients}`;
-                    } else {
-                        patientCounterEl.classList.add('hidden');
-                    }
-                    
-                    const progressIcon = jobCard.querySelector('.progress-icon i');
-                    if (jobData.status === 'completed') {
-                        progressIcon.className = 'fas fa-check-circle';
-                        jobCard.querySelector('.download-btn').classList.remove('hidden');
-                        if(overallProgressBar) {
-                            overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
-                            overallProgressBar.classList.add('bg-success');
-                        }
-                        const actionsDiv = jobCard.querySelector('.job-actions');
-                        if (actionsDiv && !actionsDiv.querySelector('.show-viz-btn')) {
-                            const vizBtn = document.createElement('a');
-                            vizBtn.href = `/visualizations?job_id=${jobId}`; // Corrected URL
-                            vizBtn.className = 'btn btn-info btn-sm show-viz-btn ms-2';
-                            vizBtn.innerHTML = '<i class="fas fa-chart-bar me-1"></i> Show Visualization';
-                            vizBtn.target = '_blank';
-                            actionsDiv.appendChild(vizBtn);
-                        }
-                    } else if (jobData.status === 'failed') {
-                        progressIcon.className = 'fas fa-exclamation-circle';
-                        const errorMsgDiv = document.createElement('div');
-                        errorMsgDiv.className = 'alert alert-danger mt-2';
-                        errorMsgDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${jobData.error || 'Error during generation'}`;
-                        if (!jobCard.querySelector('.alert-danger')) {
-                            jobCard.querySelector('.card-body').appendChild(errorMsgDiv);
-                        }
-                        if(overallProgressBar) {
-                            overallProgressBar.classList.remove('progress-bar-animated', 'progress-bar-striped');
-                            overallProgressBar.classList.add('bg-danger');
-                        }
-                    } else {
-                        progressIcon.className = 'fas fa-sync-alt fa-spin';
-                    }
-                }
-                
-                if (jobData.summary && Object.keys(jobData.summary).length > 0) {
-                    const summaryDiv = document.getElementById(`job-summary-${jobId}`);
-                    summaryDiv.classList.remove('hidden');
-                    
-                    if (jobData.summary.total_patients) document.getElementById(`job-total-patients-${jobId}`).textContent = jobData.summary.total_patients;
-                    if (jobData.summary.rtd_count !== undefined) document.getElementById(`job-rtd-count-${jobId}`).textContent = jobData.summary.rtd_count;
-                    if (jobData.summary.kia_count !== undefined) document.getElementById(`job-kia-count-${jobId}`).textContent = jobData.summary.kia_count;
-                    
-                    if (jobData.output_files && jobData.output_files.length > 0) {
-                        const outputSummary = document.getElementById(`job-output-summary-${jobId}`);
-                        let summaryHtml = '';
-                        if (jobData.file_types) {
-                            summaryHtml += '<tr><th scope="row">File Types</th><td>';
-                            for (const [ext, count] of Object.entries(jobData.file_types)) summaryHtml += `${ext}: ${count} files<br>`;
-                            summaryHtml += '</td></tr>';
-                        }
-                        if (jobData.total_size_formatted) summaryHtml += `<tr><th scope="row">Total Size</th><td>${jobData.total_size_formatted}</td></tr>`;
-                        if (jobData.created_at) summaryHtml += `<tr><th scope="row">Created</th><td>${new Date(jobData.created_at).toLocaleString()}</td></tr>`;
-                        if (jobData.completed_at) summaryHtml += `<tr><th scope="row">Completed</th><td>${new Date(jobData.completed_at).toLocaleString()}</td></tr>`;
-                        outputSummary.innerHTML = summaryHtml;
-                    }
-                }
-            } 
-
-            async function loadExistingJobs() {
-                try {
-                    const response = await fetch('/api/jobs');
-                    if (!response.ok) throw new Error('Failed to fetch existing jobs');
-                    const existingJobs = await response.json();
-                    
-                    if (existingJobs && existingJobs.length > 0) {
-                        document.getElementById('noJobsMessage').classList.add('hidden');
-                        existingJobs.forEach(jobData => {
-                            addJobToList(jobData.job_id); 
-                            updateJobUI(jobData.job_id, jobData); 
-                            if (jobData.status === 'running' || jobData.status === 'queued') {
-                                pollJobStatus(jobData.job_id);
-                            }
-                        });
-                    } else {
-                        document.getElementById('noJobsMessage').classList.remove('hidden');
-                    }
-                } catch (error) {
-                    console.error('Error loading existing jobs:', error);
-                }
-            }
-
-            loadExistingJobs();
-            checkStaticFrontsConfig();
-
-        }); 
-    </script>
-
-    <div class="modal fade" id="configurationModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="configModalLabel">Advanced Scenario Configuration</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="reactConfigurationPanelRoot">
-                        <p>Loading Advanced Configuration Panel...</p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</body>
+        <script src="/static/js/simple-app.js"></script>
+    </body>
 </html>
