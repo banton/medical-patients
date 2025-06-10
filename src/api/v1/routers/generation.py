@@ -61,10 +61,11 @@ async def generate_patients(
     """
     try:
         # Validate configuration source
+        config_dict: Dict[str, Any] = {}
         if request.configuration_id:
             # TODO: Validate configuration_id exists in database
             config_dict = {"configuration_id": request.configuration_id}
-        else:
+        elif request.configuration:
             # Use inline configuration
             config_dict = request.configuration.copy()
 
