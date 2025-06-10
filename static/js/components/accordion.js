@@ -82,9 +82,8 @@ class AccordionComponent {
     
     setupValidation() {
         // Set up JSON validators for each section
-        this.validators.set(0, this.validateDemographics.bind(this));
-        this.validators.set(1, this.validateBattleFronts.bind(this));
-        this.validators.set(2, this.validateInjuries.bind(this));
+        this.validators.set(0, this.validateBattleFronts.bind(this));
+        this.validators.set(1, this.validateInjuries.bind(this));
     }
     
     handleKeyDown(e, index) {
@@ -234,30 +233,6 @@ class AccordionComponent {
     }
     
     // Validation methods for each section
-    validateDemographics(content) {
-        if (!content) {
-            return { valid: false, message: 'Demographics configuration is required' };
-        }
-        
-        try {
-            const config = JSON.parse(content);
-            
-            if (!config.nationalities || typeof config.nationalities !== 'object') {
-                return { valid: false, message: 'Missing or invalid "nationalities" object' };
-            }
-            
-            // Check if percentages add up to reasonable total
-            const total = Object.values(config.nationalities).reduce((sum, val) => sum + (val || 0), 0);
-            if (total <= 0) {
-                return { valid: false, message: 'Nationality percentages must be greater than 0' };
-            }
-            
-            return { valid: true, message: `${Object.keys(config.nationalities).length} nationalities configured` };
-            
-        } catch (e) {
-            return { valid: false, message: `JSON syntax error: ${e.message}` };
-        }
-    }
     
     validateBattleFronts(content) {
         if (!content) {

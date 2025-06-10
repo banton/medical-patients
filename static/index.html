@@ -165,34 +165,6 @@
 
             <!-- Configuration Accordion -->
             <div class="accordion">
-                <!-- Demographics Configuration -->
-                <div class="accordion__item">
-                    <button class="accordion__header" type="button">
-                        <div class="accordion__title">
-                            <span class="accordion__status accordion__status--unknown">?</span>
-                            Demographics Configuration
-                        </div>
-                        <span class="accordion__icon">▼</span>
-                    </button>
-                    <div class="accordion__content">
-                        <textarea
-                            class="accordion__editor"
-                            id="demographics-editor"
-                            placeholder="Enter demographics configuration JSON..."
-                            rows="15"
-                        >{
-  "nationalities": {
-    "USA": 40,
-    "GBR": 30,
-    "CAN": 15,
-    "FRA": 10,
-    "DEU": 5
-  }
-}</textarea>
-                        <div class="accordion__validation"></div>
-                    </div>
-                </div>
-
                 <!-- Battle Fronts Configuration -->
                 <div class="accordion__item">
                     <button class="accordion__header" type="button">
@@ -217,7 +189,8 @@
       "nationality_distribution": [
         { "nationality_code": "POL", "percentage": 50.0 },
         { "nationality_code": "LTU", "percentage": 25.0 },
-        { "nationality_code": "GBR", "percentage": 25.0 }
+        { "nationality_code": "NLD", "percentage": 20.0 },
+        { "nationality_code": "ESP", "percentage": 5.0 }
       ]
     },
     {
@@ -225,8 +198,17 @@
       "name": "Estonia Front",
       "casualty_rate": 0.3,
       "nationality_distribution": [
-        { "nationality_code": "EST", "percentage": 60.0 },
-        { "nationality_code": "USA", "percentage": 40.0 }
+        { "nationality_code": "EST", "percentage": 50.0 },
+        { "nationality_code": "GBR", "percentage": 50.0 }
+      ]
+    },
+    {
+      "id": "finland",
+      "name": "Finland Front",
+      "casualty_rate": 0.1,
+      "nationality_distribution": [
+        { "nationality_code": "FIN", "percentage": 50.0 },
+        { "nationality_code": "USA", "percentage": 50.0 }
       ]
     }
   ]

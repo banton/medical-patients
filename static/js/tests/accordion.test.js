@@ -49,7 +49,7 @@ TestFramework.test('Accordion should have correct structure', () => {
     const accordion = querySelector('.accordion');
     const items = accordion.querySelectorAll('.accordion__item');
     
-    assert(items.length === 3, 'Should have 3 accordion items');
+    assert(items.length === 2, 'Should have 2 accordion items');
     
     items.forEach((item, index) => {
         const header = item.querySelector('.accordion__header');
@@ -64,7 +64,6 @@ TestFramework.test('Accordion should have correct structure', () => {
 
 TestFramework.test('Accordion should have proper section titles', () => {
     const expectedTitles = [
-        'Demographics Configuration',
         'Battle Fronts Configuration',
         'Injury Distribution'
     ];

@@ -201,9 +201,8 @@ class PatientGeneratorApp {
     }
     
     buildConfiguration() {
-        const [demographicsJson, frontsJson, injuriesJson] = this.accordion.getAllContent();
+        const [frontsJson, injuriesJson] = this.accordion.getAllContent();
         
-        const demographics = JSON.parse(demographicsJson);
         const fronts = JSON.parse(frontsJson);
         const injuries = JSON.parse(injuriesJson);
         
@@ -213,8 +212,8 @@ class PatientGeneratorApp {
             total_patients: injuries.total_patients || 1440,
             injury_distribution: injuries.injury_distribution,
             front_configs: fronts.front_configs,
-            facility_configs: this.generateFacilityConfigs(fronts.front_configs),
-            ...demographics
+            facility_configs: this.generateFacilityConfigs(fronts.front_configs)
+            // Demographics are loaded automatically from the backend's demographics.json
         };
     }
     
