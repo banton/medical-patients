@@ -109,6 +109,37 @@
             .download-link:hover {
                 background-color: #45a049;
             }
+            .fun-message {
+                font-style: italic;
+                color: #666;
+                margin-top: 10px;
+                padding: 8px;
+                background-color: #f9f9f9;
+                border-radius: 4px;
+                border-left: 3px solid #1a73e8;
+            }
+            .download-section {
+                background-color: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 8px;
+                padding: 20px;
+                margin-top: 20px;
+            }
+            .download-section h4 {
+                margin-top: 0;
+                color: #1a73e8;
+            }
+            .download-info {
+                margin-top: 10px;
+                opacity: 0.8;
+            }
+            code {
+                background-color: #f1f3f4;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: monospace;
+                font-size: 0.9em;
+            }
         </style>
     </head>
     <body>
@@ -244,10 +275,12 @@
             </div>
         </div>
 
+        <script src="/static/js/services/api.js"></script>
         <script src="/static/js/components/accordion.js"></script>
-        <script src="/static/js/simple-app.js"></script>
+        <script src="/static/js/app.js"></script>
         <!-- Include tests in development -->
         <script src="/static/js/tests/banner.test.js"></script>
         <script src="/static/js/tests/accordion.test.js"></script>
+        <script src="/static/js/tests/api.test.js"></script>
     </body>
 </html>
