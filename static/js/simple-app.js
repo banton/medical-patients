@@ -228,6 +228,7 @@ function updateJobStatus(jobData) {
 /**
  * Download results for a completed job
  */
+// eslint-disable-next-line no-unused-vars
 async function downloadResults(jobId) {
     try {
         const response = await fetch(`/api/v1/downloads/${jobId}`, {
@@ -242,21 +243,20 @@ async function downloadResults(jobId) {
 
         // Create blob from response
         const blob = await response.blob();
-        
+
         // Create download link
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `patient_data_${jobId}.zip`;
-        
+
         // Trigger download
         document.body.appendChild(a);
         a.click();
-        
+
         // Clean up
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
     } catch (error) {
         alert(`Download failed: ${error.message}`);
     }
