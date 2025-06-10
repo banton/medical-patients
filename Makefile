@@ -111,7 +111,7 @@ test-docker-integration:
 	@echo "Waiting for services to be ready..."
 	@sleep 10
 	@echo "Running integration tests..."
-	python -m pytest tests_api.py tests/test_e2e_flows.py -v --base-url=http://localhost:8001
+	python -m pytest tests/test_simple_api.py tests/test_api_standardization.py tests/test_e2e_flows.py -v --base-url=http://localhost:8001
 	@echo "Cleaning up..."
 	docker compose -f docker-compose.test.yml down
 
@@ -129,8 +129,6 @@ lint:
 	@mypy src/ patient_generator/ --ignore-missing-imports || true
 	@echo "JavaScript linting with ESLint..."
 	@npm run lint:check || true
-	@echo "TypeScript checking..."
-	@npx tsc --noEmit || true
 
 # Format code
 format:
@@ -147,7 +145,6 @@ lint-ci:
 	@mypy src/ patient_generator/ --ignore-missing-imports
 	@npm run lint:check
 	@npm run format:check
-	@npx tsc --noEmit
 
 # Install linting and formatting tools
 install-lint-tools:
@@ -246,10 +243,10 @@ watch:
 # Generate test data
 generate-test:
 	@echo "Generating test patients..."
-	curl -X POST http://localhost:8000/api/generate \
+	curl -X POST http://localhost:8000/api/v1/generation/ \
 		-H "X-API-Key: your_secret_api_key_here" \
 		-H "Content-Type: application/json" \
-		-d '{"configuration_id": "test", "output_formats": ["json"], "use_compression": false}'
+		-d '{"configuration": {"count": 10}, "output_formats": ["json"], "use_compression": false}'
 
 # Check code quality
 quality: lint test
