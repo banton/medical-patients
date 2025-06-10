@@ -6,6 +6,7 @@
         <title>Military Patient Generator</title>
         <link rel="stylesheet" href="/static/css/variables.css" />
         <link rel="stylesheet" href="/static/css/components/banner.css" />
+        <link rel="stylesheet" href="/static/css/components/accordion.css" />
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -131,17 +132,104 @@
                 <p>Simple Interface for Patient Data Generation</p>
             </div>
 
-            <div class="info-box">
-                <h2>Configuration Files</h2>
-                <p>The patient generator uses the following JSON configuration files located in the <code>patient_generator/</code> directory:</p>
+            <!-- Configuration Accordion -->
+            <div class="accordion">
+                <!-- Demographics Configuration -->
+                <div class="accordion__item">
+                    <button class="accordion__header" type="button">
+                        <div class="accordion__title">
+                            <span class="accordion__status accordion__status--unknown">?</span>
+                            Demographics Configuration
+                        </div>
+                        <span class="accordion__icon">▼</span>
+                    </button>
+                    <div class="accordion__content">
+                        <textarea
+                            class="accordion__editor"
+                            id="demographics-editor"
+                            placeholder="Enter demographics configuration JSON..."
+                            rows="15"
+                        >{
+  "nationalities": {
+    "USA": 40,
+    "GBR": 30,
+    "CAN": 15,
+    "FRA": 10,
+    "DEU": 5
+  }
+}</textarea>
+                        <div class="accordion__validation"></div>
+                    </div>
+                </div>
 
-                <div class="file-list"><strong>demographics.json</strong> - Contains nationality data, names, and ID formats for NATO nations</div>
+                <!-- Battle Fronts Configuration -->
+                <div class="accordion__item">
+                    <button class="accordion__header" type="button">
+                        <div class="accordion__title">
+                            <span class="accordion__status accordion__status--unknown">?</span>
+                            Battle Fronts Configuration
+                        </div>
+                        <span class="accordion__icon">▼</span>
+                    </button>
+                    <div class="accordion__content">
+                        <textarea
+                            class="accordion__editor"
+                            id="fronts-editor"
+                            placeholder="Enter battle fronts configuration JSON..."
+                            rows="15"
+                        >{
+  "front_configs": [
+    {
+      "id": "poland",
+      "name": "Poland Front",
+      "casualty_rate": 0.6,
+      "nationality_distribution": [
+        { "nationality_code": "POL", "percentage": 50.0 },
+        { "nationality_code": "LTU", "percentage": 25.0 },
+        { "nationality_code": "GBR", "percentage": 25.0 }
+      ]
+    },
+    {
+      "id": "estonia",
+      "name": "Estonia Front",
+      "casualty_rate": 0.3,
+      "nationality_distribution": [
+        { "nationality_code": "EST", "percentage": 60.0 },
+        { "nationality_code": "USA", "percentage": 40.0 }
+      ]
+    }
+  ]
+}</textarea>
+                        <div class="accordion__validation"></div>
+                    </div>
+                </div>
 
-                <div class="file-list"><strong>fronts_config.json</strong> - Defines battle fronts with casualty ratios and nationality distributions</div>
-
-                <div class="file-list"><strong>injuries.json</strong> - Specifies the distribution of injuries (disease, non-battle injuries, battle injuries)</div>
-
-                <p><strong>To modify the generation parameters, edit these JSON files directly before clicking Generate.</strong></p>
+                <!-- Injury Distribution -->
+                <div class="accordion__item">
+                    <button class="accordion__header" type="button">
+                        <div class="accordion__title">
+                            <span class="accordion__status accordion__status--unknown">?</span>
+                            Injury Distribution
+                        </div>
+                        <span class="accordion__icon">▼</span>
+                    </button>
+                    <div class="accordion__content">
+                        <textarea
+                            class="accordion__editor"
+                            id="injuries-editor"
+                            placeholder="Enter injury distribution JSON..."
+                            rows="10"
+                        >{
+  "injury_distribution": {
+    "Disease": 0.52,
+    "Non-Battle Injury": 0.33,
+    "Battle Injury": 0.15
+  },
+  "total_patients": 1440
+}</textarea>
+                        <div class="accordion__validation"></div>
+                    </div>
+                </div>
             </div>
 
             <button class="generate-button" id="generateBtn">Generate Patients</button>
@@ -156,8 +244,10 @@
             </div>
         </div>
 
+        <script src="/static/js/components/accordion.js"></script>
         <script src="/static/js/simple-app.js"></script>
         <!-- Include tests in development -->
         <script src="/static/js/tests/banner.test.js"></script>
+        <script src="/static/js/tests/accordion.test.js"></script>
     </body>
 </html>
