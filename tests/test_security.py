@@ -29,7 +29,7 @@ async def test_verify_api_key_invalid():
         with pytest.raises(HTTPException) as exc_info:
             await verify_api_key("wrong-api-key")
 
-        assert exc_info.value.status_code == 403
+        assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid API Key"
 
 
@@ -42,4 +42,5 @@ async def test_verify_api_key_empty():
         with pytest.raises(HTTPException) as exc_info:
             await verify_api_key("")
 
-        assert exc_info.value.status_code == 403
+        assert exc_info.value.status_code == 401
+        assert exc_info.value.detail == "Invalid API Key"
