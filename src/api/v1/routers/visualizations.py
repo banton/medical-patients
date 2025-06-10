@@ -4,13 +4,13 @@ Provides endpoints for dashboard data and patient visualization information.
 """
 
 import random
-from typing import Any, Dict, List, Optional
+from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from patient_generator.visualization_data import transform_job_data_for_visualization
 from src.api.v1.dependencies.services import get_job_service
-from src.api.v1.models import VisualizationDataResponse, ErrorResponse
+from src.api.v1.models import ErrorResponse, VisualizationDataResponse
 from src.core.security import verify_api_key
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
@@ -24,7 +24,7 @@ router = APIRouter(
         401: {"model": ErrorResponse, "description": "Unauthorized"},
         404: {"model": ErrorResponse, "description": "Resource Not Found"},
         500: {"model": ErrorResponse, "description": "Internal Server Error"},
-    }
+    },
 )
 
 
@@ -34,23 +34,23 @@ router = APIRouter(
     summary="Get Dashboard Data",
     description="""
     Retrieve aggregated data for the visualization dashboard.
-    
+
     If a job_id is provided, returns data specific to that job (if completed).
     Otherwise returns data from the most recently completed job.
-    
+
     Dashboard data includes:
     - Patient summary statistics
-    - Front and nationality distributions  
+    - Front and nationality distributions
     - Injury type distributions
     - Treatment flow data
     - Timeline data
     - Facility load information
     """,
-    response_description="Dashboard visualization data with metadata"
+    response_description="Dashboard visualization data with metadata",
 )
 async def get_dashboard_data(
     job_id: Optional[str] = Query(None, description="Specific job ID to get data for"),
-    job_service: JobService = Depends(get_job_service)
+    job_service: JobService = Depends(get_job_service),
 ) -> VisualizationDataResponse:
     """Get aggregated data for the visualization dashboard."""
     try:
@@ -73,8 +73,7 @@ async def get_dashboard_data(
                     )
             except Exception:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Job {job_id} not found or not completed"
+                    status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found or not completed"
                 )
 
         # If no specific job or job not found, use most recent
@@ -86,31 +85,34 @@ async def get_dashboard_data(
                 )
 
         # Return data or empty structure
-        dashboard_data = target_job_data if target_job_data else {
-            "summary": {"total_patients": 0, "rtd_count": 0, "kia_count": 0, "evacuated_count": 0},
-            "front_distribution": [],
-            "nationality_distribution": [],
-            "injury_distribution": [],
-            "flow_data": {"nodes": [], "links": []},
-            "timeline_data": [],
-            "facility_load": [],
-        }
+        dashboard_data = (
+            target_job_data
+            if target_job_data
+            else {
+                "summary": {"total_patients": 0, "rtd_count": 0, "kia_count": 0, "evacuated_count": 0},
+                "front_distribution": [],
+                "nationality_distribution": [],
+                "injury_distribution": [],
+                "flow_data": {"nodes": [], "links": []},
+                "timeline_data": [],
+                "facility_load": [],
+            }
+        )
 
         return VisualizationDataResponse(
             data=dashboard_data,
             metadata={
                 "job_id": job_id,
                 "total_completed_jobs": len(completed_jobs),
-                "data_source": "completed_job" if target_job_data else "empty"
-            }
+                "data_source": "completed_job" if target_job_data else "empty",
+            },
         )
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve dashboard data: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve dashboard data: {e!s}"
         )
 
 
@@ -120,19 +122,19 @@ async def get_dashboard_data(
     summary="Get Patient Detail",
     description="""
     Retrieve detailed information for a specific patient.
-    
+
     Returns comprehensive patient data including demographics,
     medical conditions, treatment history, and final status.
-    
+
     Note: This endpoint currently returns mock data for demonstration.
     In production, it would load actual patient data from generated files.
     """,
-    response_description="Detailed patient information"
+    response_description="Detailed patient information",
 )
 async def get_patient_detail(
     patient_id: str,
     job_id: Optional[str] = Query(None, description="Job ID to load patient data from"),
-    job_service: JobService = Depends(get_job_service)
+    job_service: JobService = Depends(get_job_service),
 ) -> VisualizationDataResponse:
     """Get detailed information for a specific patient."""
     try:
@@ -163,14 +165,14 @@ async def get_patient_detail(
                 "patient_id": patient_id,
                 "job_id": job_id,
                 "data_source": "mock_data",
-                "note": "This endpoint returns mock data for demonstration"
-            }
+                "note": "This endpoint returns mock data for demonstration",
+            },
         )
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve patient detail for {patient_id}: {str(e)}"
+            detail=f"Failed to retrieve patient detail for {patient_id}: {e!s}",
         )
 
 
@@ -180,14 +182,14 @@ async def get_patient_detail(
     summary="Get Sample Patients",
     description="""
     Retrieve a sample of patients from a generation job.
-    
+
     Returns a limited number of patient records for visualization
     and preview purposes. Useful for dashboards and data exploration.
-    
+
     Note: This endpoint currently returns mock data for demonstration.
     In production, it would load actual patient data from generated files.
     """,
-    response_description="Sample patient data for visualization"
+    response_description="Sample patient data for visualization",
 )
 async def get_sample_patients(
     job_id: Optional[str] = Query(None, description="Job ID to load patient data from"),
@@ -220,12 +222,11 @@ async def get_sample_patients(
                 "requested_limit": limit,
                 "actual_count": len(sample_patients),
                 "data_source": "mock_data",
-                "note": "This endpoint returns mock data for demonstration"
-            }
+                "note": "This endpoint returns mock data for demonstration",
+            },
         )
 
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to retrieve sample patients: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to retrieve sample patients: {e!s}"
         )

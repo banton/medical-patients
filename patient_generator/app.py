@@ -71,7 +71,9 @@ class PatientGeneratorApp:
 
         self.logger.info(
             "Initialized PatientGeneratorApp with %s workers, batch size %s for %s patients.",
-            self.num_workers, self.batch_size, self.total_patients
+            self.num_workers,
+            self.batch_size,
+            self.total_patients,
         )
 
     def _cleanup_temp_files(self):

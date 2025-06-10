@@ -76,11 +76,11 @@ def create_app() -> FastAPI:
 
     # Include v1 API routers with consistent prefix
     v1_prefix = "/api/v1"
-    
+
     # Configuration routers (already use v1 prefix)
     app.include_router(configurations.router, prefix=v1_prefix)
     app.include_router(configurations.reference_router, prefix=v1_prefix)
-    
+
     # New standardized v1 routers
     app.include_router(generation.router, prefix=v1_prefix)
     app.include_router(jobs.router, prefix=v1_prefix)

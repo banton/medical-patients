@@ -4,23 +4,26 @@ All endpoints should use these response models for consistent data formats.
 """
 
 from datetime import datetime
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class JobStatus(str, Enum):
     """Standardized job status values."""
+
     INITIALIZING = "initializing"
     QUEUED = "queued"
     PENDING = "pending"
-    RUNNING = "running" 
+    RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
 
 
 class JobProgressDetails(BaseModel):
     """Detailed progress information for job execution."""
+
     current_step: str = Field(..., description="Current processing step")
     total_steps: int = Field(..., description="Total number of steps")
     completed_steps: int = Field(..., description="Number of completed steps")
@@ -30,6 +33,7 @@ class JobProgressDetails(BaseModel):
 
 class JobResponse(BaseModel):
     """Standardized response model for job-related endpoints."""
+
     job_id: str = Field(..., description="Unique job identifier")
     status: JobStatus = Field(..., description="Current job status")
     created_at: datetime = Field(..., description="Job creation timestamp")
@@ -43,13 +47,13 @@ class JobResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class GenerationResponse(BaseModel):
     """Standardized response model for patient generation endpoint."""
+
     job_id: str = Field(..., description="Unique job identifier for tracking generation progress")
     status: JobStatus = Field(..., description="Initial job status")
     message: str = Field(..., description="Human-readable status message")
@@ -57,18 +61,20 @@ class GenerationResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
+
         schema_extra = {
             "example": {
                 "job_id": "job_12345",
                 "status": "pending",
                 "message": "Patient generation job created successfully",
-                "estimated_duration": 45
+                "estimated_duration": 45,
             }
         }
 
 
 class ErrorResponse(BaseModel):
     """Standardized error response model for all endpoints."""
+
     error: str = Field(..., description="Error type or category")
     detail: str = Field(..., description="Detailed error message")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error occurrence timestamp")
@@ -76,21 +82,21 @@ class ErrorResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}
         schema_extra = {
             "example": {
                 "error": "Job Not Found",
                 "detail": "Job with ID 'invalid-job' was not found",
                 "timestamp": "2024-01-15T10:30:00Z",
-                "request_id": "req_12345"
+                "request_id": "req_12345",
             }
         }
 
 
 class ConfigurationResponse(BaseModel):
     """Standardized response model for configuration endpoints."""
+
     id: str = Field(..., description="Configuration identifier")
     name: str = Field(..., description="Configuration name")
     description: Optional[str] = Field(None, description="Configuration description")
@@ -102,13 +108,13 @@ class ConfigurationResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class ConfigurationListResponse(BaseModel):
     """Standardized response model for configuration list endpoint."""
+
     configurations: List[ConfigurationResponse] = Field(..., description="List of configurations")
     total: int = Field(..., description="Total number of configurations")
     page: int = Field(default=1, description="Current page number")
@@ -118,6 +124,7 @@ class ConfigurationListResponse(BaseModel):
 
 class VisualizationDataResponse(BaseModel):
     """Standardized response model for visualization data endpoints."""
+
     data: Dict[str, Any] = Field(..., description="Visualization data")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Data metadata")
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Data generation timestamp")
@@ -125,13 +132,13 @@ class VisualizationDataResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class HealthCheckResponse(BaseModel):
     """Standardized response model for health check endpoints."""
+
     status: str = Field(..., description="Overall health status")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Health check timestamp")
     version: str = Field(..., description="Application version")
@@ -140,13 +147,13 @@ class HealthCheckResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class ValidationResponse(BaseModel):
     """Standardized response model for validation endpoints."""
+
     is_valid: bool = Field(..., description="Whether the input is valid")
     errors: List[str] = Field(default_factory=list, description="List of validation errors")
     warnings: List[str] = Field(default_factory=list, description="List of validation warnings")
@@ -154,18 +161,20 @@ class ValidationResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
+
         schema_extra = {
             "example": {
                 "is_valid": False,
                 "errors": ["Invalid nationality code: XX"],
                 "warnings": ["Large patient count may take significant time"],
-                "validated_data": None
+                "validated_data": None,
             }
         }
 
 
 class DownloadResponse(BaseModel):
     """Standardized response model for download endpoints (when not returning file directly)."""
+
     download_url: str = Field(..., description="URL to download the file")
     filename: str = Field(..., description="Suggested filename")
     file_size: int = Field(..., description="File size in bytes")
@@ -174,6 +183,5 @@ class DownloadResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+
+        json_encoders = {datetime: lambda v: v.isoformat()}

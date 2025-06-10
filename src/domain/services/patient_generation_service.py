@@ -15,11 +15,13 @@ from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 if sys.version_info >= (3, 9):
     to_thread = asyncio.to_thread
 else:
+
     async def to_thread(func, *args, **kwargs):
         """Backport of asyncio.to_thread for Python < 3.9."""
         loop = asyncio.get_running_loop()
         with ThreadPoolExecutor() as executor:
             return await loop.run_in_executor(executor, func, *args, **kwargs)
+
 
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import Database
@@ -241,7 +243,7 @@ class AsyncPatientGenerationService:
         # Create output streams for each format
         output_streams = {}
 
-        for format in (context.output_formats or ["json"]):
+        for format in context.output_formats or ["json"]:
             if format == "json":
                 # JSON needs special handling for streaming
                 temp_file = tempfile.NamedTemporaryFile(
@@ -272,7 +274,7 @@ class AsyncPatientGenerationService:
                 patient_count += 1
 
                 # Write to each format
-                for format in (context.output_formats or ["json"]):
+                for format in context.output_formats or ["json"]:
                     stream = output_streams[format]
 
                     if format == "json":
