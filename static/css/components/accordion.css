@@ -256,16 +256,16 @@
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-    .accordion__icon {
+    .accordion__icon,
+    .accordion__content,
+    .accordion__header,
+    .accordion__item {
         transition: none;
+        animation: none;
     }
     
-    .accordion__content {
-        transition: none;
-    }
-    
-    .accordion__header {
-        transition: none;
+    .accordion__item:hover {
+        transform: none;
     }
     
     .accordion__editor--loading {

@@ -97,23 +97,7 @@
     --z-tooltip: 1070;
 }
 
-/* Dark Mode Support - Updated for Modern Palette */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0f172a;
-        --background-secondary: #1e293b;
-        --surface: #1e293b;
-        --surface-elevated: #334155;
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-disabled: #64748b;
-        --border: #475569;
-        --border-light: #334155;
-        --api-banner-bg: #164e63;
-        --api-banner-text: #ecfeff;
-        --api-banner-border: #0891b2;
-    }
-}
+/* Light Mode Only - Dark Mode Removed */
 
 /* Responsive Breakpoints */
 @custom-media --mobile (max-width: 768px);
@@ -127,5 +111,6 @@
         --surface: #ffffff;
         --text-primary: #000000;
         --text-secondary: #333333;
+        --border: #cccccc;
     }
 }

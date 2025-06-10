@@ -24,30 +24,17 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     </head>
     <body class="bg-slate-50 font-inter">
-        <!-- API Notification Toast -->
-        <div id="api-toast" class="fixed top-4 right-4 z-50 max-w-sm">
-            <div class="api-banner">
-                <div class="api-banner__content">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-code text-cyan-600"></i>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-cyan-800">
-                                API Available
-                            </p>
-                            <p class="text-xs text-cyan-600 mt-1">
-                                Integrate patient generation programmatically
-                            </p>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex-shrink-0 flex">
-                        <a href="/docs" class="api-banner__link">
-                            <i class="fas fa-external-link-alt mr-1"></i>
-                            View Docs
-                        </a>
-                    </div>
-                </div>
+        <!-- API Notice Bar -->
+        <div class="api-banner">
+            <div class="api-banner__content">
+                <span class="api-banner__text">
+                    <i class="fas fa-code api-banner__icon"></i>
+                    API Available - Integrate patient generation programmatically
+                </span>
+                <a href="/docs" class="api-banner__link">
+                    View Documentation
+                    <i class="fas fa-external-link-alt api-banner__arrow"></i>
+                </a>
             </div>
         </div>
 
@@ -78,7 +65,7 @@
                                 Military Patient Generator
                             </h1>
                         </div>
-                        <p class="text-xl text-cyan-100 max-w-2xl mx-auto leading-relaxed">
+                        <p class="text-xl text-white text-opacity-90 max-w-2xl mx-auto leading-relaxed">
                             Professional medical training data generation platform for military healthcare exercises
                         </p>
                     </div>

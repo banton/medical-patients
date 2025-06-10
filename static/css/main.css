@@ -244,21 +244,7 @@ code {
     font-weight: 500;
 }
 
-/* API Toast Enhancement */
-#api-toast {
-    animation: slideInRight 0.4s ease-out;
-}
-
-@keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(100%);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
+/* API Banner is now a top notice bar - no animations needed */
 
 /* Focus Improvements */
 button:focus-visible,
@@ -330,20 +316,13 @@ a:focus-visible {
         font-size: 0.9rem;
     }
     
-    #api-toast {
-        position: fixed;
-        top: 1rem;
-        left: 1rem;
-        right: 1rem;
-        max-width: none;
-    }
+    /* API banner responsive handled in banner.css */
 }
 
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
     .generate-button::before,
     .progress-bar::after,
-    #api-toast,
     .status-box,
     .success,
     .error,
@@ -394,7 +373,7 @@ a:focus-visible {
         border: 1px solid var(--border);
     }
     
-    #api-toast {
+    .api-banner {
         display: none;
     }
 }
