@@ -38,7 +38,14 @@
       "Bash(rm:*)",
       "Bash(curl:*)",
       "Bash(git add:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install)",
+      "Bash(./run_tests.sh:*)",
+      "Bash(pkill:*)",
+      "Bash(true)",
+      "Bash(rg:*)"
     ],
     "deny": []
   },

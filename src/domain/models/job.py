@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 class JobStatus(str, Enum):
     """Job status enumeration."""
 
-    INITIALIZING = "initializing"
+    PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"

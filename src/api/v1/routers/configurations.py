@@ -13,6 +13,7 @@ from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.nationality_data import NationalityDataProvider
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition
 from src.api.v1.dependencies.database import get_database
+from src.api.v1.models.responses import DeleteResponse
 from src.core.security import verify_api_key
 
 # Initialize router (prefix will be added by main app)
@@ -76,9 +77,9 @@ async def update_configuration(
     return updated
 
 
-@router.delete("/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{config_id}", response_model=DeleteResponse)
 @limiter.limit("10/minute")
-async def delete_configuration(request: Request, config_id: str, db: Database = Depends(get_database)) -> None:
+async def delete_configuration(request: Request, config_id: str, db: Database = Depends(get_database)) -> DeleteResponse:
     """Delete a configuration template."""
     repo = ConfigurationRepository(db)
 
@@ -86,6 +87,12 @@ async def delete_configuration(request: Request, config_id: str, db: Database = 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {config_id} not found")
 
     repo.delete_configuration(config_id)
+    
+    return DeleteResponse(
+        success=True,
+        message="Configuration deleted successfully",
+        deleted_id=config_id
+    )
 
 
 @router.post("/validate/")

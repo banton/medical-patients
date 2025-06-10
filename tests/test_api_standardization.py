@@ -77,7 +77,7 @@ class TestJobResponseModels:
         job_id = response.json()["job_id"]
         
         # Get job status
-        response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}")
+        response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers={"X-API-Key": API_KEY})
         assert response.status_code == 200
         
         job_data = response.json()
@@ -142,7 +142,7 @@ class TestInputValidationEnhancement:
         # Should return 422 with validation error
         assert response.status_code == 422
         error_detail = response.json()["detail"]
-        assert "Invalid format" in str(error_detail)
+        assert "Invalid output format" in str(error_detail)
     
     def test_generation_request_should_validate_encryption_password(self):
         """Generation request should validate encryption password when encryption is enabled."""
@@ -187,7 +187,7 @@ class TestErrorResponseStandardization:
     def test_not_found_errors_should_be_standardized(self):
         """All 404 errors should return standardized ErrorResponse format."""
         # Test non-existent job
-        response = requests.get(f"{BASE_URL}/api/v1/jobs/nonexistent-job-id")
+        response = requests.get(f"{BASE_URL}/api/v1/jobs/nonexistent-job-id", headers={"X-API-Key": API_KEY})
         assert response.status_code == 404
         
         error_data = response.json()
@@ -197,7 +197,7 @@ class TestErrorResponseStandardization:
         for field in required_fields:
             assert field in error_data, f"Missing error field: {field}"
         
-        assert error_data["error"] == "Job Not Found"
+        assert error_data["error"] == "Not Found"
         assert isinstance(error_data["detail"], str)
         assert isinstance(error_data["timestamp"], str)
         

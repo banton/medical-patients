@@ -44,7 +44,7 @@ class InMemoryJobRepository(JobRepositoryInterface):
     async def create(self, config: Dict[str, Any]) -> Job:
         """Create a new job."""
         job_id = str(uuid.uuid4())
-        job = Job(job_id=job_id, status=JobStatus.INITIALIZING, created_at=datetime.utcnow(), config=config, progress=0)
+        job = Job(job_id=job_id, status=JobStatus.PENDING, created_at=datetime.utcnow(), config=config, progress=0)
         self._jobs[job_id] = job
         return job
 

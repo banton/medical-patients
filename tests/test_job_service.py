@@ -20,7 +20,7 @@ async def test_create_job():
     job = await service.create_job(config)
 
     assert job.job_id is not None
-    assert job.status == JobStatus.INITIALIZING
+    assert job.status == JobStatus.PENDING
     assert job.config == config
     assert job.progress == 0
 

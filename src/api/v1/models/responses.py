@@ -4,21 +4,11 @@ All endpoints should use these response models for consistent data formats.
 """
 
 from datetime import datetime
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-
-class JobStatus(str, Enum):
-    """Standardized job status values."""
-
-    INITIALIZING = "initializing"
-    QUEUED = "queued"
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
+from src.domain.models.job import JobStatus
 
 
 class JobProgressDetails(BaseModel):
@@ -185,3 +175,25 @@ class DownloadResponse(BaseModel):
         """Pydantic configuration."""
 
         json_encoders = {datetime: lambda v: v.isoformat()}
+
+
+class DeleteResponse(BaseModel):
+    """Standardized response model for DELETE operations."""
+
+    success: bool = Field(..., description="Whether the deletion was successful")
+    message: str = Field(..., description="Human-readable message about the deletion")
+    deleted_id: str = Field(..., description="ID of the deleted resource")
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="Timestamp of the deletion operation")
+
+    class Config:
+        """Pydantic configuration."""
+
+        json_encoders = {datetime: lambda v: v.isoformat()}
+        schema_extra = {
+            "example": {
+                "success": True,
+                "message": "Resource deleted successfully",
+                "deleted_id": "config_12345",
+                "timestamp": "2024-01-15T10:30:00Z",
+            }
+        }

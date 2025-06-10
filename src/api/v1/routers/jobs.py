@@ -8,7 +8,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.v1.dependencies.services import get_job_service
-from src.api.v1.models import ErrorResponse, JobResponse
+from src.api.v1.models import DeleteResponse, ErrorResponse, JobResponse
 from src.core.exceptions import JobNotFoundError
 from src.core.security import verify_api_key
 from src.domain.services.job_service import JobService
@@ -95,15 +95,20 @@ async def get_job_results(job_id: str, job_service: JobService = Depends(get_job
 
 @router.delete(
     "/{job_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=DeleteResponse,
     summary="Delete Job",
     description="Delete a job and all its associated files",
     response_description="Job successfully deleted",
 )
-async def delete_job(job_id: str, job_service: JobService = Depends(get_job_service)) -> None:
+async def delete_job(job_id: str, job_service: JobService = Depends(get_job_service)) -> DeleteResponse:
     """Delete a job and all its associated files."""
     try:
         await job_service.cleanup_job_files(job_id)
+        return DeleteResponse(
+            success=True,
+            message="Job deleted successfully",
+            deleted_id=job_id
+        )
     except JobNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
     except Exception as e:

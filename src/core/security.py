@@ -3,9 +3,11 @@ Security utilities for the application.
 Handles API key validation and other security concerns.
 """
 
+from typing import Optional
+
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_401_UNAUTHORIZED
 
 from config import get_settings
 
@@ -14,10 +16,10 @@ settings = get_settings()
 
 # API Key configuration
 API_KEY_NAME = "X-API-KEY"
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
 
-async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
+async def verify_api_key(api_key: Optional[str] = Security(api_key_header)) -> str:
     """
     Verify the API key from the request header.
 
@@ -28,8 +30,10 @@ async def verify_api_key(api_key: str = Security(api_key_header)) -> str:
         The verified API key
 
     Raises:
-        HTTPException: If the API key is invalid
+        HTTPException: If the API key is missing or invalid
     """
+    if api_key is None:
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Missing API Key")
     if api_key == settings.API_KEY:
         return api_key
-    raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Invalid API Key")
+    raise HTTPException(status_code=HTTP_401_UNAUTHORIZED, detail="Invalid API Key")
