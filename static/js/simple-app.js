@@ -123,7 +123,7 @@ async function handleGenerate() {
         downloadContainer.innerHTML = '';
 
         // Make API request
-        const response = await fetch('/api/generate', {
+        const response = await fetch('/api/v1/generation/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ async function handleGenerate() {
 function pollJobStatus() {
     pollInterval = setInterval(async () => {
         try {
-            const response = await fetch(`/api/jobs/${currentJobId}`, {
+            const response = await fetch(`/api/v1/jobs/${currentJobId}`, {
                 headers: {
                     'X-API-Key': API_KEY
                 }
@@ -212,9 +212,9 @@ function updateJobStatus(jobData) {
         downloadContainer.innerHTML = `
             <h4>Download Results</h4>
             <p>Your generated patient data is ready for download:</p>
-            <a href="/api/download/${currentJobId}" class="download-link" download>
+            <button onclick="downloadResults('${currentJobId}')" class="download-link">
                 Download Patient Data (ZIP)
-            </a>
+            </button>
             <p><small>Files are saved in: output/job_${currentJobId}/</small></p>
         `;
     } else if (jobData.status === 'failed') {
@@ -222,6 +222,43 @@ function updateJobStatus(jobData) {
             <p class="error">✗ Generation failed</p>
             <p>Error: ${jobData.error || 'Unknown error'}</p>
         `;
+    }
+}
+
+/**
+ * Download results for a completed job
+ */
+async function downloadResults(jobId) {
+    try {
+        const response = await fetch(`/api/v1/downloads/${jobId}`, {
+            headers: {
+                'X-API-Key': API_KEY
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to download results');
+        }
+
+        // Create blob from response
+        const blob = await response.blob();
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `patient_data_${jobId}.zip`;
+        
+        // Trigger download
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+    } catch (error) {
+        alert(`Download failed: ${error.message}`);
     }
 }
 

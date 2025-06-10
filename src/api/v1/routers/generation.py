@@ -80,9 +80,13 @@ async def generate_patients(
         job = await job_service.create_job(config=config_dict)
         
         # Start background generation
-        # Note: We'll need to adapt this to work with the actual service interface
-        # For now, let's just track the job creation
-        # TODO: Implement proper background generation integration
+        background_tasks.add_task(
+            _run_generation_task,
+            job.job_id,
+            config_dict,
+            generation_service,
+            job_service
+        )
         
         # Estimate duration based on configuration
         estimated_duration = _estimate_generation_duration(config_dict)
@@ -138,3 +142,102 @@ def _estimate_generation_duration(config: Dict[str, Any]) -> int:
     
     # Minimum 5 seconds, maximum 300 seconds (5 minutes)
     return max(5, min(int(base_time), 300))
+
+
+async def _run_generation_task(
+    job_id: str,
+    config: Dict[str, Any],
+    generation_service: AsyncPatientGenerationService,
+    job_service: JobService
+) -> None:
+    """
+    Background task to run patient generation.
+    
+    Args:
+        job_id: Unique job identifier
+        config: Generation configuration
+        generation_service: Patient generation service
+        job_service: Job management service
+    """
+    import tempfile
+    import os
+    from pathlib import Path
+    from src.domain.models.job import JobStatus
+    from src.domain.services.patient_generation_service import GenerationContext
+    from patient_generator.schemas_config import ConfigurationTemplateDB
+    
+    try:
+        # Update job status to running
+        await job_service.update_job_status(job_id, JobStatus.RUNNING)
+        
+        # Create output directory
+        output_dir = Path(tempfile.gettempdir()) / "medical_patients" / f"job_{job_id}"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create and save configuration to database first
+        from patient_generator.database import Database, ConfigurationRepository
+        from patient_generator.schemas_config import ConfigurationTemplateCreate
+        
+        # Create configuration template for database
+        config_create = ConfigurationTemplateCreate(
+            name=config.get("name", "Generated Configuration"),
+            description=config.get("description", "Auto-generated configuration"),
+            total_patients=config.get("count", config.get("total_patients", 10)),
+            injury_distribution=config.get("injury_distribution", {
+                "Disease": 0.52,
+                "Non-Battle Injury": 0.33,
+                "Battle Injury": 0.15
+            }),
+            front_configs=config.get("front_configs", []),
+            facility_configs=config.get("facility_configs", [])
+        )
+        
+        # Save to database
+        db_instance = Database.get_instance()
+        config_repo = ConfigurationRepository(db_instance)
+        config_template = config_repo.create_configuration(config_create)
+        
+        # Create generation context
+        generation_context = GenerationContext(
+            config=config_template,
+            job_id=job_id,
+            output_directory=str(output_dir),
+            encryption_password=config.get("encryption_password"),
+            output_formats=config.get("output_formats", ["json"]),
+            use_compression=config.get("use_compression", False)
+        )
+        
+        # Progress callback
+        async def progress_callback(progress_data: Dict[str, Any]) -> None:
+            progress_percent = int(progress_data.get("progress", 0) * 100)
+            await job_service.update_job_progress(job_id, progress_percent)
+        
+        # Run generation
+        result = await generation_service.generate_patients(
+            generation_context, 
+            progress_callback
+        )
+        
+        # Clean up configuration from database after generation
+        try:
+            config_repo.delete_configuration(config_template.id)
+        except Exception as e:
+            print(f"Warning: Could not clean up temporary configuration {config_template.id}: {e}")
+        
+        # Update job with results
+        await job_service.set_job_results(
+            job_id=job_id,
+            output_directory=str(output_dir),
+            result_files=result.get("output_files", []),
+            summary={"total_patients": result.get("patient_count", 0)}
+        )
+        
+        # Mark job as completed
+        await job_service.update_job_status(job_id, JobStatus.COMPLETED)
+        
+    except Exception as e:
+        # Mark job as failed
+        await job_service.update_job_status(job_id, JobStatus.FAILED, error=str(e))
+        print(f"Generation task failed for job {job_id}: {e}")
+        import traceback
+        traceback.print_exc()

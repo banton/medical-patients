@@ -37,7 +37,8 @@
       "Bash(pytest:*)",
       "Bash(rm:*)",
       "Bash(curl:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": []
   },

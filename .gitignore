@@ -97,3 +97,12 @@ static/dist/
 
 # Database files
 *.db
+
+# Test artifacts
+test_*.zip
+debug_*.png
+
+# Session planning documents  
+refactoring-plan.md
+implementation-guide-*.md
+ci_summary.md

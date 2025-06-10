@@ -31,7 +31,7 @@ class PatientGeneratorClient:
         self.api_key = api_key
         self.headers = {"Accept": "application/json"}
         if self.api_key:
-            self.headers["X-API-KEY"] = self.api_key  # Matches APIKeyHeader name in app.py
+            self.headers["X-API-Key"] = self.api_key  # Matches APIKeyHeader name in backend
 
     def _request(
         self,
@@ -112,21 +112,21 @@ class PatientGeneratorClient:
         """
         Start a new patient generation job.
         Args:
-            payload: A dictionary matching GenerationRequestPayload schema.
+            payload: A dictionary matching GenerationRequest schema.
         """
-        return self._request("POST", "api/generate", json_data=payload)
+        return self._request("POST", "api/v1/generation/", json_data=payload)
 
     def get_job_status(self, job_id: str) -> Dict[str, Any]:
         """
         Get the status of a generation job.
         """
-        return self._request("GET", f"api/jobs/{job_id}")
+        return self._request("GET", f"api/v1/jobs/{job_id}")
 
-    def get_job_results_summary(self, job_id: str) -> Dict[str, Any]:
+    def list_jobs(self, limit: int = 50) -> List[Dict[str, Any]]:
         """
-        Get the results summary of a completed job.
+        List all generation jobs.
         """
-        return self._request("GET", f"api/jobs/{job_id}/results")
+        return self._request("GET", "api/v1/jobs/", params={"limit": limit})
 
     def download_job_output(self, job_id: str, output_path: str) -> str:
         """
@@ -137,7 +137,7 @@ class PatientGeneratorClient:
         Returns:
             The path where the file was saved.
         """
-        url = f"{self.base_url}api/download/{job_id}"
+        url = f"{self.base_url}api/v1/downloads/{job_id}"
         headers = self.headers.copy()
 
         try:
@@ -170,10 +170,9 @@ class PatientGeneratorClient:
 # Example Usage (can be run if the API server is running):
 if __name__ == "__main__":
     # It's recommended to manage API keys securely, e.g., via environment variables or a config file.
-    # For this example, we'll use a placeholder. Replace with your actual API key if required.
-    # The development server (app.py) uses a hardcoded key "dev_api_key" if no dashboard_auth.toml is found or properly configured.
-    # For a deployed instance, this key would be managed securely.
-    API_KEY = "dev_api_key"  # Replace with your actual API key or None if API key is not enforced for all endpoints
+    # For this example, we'll use the development API key.
+    # For a deployed instance, this key would be managed securely via environment variables.
+    API_KEY = "your_secret_api_key_here"  # Default development API key
     BASE_URL = "http://localhost:8000"
 
     client = PatientGeneratorClient(base_url=BASE_URL, api_key=API_KEY)
@@ -298,14 +297,16 @@ if __name__ == "__main__":
         print("Updated Configuration Template:", json.dumps(updated_template, indent=2))
 
         print("\n--- Patient Generation Job ---")
-        # Example: Start a patient generation job using the created/updated configuration
+        # Example: Start a patient generation job using inline configuration
         job_payload = {
-            "configuration_id": config_id,  # Use the ID of the configuration template
-            # "configuration_data": new_config_payload, # Alternatively, provide ad-hoc config
-            "output_formats": ["json", "xml"],
-            "use_compression": True,
-            "use_encryption": False,  # Set to True and provide password if testing encryption
-            # "encryption_password": "supersecretpassword" # Only if use_encryption is True
+            "configuration": {
+                "name": "SDK Generated Test",
+                "total_patients": 5  # Small test
+            },
+            "output_formats": ["json"],
+            "use_compression": False,
+            "use_encryption": False,
+            "priority": "normal"
         }
         print("\nStarting generation job with payload:", json.dumps(job_payload, indent=2))
         job_info = client.start_generation_job(job_payload)
@@ -321,20 +322,23 @@ if __name__ == "__main__":
                 print("Job completed successfully!")
                 break
             elif status_info["status"] == "failed":
-                print(f"Job failed. Reason: {status_info.get('error_message', 'Unknown error')}")
+                print(f"Job failed. Reason: {status_info.get('error', 'Unknown error')}")
                 break
             time.sleep(5)  # Poll every 5 seconds
 
-        # If job completed, get results summary and download output
+        # If job completed, download output
         if status_info["status"] == "completed":
-            print(f"\nFetching results summary for job {job_id}...")
-            results_summary = client.get_job_results_summary(job_id)
-            print("Results Summary:", json.dumps(results_summary, indent=2))
+            print(f"\nJob {job_id} completed successfully!")
+            print(f"Summary: {status_info.get('summary', {})}")
+            print(f"Output files: {status_info.get('output_files', [])}")
 
-            download_filename = f"./{job_id}_patient_data.zip"
+            download_filename = f"./patient_data_{job_id}.zip"
             print(f"\nDownloading output for job {job_id} to '{download_filename}'...")
-            saved_path = client.download_job_output(job_id, download_filename)
-            print(f"Output successfully downloaded to: {saved_path}")
+            try:
+                saved_path = client.download_job_output(job_id, download_filename)
+                print(f"Output successfully downloaded to: {saved_path}")
+            except Exception as download_error:
+                print(f"Download failed: {download_error}")
 
         # Example: Delete the configuration template
         # print(f"\nAttempting to delete configuration {config_id}...")

@@ -1,6 +1,6 @@
 # Military Medical Exercise Patient Generator
 
-A web-based application to generate realistic dummy patient data for military medical exercises. It features a highly configurable system supporting dynamic scenario definitions (multiple treatment facilities, all 32 NATO nations, varied injury types), a PostgreSQL backend, a comprehensive RESTful API, a Python SDK, and an advanced React-based configuration interface, all following NATO medical standards.
+A web-based application to generate realistic dummy patient data for military medical exercises. It features a highly configurable system supporting dynamic scenario definitions (multiple treatment facilities, all 32 NATO nations, varied injury types), a PostgreSQL backend, a comprehensive RESTful API with v1 standardization, a Python SDK, and a clean web interface, all following NATO medical standards.
 
 ## Overview
 
@@ -18,9 +18,9 @@ This application generates simulated patient data for military medical exercises
     - Multiple configurable fronts with specific casualty rates.
     - Detailed nationality distributions per front (goal: all 32 NATO nations).
     - Overall injury type distributions (Disease, Non-Battle Injury, Battle Injury).
-- **Advanced Configuration Panel**: A React-based UI (`ConfigurationPanel.tsx`) for creating, editing, saving, and loading scenario templates.
+- **Simple Web Interface**: Clean HTML/JavaScript interface for patient generation and job monitoring.
 - **Database-Backed Configurations**: Scenarios are stored and versioned in a PostgreSQL database.
-- **Comprehensive RESTful API**: Programmatic control over configuration management and patient generation.
+- **Standardized RESTful API**: v1 API endpoints with consistent request/response models and comprehensive validation.
 - **Python SDK**: Simplifies interaction with the API for automation and integration.
 - **Realistic Patient Data**:
     - Demographics generation for a wide range of nationalities.
@@ -30,23 +30,23 @@ This application generates simulated patient data for military medical exercises
 - **Data Security Options**: gzip compression and AES-256-GCM encryption (using unique salts per encryption).
 - **Dockerized Development Environment**: Easy setup and consistent environment using Docker and `start-dev.sh` script.
 - **Database Schema Management**: Alembic for robust PostgreSQL schema migrations.
-- **Enhanced Visualization Dashboard**: React-based dashboard for visualizing generated data.
+- **Background Job Processing**: Async patient generation with real-time progress tracking.
 
 ## Architecture
 
 The application features a clean, domain-driven architecture with clear separation of concerns. The codebase has been recently refactored (May 2024) to improve scalability, maintainability, and developer experience.
 
-### Recent Architecture Improvements
+### Recent Architecture Improvements (June 2025)
 
-**✅ Modular Backend Architecture**: The monolithic `app.py` has been refactored into a clean domain-driven design with proper separation of concerns.
+**✅ API Standardization**: Complete v1 API standardization with consistent request/response models, comprehensive validation, and proper error handling.
 
-**✅ Async Patient Generation**: Background tasks now use async/await patterns with thread pool execution for better concurrency and scalability.
+**✅ Background Task Processing**: Fixed patient generation workflow with proper background task execution and database configuration management.
 
-**✅ Enhanced API Security**: All API endpoints now properly implement authentication and dependency injection.
+**✅ Clean Codebase**: Systematic removal of deprecated code, auto-generated files, and unused artifacts for a clean foundation.
 
-**✅ Developer Experience**: Comprehensive Makefile provides consistent commands for development, testing, and deployment workflows.
+**✅ Enhanced Testing**: Comprehensive API contract tests ensuring reliable endpoints and proper validation.
 
-**✅ Improved Testing**: Enhanced testing infrastructure with proper job service integration.
+**✅ Modular Backend Architecture**: Clean domain-driven design with proper separation of concerns and dependency injection.
 
 ### Application Structure
 
@@ -102,10 +102,8 @@ The application features a clean, domain-driven architecture with clear separati
    - **Specialized Generators**: Demographics, medical conditions, flow simulation
 
 5. **Frontend Layer**:
-   - **Main Shell** (`static/index.html`): Entry point
-   - **Configuration Panel** (`ConfigurationPanel.tsx`): React component for scenario design
-   - **Visualization Dashboard** (`enhanced-visualization-dashboard.tsx`): Data visualization
-   - **Build System**: esbuild for TypeScript/React compilation
+   - **Main Application** (`static/index.html`): Simple web interface for patient generation
+   - **JavaScript** (`static/js/simple-app.js`): Handles API communication and user interactions
 
 6. **Database Layer**:
    - **PostgreSQL**: Configuration storage with versioning
@@ -142,9 +140,9 @@ The application now includes a comprehensive Makefile for streamlined developmen
     ```
 
 3.  **Access the application**:
-    *   Main UI (including Advanced Configuration Panel): `http://localhost:8000/static/index.html`
-    *   Enhanced Visualization Dashboard: `http://localhost:8000/static/visualizations.html`
+    *   Main Application: `http://localhost:8000/static/index.html`
     *   API Documentation: `http://localhost:8000/docs`
+    *   Alternative API Docs: `http://localhost:8000/redoc`
 
 ### Development Commands
 
@@ -223,24 +221,83 @@ For complete development guidelines, see the [Git Workflow documentation](memory
 
 ## Usage
 
-The application offers multiple ways to define scenarios and generate patient data:
+The application offers multiple ways to generate patient data:
 
-1.  **Advanced Configuration Panel (Web UI)**:
-    *   Access via `http://localhost:8000/static/index.html`.
-    *   Use the "Advanced Configuration" modal to:
-        *   Create new scenario templates.
-        *   Load, edit, and save existing templates.
-        *   Define fronts, facility chains, nationality distributions, injury patterns, and other parameters.
-    *   Once a configuration is active, use the main UI to initiate patient generation.
+### 1. Web Interface
 
-2.  **Python SDK (`patient_generator_sdk.py`)**:
-    *   Provides a `PatientGeneratorClient` class to interact with the API.
-    *   Allows programmatic creation, retrieval, and management of configuration templates.
-    *   Enables scripting of patient generation jobs.
-    *   See examples within the SDK file and future documentation.
+Access the simple web interface at `http://localhost:8000/static/index.html`:
+- Click "Generate Patients" to start a new generation job
+- Monitor job progress in real-time
+- Download generated patient data as ZIP archives when complete
 
-3.  **Direct API Interaction**:
-    *   The RESTful API (Swagger docs at `http://localhost:8000/docs`) can be used directly with any HTTP client.
+### 2. Python SDK
+
+Use the included Python SDK for programmatic access:
+
+```python
+from patient_generator_sdk import PatientGeneratorClient
+
+# Initialize client
+client = PatientGeneratorClient(
+    base_url="http://localhost:8000",
+    api_key="your_secret_api_key_here"
+)
+
+# Start generation job
+job = client.start_generation_job({
+    "configuration": {
+        "name": "Test Generation",
+        "total_patients": 10
+    },
+    "output_formats": ["json"],
+    "priority": "normal"
+})
+
+# Monitor progress
+while True:
+    status = client.get_job_status(job["job_id"])
+    if status["status"] == "completed":
+        break
+    elif status["status"] == "failed":
+        break
+    time.sleep(2)
+
+# Download results
+client.download_job_output(job["job_id"], "patients.zip")
+```
+
+### 3. Direct API Usage
+
+Use the standardized v1 API endpoints directly:
+
+```bash
+# Start generation
+curl -X POST "http://localhost:8000/api/v1/generation/" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your_secret_api_key_here" \
+  -d '{
+    "configuration": {
+      "name": "API Test",
+      "total_patients": 5
+    },
+    "output_formats": ["json"]
+  }'
+
+# Check job status
+curl -H "X-API-Key: your_secret_api_key_here" \
+  "http://localhost:8000/api/v1/jobs/{job_id}"
+
+# Download results
+curl -H "X-API-Key: your_secret_api_key_here" \
+  "http://localhost:8000/api/v1/downloads/{job_id}" \
+  --output patients.zip
+```
+
+### 4. API Documentation
+
+Complete API documentation is available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 Generated data can be used for:
 -   Importing into exercise management systems.
@@ -291,8 +348,7 @@ military-patient-generator/
 │
 ├── static/                             # Frontend files
 │   ├── index.html                      # Main UI
-│   ├── js/                             # JavaScript files
-│   └── dist/                           # Compiled bundles
+│   └── js/                             # JavaScript files
 │
 ├── tests/                              # Test files
 ├── config.py                           # Environment configuration
@@ -316,17 +372,17 @@ This generator creates data compliant with:
 
 ## Project Status
 
-### ✅ Recently Completed (May 2024)
-- **Domain-Driven Architecture**: Refactored monolithic codebase into clean, modular architecture
-- **Async Patient Generation**: Improved performance with async/await patterns
-- **Enhanced API Security**: Comprehensive authentication across all endpoints
-- **Developer Tooling**: Makefile with common development commands
-- **UI Stability**: Maintained full UI functionality throughout refactoring
+### ✅ Recently Completed (June 2025)
+- **API v1 Standardization**: Complete API standardization with consistent endpoints, models, and validation
+- **Background Task Processing**: Fixed patient generation with proper async background tasks
+- **Clean Codebase Foundation**: Systematic cleanup of deprecated and unused code
+- **Enhanced Download Functionality**: Working file downloads with proper authentication
+- **Comprehensive Testing**: Full API contract test coverage
 
 ### 🔄 In Progress
 - Performance optimization with Redis caching
-- Unified React frontend architecture
-- Enhanced testing infrastructure
+- Advanced frontend development with modern framework
+- Enhanced visualization dashboard
 
 ### 📋 Planned Features
 - CI/CD pipeline with GitHub Actions
@@ -334,7 +390,7 @@ This generator creates data compliant with:
 - Plugin architecture for extensible configurations
 - Advanced analytics and reporting
 
-For detailed progress tracking, see the [refactoring progress summary](memory-bank/refactoring-progress-summary.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
 ## Contributing
 
@@ -350,13 +406,12 @@ This project follows a structured Git workflow, including a specific branching m
 -   **Release Branches** (e.g., `release/vX.Y.Z`): For preparing releases.
 -   **Hotfix Branches** (e.g., `hotfix/TICKET-ID-short-description`): For critical production fixes.
 
-For complete details on the branching strategy, commit message format, PR process, testing requirements, and release procedures, please refer to the [Git Workflow documentation in the Memory Bank](memory-bank/git-workflow.md).
+For complete details on the branching strategy, commit message format, PR process, testing requirements, and release procedures, please refer to the Git Workflow documentation in the `memory/` directory.
 
 ### Key Development Files
 
 - `.gitignore`: Specifies intentionally untracked files that Git should ignore. This has been recently updated to include common OS-generated files, Node.js artifacts, and log files.
-- `.clinerules`: Contains project-specific intelligence and patterns for Cline (the AI assistant).
-- `memory-bank/`: Stores contextual information about the project to aid AI-assisted development.
+- `memory/`: Stores contextual information about the project including patterns, implementations, and architectural decisions.
 
 ## License
 
