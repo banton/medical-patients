@@ -104,11 +104,7 @@ async def delete_job(job_id: str, job_service: JobService = Depends(get_job_serv
     """Delete a job and all its associated files."""
     try:
         await job_service.cleanup_job_files(job_id)
-        return DeleteResponse(
-            success=True,
-            message="Job deleted successfully",
-            deleted_id=job_id
-        )
+        return DeleteResponse(success=True, message="Job deleted successfully", deleted_id=job_id)
     except JobNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
     except Exception as e:

@@ -19,7 +19,11 @@ from slowapi.util import get_remote_address
 from config import get_settings
 from src.api.v1.routers import configurations, downloads, generation, jobs, visualizations
 from src.core.cache import close_cache, get_cache_service, initialize_cache
-from src.core.error_handlers import http_exception_handler, request_validation_exception_handler, validation_exception_handler
+from src.core.error_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+    validation_exception_handler,
+)
 
 # Get settings
 settings = get_settings()
@@ -67,7 +71,7 @@ def create_app() -> FastAPI:
     limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-    
+
     # Add custom error handlers for standardized responses
     app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(RequestValidationError, request_validation_exception_handler)

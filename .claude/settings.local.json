@@ -45,7 +45,8 @@
       "Bash(./run_tests.sh:*)",
       "Bash(pkill:*)",
       "Bash(true)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(gh pr list:*)"
     ],
     "deny": []
   },

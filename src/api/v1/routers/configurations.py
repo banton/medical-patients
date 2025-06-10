@@ -79,7 +79,9 @@ async def update_configuration(
 
 @router.delete("/{config_id}", response_model=DeleteResponse)
 @limiter.limit("10/minute")
-async def delete_configuration(request: Request, config_id: str, db: Database = Depends(get_database)) -> DeleteResponse:
+async def delete_configuration(
+    request: Request, config_id: str, db: Database = Depends(get_database)
+) -> DeleteResponse:
     """Delete a configuration template."""
     repo = ConfigurationRepository(db)
 
@@ -87,12 +89,8 @@ async def delete_configuration(request: Request, config_id: str, db: Database = 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {config_id} not found")
 
     repo.delete_configuration(config_id)
-    
-    return DeleteResponse(
-        success=True,
-        message="Configuration deleted successfully",
-        deleted_id=config_id
-    )
+
+    return DeleteResponse(success=True, message="Configuration deleted successfully", deleted_id=config_id)
 
 
 @router.post("/validate/")
