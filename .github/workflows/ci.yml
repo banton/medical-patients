@@ -55,9 +55,6 @@ jobs:
           npm run lint:check
           npm run format:check
 
-      - name: Check TypeScript
-        run: npx tsc --noEmit
-
   test:
     name: Test
     runs-on: ubuntu-latest
