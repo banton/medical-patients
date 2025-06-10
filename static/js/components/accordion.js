@@ -345,6 +345,14 @@ class AccordionComponent {
             console.log(`Item ${index} validation result:`, item.isValid);
         });
         console.log('Overall validation state:', this.isAllValid());
+        
+        // Emit a global validation event for the app to catch
+        this.container.dispatchEvent(new CustomEvent('accordion:validate', {
+            detail: { 
+                allValid: this.isAllValid(),
+                validationStates: this.getAllValidation()
+            }
+        }));
     }
 }
 

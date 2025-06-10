@@ -97,8 +97,12 @@ class PatientGeneratorApp {
         const checkAccordion = () => {
             if (window.accordion) {
                 this.accordion = window.accordion;
-                this.updateGenerateButtonState();
                 console.log('🎵 Accordion connected to app');
+                // Wait a bit more for initial validation to complete
+                setTimeout(() => {
+                    this.updateGenerateButtonState();
+                    console.log('🔄 Initial button state update after accordion connection');
+                }, 50);
             } else {
                 setTimeout(checkAccordion, 100);
             }

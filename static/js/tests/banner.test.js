@@ -140,6 +140,11 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = { TestFramework, assert, querySelector };
 }
 
+// Export to window for other test files
+if (typeof window !== 'undefined') {
+    window.TestFramework = { TestFramework, assert, querySelector };
+}
+
 // Auto-run tests if this file is loaded directly
 if (typeof window !== 'undefined' && document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
