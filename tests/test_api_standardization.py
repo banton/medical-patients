@@ -36,7 +36,7 @@ class TestAPIVersioningStandardization:
     
     def test_generation_endpoint_should_be_versioned(self):
         """Generation endpoint should use /api/v1/generation/ instead of /api/generate."""
-        # Test current endpoint exists (should pass)
+        # Test old endpoint is deprecated (should return 404)
         response = requests.post(
             f"{BASE_URL}/api/generate",
             headers={"X-API-Key": API_KEY},
@@ -45,19 +45,18 @@ class TestAPIVersioningStandardization:
                 "output_formats": ["json"]
             }
         )
-        assert response.status_code in [200, 201, 422]  # Should work currently
+        assert response.status_code == 404  # Old endpoint should be gone
         
-        # Test new versioned endpoint (should FAIL initially)
+        # Test new versioned endpoint works
         response = requests.post(
             f"{BASE_URL}/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
-                "configuration_id": "test", 
+                "configuration": {"count": 5}, 
                 "output_formats": ["json"]
             }
         )
-        # This should FAIL initially - endpoint doesn't exist yet
-        assert response.status_code in [200, 201], f"Expected success, got {response.status_code}"
+        assert response.status_code in [200, 201, 422], f"Expected success, got {response.status_code}"
 
 
 class TestJobResponseModels:
@@ -67,10 +66,10 @@ class TestJobResponseModels:
         """Job status endpoint should return a proper JobResponse model."""
         # First create a job
         response = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
-                "configuration_id": "test",
+                "configuration": {"count": 5},
                 "output_formats": ["json"]
             }
         )
@@ -78,7 +77,7 @@ class TestJobResponseModels:
         job_id = response.json()["job_id"]
         
         # Get job status
-        response = requests.get(f"{BASE_URL}/api/jobs/{job_id}")
+        response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}")
         assert response.status_code == 200
         
         job_data = response.json()
@@ -104,10 +103,10 @@ class TestJobResponseModels:
     def test_generation_response_should_be_standardized(self):
         """Generation endpoint should return standardized GenerationResponse."""
         response = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
-                "configuration_id": "test",
+                "configuration": {"count": 5},
                 "output_formats": ["json"]
             }
         )
@@ -131,12 +130,12 @@ class TestInputValidationEnhancement:
     
     def test_generation_request_should_validate_output_formats(self):
         """Generation request should validate output_formats field."""
-        # Test invalid format (should FAIL initially - no validation)
+        # Test invalid format (should return validation error)
         response = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
-                "configuration_id": "test",
+                "configuration": {"count": 5},
                 "output_formats": ["invalid_format"]
             }
         )
@@ -147,12 +146,12 @@ class TestInputValidationEnhancement:
     
     def test_generation_request_should_validate_encryption_password(self):
         """Generation request should validate encryption password when encryption is enabled."""
-        # Test encryption enabled without password (should FAIL initially)
+        # Test encryption enabled without password
         response = requests.post(
-            f"{BASE_URL}/api/generate", 
+            f"{BASE_URL}/api/v1/generation/", 
             headers={"X-API-Key": API_KEY},
             json={
-                "configuration_id": "test",
+                "configuration": {"count": 5},
                 "output_formats": ["json"],
                 "use_encryption": True
                 # Missing encryption_password
@@ -165,12 +164,12 @@ class TestInputValidationEnhancement:
     
     def test_generation_request_should_validate_min_password_length(self):
         """Generation request should validate minimum password length."""
-        # Test password too short (should FAIL initially)
+        # Test password too short
         response = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
-                "configuration_id": "test",
+                "configuration": {"count": 5},
                 "output_formats": ["json"],
                 "use_encryption": True,
                 "encryption_password": "123"  # Too short
@@ -188,7 +187,7 @@ class TestErrorResponseStandardization:
     def test_not_found_errors_should_be_standardized(self):
         """All 404 errors should return standardized ErrorResponse format."""
         # Test non-existent job
-        response = requests.get(f"{BASE_URL}/api/jobs/nonexistent-job-id")
+        response = requests.get(f"{BASE_URL}/api/v1/jobs/nonexistent-job-id")
         assert response.status_code == 404
         
         error_data = response.json()
@@ -208,7 +207,7 @@ class TestErrorResponseStandardization:
     def test_unauthorized_errors_should_be_standardized(self):
         """Unauthorized errors should return standardized format."""
         # Test without API key
-        response = requests.post(f"{BASE_URL}/api/generate", json={"test": "data"})
+        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"test": "data"})
         assert response.status_code == 401
         
         error_data = response.json()

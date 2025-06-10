@@ -79,7 +79,7 @@ class TestSimpleAPI:
         config = load_json_config()
 
         # Start generation
-        response = requests.post(f"{BASE_URL}/api/generate", json={"configuration": config}, headers=headers)
+        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"configuration": config}, headers=headers)
         assert response.status_code in [200, 201]
 
         job_data = response.json()
@@ -89,7 +89,7 @@ class TestSimpleAPI:
         # Poll for completion
         max_attempts = 60
         for attempt in range(max_attempts):
-            response = requests.get(f"{BASE_URL}/api/jobs/{job_id}", headers=headers)
+            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=headers)
             assert response.status_code == 200
 
             status_data = response.json()
@@ -105,7 +105,7 @@ class TestSimpleAPI:
             pytest.fail("Job timed out")
 
         # Test download
-        response = requests.get(f"{BASE_URL}/api/download/{job_id}", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/v1/downloads/{job_id}", headers=headers)
         assert response.status_code == 200
         assert len(response.content) > 0
         assert response.headers.get("content-type") == "application/zip"
@@ -139,7 +139,7 @@ class TestSimpleAPI:
             ],
         }
 
-        response = requests.post(f"{BASE_URL}/api/generate", json={"configuration": config}, headers=headers)
+        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"configuration": config}, headers=headers)
         assert response.status_code in [200, 201]
 
     def test_invalid_injury_keys(self, headers):
@@ -152,7 +152,7 @@ class TestSimpleAPI:
             "battle_injuries": 0.2,  # underscore - wrong!
         }
 
-        response = requests.post(f"{BASE_URL}/api/generate", json={"configuration": config}, headers=headers)
+        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"configuration": config}, headers=headers)
 
         # Should either fail validation or the job should fail
         if response.status_code in [200, 201]:
@@ -162,7 +162,7 @@ class TestSimpleAPI:
             # Wait for job to process
             time.sleep(2)
 
-            response = requests.get(f"{BASE_URL}/api/jobs/{job_id}", headers=headers)
+            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=headers)
             assert response.status_code == 200
             status_data = response.json()
             assert status_data["status"] == "failed"
