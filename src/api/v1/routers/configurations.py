@@ -15,8 +15,8 @@ from patient_generator.schemas_config import ConfigurationTemplateCreate, Config
 from src.api.v1.dependencies.database import get_database
 from src.core.security import verify_api_key
 
-# Initialize router
-router = APIRouter(prefix="/api/v1/configurations", tags=["configurations"], dependencies=[Depends(verify_api_key)])
+# Initialize router (prefix will be added by main app)
+router = APIRouter(prefix="/configurations", tags=["configurations"], dependencies=[Depends(verify_api_key)])
 
 # Initialize rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -100,8 +100,8 @@ async def validate_configuration(request: Request, config: ConfigurationTemplate
         return {"valid": False, "errors": [str(e)]}
 
 
-# Reference data endpoints (don't require API key)
-reference_router = APIRouter(prefix="/api/v1/configurations/reference", tags=["reference"])
+# Reference data endpoints (don't require API key, prefix will be added by main app)
+reference_router = APIRouter(prefix="/configurations/reference", tags=["reference"])
 
 
 @reference_router.get("/nationalities/")

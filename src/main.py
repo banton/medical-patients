@@ -74,13 +74,18 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Include API routers
-    app.include_router(configurations.router)
-    app.include_router(configurations.reference_router)
-    app.include_router(generation.router)
-    app.include_router(jobs.router)
-    app.include_router(downloads.router)
-    app.include_router(visualizations.router)
+    # Include v1 API routers with consistent prefix
+    v1_prefix = "/api/v1"
+    
+    # Configuration routers (already use v1 prefix)
+    app.include_router(configurations.router, prefix=v1_prefix)
+    app.include_router(configurations.reference_router, prefix=v1_prefix)
+    
+    # New standardized v1 routers
+    app.include_router(generation.router, prefix=v1_prefix)
+    app.include_router(jobs.router, prefix=v1_prefix)
+    app.include_router(downloads.router, prefix=v1_prefix)
+    app.include_router(visualizations.router, prefix=v1_prefix)
 
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")

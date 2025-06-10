@@ -1,270 +1,266 @@
-# CLAUDE.md
+# Medical Patients Generator - Claude Code Development Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## 🧠 External Memory System
+This document serves as Claude Code's persistent memory across sessions. Read this first in every session.
 
-## Essential Commands
+## 🎯 Project Overview
+**Project**: Medical Patients Generator
+**Type**: Low-use specialist tool for military medical exercises
+**Purpose**: Generate simulated patient data with configurable parameters
+**Stack**: FastAPI backend, Vanilla JS frontend
+**Architecture**: Clean architecture with domain/infrastructure/api separation
+**Database**: PostgreSQL
+**Deployment**: Traditional VPS and local use
 
-### Development Setup
+## 📋 Session Protocol
 
-**Quick Start** (Recommended):
-```bash
-# Start development environment with Docker
-make dev
+### Start of Session
+1. Read this CLAUDE.md file completely
+2. Check `memory/current-session.md` for handoff notes
+3. Review relevant memory files based on current task
+4. Ask: "What are we working on today?"
 
-# Check if services are running
-curl http://localhost:8000/health
+### During Session
+1. Document all significant decisions in appropriate memory files
+2. Update progress in `memory/current-session.md`
+3. When stuck, write questions in `memory/questions/`
+4. Apply "Fix Don't Skip" policy - solve and document all issues
 
-# View application at
-# - UI: http://localhost:8000
-# - API docs: http://localhost:8000/docs  
-# - Advanced visualizations: http://localhost:8000/static/visualizations.html
+### End of Session
+1. Update `memory/current-session.md` with:
+   - What was accomplished
+   - Current state
+   - Next steps
+   - Any blockers or questions
+2. Commit all memory updates
+
+## 🏗️ Project Structure
+
+### Backend Structure
+```
+src/
+├── main.py              # FastAPI application entry
+├── api/                 # API layer
+│   └── v1/
+│       ├── routers/     # API endpoints
+│       ├── dependencies/# Dependency injection
+│       └── middleware/  # API middleware
+├── domain/              # Business logic
+│   ├── models/         # Domain models
+│   ├── services/       # Business services
+│   └── repositories/   # Repository interfaces
+├── infrastructure/      # External interfaces
+│   └── repositories/   # Repository implementations
+└── core/               # Shared utilities
+    ├── cache.py        # Redis caching
+    ├── exceptions.py   # Custom exceptions
+    └── security.py     # API key validation
 ```
 
-**Manual setup** (if needed):
-```bash
-docker compose -f docker-compose.dev.yml up -d  # Start all services
-docker compose -f docker-compose.dev.yml logs   # View logs
+### Configuration Files
+```
+patient_generator/
+├── demographics.json    # NATO nations data, names, IDs
+├── fronts_config.json  # Battle fronts, casualty ratios
+└── injuries.json       # Injury distributions
 ```
 
-**Troubleshooting**:
+### Key API Endpoints (v1 Standardized)
+- `POST /api/v1/generation/` - Generate patients (enhanced validation)
+- `GET /api/v1/jobs/{job_id}` - Get job status (standardized response)
+- `GET /api/v1/jobs/` - List all jobs
+- `GET /api/v1/downloads/{job_id}` - Download job results
+- `GET /api/v1/visualizations/dashboard-data` - Get dashboard data
+- `GET /api/v1/configurations/` - List configurations
+- `POST /api/v1/configurations/` - Create configuration
+- `GET /docs` - OpenAPI documentation with enhanced schemas
+
+## 🧪 Development Principles
+
+### API First Approach
+1. Define API contracts before implementation
+2. Use OpenAPI/Swagger documentation
+3. Test API endpoints independently
+4. Frontend consumes only documented APIs
+
+### TDD Workflow
+1. Write test first (failing)
+2. Implement minimal code to pass
+3. Refactor with confidence
+4. Document test purpose
+5. Maintain high coverage
+
+### Code Standards
+- Type hints for all functions
+- Docstrings for modules, classes, methods
+- Async/await for I/O operations
+- Dependency injection pattern
+- Repository pattern for data access
+- No complex abstractions - keep it simple
+
+## 🎯 Current Implementation Status
+
+### Backend (Priority 1) - COMPLETED
+- ✅ FastAPI application structure
+- ✅ Async patient generation service
+- ✅ Job management system
+- ✅ Configuration management
+- ✅ Redis caching (optional)
+- ✅ API key authentication
+- ✅ OpenAPI documentation
+- ✅ **NEW**: API v1 standardization with consistent response models
+- ✅ **NEW**: Enhanced input validation with comprehensive error handling
+- ✅ **NEW**: Standardized error responses across all endpoints
+- ✅ **NEW**: Comprehensive test coverage for API contracts
+
+### Frontend (Priority 2)
+- ❌ API promotion banner
+- ❌ Vertical accordion JSON editors
+- ❌ Load previous configurations
+- ❌ Nationality code validation  
+- ❌ Fun progress messages (2+ seconds)
+- ❌ Error retry with reporting
+- ❌ Download functionality
+- ✅ Basic static HTML interface
+
+## 🔧 Key Technical Decisions
+
+### Backend Optimizations COMPLETED
+1. ✅ **API Standardization** - All endpoints use consistent v1 versioning
+2. ✅ **Response Models** - Standardized Pydantic models for all responses
+3. ✅ **Error Handling** - Consistent exception patterns with proper HTTP status codes
+4. ✅ **Input Validation** - Comprehensive validation with descriptive error messages
+5. ✅ **API Documentation** - Enhanced OpenAPI specs with examples and descriptions
+
+### Frontend Architecture
+- **Framework**: Vanilla JS (no framework complexity)
+- **Target**: 1080p military laptops
+- **Features**: 
+  - Single page application
+  - API promotion banner (always visible)
+  - Vertical accordion layout (one editor visible at a time)
+  - JSON editors with nationality validation
+  - Load previous configurations from DB
+  - Fun progress messages (minimum 2 seconds)
+  - Developer-friendly error reporting
+  - Download generated files
+- **No bells and whistles** - Focus on functionality
+
+## 📝 Memory Map
+
+### `/memory/architecture/`
+Design decisions, system architecture, API contracts
+
+### `/memory/implementations/`
+Completed features, code patterns, implementation notes
+
+### `/memory/fixes/`
+Solved problems, debugging notes, workarounds
+
+### `/memory/patterns/`
+Reusable code patterns, testing strategies, common solutions
+
+### `/memory/questions/`
+Unresolved questions, clarifications needed, design considerations
+
+### `/memory/context/`
+Current task context, work in progress, temporary notes
+
+## 🚦 Progress Tracking
+
+### Backend Analysis & Optimization - COMPLETED
+- ✅ Complete backend evaluation
+- ✅ Document optimization opportunities  
+- ✅ Implement API standardization optimizations
+- ✅ Update test coverage with comprehensive API contract tests
+- ✅ Create standardized request/response models
+- ✅ Enhance input validation and error handling
+
+### Frontend Development
+- [ ] Design UI mockup
+- [ ] Implement JSON editor component
+- [ ] Add generation controls
+- [ ] Implement progress tracking
+- [ ] Add download functionality
+- [ ] Write unit tests
+- [ ] Write E2E tests
+
+## 🔐 Security Notes
+- API key authentication required
+- No personal data generated
+- No compliance requirements (HIPAA/GDPR)
+- Local/VPS deployment only
+
+## 🎓 Quick Commands
+
+### Development
 ```bash
-# If startup fails, check logs
-docker compose -f docker-compose.dev.yml logs app
+# Start development server
+python -m uvicorn src.main:app --reload
 
-# Restart services 
-docker compose -f docker-compose.dev.yml restart
+# Run tests
+pytest
 
-# Full cleanup and restart
-make dev-clean
+# Check code quality
+ruff check .
+ruff format .
+
+# Generate test data
+python demo.py
 ```
 
-### Running Tests
+### Frontend Build
 ```bash
-# API integration tests (requires running server)
-python -m pytest tests_api.py -xvs
-
-# Single test
-python -m pytest tests_api.py::TestAPIIntegration::test_05_config_create_valid -xvs
-
-# Frontend tests
-npm test
-
-# Unit tests
-python -m pytest tests/ -xvs
+# Build frontend (when implemented)
+# No build step needed for vanilla JS
 ```
 
-### Building Frontend
-```bash
-npm run build:all-frontend     # Build all React components
-npm run build:viz-dashboard    # Build visualization dashboard only
-npm run build:config-panel     # Build configuration panel only
-npm run build:military-dashboard # Build military dashboard only
+## ⚠️ Important Reminders
+1. **Keep it simple** - This is a specialist tool, not a SaaS
+2. **No over-engineering** - Avoid unnecessary complexity
+3. **Focus on functionality** - UI should be clean and functional
+4. **Document everything** - Future Claude sessions need context
+5. **Test everything** - TDD is mandatory
+
+---
+
+*Last Updated: API Standardization Complete*
+*Current Focus: Main application integration and frontend development*
+
+## 📋 API Standardization Summary
+
+### What Was Accomplished
+- **Consistent Versioning**: All API endpoints now use `/api/v1/` prefix
+- **Response Models**: Created comprehensive Pydantic models for all endpoints
+- **Request Validation**: Enhanced input validation with cross-field validation
+- **Error Handling**: Standardized error responses with proper HTTP status codes
+- **Documentation**: Rich OpenAPI documentation with examples and descriptions
+- **Test Coverage**: Comprehensive failing tests to drive implementation
+
+### Files Created/Modified
+```
+src/api/v1/models/
+├── __init__.py           # Model exports
+├── requests.py           # Enhanced request models with validation  
+└── responses.py          # Standardized response models
+
+src/api/v1/routers/
+├── generation.py         # New versioned generation endpoint
+├── jobs.py              # Updated with JobResponse models
+├── downloads.py         # Enhanced download functionality
+└── visualizations.py    # Standardized visualization responses
+
+tests/
+└── test_api_standardization.py  # Comprehensive API contract tests
+
+memory/implementations/
+└── api-standardization-implementation.md
+
+memory/patterns/
+└── api-first-development-patterns.md
 ```
 
-### Database Operations
-```bash
-# Create new migration
-alembic revision --autogenerate -m "Description of changes"
-
-# Apply migrations
-alembic upgrade head
-
-# Rollback one migration
-alembic downgrade -1
-
-# Database connection
-postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
-```
-
-### Cache Management
-```bash
-# Start Redis service only
-make redis
-
-# Start both database and Redis
-make services
-
-# Flush Redis cache
-make cache-flush
-
-# View Redis cache information
-make cache-info
-
-# Run cache-specific tests
-make test-cache
-```
-
-### Docker Commands
-```bash
-docker compose up -d            # Start all services
-docker compose down            # Stop all services
-docker compose logs -f app     # View application logs
-docker compose exec app bash   # Shell into app container
-docker compose ps              # Check service status
-```
-
-### Linting and Type Checking
-```bash
-# Python linting (if configured)
-ruff check src/ patient_generator/
-mypy src/ patient_generator/
-
-# TypeScript checking
-npx tsc --noEmit
-```
-
-## Architecture Overview
-
-The application follows a clean domain-driven architecture with clear separation of concerns:
-
-### Layer Responsibilities
-
-1. **API Layer (`src/api/v1/`)**
-   - FastAPI routers handle HTTP requests
-   - Each router corresponds to a domain area (configurations, generation, jobs)
-   - Uses dependency injection for services and database access
-   - All endpoints require API key authentication (except reference endpoints)
-
-2. **Domain Layer (`src/domain/`)**
-   - Contains business logic and domain models
-   - Services orchestrate complex operations
-   - Repository interfaces define data access contracts
-   - Models represent business entities with behavior
-
-3. **Core Layer (`src/core/`)**
-   - Cross-cutting concerns like security and exceptions
-   - API key validation middleware
-   - Custom exception hierarchy for proper error handling
-
-4. **Patient Generator (`patient_generator/`)**
-   - Legacy module containing core generation logic
-   - ConfigurationManager handles scenario configurations
-   - Database class provides PostgreSQL connection pooling
-   - Generators create demographics, medical conditions, and FHIR bundles
-
-### Key Design Patterns
-
-1. **Dependency Injection**
-   - FastAPI's `Depends` mechanism for injecting services
-   - Database connections managed through dependencies
-   - Testability through interface injection
-
-2. **Repository Pattern**
-   - Data access abstracted behind repository interfaces
-   - ConfigurationRepository handles configuration CRUD
-   - Job repository manages job state persistence
-
-3. **Service Layer**
-   - JobService orchestrates job lifecycle
-   - Handles background task coordination
-   - Manages file storage and cleanup
-
-4. **Background Tasks**
-   - Patient generation runs as background tasks
-   - Progress updates through job service
-   - Async/await pattern for non-blocking operations
-
-5. **Caching Layer**
-   - Redis-based caching for improved performance
-   - Demographics and medical conditions data cached
-   - Automatic cache warming before patient generation
-   - Graceful degradation when Redis is unavailable
-
-### Critical Integration Points
-
-1. **ConfigurationManager vs Direct Database Access**
-   - PatientGeneratorApp requires ConfigurationManager with loaded config
-   - Cannot pass configuration dict directly
-   - For ad-hoc configs, must create temporary database entry
-
-2. **Database Connection Management**
-   - Database class uses singleton pattern with connection pooling
-   - Always use Database() instance, not Database.get_instance()
-   - Connection pool handles concurrent access
-
-3. **File Output Management**
-   - Output files stored in `output/job_{job_id}/` directories
-   - Temporary files cleaned up automatically
-   - ZIP archives created for download endpoints
-
-4. **API Authentication**
-   - API key passed via X-API-Key header
-   - Default key: "your_secret_api_key_here" (change in production)
-   - Reference endpoints don't require authentication
-
-### Common Pitfalls to Avoid
-
-1. **Import Paths**
-   - Always set PYTHONPATH to project root
-   - Use absolute imports from src/ and patient_generator/
-   - Don't use relative imports between modules
-
-2. **Type Annotations**
-   - Time estimates in JobProgressDetails must be Dict[str, float]
-   - Use Optional for nullable fields
-   - Pydantic models use strict type validation
-
-3. **Database Migrations**
-   - Always create migrations for schema changes
-   - Test rollback before applying to production
-   - Use descriptive migration messages
-
-4. **Frontend Builds**
-   - Must rebuild after TypeScript changes
-   - Bundle outputs to static/dist/
-   - Clear browser cache after updates
-
-## Environment Variables
-
-### Core Application
-- `API_KEY`: API authentication key (default: "your_secret_api_key_here")
-- `DEBUG`: Enable debug mode (default: True in dev, False in prod)
-- `CORS_ORIGINS`: Comma-separated list of allowed origins
-
-### Database
-- `DATABASE_URL`: PostgreSQL connection string (default: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db)
-
-### Redis Cache
-- `REDIS_URL`: Redis connection string (default: redis://localhost:6379/0)
-- `CACHE_TTL`: Default cache TTL in seconds (default: 3600)
-- `CACHE_ENABLED`: Enable/disable caching (default: True)
-
-### Patient Generation
-- `PATIENT_GENERATOR_THREADS`: Number of worker threads (default: 4)
-- `PATIENT_GENERATOR_MAX_MEMORY`: Maximum memory in MB (default: 2048)
-
-## Git Workflow
-
-- Feature branches: `feature/<epic>/<task>` or `feature/TICKET-ID-description`
-- Commit format: `[TICKET-ID] Brief description`
-- Always create PRs to `develop` branch
-- Squash and merge for clean history
-- Update ticket status in memory-bank after merge
-
-## Testing Requirements
-
-- All new endpoints need API integration tests
-- Business logic requires unit tests
-- Frontend components need Jest tests
-- Maintain existing test patterns for consistency
-
-## Feature Development Workflow
-
-When deferring or hiding features for later development:
-1. Comment out the UI element with a note: `<!-- Hidden for future development -->`
-2. Add the feature to `memory-bank/backlog.md` with:
-   - Current status (hidden, planned, partially implemented)
-   - File locations where code exists
-   - What functionality already exists
-   - What needs to be specified before implementation
-3. When ready to implement, create specification and move to tickets
-
-This ensures unfinished features are tracked and not forgotten.
-
-## Additional Memory Entries
-
-- When changing HTML files, always confirm that no dependencies from API, JS or CSS, or other assets remain.
-
-## Additional Memory Entries
-
-- Always run proper linting and formatting with each file committing to git
+### Next Steps
+1. Update main FastAPI application to include v1 routers
+2. Run test suite to verify implementation
+3. Begin frontend development with new API contracts

@@ -84,9 +84,16 @@ yarn-error.log*
 # Claude Code local settings
 .claude/settings.local.json
 
-# Temporary UI analysis files (keep main memory-bank files)
-memory-bank/stashed-*.md
-memory-bank/ui-*.md
+# Old memory system - replaced with new memory/ structure
+memory-bank/
+
+# Project temporary files
+ci_complete.md
+final_ci_status.md
+temp/
+
+# Frontend build artifacts
+static/dist/
 
 # Database files
 *.db

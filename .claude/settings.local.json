@@ -34,8 +34,12 @@
       "Bash(npm run format:check:*)",
       "Bash(npx prettier:*)",
       "Bash(npm run lint:*)",
-      "Bash(pytest:*)"
+      "Bash(pytest:*)",
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": false
 }
