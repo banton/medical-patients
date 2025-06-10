@@ -4,6 +4,8 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Military Patient Generator</title>
+        <link rel="stylesheet" href="/static/css/variables.css" />
+        <link rel="stylesheet" href="/static/css/components/banner.css" />
         <style>
             body {
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -110,6 +112,20 @@
     </head>
     <body>
         <div class="container">
+            <!-- API Banner - Always Visible -->
+            <div class="api-banner">
+                <div class="api-banner__content">
+                    <p class="api-banner__text">
+                        <span class="api-banner__icon">🔧</span>
+                        API Available! This tool can also be used programmatically. Integrate patient generation into your systems via our REST API.
+                    </p>
+                    <a href="/docs" class="api-banner__link">
+                        View API Documentation
+                        <span class="api-banner__arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="header">
                 <h1>Military Patient Generator</h1>
                 <p>Simple Interface for Patient Data Generation</p>
@@ -141,5 +157,7 @@
         </div>
 
         <script src="/static/js/simple-app.js"></script>
+        <!-- Include tests in development -->
+        <script src="/static/js/tests/banner.test.js"></script>
     </body>
 </html>

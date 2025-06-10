@@ -1,0 +1,152 @@
+/**
+ * API Banner Component Styles
+ * Always visible promotion banner for programmatic API usage
+ */
+
+.api-banner {
+    background-color: var(--api-banner-bg);
+    border: 1px solid var(--api-banner-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-lg);
+    color: var(--api-banner-text);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    position: relative;
+    box-shadow: var(--shadow-sm);
+}
+
+.api-banner__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+}
+
+.api-banner__text {
+    flex: 1;
+    margin: 0;
+    font-weight: var(--font-weight-normal);
+}
+
+.api-banner__icon {
+    font-size: var(--font-size-base);
+    margin-right: var(--space-xs);
+    vertical-align: middle;
+}
+
+.api-banner__link {
+    background-color: var(--api-banner-link);
+    color: var(--surface);
+    text-decoration: none;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.api-banner__link:hover {
+    background-color: var(--api-banner-link-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.api-banner__link:focus {
+    outline: 2px solid var(--api-banner-link);
+    outline-offset: 2px;
+}
+
+.api-banner__link:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+}
+
+.api-banner__arrow {
+    font-size: var(--font-size-xs);
+    transition: transform var(--transition-fast);
+}
+
+.api-banner__link:hover .api-banner__arrow {
+    transform: translateX(2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .api-banner {
+        padding: var(--space-sm) var(--space-md);
+        margin-bottom: var(--space-md);
+        font-size: var(--font-size-xs);
+    }
+    
+    .api-banner__content {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        gap: var(--space-sm);
+    }
+    
+    .api-banner__link {
+        justify-content: center;
+        padding: var(--space-sm) var(--space-md);
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .api-banner {
+        border-width: 2px;
+        border-color: var(--text-primary);
+    }
+    
+    .api-banner__link {
+        border: 2px solid var(--text-primary);
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .api-banner__link {
+        transition: none;
+    }
+    
+    .api-banner__link:hover {
+        transform: none;
+    }
+    
+    .api-banner__arrow {
+        transition: none;
+    }
+    
+    .api-banner__link:hover .api-banner__arrow {
+        transform: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .api-banner {
+        background-color: transparent;
+        border: 1px solid var(--text-primary);
+        color: var(--text-primary);
+        box-shadow: none;
+    }
+    
+    .api-banner__link {
+        background-color: transparent;
+        color: var(--text-primary);
+        border: 1px solid var(--text-primary);
+    }
+    
+    .api-banner__link::after {
+        content: " (" attr(href) ")";
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-normal);
+    }
+}
