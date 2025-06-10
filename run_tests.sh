@@ -77,7 +77,7 @@ case "$TEST_TYPE" in
         # Check if server is running for API tests
         if check_server; then
             print_info "Server is running. Running API integration tests..."
-            pytest tests_api.py -v ${EXTRA_ARGS}
+            pytest tests/test_simple_api.py tests/test_api_standardization.py -v ${EXTRA_ARGS}
         else
             print_warning "Server not running. Starting server for API tests..."
             # Start server in background
@@ -88,7 +88,7 @@ case "$TEST_TYPE" in
             sleep 5
             
             if check_server; then
-                pytest tests_api.py -v ${EXTRA_ARGS}
+                pytest tests/test_simple_api.py tests/test_api_standardization.py -v ${EXTRA_ARGS}
                 # Stop server
                 kill $SERVER_PID 2>/dev/null || true
             else
@@ -130,7 +130,7 @@ case "$TEST_TYPE" in
             exit 1
         fi
         
-        pytest tests_api.py -v ${EXTRA_ARGS}
+        pytest tests/test_simple_api.py tests/test_api_standardization.py -v ${EXTRA_ARGS}
         ;;
     
     quick)
@@ -153,7 +153,7 @@ case "$TEST_TYPE" in
         
         if check_server; then
             print_info "Running API and E2E tests..."
-            pytest tests_api.py tests/test_e2e_flows.py -v || true
+            pytest tests/test_simple_api.py tests/test_api_standardization.py tests/test_e2e_flows.py -v || true
         else
             print_warning "Server not running. Skipping API and E2E tests."
         fi
