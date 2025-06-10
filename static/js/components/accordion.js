@@ -339,9 +339,12 @@ class AccordionComponent {
     }
     
     validateAllItems() {
+        console.log('🔍 Validating all accordion items...');
         this.items.forEach((item, index) => {
             this.validateItem(index);
+            console.log(`Item ${index} validation result:`, item.isValid);
         });
+        console.log('Overall validation state:', this.isAllValid());
     }
 }
 

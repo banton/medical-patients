@@ -143,9 +143,14 @@ class PatientGeneratorApp {
     }
     
     updateGenerateButtonState() {
-        if (!this.accordion || !this.generateBtn) return;
+        if (!this.accordion || !this.generateBtn) {
+            console.log('🔴 Missing accordion or generate button');
+            return;
+        }
         
         const isValid = this.accordion.isAllValid();
+        console.log('🎯 Button state update - isValid:', isValid, 'currentJobId:', this.currentJobId);
+        
         this.generateBtn.disabled = !isValid || this.currentJobId !== null;
         
         if (!isValid) {
