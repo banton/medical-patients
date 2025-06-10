@@ -63,6 +63,26 @@ demo_output/
 *.ndef.json
 temp/
 
+# Generated patient documents and job results
+job_*/
+patient_data_*.zip
+patient_data_*.json
+patient_data_*.csv
+patient_data_*.xml
+patients.json
+patients.csv
+patients.xml
+patients.xlsx
+patients.fhir
+*_patients_*.json
+*_patients_*.csv
+*_patients_*.xml
+*.fhir
+
+# Temporary generation directories
+/tmp/medical_patients/
+/var/tmp/medical_patients/
+
 # macOS
 .DS_Store
 

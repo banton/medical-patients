@@ -5,7 +5,7 @@ All endpoints should use these request models for consistent input validation.
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class GenerationRequest(BaseModel):
@@ -29,8 +29,9 @@ class GenerationRequest(BaseModel):
 
     priority: str = Field(default="normal", description="Job priority level")
 
-    @validator("output_formats")
-    def validate_output_formats(self, v):
+    @field_validator("output_formats")
+    @classmethod
+    def validate_output_formats(cls, v):
         """Validate that all output formats are supported."""
         valid_formats = ["json", "csv", "xlsx", "xml", "fhir"]
 
@@ -41,8 +42,9 @@ class GenerationRequest(BaseModel):
 
         return v
 
-    @validator("priority")
-    def validate_priority(self, v):
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v):
         """Validate priority level."""
         valid_priorities = ["low", "normal", "high"]
         if v not in valid_priorities:
@@ -107,16 +109,18 @@ class ConfigurationCreateRequest(BaseModel):
 
     is_active: bool = Field(default=True, description="Whether configuration should be active")
 
-    @validator("name")
-    def validate_name(self, v):
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
         """Validate configuration name."""
         if not v.strip():
             msg = "Configuration name cannot be empty"
             raise ValueError(msg)
         return v.strip()
 
-    @validator("template")
-    def validate_template(self, v):
+    @field_validator("template")
+    @classmethod
+    def validate_template(cls, v):
         """Basic template validation."""
         if not isinstance(v, dict):
             msg = "Template must be a dictionary"
@@ -158,16 +162,18 @@ class ConfigurationUpdateRequest(BaseModel):
 
     is_active: Optional[bool] = Field(None, description="Whether configuration should be active")
 
-    @validator("name")
-    def validate_name(self, v):
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
         """Validate configuration name if provided."""
         if v is not None and not v.strip():
             msg = "Configuration name cannot be empty"
             raise ValueError(msg)
         return v.strip() if v else v
 
-    @validator("template")
-    def validate_template(self, v):
+    @field_validator("template")
+    @classmethod
+    def validate_template(cls, v):
         """Basic template validation if provided."""
         if v is not None:
             if not isinstance(v, dict):
@@ -197,8 +203,9 @@ class ConfigurationValidationRequest(BaseModel):
 
     strict: bool = Field(default=False, description="Whether to perform strict validation")
 
-    @validator("template")
-    def validate_template_structure(self, v):
+    @field_validator("template")
+    @classmethod
+    def validate_template_structure(cls, v):
         """Validate basic template structure."""
         if not isinstance(v, dict):
             msg = "Template must be a dictionary"
