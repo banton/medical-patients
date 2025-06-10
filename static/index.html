@@ -25,6 +25,8 @@
                 padding: 20px;
                 margin: -20px -20px 20px -20px;
                 text-align: center;
+                width: calc(100% + 40px);
+                box-sizing: border-box;
             }
             .info-box {
                 background-color: #e3f2fd;
@@ -53,8 +55,10 @@
                 border-radius: 4px;
                 cursor: pointer;
                 display: block;
-                margin: 0 auto;
+                margin: 30px auto;
                 transition: background-color 0.3s;
+                width: 100%;
+                max-width: 300px;
             }
             .generate-button:hover {
                 background-color: #45a049;
@@ -70,6 +74,8 @@
                 padding: 20px;
                 margin-top: 30px;
                 display: none;
+                width: 100%;
+                box-sizing: border-box;
             }
             .status-box.show {
                 display: block;
@@ -94,17 +100,21 @@
                 transition: width 0.3s;
             }
             .download-link {
-                display: inline-block;
+                display: block;
                 background-color: #4caf50;
                 color: white;
                 padding: 12px 24px;
                 border: none;
                 border-radius: 4px;
-                margin-top: 10px;
+                margin: 10px auto 0;
                 cursor: pointer;
                 font-size: 16px;
                 font-weight: bold;
                 text-decoration: none;
+                text-align: center;
+                width: 100%;
+                max-width: 250px;
+                box-sizing: border-box;
             }
             .download-link:hover {
                 background-color: #45a049;
@@ -124,6 +134,8 @@
                 border-radius: 8px;
                 padding: 20px;
                 margin-top: 20px;
+                width: 100%;
+                box-sizing: border-box;
             }
             .download-section h4 {
                 margin-top: 0;

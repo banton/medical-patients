@@ -14,6 +14,8 @@
     line-height: var(--line-height-normal);
     position: relative;
     box-shadow: var(--shadow-sm);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .api-banner__content {
@@ -21,8 +23,6 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
-    max-width: var(--container-max-width);
-    margin: 0 auto;
 }
 
 .api-banner__text {

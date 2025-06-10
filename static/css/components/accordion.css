@@ -9,6 +9,8 @@
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    width: 100%;
+    margin-bottom: var(--space-lg);
 }
 
 .accordion__item {
