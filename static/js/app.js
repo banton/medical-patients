@@ -97,11 +97,9 @@ class PatientGeneratorApp {
         const checkAccordion = () => {
             if (window.accordion) {
                 this.accordion = window.accordion;
-                console.log('🎵 Accordion connected to app');
                 // Wait a bit more for initial validation to complete
                 setTimeout(() => {
                     this.updateGenerateButtonState();
-                    console.log('🔄 Initial button state update after accordion connection');
                 }, 50);
             } else {
                 setTimeout(checkAccordion, 100);
@@ -147,14 +145,9 @@ class PatientGeneratorApp {
     }
     
     updateGenerateButtonState() {
-        if (!this.accordion || !this.generateBtn) {
-            console.log('🔴 Missing accordion or generate button');
-            return;
-        }
+        if (!this.accordion || !this.generateBtn) return;
         
         const isValid = this.accordion.isAllValid();
-        console.log('🎯 Button state update - isValid:', isValid, 'currentJobId:', this.currentJobId);
-        
         this.generateBtn.disabled = !isValid || this.currentJobId !== null;
         
         if (!isValid) {
