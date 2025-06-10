@@ -249,6 +249,13 @@ memory/patterns/ci-requirements-matrix.md      # Exact test requirements for fut
 - **Test Coverage**: 13 comprehensive API client tests with mock framework
 - **Keyboard Shortcuts**: Ctrl+Enter for generation trigger
 
-**Next Action**: Begin Phase 4 - Load Previous Configurations
+### ✅ Critical Logic Fix: Demographics Panel Removal
+- **Problem Identified**: Demographics.json is static NATO data, not user-configurable
+- **Solution Applied**: Removed demographics accordion panel entirely  
+- **Impact**: Cleaner UX with only 2 user-configurable sections (Battle Fronts + Injuries)
+- **Technical Updates**: Accordion component updated for 2 sections, app logic uses backend demographics
+- **Validation**: Confirmed working with 2 accordion items, proper validation mapping
+
+**Next Action**: Ready for handoff - Major frontend functionality complete
 
 *Current deliverable: Modern frontend with v1 API integration following UI specification*
