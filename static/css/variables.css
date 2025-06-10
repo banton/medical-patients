@@ -4,38 +4,39 @@
  */
 
 :root {
-    /* Primary Colors */
-    --primary: #1976d2;
-    --primary-dark: #1565c0;
-    --primary-light: #42a5f5;
+    /* Primary Colors - Modern Healthcare Palette */
+    --primary: #0891b2;
+    --primary-dark: #0e7490;
+    --primary-light: #06b6d4;
     
-    /* Status Colors */
-    --success: #4caf50;
-    --error: #f44336;
-    --warning: #ff9800;
-    --info: #2196f3;
+    /* Status Colors - Modern Palette */
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    --info: #06b6d4;
     
-    /* Background Colors */
-    --background: #f5f5f5;
+    /* Background Colors - Softer Slate Palette */
+    --background: #f8fafc;
+    --background-secondary: #f1f5f9;
     --surface: #ffffff;
     --surface-elevated: #ffffff;
     
-    /* Text Colors */
-    --text-primary: #212121;
-    --text-secondary: #666666;
-    --text-disabled: #9e9e9e;
+    /* Text Colors - Better Contrast */
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-disabled: #94a3b8;
     
-    /* Border Colors */
-    --border: #dddddd;
-    --border-light: #e0e0e0;
-    --border-dark: #bdbdbd;
+    /* Border Colors - Softer Grays */
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --border-dark: #cbd5e1;
     
-    /* API Banner Specific */
-    --api-banner-bg: #e3f2fd;
-    --api-banner-border: #1976d2;
-    --api-banner-text: #0d47a1;
-    --api-banner-link: #1976d2;
-    --api-banner-link-hover: #1565c0;
+    /* API Banner Specific - Updated for Cyan Palette */
+    --api-banner-bg: #ecfeff;
+    --api-banner-border: #0891b2;
+    --api-banner-text: #0e7490;
+    --api-banner-link: #0891b2;
+    --api-banner-link-hover: #0e7490;
     
     /* Shadows */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
@@ -55,9 +56,9 @@
     --space-xl: 32px;
     --space-2xl: 48px;
     
-    /* Typography */
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-family-mono: 'SF Mono', Consolas, 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    /* Typography - Modern Fonts */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-mono: 'JetBrains Mono', 'SF Mono', Consolas, 'Monaco', 'Inconsolata', 'Fira Code', monospace;
     
     --font-size-xs: 12px;
     --font-size-sm: 14px;
@@ -76,8 +77,8 @@
     --line-height-normal: 1.5;
     --line-height-relaxed: 1.75;
     
-    /* Layout */
-    --container-max-width: 1000px;
+    /* Layout - Increased for Modern Design */
+    --container-max-width: 1200px;
     --header-height: 60px;
     --banner-height: auto;
     
@@ -96,17 +97,21 @@
     --z-tooltip: 1070;
 }
 
-/* Dark Mode Support (Future Enhancement) */
+/* Dark Mode Support - Updated for Modern Palette */
 @media (prefers-color-scheme: dark) {
     :root {
-        --background: #121212;
-        --surface: #1e1e1e;
-        --surface-elevated: #2d2d2d;
-        --text-primary: #ffffff;
-        --text-secondary: #b3b3b3;
-        --border: #404040;
-        --api-banner-bg: #1a237e;
-        --api-banner-text: #e3f2fd;
+        --background: #0f172a;
+        --background-secondary: #1e293b;
+        --surface: #1e293b;
+        --surface-elevated: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-disabled: #64748b;
+        --border: #475569;
+        --border-light: #334155;
+        --api-banner-bg: #164e63;
+        --api-banner-text: #ecfeff;
+        --api-banner-border: #0891b2;
     }
 }
 

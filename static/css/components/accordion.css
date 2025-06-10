@@ -1,34 +1,38 @@
 /**
- * Accordion Component Styles - Enhanced Modern Design
+ * Accordion Component Styles - Modern Healthcare Design
  * Vertical accordion for configuration sections (one expanded at a time)
  */
 
 .accordion {
-    background-color: var(--surface);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
+    border-radius: 0.5rem;
     overflow: hidden;
     width: 100%;
-    transition: box-shadow var(--transition-normal);
-}
-
-.accordion:hover {
-    box-shadow: var(--shadow-lg);
+    space-y: 0;
 }
 
 .accordion__item {
-    border-bottom: 1px solid var(--border-light);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-normal);
+    overflow: hidden;
+}
+
+.accordion__item:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
 }
 
 .accordion__item:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
 }
 
 .accordion__header {
-    background: linear-gradient(90deg, var(--surface) 0%, #fafafa 100%);
+    background: var(--surface);
     border: none;
-    padding: var(--space-lg) var(--space-xl);
+    padding: 1.25rem 1.5rem;
     width: 100%;
     text-align: left;
     cursor: pointer;
@@ -36,8 +40,8 @@
     align-items: center;
     justify-content: space-between;
     font-family: var(--font-family);
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--text-primary);
     transition: all var(--transition-normal);
     position: relative;
@@ -45,28 +49,26 @@
 }
 
 .accordion__header:hover {
-    background: linear-gradient(90deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.02) 100%);
+    background: linear-gradient(90deg, rgba(8, 145, 178, 0.05) 0%, rgba(8, 145, 178, 0.02) 100%);
     border-left-color: var(--primary-light);
-    transform: translateX(2px);
 }
 
 .accordion__header:focus {
     outline: 2px solid var(--primary);
     outline-offset: -2px;
-    background: linear-gradient(90deg, rgba(25, 118, 210, 0.08) 0%, rgba(25, 118, 210, 0.03) 100%);
+    background: linear-gradient(90deg, rgba(8, 145, 178, 0.08) 0%, rgba(8, 145, 178, 0.03) 100%);
     border-left-color: var(--primary);
 }
 
 .accordion__header--active {
-    background: linear-gradient(90deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%);
+    background: linear-gradient(90deg, rgba(8, 145, 178, 0.1) 0%, rgba(8, 145, 178, 0.05) 100%);
     color: var(--primary-dark);
     border-left-color: var(--primary);
-    box-shadow: inset 0 1px 3px rgba(25, 118, 210, 0.1);
+    box-shadow: inset 0 1px 3px rgba(8, 145, 178, 0.1);
 }
 
 .accordion__header--active:hover {
-    background: linear-gradient(90deg, rgba(25, 118, 210, 0.15) 0%, rgba(25, 118, 210, 0.08) 100%);
-    transform: translateX(2px);
+    background: linear-gradient(90deg, rgba(8, 145, 178, 0.15) 0%, rgba(8, 145, 178, 0.08) 100%);
 }
 
 .accordion__title {
@@ -149,33 +151,31 @@
 .accordion__editor {
     min-height: 300px;
     max-height: 500px;
-    border: 2px solid var(--border-light);
-    border-radius: var(--radius-md);
+    border: 2px solid var(--border);
+    border-radius: 0.5rem;
     font-family: var(--font-family-mono);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
-    padding: var(--space-lg);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    padding: 1rem;
     resize: vertical;
-    background: linear-gradient(135deg, var(--surface) 0%, #fafafa 100%);
+    background: var(--surface);
     color: var(--text-primary);
     width: 100%;
     box-sizing: border-box;
     transition: all var(--transition-normal);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .accordion__editor:focus {
     outline: none;
     border-color: var(--primary);
-    background: var(--surface);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(25, 118, 210, 0.1);
-    transform: scale(1.01);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .accordion__editor--invalid {
     border-color: var(--error);
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(244, 67, 54, 0.02) 100%);
-    box-shadow: inset 0 2px 4px rgba(244, 67, 54, 0.1);
+    background: rgba(239, 68, 68, 0.02);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 .accordion__validation {
