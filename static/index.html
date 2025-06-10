@@ -4,154 +4,17 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Military Patient Generator</title>
+        
+        <!-- CSS Framework and Stylesheets -->
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
         <link rel="stylesheet" href="/static/css/variables.css" />
+        <link rel="stylesheet" href="/static/css/main.css" />
         <link rel="stylesheet" href="/static/css/components/banner.css" />
         <link rel="stylesheet" href="/static/css/components/accordion.css" />
+        
+        <!-- Font Icons -->
         <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f5f5f5;
-            }
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            .header {
-                background-color: #1a73e8;
-                color: white;
-                padding: 20px;
-                margin: -20px -20px 20px -20px;
-                text-align: center;
-                width: calc(100% + 40px);
-                box-sizing: border-box;
-            }
-            .info-box {
-                background-color: #e3f2fd;
-                border: 1px solid #1976d2;
-                border-radius: 4px;
-                padding: 20px;
-                margin-bottom: 30px;
-            }
-            .info-box h2 {
-                margin-top: 0;
-                color: #1976d2;
-            }
-            .file-list {
-                background-color: white;
-                padding: 15px;
-                border-radius: 4px;
-                margin: 10px 0;
-                font-family: monospace;
-            }
-            .generate-button {
-                background-color: #4caf50;
-                color: white;
-                border: none;
-                padding: 20px 40px;
-                font-size: 20px;
-                border-radius: 4px;
-                cursor: pointer;
-                display: block;
-                margin: 30px auto;
-                transition: background-color 0.3s;
-                width: 100%;
-                max-width: 300px;
-            }
-            .generate-button:hover {
-                background-color: #45a049;
-            }
-            .generate-button:disabled {
-                background-color: #cccccc;
-                cursor: not-allowed;
-            }
-            .status-box {
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 20px;
-                margin-top: 30px;
-                display: none;
-                width: 100%;
-                box-sizing: border-box;
-            }
-            .status-box.show {
-                display: block;
-            }
-            .success {
-                color: #4caf50;
-            }
-            .error {
-                color: #f44336;
-            }
-            .progress {
-                background-color: #e0e0e0;
-                border-radius: 4px;
-                height: 20px;
-                margin: 10px 0;
-                overflow: hidden;
-            }
-            .progress-bar {
-                background-color: #1a73e8;
-                height: 100%;
-                width: 0%;
-                transition: width 0.3s;
-            }
-            .download-link {
-                display: block;
-                background-color: #4caf50;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 4px;
-                margin: 10px auto 0;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: bold;
-                text-decoration: none;
-                text-align: center;
-                width: 100%;
-                max-width: 250px;
-                box-sizing: border-box;
-            }
-            .download-link:hover {
-                background-color: #45a049;
-            }
-            .fun-message {
-                font-style: italic;
-                color: #666;
-                margin-top: 10px;
-                padding: 8px;
-                background-color: #f9f9f9;
-                border-radius: 4px;
-                border-left: 3px solid #1a73e8;
-            }
-            .download-section {
-                background-color: #f8f9fa;
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                padding: 20px;
-                margin-top: 20px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-            .download-section h4 {
-                margin-top: 0;
-                color: #1a73e8;
-            }
-            .download-info {
-                margin-top: 10px;
-                opacity: 0.8;
-            }
-            code {
-                background-color: #f1f3f4;
-                padding: 2px 6px;
-                border-radius: 3px;
-                font-family: monospace;
-                font-size: 0.9em;
-            }
+            @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
         </style>
     </head>
     <body>
@@ -170,29 +33,40 @@
                 </div>
             </div>
 
+            <!-- Header -->
             <div class="header">
-                <h1>Military Patient Generator</h1>
-                <p>Simple Interface for Patient Data Generation</p>
+                <h1><i class="fas fa-user-md"></i> Military Patient Generator</h1>
+                <p>Professional Interface for Medical Training Data Generation</p>
             </div>
 
-            <!-- Configuration Accordion -->
-            <div class="accordion">
-                <!-- Battle Fronts Configuration -->
-                <div class="accordion__item">
-                    <button class="accordion__header" type="button">
-                        <div class="accordion__title">
-                            <span class="accordion__status accordion__status--unknown">?</span>
-                            Battle Fronts Configuration
-                        </div>
-                        <span class="accordion__icon">▼</span>
-                    </button>
-                    <div class="accordion__content">
-                        <textarea
-                            class="accordion__editor"
-                            id="fronts-editor"
-                            placeholder="Enter battle fronts configuration JSON..."
-                            rows="15"
-                        >{
+            <!-- Main Content Card -->
+            <div class="main-content">
+                <!-- Configuration Section -->
+                <div class="section-header">
+                    <i class="fas fa-cogs icon"></i>
+                    Configuration Settings
+                </div>
+                
+                <div class="content-section">
+                    <!-- Configuration Accordion -->
+                    <div class="accordion">
+                        <!-- Battle Fronts Configuration -->
+                        <div class="accordion__item">
+                            <button class="accordion__header" type="button">
+                                <div class="accordion__title">
+                                    <span class="accordion__status accordion__status--unknown">?</span>
+                                    <i class="fas fa-map-marked-alt" style="margin-right: 8px;"></i>
+                                    Battle Fronts Configuration
+                                </div>
+                                <span class="accordion__icon">▼</span>
+                            </button>
+                            <div class="accordion__content">
+                                <textarea
+                                    class="accordion__editor"
+                                    id="fronts-editor"
+                                    placeholder="Enter battle fronts configuration JSON..."
+                                    rows="15"
+                                >{
   "front_configs": [
     {
       "id": "poland",
@@ -225,26 +99,27 @@
     }
   ]
 }</textarea>
-                        <div class="accordion__validation"></div>
-                    </div>
-                </div>
-
-                <!-- Injury Distribution -->
-                <div class="accordion__item">
-                    <button class="accordion__header" type="button">
-                        <div class="accordion__title">
-                            <span class="accordion__status accordion__status--unknown">?</span>
-                            Injury Distribution
+                                <div class="accordion__validation"></div>
+                            </div>
                         </div>
-                        <span class="accordion__icon">▼</span>
-                    </button>
-                    <div class="accordion__content">
-                        <textarea
-                            class="accordion__editor"
-                            id="injuries-editor"
-                            placeholder="Enter injury distribution JSON..."
-                            rows="10"
-                        >{
+
+                        <!-- Injury Distribution -->
+                        <div class="accordion__item">
+                            <button class="accordion__header" type="button">
+                                <div class="accordion__title">
+                                    <span class="accordion__status accordion__status--unknown">?</span>
+                                    <i class="fas fa-chart-pie" style="margin-right: 8px;"></i>
+                                    Injury Distribution
+                                </div>
+                                <span class="accordion__icon">▼</span>
+                            </button>
+                            <div class="accordion__content">
+                                <textarea
+                                    class="accordion__editor"
+                                    id="injuries-editor"
+                                    placeholder="Enter injury distribution JSON..."
+                                    rows="10"
+                                >{
   "injury_distribution": {
     "Disease": 0.52,
     "Non-Battle Injury": 0.33,
@@ -252,27 +127,42 @@
   },
   "total_patients": 1440
 }</textarea>
-                        <div class="accordion__validation"></div>
+                                <div class="accordion__validation"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <button class="generate-button" id="generateBtn">Generate Patients</button>
+            <!-- Generate Button -->
+            <button class="generate-button" id="generateBtn">
+                <span class="button-icon">⚡</span>
+                Generate Patients
+            </button>
 
+            <!-- Status Section -->
             <div class="status-box" id="statusBox">
-                <h3>Generation Status</h3>
-                <div id="statusMessage"></div>
-                <div class="progress" id="progressContainer" style="display: none">
-                    <div class="progress-bar" id="progressBar"></div>
+                <div class="section-header">
+                    <i class="fas fa-tasks icon"></i>
+                    Generation Status
                 </div>
-                <div id="downloadContainer"></div>
+                
+                <div class="status-content">
+                    <div id="statusMessage"></div>
+                    <div class="progress" id="progressContainer" style="display: none">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div id="downloadContainer"></div>
+                </div>
             </div>
         </div>
 
+        <!-- Scripts -->
         <script src="/static/js/services/api.js"></script>
         <script src="/static/js/components/accordion.js"></script>
         <script src="/static/js/app.js"></script>
-        <!-- Include tests in development -->
+        
+        <!-- Development Tests -->
         <script src="/static/js/tests/banner.test.js"></script>
         <script src="/static/js/tests/accordion.test.js"></script>
         <script src="/static/js/tests/api.test.js"></script>
