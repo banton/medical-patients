@@ -139,6 +139,7 @@ class TestE2EPatientGeneration:
                         # Handle compressed vs uncompressed files
                         if data_file.endswith(".gz"):
                             import gzip
+
                             content = gzip.decompress(raw_content)
                         else:
                             content = raw_content

@@ -106,6 +106,7 @@ class JobService:
         # Only allow cancellation of pending or running jobs
         if job.status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]:
             from src.core.exceptions import InvalidOperationError
+
             error_msg = f"Cannot cancel job {job_id} with status {job.status.value}"
             raise InvalidOperationError(error_msg)
 
