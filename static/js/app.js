@@ -3,13 +3,15 @@
  * Modern frontend with v1 API integration and accordion interface
  */
 
+/* eslint no-console: "off" */
+
 class PatientGeneratorApp {
     constructor() {
         this.apiClient = window.apiClient;
         this.accordion = null;
         this.currentJobId = null;
         this.pollingPromise = null;
-        
+
         // Generation metrics tracking
         this.generationStartTime = null;
         this.generationData = {
@@ -17,14 +19,14 @@ class PatientGeneratorApp {
             duration: null,
             fileSize: null
         };
-        
+
         // Configuration history tracking
         this.configHistory = this.loadConfigHistory();
-        
+
         // Progress animation state
         this.progressSimulation = null;
         this.simulatedProgress = 0;
-        
+
         // DOM elements
         this.generateBtn = null;
         this.statusBox = null;
@@ -32,47 +34,47 @@ class PatientGeneratorApp {
         this.progressBar = null;
         this.progressContainer = null;
         this.downloadContainer = null;
-        
+
         // Progress messages for fun UX
         this.progressMessages = [
-            "Rolling dice for combat injuries...",
-            "Consulting field medics for realistic injuries...",
-            "Distributing casualties across battle fronts...",
-            "Assigning triage categories...",
-            "Creating believable medical histories...",
-            "Randomizing arrival patterns...",
-            "Double-checking NATO personnel IDs...",
-            "Simulating evacuation priorities...",
-            "Adding battlefield dust for authenticity...",
-            "Generating convincing vital signs...",
-            "Cross-referencing injury patterns..."
+            'Rolling dice for combat injuries...',
+            'Consulting field medics for realistic injuries...',
+            'Distributing casualties across battle fronts...',
+            'Assigning triage categories...',
+            'Creating believable medical histories...',
+            'Randomizing arrival patterns...',
+            'Double-checking NATO personnel IDs...',
+            'Simulating evacuation priorities...',
+            'Adding battlefield dust for authenticity...',
+            'Generating convincing vital signs...',
+            'Cross-referencing injury patterns...'
         ];
-        
+
         this.currentMessageIndex = 0;
         this.messageInterval = null;
     }
-    
+
     async init() {
-        console.log('🚀 Initializing Patient Generator App...');
-        
+        // console.log('🚀 Initializing Patient Generator App...');
+
         // Get DOM elements
         this.getDOMElements();
-        
+
         // Set up event listeners
         this.bindEvents();
-        
+
         // Wait for accordion to be ready
         this.waitForAccordion();
-        
+
         // Load initial data
         await this.loadInitialData();
-        
+
         // Initialize configuration history display
         this.updateConfigHistoryDisplay();
-        
-        console.log('✅ Patient Generator App initialized');
+
+        // console.log('✅ Patient Generator App initialized');
     }
-    
+
     getDOMElements() {
         this.generateBtn = document.getElementById('generateBtn');
         this.statusBox = document.getElementById('statusBox');
@@ -80,7 +82,7 @@ class PatientGeneratorApp {
         this.progressBar = document.getElementById('progressBar');
         this.progressContainer = document.getElementById('progressContainer');
         this.downloadContainer = document.getElementById('downloadContainer');
-        
+
         // Validate required elements
         const required = ['generateBtn', 'statusBox', 'statusMessage'];
         for (const elementName of required) {
@@ -89,18 +91,18 @@ class PatientGeneratorApp {
             }
         }
     }
-    
+
     bindEvents() {
         // Generate button
         if (this.generateBtn) {
             this.generateBtn.addEventListener('click', () => this.handleGenerate());
         }
-        
+
         // Accordion events
         document.addEventListener('accordion:validate', (e) => {
             this.updateGenerateButtonState();
         });
-        
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
@@ -109,7 +111,7 @@ class PatientGeneratorApp {
             }
         });
     }
-    
+
     waitForAccordion() {
         // Wait for accordion to be initialized
         const checkAccordion = () => {
@@ -125,7 +127,7 @@ class PatientGeneratorApp {
         };
         checkAccordion();
     }
-    
+
     async loadInitialData() {
         try {
             // Test API connection
@@ -134,45 +136,71 @@ class PatientGeneratorApp {
                 this.showError('⚠️ Backend API is not responding. Please check the server.');
                 return;
             }
-            
+
             // Load reference data for validation
             await this.loadNationalityData();
-            
-            console.log('📡 API connection established');
+
+            // console.log('📡 API connection established');
         } catch (error) {
             console.error('Failed to load initial data:', error);
             this.showError(`Failed to connect to API: ${error.message}`);
         }
     }
-    
+
     async loadNationalityData() {
         try {
             const nationalities = await this.apiClient.getNationalities();
-            this.validNationalityCodes = new Set(nationalities.map(n => n.code));
-            console.log(`📊 Loaded ${nationalities.length} nationality codes`);
+            this.validNationalityCodes = new Set(nationalities.map((n) => n.code));
+            // console.log(`📊 Loaded ${nationalities.length} nationality codes`);
         } catch (error) {
             console.warn('Could not load nationality data:', error.message);
             // Fallback to common NATO codes
             this.validNationalityCodes = new Set([
-                'USA', 'GBR', 'CAN', 'FRA', 'DEU', 'ITA', 'ESP', 'NLD', 
-                'BEL', 'PRT', 'NOR', 'DNK', 'ISL', 'LUX', 'GRC', 'TUR',
-                'POL', 'CZE', 'HUN', 'SVK', 'SVN', 'EST', 'LVA', 'LTU',
-                'BGR', 'ROU', 'HRV', 'ALB', 'MNE', 'MKD'
+                'USA',
+                'GBR',
+                'CAN',
+                'FRA',
+                'DEU',
+                'ITA',
+                'ESP',
+                'NLD',
+                'BEL',
+                'PRT',
+                'NOR',
+                'DNK',
+                'ISL',
+                'LUX',
+                'GRC',
+                'TUR',
+                'POL',
+                'CZE',
+                'HUN',
+                'SVK',
+                'SVN',
+                'EST',
+                'LVA',
+                'LTU',
+                'BGR',
+                'ROU',
+                'HRV',
+                'ALB',
+                'MNE',
+                'MKD'
             ]);
         }
     }
-    
+
     updateGenerateButtonState() {
         if (!this.accordion || !this.generateBtn) return;
-        
+
         const isValid = this.accordion.isAllValid();
         const isGenerating = this.currentJobId !== null;
-        
+
         this.generateBtn.disabled = !isValid || isGenerating;
-        
+
         // Clear existing content and classes
         this.generateBtn.className = 'generate-button';
-        
+
         if (!isValid) {
             this.generateBtn.innerHTML = `
                 <div class="flex items-center justify-center">
@@ -201,53 +229,52 @@ class PatientGeneratorApp {
             this.generateBtn.title = 'Start patient generation with current configuration';
         }
     }
-    
+
     async handleGenerate() {
         if (!this.accordion || !this.accordion.isAllValid()) {
             this.showError('Please fix all configuration errors before generating patients.');
             return;
         }
-        
+
         try {
             // Start generation timer
             this.generationStartTime = Date.now();
-            
+
             // Disable UI and update button state
             this.currentJobId = 'pending';
             this.updateGenerateButtonState();
-            
+
             // Show initial status and scroll into view
             this.showStatus();
             this.scrollToStatus();
             this.setStatusMessage('🚀 Starting patient generation...');
-            
+
             // Build configuration from accordion
             const configuration = this.buildConfiguration();
-            
+
             // Store expected patient count for later display
             this.generationData.patientCount = configuration.total_patients;
-            
+
             // Validate configuration
             this.validateConfiguration(configuration);
-            
+
             // Start simulated progress animation
             this.startProgressSimulation();
-            
+
             // Start generation
             const response = await this.apiClient.generatePatients({
                 configuration,
                 output_formats: ['json', 'csv']
             });
-            
+
             this.currentJobId = response.job_id;
             this.setStatusMessage(`✅ Generation started<br>Job ID: <code>${this.currentJobId}</code>`);
-            
+
             // Save configuration to history
             this.addToConfigHistory(configuration);
-            
+
             // Start polling with fun progress messages
             await this.pollJobWithProgress();
-            
         } catch (error) {
             console.error('Generation failed:', error);
             this.showError(`Generation failed: ${error.message}`);
@@ -255,13 +282,13 @@ class PatientGeneratorApp {
             this.resetUI();
         }
     }
-    
+
     buildConfiguration() {
         const [frontsJson, injuriesJson] = this.accordion.getAllContent();
-        
+
         const fronts = JSON.parse(frontsJson);
         const injuries = JSON.parse(injuriesJson);
-        
+
         return {
             name: `Patient Generation ${new Date().toLocaleString()}`,
             description: 'Generated from web interface',
@@ -272,10 +299,10 @@ class PatientGeneratorApp {
             // Demographics are loaded automatically from the backend's demographics.json
         };
     }
-    
+
     generateFacilityConfigs(frontConfigs) {
         // Auto-generate facility configs based on fronts
-        return frontConfigs.map(front => ({
+        return frontConfigs.map((front) => ({
             id: `role2_${front.id}`,
             name: `Role 2 ${front.name}`,
             capacity: Math.floor(1000 * front.casualty_rate),
@@ -285,17 +312,17 @@ class PatientGeneratorApp {
             rtd_rate: 0.85
         }));
     }
-    
+
     validateConfiguration(config) {
         // Additional validation beyond accordion checks
         if (!config.total_patients || config.total_patients < 1) {
             throw new Error('Total patients must be at least 1');
         }
-        
+
         if (!config.front_configs || config.front_configs.length === 0) {
             throw new Error('At least one battle front must be configured');
         }
-        
+
         // Validate nationality codes against loaded data
         for (const front of config.front_configs) {
             for (const natDist of front.nationality_distribution) {
@@ -305,55 +332,54 @@ class PatientGeneratorApp {
             }
         }
     }
-    
+
     async pollJobWithProgress() {
         this.startProgressMessages();
-        
+
         try {
             const result = await this.apiClient.pollJobStatus(
                 this.currentJobId,
                 (job) => this.updateProgress(job),
                 300000 // 5 minute timeout
             );
-            
+
             this.stopProgressMessages();
             this.handleJobComplete(result);
-            
         } catch (error) {
             this.stopProgressMessages();
-            
+
             if (error.status === 408) {
                 this.showError('⏱️ Generation timed out. The job may still be running on the server.');
             } else {
                 this.showError(`Generation failed: ${error.message}`);
             }
-            
+
             this.resetUI();
         }
     }
-    
+
     updateProgress(job) {
         const percentage = job.progress || this.simulatedProgress;
-        
+
         // Update progress bar
         if (this.progressBar) {
             this.progressBar.style.width = `${percentage}%`;
         }
-        
+
         if (this.progressContainer) {
             this.progressContainer.style.display = 'block';
         }
-        
+
         // Calculate current generation time
         const currentDuration = this.generationStartTime ? (Date.now() - this.generationStartTime) / 1000 : 0;
-        
+
         let phase = 'Processing...';
         if (percentage < 15) phase = 'Validating configurations...';
         else if (percentage < 30) phase = 'Initializing patient generator...';
         else if (percentage < 85) phase = `Generating patients... (${Math.floor(percentage)}%)`;
         else if (percentage < 95) phase = 'Finalizing medical records...';
         else phase = 'Creating downloadable archives...';
-        
+
         this.setStatusMessage(`
             <div class="status-details">
                 <div class="status-row">
@@ -375,29 +401,27 @@ class PatientGeneratorApp {
             </div>
         `);
     }
-    
+
     handleJobComplete(job) {
         // Stop progress simulation and calculate final metrics
         this.stopProgressSimulation();
-        
+
         // Calculate final generation time
         const finalDuration = this.generationStartTime ? (Date.now() - this.generationStartTime) / 1000 : job.duration;
         this.generationData.duration = finalDuration;
-        
+
         // Extract patient count from job result or use expected count
-        const totalPatients = job.result?.total_patients || 
-                             job.result?.patient_count || 
-                             this.generationData.patientCount || 
-                             'Unknown';
-        
+        const totalPatients =
+            job.result?.total_patients || job.result?.patient_count || this.generationData.patientCount || 'Unknown';
+
         // Extract file size if available
         this.generationData.fileSize = job.result?.file_size || null;
-        
+
         // Ensure progress bar shows 100%
         if (this.progressBar) {
             this.progressBar.style.width = '100%';
         }
-        
+
         // Show success animation
         this.setStatusMessage(`
             <div class="success">
@@ -418,18 +442,18 @@ class PatientGeneratorApp {
                 </div>
             </div>
         `);
-        
+
         this.showDownloadOptions(job);
         this.resetUI();
     }
-    
+
     showDownloadOptions(job) {
         if (!this.downloadContainer) return;
-        
+
         // Try to get file size from multiple sources
         let fileSize = job.result?.file_size || job.result?.size || this.generationData.fileSize;
         const fileSizeDisplay = fileSize ? this.formatFileSize(fileSize) : 'File ready for download';
-        
+
         this.downloadContainer.innerHTML = `
             <div class="download-section">
                 <h4>
@@ -458,17 +482,17 @@ class PatientGeneratorApp {
             </div>
         `;
     }
-    
+
     async downloadResults(jobId) {
         try {
             this.setStatusMessage('📥 Preparing download...');
-            
+
             const blob = await this.apiClient.downloadJobResults(jobId);
-            
+
             // Store file size if not already captured
             if (!this.generationData.fileSize && blob.size) {
                 this.generationData.fileSize = blob.size;
-                
+
                 // Update the file size display in the download section
                 const fileSizeElement = document.querySelector('.download-info .info-item:first-child');
                 if (fileSizeElement) {
@@ -478,34 +502,33 @@ class PatientGeneratorApp {
                     `;
                 }
             }
-            
+
             // Create download
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `patient_data_${jobId}.zip`;
-            
+
             document.body.appendChild(a);
             a.click();
-            
+
             // Cleanup
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
+
             this.setStatusMessage('✅ Download started successfully!');
-            
         } catch (error) {
             console.error('Download failed:', error);
             this.showError(`Download failed: ${error.message}`);
         }
     }
-    
+
     startProgressMessages() {
         this.currentMessageIndex = 0;
         this.messageInterval = setInterval(() => {
             const message = this.progressMessages[this.currentMessageIndex];
             const funMessageElement = document.getElementById('funMessage');
-            
+
             if (funMessageElement) {
                 funMessageElement.textContent = message;
             } else {
@@ -515,29 +538,29 @@ class PatientGeneratorApp {
                     /<div class="fun-message">.*?<\/div>/,
                     `<div class="fun-message">💭 ${message}</div>`
                 );
-                
+
                 if (updatedStatus === currentStatus) {
                     this.statusMessage.innerHTML += `<div class="fun-message">💭 ${message}</div>`;
                 } else {
                     this.statusMessage.innerHTML = updatedStatus;
                 }
             }
-            
+
             this.currentMessageIndex = (this.currentMessageIndex + 1) % this.progressMessages.length;
         }, 3000); // Change message every 3 seconds
     }
-    
+
     stopProgressMessages() {
         if (this.messageInterval) {
             clearInterval(this.messageInterval);
             this.messageInterval = null;
         }
     }
-    
+
     startProgressSimulation() {
         // Start with fast progress, then slow down, then speed up near end
         this.simulatedProgress = 0;
-        
+
         this.progressSimulation = setInterval(() => {
             if (this.simulatedProgress < 20) {
                 // Fast start (0-20%)
@@ -552,30 +575,30 @@ class PatientGeneratorApp {
                 // Hold at 95% until real completion
                 this.simulatedProgress = 95;
             }
-            
+
             // Cap at 95% to wait for real completion
             this.simulatedProgress = Math.min(this.simulatedProgress, 95);
-            
+
             // Update progress bar if no real progress available
             if (this.progressBar && this.simulatedProgress < 95) {
                 this.progressBar.style.width = `${this.simulatedProgress}%`;
             }
         }, 800); // Update every 800ms for smooth animation
     }
-    
+
     stopProgressSimulation() {
         if (this.progressSimulation) {
             clearInterval(this.progressSimulation);
             this.progressSimulation = null;
         }
     }
-    
+
     showStatus() {
         if (this.statusBox) {
             this.statusBox.classList.add('show');
         }
     }
-    
+
     scrollToStatus() {
         if (this.statusBox) {
             // Small delay to ensure the status box is visible before scrolling
@@ -588,24 +611,24 @@ class PatientGeneratorApp {
             }, 100);
         }
     }
-    
+
     setStatusMessage(message) {
         if (this.statusMessage) {
             this.statusMessage.innerHTML = message;
         }
     }
-    
+
     showError(message) {
         this.setStatusMessage(`<div class="error">❌ ${message}</div>`);
         this.showStatus();
     }
-    
+
     resetUI() {
         this.currentJobId = null;
         this.stopProgressSimulation();
         this.stopProgressMessages();
         this.updateGenerateButtonState();
-        
+
         // Reset generation metrics
         this.generationStartTime = null;
         this.generationData = {
@@ -614,39 +637,39 @@ class PatientGeneratorApp {
             fileSize: null
         };
     }
-    
+
     formatDuration(seconds) {
         if (!seconds || seconds < 0) return '0.0s';
-        
+
         if (seconds < 60) {
             return `${seconds.toFixed(1)}s`;
         }
-        
+
         if (seconds < 3600) {
             const minutes = Math.floor(seconds / 60);
             const remainingSeconds = Math.floor(seconds % 60);
             return `${minutes}m ${remainingSeconds}s`;
         }
-        
+
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         return `${hours}h ${minutes}m`;
     }
-    
+
     formatFileSize(bytes) {
         if (!bytes) return 'Unknown';
-        
+
         const sizes = ['B', 'KB', 'MB', 'GB'];
         let i = 0;
-        
+
         while (bytes >= 1024 && i < sizes.length - 1) {
             bytes /= 1024;
             i++;
         }
-        
+
         return `${bytes.toFixed(1)} ${sizes[i]}`;
     }
-    
+
     // Configuration history management
     loadConfigHistory() {
         try {
@@ -657,7 +680,7 @@ class PatientGeneratorApp {
             return [];
         }
     }
-    
+
     saveConfigHistory() {
         try {
             localStorage.setItem('medpatgen_config_history', JSON.stringify(this.configHistory));
@@ -665,16 +688,16 @@ class PatientGeneratorApp {
             console.warn('Failed to save configuration history:', error);
         }
     }
-    
+
     addToConfigHistory(configuration) {
         // Create configuration signature for uniqueness check
         const configSignature = this.createConfigurationSignature(configuration);
-        
+
         // Check if this configuration already exists
-        const existingIndex = this.configHistory.findIndex(item => 
-            this.createConfigurationSignature(item.configuration) === configSignature
+        const existingIndex = this.configHistory.findIndex(
+            (item) => this.createConfigurationSignature(item.configuration) === configSignature
         );
-        
+
         const historyItem = {
             id: Date.now().toString(),
             timestamp: new Date().toISOString(),
@@ -684,101 +707,110 @@ class PatientGeneratorApp {
             nationalities: this.extractNationalities(configuration.front_configs || []),
             configuration: configuration
         };
-        
+
         if (existingIndex !== -1) {
             // Remove existing duplicate and add updated version at the beginning
             this.configHistory.splice(existingIndex, 1);
             this.configHistory.unshift(historyItem);
-            console.log('📝 Updated existing configuration in history');
+            // console.log('📝 Updated existing configuration in history');
         } else {
             // Add new configuration to beginning of array
             this.configHistory.unshift(historyItem);
-            console.log('📝 Added new configuration to history');
+            // console.log('📝 Added new configuration to history');
         }
-        
+
         // Keep only last 3 unique configurations
         this.configHistory = this.configHistory.slice(0, 3);
-        
+
         // Save to localStorage
         this.saveConfigHistory();
-        
+
         // Update UI
         this.updateConfigHistoryDisplay();
     }
-    
+
     createConfigurationSignature(configuration) {
         // Create a unique signature based on the meaningful content of the configuration
         // This helps identify truly unique configurations vs just timestamp differences
         const signature = {
             total_patients: configuration.total_patients,
             injury_distribution: configuration.injury_distribution,
-            front_configs: configuration.front_configs?.map(front => ({
-                id: front.id,
-                name: front.name,
-                casualty_rate: front.casualty_rate,
-                nationality_distribution: front.nationality_distribution?.sort((a, b) => 
-                    a.nationality_code.localeCompare(b.nationality_code)
-                )
-            })).sort((a, b) => a.id.localeCompare(b.id))
+            front_configs: configuration.front_configs
+                ?.map((front) => ({
+                    id: front.id,
+                    name: front.name,
+                    casualty_rate: front.casualty_rate,
+                    nationality_distribution: front.nationality_distribution?.sort((a, b) =>
+                        a.nationality_code.localeCompare(b.nationality_code)
+                    )
+                }))
+                .sort((a, b) => a.id.localeCompare(b.id))
         };
-        
+
         // Return JSON string as signature (normalized and sorted for consistency)
         return JSON.stringify(signature);
     }
-    
+
     extractNationalities(frontConfigs) {
         const nationalitySet = new Set();
-        frontConfigs.forEach(front => {
+        frontConfigs.forEach((front) => {
             if (front.nationality_distribution) {
-                front.nationality_distribution.forEach(natDist => {
+                front.nationality_distribution.forEach((natDist) => {
                     nationalitySet.add(natDist.nationality_code);
                 });
             }
         });
         return Array.from(nationalitySet).sort();
     }
-    
+
     loadConfiguration(historyId) {
-        const historyItem = this.configHistory.find(item => item.id === historyId);
+        const historyItem = this.configHistory.find((item) => item.id === historyId);
         if (!historyItem || !this.accordion) {
             console.warn('Configuration not found or accordion not ready');
             return;
         }
-        
+
         try {
             const config = historyItem.configuration;
-            
+
             // Extract front configs and injury distribution
-            const frontsJson = JSON.stringify({
-                front_configs: config.front_configs
-            }, null, 2);
-            
-            const injuriesJson = JSON.stringify({
-                injury_distribution: config.injury_distribution,
-                total_patients: config.total_patients
-            }, null, 2);
-            
+            const frontsJson = JSON.stringify(
+                {
+                    front_configs: config.front_configs
+                },
+                null,
+                2
+            );
+
+            const injuriesJson = JSON.stringify(
+                {
+                    injury_distribution: config.injury_distribution,
+                    total_patients: config.total_patients
+                },
+                null,
+                2
+            );
+
             // Set accordion content
             this.accordion.setContent(0, frontsJson); // Battle Fronts
             this.accordion.setContent(1, injuriesJson); // Injuries
-            
+
             // Trigger validation
             setTimeout(() => {
                 this.accordion.validateAllItems();
             }, 100);
-            
-            console.log(`✅ Loaded configuration: ${historyItem.name}`);
-            
+
+            // console.log(`✅ Loaded configuration: ${historyItem.name}`);
         } catch (error) {
             console.error('Failed to load configuration:', error);
             this.showError(`Failed to load configuration: ${error.message}`);
         }
     }
-    
+
     updateConfigHistoryDisplay() {
         const configPanel = document.getElementById('configHistoryPanel');
         if (!configPanel) return;
-        
+
         if (this.configHistory.length === 0) {
             configPanel.innerHTML = `
                 <div class="text-center text-slate-500 py-6">
@@ -789,13 +821,15 @@ class PatientGeneratorApp {
             `;
             return;
         }
-        
-        const historyHTML = this.configHistory.map(item => {
-            const timeAgo = this.formatTimeAgo(new Date(item.timestamp));
-            const nationalitiesDisplay = item.nationalities.slice(0, 3).join(', ') + 
-                (item.nationalities.length > 3 ? ` +${item.nationalities.length - 3}` : '');
-            
-            return `
+
+        const historyHTML = this.configHistory
+            .map((item) => {
+                const timeAgo = this.formatTimeAgo(new Date(item.timestamp));
+                const nationalitiesDisplay =
+                    item.nationalities.slice(0, 3).join(', ') +
+                    (item.nationalities.length > 3 ? ` +${item.nationalities.length - 3}` : '');
+
+                return `
                 <div class="config-history-item">
                     <div class="config-history-header">
                         <div class="config-history-title">
@@ -831,25 +865,26 @@ class PatientGeneratorApp {
                     </button>
                 </div>
             `;
-        }).join('');
-        
+            })
+            .join('');
+
         configPanel.innerHTML = historyHTML;
     }
-    
+
     formatTimeAgo(date) {
         const now = new Date();
         const diffMs = now - date;
         const diffMins = Math.floor(diffMs / (1000 * 60));
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        
+
         if (diffMins < 1) return 'Just now';
         if (diffMins < 60) return `${diffMins}m ago`;
         if (diffHours < 24) return `${diffHours}h ago`;
         if (diffDays < 7) return `${diffDays}d ago`;
         return date.toLocaleDateString();
     }
-    
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -869,4 +904,4 @@ if (typeof window !== 'undefined') {
     window.app = app;
 }
 
-console.log('🔧 Patient Generator App loaded');
+// console.log('🔧 Patient Generator App loaded');

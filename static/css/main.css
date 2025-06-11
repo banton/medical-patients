@@ -157,8 +157,12 @@ body {
 }
 
 @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 /* Download Section - Enhanced */
@@ -246,8 +250,14 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Enhanced Status Display */
@@ -282,14 +292,16 @@ body {
     margin-top: 1rem;
 }
 
-.stat-item, .info-item {
+.stat-item,
+.info-item {
     display: flex;
     align-items: center;
     padding: 0.375rem 0;
     font-size: 0.9rem;
 }
 
-.stat-item strong, .info-item strong {
+.stat-item strong,
+.info-item strong {
     color: var(--text-primary);
     margin-right: 0.5rem;
 }
@@ -405,11 +417,11 @@ body {
         align-items: flex-start;
         gap: 0.25rem;
     }
-    
+
     .config-history-stats {
         gap: 0.75rem;
     }
-    
+
     .config-history-stats .stat {
         font-size: 0.8rem;
     }
@@ -459,8 +471,12 @@ a:focus-visible {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Responsive Design */
@@ -468,12 +484,12 @@ a:focus-visible {
     .container {
         padding: 1rem;
     }
-    
+
     .grid {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
-    
+
     .lg\\:col-span-2,
     .lg\\:col-span-1 {
         grid-column: span 1;
@@ -484,20 +500,20 @@ a:focus-visible {
     .container {
         padding: 0.75rem;
     }
-    
+
     .status-content {
         padding: 1rem;
     }
-    
+
     .download-section {
         padding: 1rem;
     }
-    
+
     .generate-button {
         padding: 0.875rem 1.5rem;
         font-size: 0.9rem;
     }
-    
+
     /* API banner responsive handled in banner.css */
 }
 
@@ -511,15 +527,15 @@ a:focus-visible {
     .fun-message {
         animation: none;
     }
-    
+
     .generate-button:hover {
         transform: none;
     }
-    
+
     .download-link:hover {
         transform: none;
     }
-    
+
     * {
         transition: none !important;
     }
@@ -531,7 +547,7 @@ a:focus-visible {
     .download-link {
         border: 2px solid var(--text-primary);
     }
-    
+
     .bg-white {
         border: 1px solid var(--text-primary);
     }
@@ -542,19 +558,19 @@ a:focus-visible {
     body {
         background: var(--surface);
     }
-    
+
     .generate-button,
     .download-link {
         background: var(--surface);
         color: var(--text-primary);
         border: 1px solid var(--text-primary);
     }
-    
+
     .bg-white {
         box-shadow: none;
         border: 1px solid var(--border);
     }
-    
+
     .api-banner {
         display: none;
     }

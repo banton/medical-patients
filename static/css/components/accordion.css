@@ -137,7 +137,9 @@
 
 .accordion__content {
     overflow: hidden;
-    transition: max-height var(--transition-normal), padding var(--transition-normal);
+    transition:
+        max-height var(--transition-normal),
+        padding var(--transition-normal);
     max-height: 0;
     padding: 0 var(--space-lg);
     background-color: var(--surface);
@@ -169,7 +171,9 @@
 .accordion__editor:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow:
+        0 0 0 3px rgba(8, 145, 178, 0.1),
+        0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .accordion__editor--invalid {
@@ -200,12 +204,7 @@
 .accordion__editor--loading {
     opacity: 0.6;
     pointer-events: none;
-    background-image: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.4),
-        transparent
-    );
+    background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
     background-size: 200% 100%;
     animation: loading-shimmer 1.5s infinite;
 }
@@ -225,12 +224,12 @@
         padding: var(--space-sm) var(--space-md);
         font-size: var(--font-size-sm);
     }
-    
+
     .accordion__content--expanded {
         padding: var(--space-sm) var(--space-md);
         max-height: 400px;
     }
-    
+
     .accordion__editor {
         min-height: 200px;
         max-height: 300px;
@@ -244,11 +243,11 @@
     .accordion {
         border-width: 2px;
     }
-    
+
     .accordion__header {
         border-bottom: 2px solid var(--border);
     }
-    
+
     .accordion__editor {
         border-width: 2px;
     }
@@ -263,11 +262,11 @@
         transition: none;
         animation: none;
     }
-    
+
     .accordion__item:hover {
         transform: none;
     }
-    
+
     .accordion__editor--loading {
         animation: none;
         background-image: none;
@@ -280,16 +279,16 @@
         max-height: none !important;
         padding: var(--space-md) 0 !important;
     }
-    
+
     .accordion__header {
         background-color: transparent !important;
         color: var(--text-primary) !important;
     }
-    
+
     .accordion__icon {
         display: none;
     }
-    
+
     .accordion__editor {
         border: 1px solid var(--text-primary);
         background-color: transparent;

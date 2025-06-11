@@ -4,24 +4,24 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Military Patient Generator</title>
-        
+
         <!-- Modern Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-        
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
         <!-- CSS Frameworks -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
-        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-        
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
         <!-- Custom Stylesheets -->
         <link rel="stylesheet" href="/static/css/variables.css" />
         <link rel="stylesheet" href="/static/css/main.css" />
         <link rel="stylesheet" href="/static/css/components/banner.css" />
         <link rel="stylesheet" href="/static/css/components/accordion.css" />
-        
+
         <!-- Icons -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     </head>
     <body class="bg-slate-50 font-inter">
         <!-- API Notice Bar -->
@@ -41,7 +41,6 @@
         <!-- Main Container -->
         <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
             <div class="container mx-auto px-4 py-8 max-w-6xl">
-                
                 <!-- Header Section -->
                 <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
                     <div class="px-6 py-4 text-center">
@@ -49,19 +48,14 @@
                             <div class="bg-cyan-100 rounded-lg p-2 mr-3">
                                 <i class="fas fa-user-md text-xl text-cyan-600"></i>
                             </div>
-                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">
-                                Military Patient Generator
-                            </h1>
+                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Military Patient Generator</h1>
                         </div>
-                        <p class="text-sm text-slate-600 max-w-xl mx-auto">
-                            Professional medical training data generation platform
-                        </p>
+                        <p class="text-sm text-slate-600 max-w-xl mx-auto">Professional medical training data generation platform</p>
                     </div>
                 </div>
 
                 <!-- Main Content Grid -->
                 <div class="grid lg:grid-cols-3 gap-8">
-                    
                     <!-- Configuration Panel -->
                     <div class="lg:col-span-2">
                         <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
@@ -74,7 +68,7 @@
                                     <h2 class="text-lg font-semibold text-slate-800">Configuration Settings</h2>
                                 </div>
                             </div>
-                            
+
                             <!-- Configuration Content -->
                             <div class="p-6">
                                 <div class="accordion">
@@ -93,15 +87,9 @@
                                         <div class="accordion__content">
                                             <div class="space-y-4">
                                                 <div>
-                                                    <label class="block text-sm font-medium text-slate-700 mb-2">
-                                                        Battle Front Setup (JSON Format)
-                                                    </label>
-                                                    <textarea
-                                                        class="accordion__editor"
-                                                        id="fronts-editor"
-                                                        placeholder="Enter battle fronts configuration JSON..."
-                                                        rows="15"
-                                                    >{
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2"> Battle Front Setup (JSON Format) </label>
+                                                    <textarea class="accordion__editor" id="fronts-editor" placeholder="Enter battle fronts configuration JSON..." rows="15">
+{
   "front_configs": [
     {
       "id": "poland",
@@ -133,7 +121,8 @@
       ]
     }
   ]
-}</textarea>
+}</textarea
+                                                    >
                                                 </div>
                                                 <div class="accordion__validation"></div>
                                             </div>
@@ -155,22 +144,17 @@
                                         <div class="accordion__content">
                                             <div class="space-y-4">
                                                 <div>
-                                                    <label class="block text-sm font-medium text-slate-700 mb-2">
-                                                        Medical Case Distribution (JSON Format)
-                                                    </label>
-                                                    <textarea
-                                                        class="accordion__editor"
-                                                        id="injuries-editor"
-                                                        placeholder="Enter injury distribution JSON..."
-                                                        rows="10"
-                                                    >{
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2"> Medical Case Distribution (JSON Format) </label>
+                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter injury distribution JSON..." rows="10">
+{
   "injury_distribution": {
     "Disease": 0.52,
     "Non-Battle Injury": 0.33,
     "Battle Injury": 0.15
   },
   "total_patients": 1440
-}</textarea>
+}</textarea
+                                                    >
                                                 </div>
                                                 <div class="accordion__validation"></div>
                                             </div>
@@ -193,21 +177,19 @@
                                     <h3 class="text-lg font-semibold text-slate-800">Generate Data</h3>
                                 </div>
                             </div>
-                            
+
                             <div class="p-6">
-                                <p class="text-sm text-slate-600 mb-6">
-                                    Ready to generate medical training data based on your configuration settings.
-                                </p>
-                                
+                                <p class="text-sm text-slate-600 mb-6">Ready to generate medical training data based on your configuration settings.</p>
+
                                 <button id="generateBtn" class="generate-button">
                                     <div class="flex items-center justify-center">
                                         <i class="fas fa-bolt mr-2"></i>
                                         <span>Generate Patients</span>
                                     </div>
                                 </button>
-                                
+
                                 <div class="mt-4 text-xs text-slate-500 text-center">
-                                    <kbd class="px-2 py-1 bg-slate-100 rounded text-slate-600 font-mono">Ctrl</kbd> + 
+                                    <kbd class="px-2 py-1 bg-slate-100 rounded text-slate-600 font-mono">Ctrl</kbd> +
                                     <kbd class="px-2 py-1 bg-slate-100 rounded text-slate-600 font-mono">Enter</kbd>
                                     to generate
                                 </div>
@@ -224,7 +206,7 @@
                                     <h3 class="text-lg font-semibold text-slate-800">Recent Configurations</h3>
                                 </div>
                             </div>
-                            
+
                             <div class="p-4">
                                 <div id="configHistoryPanel">
                                     <!-- Configuration history will be populated here -->
@@ -242,7 +224,7 @@
                                     <h3 class="text-lg font-semibold text-slate-800">Quick Overview</h3>
                                 </div>
                             </div>
-                            
+
                             <div class="p-6">
                                 <div class="space-y-4">
                                     <div class="flex justify-between items-center">
@@ -277,15 +259,15 @@
                                 <h3 class="text-lg font-semibold text-slate-800">Generation Status</h3>
                             </div>
                         </div>
-                        
+
                         <div class="status-content">
                             <div id="statusMessage"></div>
-                            
+
                             <!-- Progress Bar -->
                             <div id="progressContainer" class="progress" style="display: none">
                                 <div class="progress-bar" id="progressBar"></div>
                             </div>
-                            
+
                             <!-- Download Container -->
                             <div id="downloadContainer"></div>
                         </div>
@@ -299,7 +281,7 @@
         <script src="/static/js/services/api.js"></script>
         <script src="/static/js/components/accordion.js"></script>
         <script src="/static/js/app.js"></script>
-        
+
         <!-- Development Tests -->
         <script src="/static/js/tests/banner.test.js"></script>
         <script src="/static/js/tests/accordion.test.js"></script>
