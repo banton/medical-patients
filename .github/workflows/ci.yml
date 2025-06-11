@@ -43,12 +43,18 @@ jobs:
           pip install ruff mypy types-requests
 
       - name: Install Node dependencies
-        run: npm ci
+        run: |
+          npm ci
+          cd patient-timeline-viewer && npm ci
 
       - name: Run Python linting
         run: |
           ruff check src/ patient_generator/
           mypy src/ patient_generator/ --ignore-missing-imports
+
+      - name: Build timeline viewer
+        run: |
+          cd patient-timeline-viewer && npm run build
 
       - name: Run JavaScript linting
         run: |
@@ -100,11 +106,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest-cov
+          npm ci
+          cd patient-timeline-viewer && npm ci
+
+      - name: Build timeline viewer
+        run: |
+          cd patient-timeline-viewer && npm run build
 
       - name: Run migrations
         env:
@@ -138,10 +156,18 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          npm ci
+          cd patient-timeline-viewer && npm ci
 
       - name: Start services
         run: |
@@ -193,6 +219,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Node dependencies
+        run: |
+          npm ci
+          cd patient-timeline-viewer && npm ci
+
+      - name: Build timeline viewer
+        run: |
+          cd patient-timeline-viewer && npm run build
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -212,6 +253,21 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Node dependencies
+        run: |
+          npm ci
+          cd patient-timeline-viewer && npm ci
+
+      - name: Build timeline viewer for scanning
+        run: |
+          cd patient-timeline-viewer && npm run build
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master

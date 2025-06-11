@@ -1,5 +1,7 @@
 {
       "patients": 1440,
+      "days_of_fighting": 8,
+      "type_of_battle": "skirmish",
       "Disease": 0.52,
       "Non-Battle Injury": 0.33,
       "Battle Injury": 0.15

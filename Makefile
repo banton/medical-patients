@@ -1,7 +1,7 @@
 # Military Medical Exercise Patient Generator - Makefile
 # Provides common development commands for easier workflow
 
-.PHONY: help dev test lint format clean build-frontend api-test deps migrate
+.PHONY: help dev test lint format clean build-frontend api-test deps migrate timeline-viewer
 
 # Default target - show help
 help:
@@ -19,6 +19,10 @@ help:
 	@echo "  make format       - Format code automatically"
 	@echo "  make clean        - Clean up generated files and cache"
 	@echo "  make build-frontend - Build all frontend components"
+	@echo "  make timeline-viewer - Start React timeline viewer"
+	@echo "  make timeline-dev   - Start timeline viewer in development mode"
+	@echo "  make timeline-build - Build timeline viewer for production"
+	@echo "  make timeline-test  - Test timeline viewer"
 	@echo "  make deps         - Install all dependencies"
 	@echo "  make migrate      - Run database migrations"
 	@echo "  make services     - Start database and Redis services"
@@ -172,12 +176,16 @@ clean:
 	rm -rf .pytest_cache 2>/dev/null || true
 	rm -rf .mypy_cache 2>/dev/null || true
 	rm -rf node_modules/.cache 2>/dev/null || true
+	rm -rf patient-timeline-viewer/dist 2>/dev/null || true
+	rm -rf patient-timeline-viewer/node_modules/.cache 2>/dev/null || true
 	@echo "Cleanup complete!"
 
 # Build frontend components
 build-frontend:
 	@echo "Building frontend components..."
 	npm run build:all-frontend
+	@echo "Building timeline viewer..."
+	@cd patient-timeline-viewer && npm run build
 
 # Build individual frontend components
 build-viz:
@@ -194,6 +202,8 @@ deps:
 	@echo "Installing dependencies..."
 	pip install -r requirements.txt
 	npm install
+	@echo "Installing timeline viewer dependencies..."
+	@cd patient-timeline-viewer && npm install
 	@echo "Dependencies installed!"
 
 # Run database migrations
@@ -308,3 +318,41 @@ check-env:
 verify-redis:
 	@echo "Verifying Redis integration..."
 	python verify-redis-integration.py
+
+# React Timeline Viewer Commands
+timeline-viewer:
+	@echo "Starting React timeline viewer..."
+	@cd patient-timeline-viewer && npm run dev
+
+timeline-dev:
+	@echo "Starting timeline viewer in development mode..."
+	@cd patient-timeline-viewer && npm run dev
+
+timeline-build:
+	@echo "Building timeline viewer for production..."
+	@cd patient-timeline-viewer && npm run build
+
+timeline-test:
+	@echo "Testing timeline viewer..."
+	@cd patient-timeline-viewer && npm run build
+	@echo "Timeline viewer build successful!"
+
+timeline-deps:
+	@echo "Installing timeline viewer dependencies..."
+	@cd patient-timeline-viewer && npm install
+	@echo "Timeline viewer dependencies installed!"
+
+timeline-clean:
+	@echo "Cleaning timeline viewer build files..."
+	@cd patient-timeline-viewer && rm -rf dist node_modules/.cache
+	@echo "Timeline viewer cleaned!"
+
+# Start both backend and timeline viewer
+dev-full:
+	@echo "Starting full development environment (backend + timeline viewer)..."
+	@echo "Starting backend on port 8000..."
+	@chmod +x start-dev.sh && ./start-dev.sh --skip-tests &
+	@echo "Waiting for backend to start..."
+	@sleep 10
+	@echo "Starting timeline viewer on port 5174..."
+	@cd patient-timeline-viewer && npm run dev

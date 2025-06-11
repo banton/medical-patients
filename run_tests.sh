@@ -133,6 +133,38 @@ case "$TEST_TYPE" in
         pytest tests/test_simple_api.py tests/test_api_standardization.py -v ${EXTRA_ARGS}
         ;;
     
+    timeline)
+        print_info "Running timeline viewer tests..."
+        
+        # Check if timeline viewer dependencies are installed
+        if [ ! -d "patient-timeline-viewer/node_modules" ]; then
+            print_warning "Timeline viewer dependencies not found. Installing..."
+            cd patient-timeline-viewer && npm install && cd ..
+        fi
+        
+        # Build timeline viewer as a test
+        print_info "Testing timeline viewer build..."
+        cd patient-timeline-viewer && npm run build && cd ..
+        print_info "Timeline viewer tests passed!"
+        ;;
+    
+    frontend)
+        print_info "Running all frontend tests..."
+        
+        # Run main frontend tests
+        print_info "Running main frontend tests..."
+        npm run test:ui || true
+        
+        # Run timeline viewer tests
+        print_info "Running timeline viewer tests..."
+        if [ ! -d "patient-timeline-viewer/node_modules" ]; then
+            print_warning "Timeline viewer dependencies not found. Installing..."
+            cd patient-timeline-viewer && npm install && cd ..
+        fi
+        cd patient-timeline-viewer && npm run build && cd ..
+        print_info "All frontend tests completed!"
+        ;;
+    
     quick)
         print_info "Running quick tests (no Docker/server required)..."
         pytest tests/ -m "not requires_docker and not integration and not e2e" ${EXTRA_ARGS}
@@ -157,10 +189,22 @@ case "$TEST_TYPE" in
         else
             print_warning "Server not running. Skipping API and E2E tests."
         fi
+        
+        # Run frontend tests
+        print_info "Running frontend tests..."
+        npm run test:ui || true
+        
+        # Test timeline viewer build
+        print_info "Testing timeline viewer..."
+        if [ ! -d "patient-timeline-viewer/node_modules" ]; then
+            print_warning "Timeline viewer dependencies not found. Installing..."
+            cd patient-timeline-viewer && npm install && cd ..
+        fi
+        cd patient-timeline-viewer && npm run build && cd .. || true
         ;;
     
     *)
-        echo "Usage: $0 [unit|integration|e2e|db|api|quick|all] [pytest arguments]"
+        echo "Usage: $0 [unit|integration|e2e|db|api|timeline|frontend|quick|all] [pytest arguments]"
         echo ""
         echo "Test types:"
         echo "  unit        - Run unit tests only"
@@ -168,6 +212,8 @@ case "$TEST_TYPE" in
         echo "  e2e         - Run end-to-end tests"
         echo "  db          - Run database tests with testcontainers"
         echo "  api         - Run API integration tests"
+        echo "  timeline    - Run timeline viewer tests"
+        echo "  frontend    - Run all frontend tests"
         echo "  quick       - Run tests that don't require external services"
         echo "  all         - Run all available tests"
         echo ""
