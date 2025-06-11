@@ -1,0 +1,82 @@
+{
+  "evacuation_times": {
+    "POI": {
+      "T1": { "min_hours": 3, "max_hours": 8 },
+      "T2": { "min_hours": 5, "max_hours": 12 },
+      "T3": { "min_hours": 8, "max_hours": 12 }
+    },
+    "Role1": {
+      "T1": { "min_hours": 4, "max_hours": 10 },
+      "T2": { "min_hours": 8, "max_hours": 16 },
+      "T3": { "min_hours": 12, "max_hours": 16 }
+    },
+    "Role2": {
+      "T1": { "min_hours": 3, "max_hours": 8 },
+      "T2": { "min_hours": 5, "max_hours": 12 },
+      "T3": { "min_hours": 8, "max_hours": 12 }
+    },
+    "Role3": {
+      "T1": { "min_hours": 4, "max_hours": 12 },
+      "T2": { "min_hours": 4, "max_hours": 24 },
+      "T3": { "min_hours": 12, "max_hours": 24 }
+    },
+    "Role4": {
+      "T1": { "min_hours": 24, "max_hours": 48 },
+      "T2": { "min_hours": 24, "max_hours": 96 },
+      "T3": { "min_hours": 48, "max_hours": 96 }
+    }
+  },
+  "transit_times": {
+    "POI_to_Role1": {
+      "T1": { "min_hours": 1, "max_hours": 3 },
+      "T2": { "min_hours": 2, "max_hours": 4 },
+      "T3": { "min_hours": 3, "max_hours": 4 }
+    },
+    "Role1_to_Role2": {
+      "T1": { "min_hours": 2, "max_hours": 5 },
+      "T2": { "min_hours": 4, "max_hours": 8 },
+      "T3": { "min_hours": 6, "max_hours": 8 }
+    },
+    "Role2_to_Role3": {
+      "T1": { "min_hours": 2, "max_hours": 4 },
+      "T2": { "min_hours": 3, "max_hours": 6 },
+      "T3": { "min_hours": 4, "max_hours": 6 }
+    },
+    "Role3_to_Role4": {
+      "T1": { "min_hours": 1, "max_hours": 3 },
+      "T2": { "min_hours": 2, "max_hours": 4 },
+      "T3": { "min_hours": 3, "max_hours": 5 }
+    }
+  },
+  "kia_rate_modifiers": {
+    "T1": 1.5,
+    "T2": 1.0,
+    "T3": 0.5
+  },
+  "rtd_rate_modifiers": {
+    "T1": 0.8,
+    "T2": 1.0,
+    "T3": 1.2
+  },
+  "facility_hierarchy": [
+    "POI",
+    "Role1", 
+    "Role2",
+    "Role3",
+    "Role4"
+  ],
+  "triage_categories": ["T1", "T2", "T3"],
+  "configuration_metadata": {
+    "version": "1.0",
+    "description": "Evacuation and transit time configurations for military medical facilities",
+    "last_updated": "2024-01-01",
+    "author": "Medical Training Simulation Team",
+    "notes": {
+      "evacuation_times": "Time spent receiving treatment at each facility based on triage category",
+      "transit_times": "Transportation time between facilities based on urgency and route",
+      "kia_rate_modifiers": "Multipliers applied to base KIA rates based on triage category (T1=urgent, higher risk)",
+      "rtd_rate_modifiers": "Multipliers applied to base RTD rates based on triage category (T3=less urgent, higher RTD)",
+      "role4_special": "Role4 patients automatically RTD after evacuation period if not KIA"
+    }
+  }
+}
