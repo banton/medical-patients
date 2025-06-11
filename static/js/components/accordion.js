@@ -253,18 +253,50 @@ class AccordionComponent {
                 return { valid: false, message: 'At least one battle front must be configured' };
             }
             
+            // Calculate total casualty rate across all fronts
+            let totalCasualtyRate = 0;
+            
             // Validate each front
             for (const front of config.front_configs) {
                 if (!front.id || !front.name) {
                     return { valid: false, message: 'Each front must have "id" and "name"' };
                 }
                 
+                // Validate casualty rate
+                if (typeof front.casualty_rate !== 'number' || front.casualty_rate < 0 || front.casualty_rate > 1) {
+                    return { valid: false, message: `Front "${front.name}" has invalid casualty_rate (must be 0-1)` };
+                }
+                totalCasualtyRate += front.casualty_rate;
+                
+                // Validate nationality distribution
                 if (!front.nationality_distribution || !Array.isArray(front.nationality_distribution)) {
                     return { valid: false, message: `Front "${front.name}" missing nationality distribution` };
                 }
+                
+                // Check nationality distribution percentages total 100%
+                let totalPercentage = 0;
+                for (const natDist of front.nationality_distribution) {
+                    if (!natDist.nationality_code || typeof natDist.percentage !== 'number') {
+                        return { valid: false, message: `Front "${front.name}" has invalid nationality distribution format` };
+                    }
+                    if (natDist.percentage < 0 || natDist.percentage > 100) {
+                        return { valid: false, message: `Front "${front.name}" has invalid percentage for ${natDist.nationality_code} (must be 0-100)` };
+                    }
+                    totalPercentage += natDist.percentage;
+                }
+                
+                // Allow small tolerance for floating point precision
+                if (Math.abs(totalPercentage - 100) > 0.01) {
+                    return { valid: false, message: `Front "${front.name}" nationality percentages total ${totalPercentage.toFixed(1)}% (must equal 100%)` };
+                }
             }
             
-            return { valid: true, message: `${config.front_configs.length} battle fronts configured` };
+            // Check total casualty rate equals 1.0 (100%)
+            if (Math.abs(totalCasualtyRate - 1.0) > 0.01) {
+                return { valid: false, message: `Total casualty rate is ${(totalCasualtyRate * 100).toFixed(1)}% (must equal 100%)` };
+            }
+            
+            return { valid: true, message: `${config.front_configs.length} battle fronts configured with valid rates` };
             
         } catch (e) {
             return { valid: false, message: `JSON syntax error: ${e.message}` };
