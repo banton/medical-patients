@@ -1,0 +1,377 @@
+[
+  {
+    "id": "1",
+    "nationality": "USA",
+    "gender": "male",
+    "injury_type": "Battle Injury",
+    "triage_category": "T1",
+    "day_of_injury": "Day 1",
+    "last_facility": "Role2",
+    "final_status": "RTD",
+    "injury_timestamp": "2024-01-01T00:00:00Z",
+    "movement_timeline": [
+      {
+        "event_type": "arrival",
+        "facility": "POI",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "hours_since_injury": 0
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "POI",
+        "timestamp": "2024-01-01T00:00:00Z",
+        "hours_since_injury": 0,
+        "evacuation_duration_hours": 6,
+        "triage_category": "T1"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "POI",
+        "timestamp": "2024-01-01T06:00:00Z",
+        "hours_since_injury": 6,
+        "from_facility": "POI",
+        "to_facility": "Role1",
+        "transit_duration_hours": 2
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T08:00:00Z",
+        "hours_since_injury": 8
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T08:00:00Z",
+        "hours_since_injury": 8,
+        "evacuation_duration_hours": 8,
+        "triage_category": "T1"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T16:00:00Z",
+        "hours_since_injury": 16,
+        "from_facility": "Role1",
+        "to_facility": "Role2",
+        "transit_duration_hours": 3
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role2",
+        "timestamp": "2024-01-01T19:00:00Z",
+        "hours_since_injury": 19
+      },
+      {
+        "event_type": "rtd",
+        "facility": "Role2",
+        "timestamp": "2024-01-02T01:00:00Z",
+        "hours_since_injury": 25,
+        "rtd_timing": "during_evacuation"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "nationality": "GBR",
+    "gender": "female",
+    "injury_type": "Battle Injury",
+    "triage_category": "T2",
+    "day_of_injury": "Day 1",
+    "last_facility": "Role1",
+    "final_status": "KIA",
+    "injury_timestamp": "2024-01-01T02:00:00Z",
+    "movement_timeline": [
+      {
+        "event_type": "arrival",
+        "facility": "POI",
+        "timestamp": "2024-01-01T02:00:00Z",
+        "hours_since_injury": 0
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "POI",
+        "timestamp": "2024-01-01T02:00:00Z",
+        "hours_since_injury": 0,
+        "evacuation_duration_hours": 8,
+        "triage_category": "T2"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "POI",
+        "timestamp": "2024-01-01T10:00:00Z",
+        "hours_since_injury": 8,
+        "from_facility": "POI",
+        "to_facility": "Role1",
+        "transit_duration_hours": 3
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T13:00:00Z",
+        "hours_since_injury": 11
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T13:00:00Z",
+        "hours_since_injury": 11,
+        "evacuation_duration_hours": 12,
+        "triage_category": "T2"
+      },
+      {
+        "event_type": "kia",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T20:00:00Z",
+        "hours_since_injury": 18,
+        "kia_timing": "during_evacuation"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "nationality": "CAN",
+    "gender": "male",
+    "injury_type": "Non-Battle Injury",
+    "triage_category": "T3",
+    "day_of_injury": "Day 2",
+    "last_facility": "Role4",
+    "final_status": "RTD",
+    "injury_timestamp": "2024-01-02T00:00:00Z",
+    "movement_timeline": [
+      {
+        "event_type": "arrival",
+        "facility": "POI",
+        "timestamp": "2024-01-02T00:00:00Z",
+        "hours_since_injury": 0
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "POI",
+        "timestamp": "2024-01-02T00:00:00Z",
+        "hours_since_injury": 0,
+        "evacuation_duration_hours": 12,
+        "triage_category": "T3"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "POI",
+        "timestamp": "2024-01-02T12:00:00Z",
+        "hours_since_injury": 12,
+        "from_facility": "POI",
+        "to_facility": "Role1",
+        "transit_duration_hours": 4
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role1",
+        "timestamp": "2024-01-02T16:00:00Z",
+        "hours_since_injury": 16
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-02T16:00:00Z",
+        "hours_since_injury": 16,
+        "evacuation_duration_hours": 16,
+        "triage_category": "T3"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-03T08:00:00Z",
+        "hours_since_injury": 32,
+        "from_facility": "Role1",
+        "to_facility": "Role2",
+        "transit_duration_hours": 6
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role2",
+        "timestamp": "2024-01-03T14:00:00Z",
+        "hours_since_injury": 38
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role2",
+        "timestamp": "2024-01-03T14:00:00Z",
+        "hours_since_injury": 38,
+        "evacuation_duration_hours": 24,
+        "triage_category": "T3"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "Role2",
+        "timestamp": "2024-01-04T14:00:00Z",
+        "hours_since_injury": 62,
+        "from_facility": "Role2",
+        "to_facility": "Role3",
+        "transit_duration_hours": 8
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role3",
+        "timestamp": "2024-01-04T22:00:00Z",
+        "hours_since_injury": 70
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role3",
+        "timestamp": "2024-01-04T22:00:00Z",
+        "hours_since_injury": 70,
+        "evacuation_duration_hours": 48,
+        "triage_category": "T3"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "Role3",
+        "timestamp": "2024-01-07T22:00:00Z",
+        "hours_since_injury": 118,
+        "from_facility": "Role3",
+        "to_facility": "Role4",
+        "transit_duration_hours": 12
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role4",
+        "timestamp": "2024-01-08T10:00:00Z",
+        "hours_since_injury": 130
+      },
+      {
+        "event_type": "rtd",
+        "facility": "Role4",
+        "timestamp": "2024-01-10T10:00:00Z",
+        "hours_since_injury": 178,
+        "rtd_timing": "auto_role4"
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "nationality": "FRA",
+    "gender": "male",
+    "injury_type": "Battle Injury",
+    "triage_category": "T1",
+    "day_of_injury": "Day 1",
+    "last_facility": "Role3",
+    "final_status": "Remains_Role4",
+    "injury_timestamp": "2024-01-01T04:00:00Z",
+    "movement_timeline": [
+      {
+        "event_type": "arrival",
+        "facility": "POI",
+        "timestamp": "2024-01-01T04:00:00Z",
+        "hours_since_injury": 0
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "POI",
+        "timestamp": "2024-01-01T04:00:00Z",
+        "hours_since_injury": 0,
+        "evacuation_duration_hours": 4,
+        "triage_category": "T1"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "POI",
+        "timestamp": "2024-01-01T08:00:00Z",
+        "hours_since_injury": 4,
+        "from_facility": "POI",
+        "to_facility": "Role1",
+        "transit_duration_hours": 2
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T10:00:00Z",
+        "hours_since_injury": 6
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T10:00:00Z",
+        "hours_since_injury": 6,
+        "evacuation_duration_hours": 6,
+        "triage_category": "T1"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "Role1",
+        "timestamp": "2024-01-01T16:00:00Z",
+        "hours_since_injury": 12,
+        "from_facility": "Role1",
+        "to_facility": "Role2",
+        "transit_duration_hours": 3
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role2",
+        "timestamp": "2024-01-01T19:00:00Z",
+        "hours_since_injury": 15
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "Role2",
+        "timestamp": "2024-01-01T19:00:00Z",
+        "hours_since_injury": 15,
+        "evacuation_duration_hours": 12,
+        "triage_category": "T1"
+      },
+      {
+        "event_type": "transit_start",
+        "facility": "Role2",
+        "timestamp": "2024-01-02T07:00:00Z",
+        "hours_since_injury": 27,
+        "from_facility": "Role2",
+        "to_facility": "Role3",
+        "transit_duration_hours": 5
+      },
+      {
+        "event_type": "arrival",
+        "facility": "Role3",
+        "timestamp": "2024-01-02T12:00:00Z",
+        "hours_since_injury": 32
+      },
+      {
+        "event_type": "remains_role4",
+        "facility": "Role3",
+        "timestamp": "2024-01-04T12:00:00Z",
+        "hours_since_injury": 80
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "nationality": "DEU",
+    "gender": "female",
+    "injury_type": "Disease",
+    "triage_category": "T2",
+    "day_of_injury": "Day 4",
+    "last_facility": "POI",
+    "final_status": "KIA",
+    "injury_timestamp": "2024-01-04T00:00:00Z",
+    "movement_timeline": [
+      {
+        "event_type": "arrival",
+        "facility": "POI",
+        "timestamp": "2024-01-04T00:00:00Z",
+        "hours_since_injury": 0
+      },
+      {
+        "event_type": "evacuation_start",
+        "facility": "POI",
+        "timestamp": "2024-01-04T00:00:00Z",
+        "hours_since_injury": 0,
+        "evacuation_duration_hours": 10,
+        "triage_category": "T2"
+      },
+      {
+        "event_type": "kia",
+        "facility": "POI",
+        "timestamp": "2024-01-04T04:00:00Z",
+        "hours_since_injury": 4,
+        "kia_timing": "during_evacuation"
+      }
+    ]
+  }
+]
