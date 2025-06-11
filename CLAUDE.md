@@ -271,3 +271,21 @@ memory/patterns/
 2. Implement frontend TDD development as planned
 3. Add API banner component and JSON editors
 4. Begin frontend development with new API contracts
+
+## 🔄 **Branch Structure Update (Latest)**
+**IMPORTANT**: The repository structure has changed:
+- **Main branch**: `origin/main` (replaces `origin/develop`)
+- **Feature branches**: Split from `main` (not `develop`)
+- **PR target**: All pull requests now target `main`
+
+### Updated Git Workflow:
+```bash
+# Start new features from main
+git checkout main
+git pull origin main
+git checkout -b feature/new-feature-name
+
+# Push and create PR targeting main
+git push origin feature/new-feature-name
+gh pr create --base main
+```
