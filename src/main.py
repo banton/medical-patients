@@ -17,7 +17,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from config import get_settings
-from src.api.v1.routers import configurations, downloads, generation, jobs, timeline, visualizations
+from src.api.v1.routers import configurations, downloads, generation, jobs, visualizations
 from src.core.cache import close_cache, get_cache_service, initialize_cache
 from src.core.error_handlers import (
     http_exception_handler,
@@ -98,7 +98,8 @@ def create_app() -> FastAPI:
     app.include_router(jobs.router, prefix=v1_prefix)
     app.include_router(downloads.router, prefix=v1_prefix)
     app.include_router(visualizations.router, prefix=v1_prefix)
-    app.include_router(timeline.router, prefix=v1_prefix)
+    # Timeline router temporarily disabled - requires additional JobService methods
+    # app.include_router(timeline.router, prefix=v1_prefix)
 
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")

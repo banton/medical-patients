@@ -73,7 +73,7 @@ class TestE2EPatientGeneration:
         # Step 2: Generate patients
         generation_payload = {
             "configuration_id": config_id,
-            "output_formats": ["json", "csv"],
+            "output_formats": ["fhir", "csv"],  # Use FHIR format to test FHIR structure
             "use_compression": True,
             "use_encryption": False,
         }
@@ -227,8 +227,8 @@ class TestE2EPatientGeneration:
                 "use_encryption": False,
             }
 
-            response = requests.post(f"{BASE_URL}/api/generate", json=generation_payload, headers=HEADERS)
-            assert response.status_code == 200
+            response = requests.post(f"{BASE_URL}/api/v1/generation/", json=generation_payload, headers=HEADERS)
+            assert response.status_code == 201
             job_ids.append(response.json()["job_id"])
 
         # Wait for all jobs to complete
@@ -286,10 +286,11 @@ class TestE2EVisualization:
         config_id = create_resp.json()["id"]
 
         generate_resp = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             json={"configuration_id": config_id, "output_formats": ["json"]},
             headers=HEADERS,
         )
+        assert generate_resp.status_code == 201
         job_id = generate_resp.json()["job_id"]
 
         # Wait for completion
@@ -352,10 +353,11 @@ class TestE2EErrorScenarios:
         config_id = create_resp.json()["id"]
 
         generate_resp = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             json={"configuration_id": config_id, "output_formats": ["json"]},
             headers=HEADERS,
         )
+        assert generate_resp.status_code == 201
         job_id = generate_resp.json()["job_id"]
 
         # Try to download immediately
@@ -401,10 +403,11 @@ class TestE2EPerformance:
         # Generate patients
         start_time = time.time()
         generate_resp = requests.post(
-            f"{BASE_URL}/api/generate",
+            f"{BASE_URL}/api/v1/generation/",
             json={"configuration_id": config_id, "output_formats": ["json"], "use_compression": True},
             headers=HEADERS,
         )
+        assert generate_resp.status_code == 201
         job_id = generate_resp.json()["job_id"]
 
         # Wait for completion with extended timeout
