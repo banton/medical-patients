@@ -49,7 +49,9 @@ class Settings:
         if cls.API_KEY == "your_secret_api_key_here":
             import warnings
 
-            warnings.warn("Using default API key. Set API_KEY environment variable for production.", UserWarning)
+            warnings.warn(
+                "Using default API key. Set API_KEY environment variable for production.", UserWarning, stacklevel=2
+            )
 
         # Ensure directories exist
         os.makedirs(cls.OUTPUT_DIRECTORY, exist_ok=True)

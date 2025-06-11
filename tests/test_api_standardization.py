@@ -230,8 +230,11 @@ class TestAPIDocumentationConsistency:
             for method, details in methods.items():
                 if method.lower() in ["get", "post", "put", "delete"]:
                     responses = details.get("responses", {})
-                    success_response = responses.get("200") or responses.get("201")
+                    success_response = responses.get("200") or responses.get("201") or responses.get("204")
 
+                    # For 204 No Content, we don't expect content
+                    if responses.get("204"):
+                        continue  # 204 is valid without content
                     if not success_response or "content" not in success_response:
                         endpoints_without_response_models.append(f"{method.upper()} {path}")
                     elif "application/json" in success_response["content"]:

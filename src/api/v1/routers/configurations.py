@@ -13,7 +13,6 @@ from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.nationality_data import NationalityDataProvider
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition
 from src.api.v1.dependencies.database import get_database
-from src.api.v1.models.responses import DeleteResponse
 from src.core.security import verify_api_key
 
 # Initialize router (prefix will be added by main app)
@@ -77,11 +76,9 @@ async def update_configuration(
     return updated
 
 
-@router.delete("/{config_id}", response_model=DeleteResponse)
+@router.delete("/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("10/minute")
-async def delete_configuration(
-    request: Request, config_id: str, db: Database = Depends(get_database)
-) -> DeleteResponse:
+async def delete_configuration(request: Request, config_id: str, db: Database = Depends(get_database)) -> None:
     """Delete a configuration template."""
     repo = ConfigurationRepository(db)
 
@@ -89,20 +86,33 @@ async def delete_configuration(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {config_id} not found")
 
     repo.delete_configuration(config_id)
-
-    return DeleteResponse(success=True, message="Configuration deleted successfully", deleted_id=config_id)
+    # Return 204 No Content with no response body
 
 
 @router.post("/validate/")
 @limiter.limit("30/minute")
 async def validate_configuration(request: Request, config: ConfigurationTemplateCreate) -> Dict[str, Any]:
     """Validate a configuration without saving it."""
-    try:
-        # The Pydantic model itself does validation
-        # Additional business logic validation could go here
-        return {"valid": True, "errors": []}
-    except Exception as e:
-        return {"valid": False, "errors": [str(e)]}
+    # The Pydantic model validation happens automatically by FastAPI
+    # If we reach this point, the configuration is valid
+
+    # Additional business logic validation could go here
+    errors = []
+
+    # Check injury distribution sums to reasonable value
+    if config.injury_distribution:
+        total = sum(config.injury_distribution.values())
+        if total > 110.0:  # Allow some tolerance
+            errors.append("Injury distribution percentages sum to more than 100%")
+
+    # Check that there are some front configs or valid configuration
+    if not config.front_configs or len(config.front_configs) == 0:
+        errors.append("At least one front configuration is required")
+
+    if errors:
+        return {"valid": False, "errors": errors}
+
+    return {"valid": True, "errors": []}
 
 
 # Reference data endpoints (don't require API key, prefix will be added by main app)

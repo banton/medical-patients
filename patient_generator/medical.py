@@ -55,12 +55,15 @@ class MedicalConditionGenerator:
 
     def generate_condition(self, injury_type, triage_category):
         """Generate a medical condition based on injury type and triage"""
+        # Normalize injury type to handle variations
+        injury_type_upper = injury_type.upper()
+
         # Select appropriate condition pool
-        if injury_type == "BATTLE_TRAUMA":
+        if "BATTLE" in injury_type_upper and "NON" not in injury_type_upper:
             conditions_pool = self.battle_trauma_conditions
-        elif injury_type == "NON_BATTLE":
+        elif "NON" in injury_type_upper or "NON_BATTLE" in injury_type_upper:
             conditions_pool = self.non_battle_injuries
-        else:  # DISEASE
+        else:  # DISEASE or Disease
             conditions_pool = self.disease_conditions
 
         # Select a base condition
@@ -86,12 +89,15 @@ class MedicalConditionGenerator:
         """Generate multiple medical conditions of the same injury type"""
         conditions = []
 
+        # Normalize injury type to handle variations
+        injury_type_upper = injury_type.upper()
+
         # Select appropriate condition pool
-        if injury_type == "BATTLE_TRAUMA":
+        if "BATTLE" in injury_type_upper and "NON" not in injury_type_upper:
             conditions_pool = self.battle_trauma_conditions.copy()
-        elif injury_type == "NON_BATTLE":
+        elif "NON" in injury_type_upper or "NON_BATTLE" in injury_type_upper:
             conditions_pool = self.non_battle_injuries.copy()
-        else:  # DISEASE
+        else:  # DISEASE or Disease
             conditions_pool = self.disease_conditions.copy()
 
         # Prevent duplicates by sampling without replacement

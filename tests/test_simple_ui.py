@@ -19,62 +19,57 @@ class TestSimpleUI:
         # Check title
         assert "<title>Military Patient Generator</title>" in response.text
 
-        # Check header
-        assert "<h1>Military Patient Generator</h1>" in response.text
+        # Check header (new modern format)
+        assert "Military Patient Generator" in response.text
+        assert 'class="text-2xl font-bold' in response.text
 
     def test_ui_elements_present(self):
         """Test that all required UI elements are present."""
         response = requests.get(f"{BASE_URL}/")
 
-        # Check info box
-        assert 'class="info-box"' in response.text
+        # Check API banner
+        assert 'class="api-banner"' in response.text
 
-        # Check configuration files are mentioned
-        assert "demographics.json" in response.text
-        assert "fronts_config.json" in response.text
-        assert "injuries.json" in response.text
+        # Check accordion structure exists
+        assert 'class="accordion"' in response.text
 
-        # Check generate button
+        # Check generate button (new format)
         assert 'id="generateBtn"' in response.text
-        assert "Generate Patients" in response.text
+        assert "Generate" in response.text
 
-        # Check status box exists (hidden initially)
+        # Check status box exists
         assert 'id="statusBox"' in response.text
 
     def test_javascript_loaded(self):
         """Test that the JavaScript file is properly referenced."""
         response = requests.get(f"{BASE_URL}/")
 
-        # Find script tag
-        assert 'src="/static/js/simple-app.js"' in response.text
+        # Find script tag (new app structure)
+        assert 'src="/static/js/app.js"' in response.text
 
         # Verify the JS file exists
-        js_response = requests.get(f"{BASE_URL}/static/js/simple-app.js")
+        js_response = requests.get(f"{BASE_URL}/static/js/app.js")
         assert js_response.status_code == 200
-        assert "handleGenerate" in js_response.text
 
-    def test_no_external_dependencies(self):
-        """Test that the UI has no external CSS/JS dependencies."""
+    def test_modern_dependencies_loaded(self):
+        """Test that the modern UI loads expected dependencies."""
         response = requests.get(f"{BASE_URL}/")
 
-        # Check no external CSS (Bootstrap, etc.)
-        assert "cdn.jsdelivr.net" not in response.text
-        assert "cdnjs.cloudflare.com" not in response.text
-        assert 'link href="http' not in response.text
+        # Modern UI uses external dependencies for professional appearance
+        assert "flowbite" in response.text  # Component library
+        assert "tailwindcss" in response.text  # CSS framework
+        assert "font-awesome" in response.text  # Icons
 
-        # Check no external JS
-        assert 'script src="http' not in response.text
-
-    def test_api_config_js_exists(self):
-        """Test that api-config.js exists for backward compatibility."""
-        response = requests.get(f"{BASE_URL}/static/js/api-config.js")
+    def test_api_service_exists(self):
+        """Test that api service file exists."""
+        response = requests.get(f"{BASE_URL}/static/js/services/api.js")
         assert response.status_code == 200
 
-    def test_css_inline(self):
-        """Test that CSS is inline in the HTML."""
+    def test_css_structure(self):
+        """Test that CSS structure is properly loaded."""
         response = requests.get(f"{BASE_URL}/")
 
-        # Check for style tag
-        assert "<style>" in response.text
-        assert ".generate-button" in response.text
-        assert ".info-box" in response.text
+        # Check for external CSS files
+        assert "/static/css/main.css" in response.text
+        assert "/static/css/components/banner.css" in response.text
+        assert "/static/css/components/accordion.css" in response.text

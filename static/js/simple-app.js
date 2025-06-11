@@ -108,6 +108,52 @@ function init() {
 }
 
 /**
+ * Get configuration from accordion panels
+ */
+function getConfigurationFromPanels() {
+    const config = { ...DEFAULT_CONFIG };
+
+    // Check if accordion is available and get content from panels
+    if (window.accordion) {
+        try {
+            // Get battle fronts configuration (panel 0)
+            const frontsContent = window.accordion.getContent(0);
+            if (frontsContent.trim()) {
+                const frontsConfig = JSON.parse(frontsContent);
+                if (frontsConfig.front_configs) {
+                    config.front_configs = frontsConfig.front_configs;
+                }
+            }
+
+            // Get injury distribution configuration (panel 1)
+            const injuriesContent = window.accordion.getContent(1);
+            if (injuriesContent.trim()) {
+                const injuriesConfig = JSON.parse(injuriesContent);
+                if (injuriesConfig.injury_distribution) {
+                    config.injury_distribution = injuriesConfig.injury_distribution;
+                }
+                if (injuriesConfig.total_patients) {
+                    config.total_patients = injuriesConfig.total_patients;
+                }
+            }
+
+            // Get evacuation timing configuration (panel 2)
+            const evacuationContent = window.accordion.getContent(2);
+            if (evacuationContent.trim()) {
+                const evacuationConfig = JSON.parse(evacuationContent);
+                // Add evacuation configuration to the payload
+                config.evacuation_config = evacuationConfig;
+            }
+        } catch (e) {
+            console.warn('Error parsing configuration from panels:', e);
+            // Continue with default config if parsing fails
+        }
+    }
+
+    return config;
+}
+
+/**
  * Handle generate button click
  */
 async function handleGenerate() {
@@ -122,6 +168,9 @@ async function handleGenerate() {
         progressContainer.style.display = 'none';
         downloadContainer.innerHTML = '';
 
+        // Get configuration from accordion panels
+        const configuration = getConfigurationFromPanels();
+
         // Make API request
         const response = await fetch('/api/v1/generation/', {
             method: 'POST',
@@ -130,7 +179,7 @@ async function handleGenerate() {
                 'X-API-Key': API_KEY
             },
             body: JSON.stringify({
-                configuration: DEFAULT_CONFIG,
+                configuration: configuration,
                 output_formats: ['json']
             })
         });

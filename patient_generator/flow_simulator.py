@@ -8,9 +8,11 @@ if TYPE_CHECKING:
 
 try:
     from .config_manager import ConfigurationManager
+    from .evacuation_time_manager import EvacuationTimeManager
     from .patient import Patient
 except ImportError:
     from patient_generator.config_manager import ConfigurationManager
+    from patient_generator.evacuation_time_manager import EvacuationTimeManager
     from patient_generator.patient import Patient
 
 
@@ -25,6 +27,9 @@ class PatientFlowSimulator:
         if not active_config:
             msg = "PatientFlowSimulator requires an active configuration to be loaded in ConfigurationManager."
             raise ValueError(msg)
+
+        # Initialize evacuation time manager for realistic timeline tracking
+        self.evacuation_manager = EvacuationTimeManager()
 
         # --- Load configurations from ConfigurationManager ---
         self.total_patients_to_generate = active_config.total_patients
@@ -65,9 +70,15 @@ class PatientFlowSimulator:
             "Day 8": 0.10,
         }
         self._triage_weights = {  # TODO: Make this configurable
-            "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},  # Key updated
-            "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5},  # Key updated
-            "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5},  # Key updated
+            # Support all variations of injury type names
+            "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
+            "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            # Uppercase variations
+            "BATTLE_TRAUMA": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
+            "NON_BATTLE_TRAUMA": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            "NON_BATTLE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            "DISEASE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
         }
         self._base_date_str = active_config.created_at.strftime("%Y-%m-%d")  # Or a dedicated config field
 
@@ -220,6 +231,10 @@ class PatientFlowSimulator:
     def _create_initial_patient(self, patient_id: int) -> Patient:
         patient = Patient(patient_id)
 
+        # Set injury timestamp for timeline tracking
+        injury_time = self._get_date_for_day("Day 1")  # Will be updated with actual day
+        patient.set_injury_timestamp(injury_time)
+
         static_front_defs: Optional[List[FrontDefinition]] = self.config_manager.get_static_front_definitions()
 
         if static_front_defs:
@@ -288,53 +303,187 @@ class PatientFlowSimulator:
         patient.gender = random.choice(["male", "female"])
         patient.day_of_injury = self._select_weighted_item(self.day_distribution)
         patient.injury_type = self._select_weighted_item(self.injury_distribution)
-        patient.triage_category = self._select_weighted_item(self._triage_weights[patient.injury_type])
 
-        patient.add_treatment(facility="POI", date=self._get_date_for_day(patient.day_of_injury))
+        # Get triage weights with fallback for unknown injury types
+        if patient.injury_type in self._triage_weights:
+            triage_weights = self._triage_weights[patient.injury_type]
+        else:
+            # Default triage weights if injury type not found
+            print(f"Warning: Unknown injury type '{patient.injury_type}'. Using default triage weights.")
+            triage_weights = {"T1": 0.3, "T2": 0.4, "T3": 0.3}
+
+        patient.triage_category = self._select_weighted_item(triage_weights)
+
+        # Update injury timestamp with actual day of injury
+        actual_injury_time = self._get_date_for_day(patient.day_of_injury)
+        patient.set_injury_timestamp(actual_injury_time)
+
+        patient.add_treatment(facility="POI", date=actual_injury_time)
         return patient
 
     def _simulate_patient_flow_single(self, patient: Patient):
-        current_location = "POI"
+        """
+        Enhanced patient flow simulation with detailed timeline tracking.
+        Uses EvacuationTimeManager for realistic timing and KIA/RTD rules.
+        """
+        current_time = patient.injury_timestamp
 
-        # Determine the ID of the last facility in the configured chain
-        last_facility_in_chain_id = None
-        if self.facility_configs_ordered:
-            last_facility_in_chain_id = self.facility_configs_ordered[-1]["id"]
+        # Track current time through evacuation chain
+        facility_hierarchy = self.evacuation_manager.get_facility_hierarchy()
 
-        while current_location not in ["RTD", "KIA"]:
-            if (
-                current_location == last_facility_in_chain_id and current_location != "POI"
-            ):  # If at the last configured facility
-                # From the last facility, can only go to KIA or RTD based on its rates
-                # (or a new terminal state like "EVAC_OUT_OF_THEATER" if defined)
-                # The _determine_next_location will handle this based on the matrix.
-                pass  # Let _determine_next_location handle terminal states from last facility
+        # Skip POI since patient is already there
+        start_index = 0
+        if facility_hierarchy[0] == "POI" and patient.current_status == "POI":
+            start_index = 1
 
-            next_location = self._determine_next_location(patient, current_location)
+        for i in range(start_index, len(facility_hierarchy)):
+            facility = facility_hierarchy[i]
 
-            if next_location not in ["RTD", "KIA"]:
-                # patient.day_of_injury is Optional[str], _get_treatment_date expects str
-                # _create_initial_patient always sets it, so it should be a string here.
-                assert patient.day_of_injury is not None, "day_of_injury should be set before simulating flow"
-                treatment_date = self._get_treatment_date(patient.day_of_injury, current_location, next_location)
-                treatments = self._generate_treatments(patient, next_location)  # next_location is the facility ID
-                observations = self._generate_observations(patient, next_location)
-                patient.add_treatment(
-                    facility=next_location, date=treatment_date, treatments=treatments, observations=observations
+            # Move patient to this facility
+            patient.add_treatment(
+                facility=facility,
+                date=current_time,
+                treatments=self._generate_treatments(patient, facility),
+                observations=self._generate_observations(patient, facility),
+            )
+
+            # Add arrival event
+            patient.add_timeline_event("arrival", facility, current_time)
+
+            # Get evacuation time for this facility based on triage
+            evacuation_hours = self.evacuation_manager.get_evacuation_time(facility, patient.triage_category)
+
+            # Add evacuation start event
+            patient.add_timeline_event(
+                "evacuation_start",
+                facility,
+                current_time,
+                evacuation_duration_hours=evacuation_hours,
+                triage_category=patient.triage_category,
+            )
+
+            # Check for KIA during evacuation
+            kia_rate = self._get_facility_kia_rate(facility)
+            kia_modifier = self.evacuation_manager.get_kia_rate_modifier(patient.triage_category)
+            adjusted_kia_rate = min(1.0, kia_rate * kia_modifier)
+
+            if random.random() < adjusted_kia_rate:
+                # KIA during evacuation
+                kia_time = current_time + datetime.timedelta(hours=random.uniform(0, evacuation_hours))
+                hours_elapsed = (kia_time - current_time).total_seconds() / 3600
+                patient.set_final_status(
+                    "KIA",
+                    facility,
+                    kia_time,
+                    kia_timing="during_evacuation",
+                    evacuation_hours_completed=round(hours_elapsed, 1),
                 )
+                return
 
-            patient.current_status = next_location
-            current_location = next_location
+            # Check for RTD during evacuation (only allowed during evacuation, not transit)
+            if facility != "Role4":  # Role4 has special auto-RTD rule
+                rtd_rate = self._get_facility_rtd_rate(facility)
+                rtd_modifier = self.evacuation_manager.get_rtd_rate_modifier(patient.triage_category)
+                adjusted_rtd_rate = min(1.0, rtd_rate * rtd_modifier)
 
-            # Break if at last facility and next state is not KIA/RTD (should not happen if matrix is correct)
-            if current_location == last_facility_in_chain_id and next_location not in ["KIA", "RTD"]:
-                # This implies the patient is "stuck" at the last facility but not KIA/RTD.
-                # The transition matrix for the last facility should only lead to KIA/RTD.
-                # If it leads to itself, it's an infinite loop.
-                # If it leads to another facility not in KIA/RTD, it's a logic error in matrix build.
-                # For now, if this state is reached, consider them as "remains at facility"
-                # which is effectively a terminal state for this simulation pass.
-                break
+                if random.random() < adjusted_rtd_rate:
+                    # RTD during evacuation
+                    rtd_time = current_time + datetime.timedelta(hours=random.uniform(0, evacuation_hours))
+                    hours_elapsed = (rtd_time - current_time).total_seconds() / 3600
+                    patient.set_final_status(
+                        "RTD",
+                        facility,
+                        rtd_time,
+                        rtd_timing="during_evacuation",
+                        evacuation_hours_completed=round(hours_elapsed, 1),
+                    )
+                    return
+
+            # Complete evacuation at this facility
+            evacuation_end_time = current_time + datetime.timedelta(hours=evacuation_hours)
+            current_time = evacuation_end_time
+
+            # Special handling for Role4 - auto RTD if no KIA
+            if facility == "Role4":
+                patient.set_final_status(
+                    "RTD", facility, current_time, rtd_timing="auto_role4", evacuation_hours_completed=evacuation_hours
+                )
+                return
+
+            # Check if this is the last facility
+            next_facility = self.evacuation_manager.get_next_facility(facility)
+            if next_facility is None:
+                # Patient remains at final facility
+                patient.set_final_status(
+                    "Remains_Role4", facility, current_time, evacuation_hours_completed=evacuation_hours
+                )
+                return
+
+            # Transit to next facility
+            transit_hours = self.evacuation_manager.get_transit_time(facility, next_facility, patient.triage_category)
+
+            # Add transit start event
+            patient.add_timeline_event(
+                "transit_start",
+                facility,
+                current_time,
+                from_facility=facility,
+                to_facility=next_facility,
+                transit_duration_hours=transit_hours,
+                triage_category=patient.triage_category,
+            )
+
+            # Check for KIA during transit
+            # Use same KIA rate as facility, but typically lower probability during transit
+            transit_kia_rate = adjusted_kia_rate * 0.3  # Reduce by 70% during transit
+
+            if random.random() < transit_kia_rate:
+                # KIA during transit
+                kia_time = current_time + datetime.timedelta(hours=random.uniform(0, transit_hours))
+                hours_elapsed = (kia_time - current_time).total_seconds() / 3600
+                patient.set_final_status(
+                    "KIA",
+                    facility,
+                    kia_time,
+                    kia_timing="during_transit",
+                    transit_hours_completed=round(hours_elapsed, 1),
+                    destination_facility=next_facility,
+                )
+                return
+
+            # Complete transit
+            transit_end_time = current_time + datetime.timedelta(hours=transit_hours)
+            current_time = transit_end_time
+
+    def _get_facility_kia_rate(self, facility_name: str) -> float:
+        """Get base KIA rate for facility (before triage modifier)"""
+        # Find facility in configured facilities
+        for facility_config in self.facility_configs_ordered:
+            facility_id = facility_config.get("id", "")
+            if facility_name in facility_id or facility_name.replace("Role", "R") in facility_id:
+                return facility_config.get("kia_rate", 0.1)
+
+        # Default rates by facility type if not found in config
+        default_rates = {"POI": 0.15, "Role1": 0.08, "Role2": 0.06, "Role3": 0.04, "Role4": 0.02}
+        return default_rates.get(facility_name, 0.1)
+
+    def _get_facility_rtd_rate(self, facility_name: str) -> float:
+        """Get base RTD rate for facility (before triage modifier)"""
+        # Find facility in configured facilities
+        for facility_config in self.facility_configs_ordered:
+            facility_id = facility_config.get("id", "")
+            if facility_name in facility_id or facility_name.replace("Role", "R") in facility_id:
+                return facility_config.get("rtd_rate", 0.3)
+
+        # Default rates by facility type if not found in config
+        default_rates = {
+            "POI": 0.2,
+            "Role1": 0.25,
+            "Role2": 0.35,
+            "Role3": 0.4,
+            "Role4": 0.6,  # Higher RTD rate at final facility
+        }
+        return default_rates.get(facility_name, 0.3)
 
     def _determine_next_location(self, patient: Patient, current_facility_id: str) -> str:
         if current_facility_id in self._transition_probabilities:
@@ -357,28 +506,46 @@ class PatientFlowSimulator:
         return "UNKNOWN_STATE"  # Or current_facility_id to signify no change / error
 
     def _generate_treatments(self, patient: Patient, facility_id: str):
-        # Find facility config by ID to get its name/type for treatment logic
-        facility_config = next((f for f in self.facility_configs_ordered if f["id"] == facility_id), None)
-        facility_name_or_type = facility_id  # Fallback to ID
-        if facility_config:
-            facility_name_or_type = facility_config.get("name", facility_id)
-            # Could also add a "type" field to FacilityConfig like "Role1", "Role2" for generic treatment logic
+        # Handle both facility IDs from config and standard facility names (Role1, Role2, etc.)
+        facility_name_or_type = facility_id  # Default to what was passed
+
+        # First check if this is a standard facility name
+        if facility_id in ["POI", "Role1", "Role2", "Role3", "Role4"]:
+            facility_name_or_type = facility_id
+        else:
+            # Try to find facility config by ID to get its name/type for treatment logic
+            facility_config = next((f for f in self.facility_configs_ordered if f["id"] == facility_id), None)
+            if facility_config:
+                facility_name_or_type = facility_config.get("name", facility_id)
 
         treatments = []
-        # Simplified example: logic can be expanded based on facility_name_or_type or other props
-        if "R1" in facility_name_or_type.upper() or "ROLE 1" in facility_name_or_type.upper():  # Example check
-            if patient.injury_type == "BATTLE_TRAUMA":
+        # Check if injury type is battle-related (handle all variations)
+        injury_upper = patient.injury_type.upper() if patient.injury_type else ""
+        is_battle_injury = "BATTLE" in injury_upper and "NON" not in injury_upper
+
+        # Generate treatments based on facility type
+        if facility_name_or_type == "POI":
+            # Minimal treatment at POI
+            if is_battle_injury:
+                treatments.append({"code": "182840001", "display": "First aid"})
+        elif facility_name_or_type == "Role1" or "R1" in facility_name_or_type.upper():
+            if is_battle_injury:
                 treatments.append({"code": "225317000", "display": "Initial dressing"})
             else:
                 treatments.append({"code": "225343006", "display": "Medication admin"})
-        elif "R2" in facility_name_or_type.upper() or "ROLE 2" in facility_name_or_type.upper():
-            if patient.injury_type == "BATTLE_TRAUMA" and random.random() < 0.5:
+        elif facility_name_or_type == "Role2" or "R2" in facility_name_or_type.upper():
+            if is_battle_injury and random.random() < 0.5:
                 treatments.append({"code": "387713003", "display": "Surgery"})
             treatments.append({"code": "385968004", "display": "Fluid management"})
-        elif "R3" in facility_name_or_type.upper() or "ROLE 3" in facility_name_or_type.upper():
-            if patient.injury_type == "BATTLE_TRAUMA" and random.random() < 0.7:
+        elif facility_name_or_type == "Role3" or "R3" in facility_name_or_type.upper():
+            if is_battle_injury and random.random() < 0.7:
                 treatments.append({"code": "387713003", "display": "Major Surgery"})
             treatments.append({"code": "225352004", "display": "Intensive care"})
+        elif facility_name_or_type == "Role4" or "R4" in facility_name_or_type.upper():
+            # Most comprehensive treatment at Role4
+            treatments.append({"code": "225352004", "display": "Intensive care"})
+            if is_battle_injury:
+                treatments.append({"code": "182929008", "display": "Rehabilitation"})
         # Add more specific treatments based on actual facility capabilities from config if available
         return treatments
 

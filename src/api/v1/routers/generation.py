@@ -164,26 +164,34 @@ async def _run_generation_task(
         output_dir = Path(tempfile.gettempdir()) / "medical_patients" / f"job_{job_id}"
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create and save configuration to database first
+        # Handle configuration source
         from patient_generator.database import ConfigurationRepository, Database
         from patient_generator.schemas_config import ConfigurationTemplateCreate
 
-        # Create configuration template for database
-        config_create = ConfigurationTemplateCreate(
-            name=config.get("name", "Generated Configuration"),
-            description=config.get("description", "Auto-generated configuration"),
-            total_patients=config.get("count", config.get("total_patients", 10)),
-            injury_distribution=config.get(
-                "injury_distribution", {"Disease": 0.52, "Non-Battle Injury": 0.33, "Battle Injury": 0.15}
-            ),
-            front_configs=config.get("front_configs", []),
-            facility_configs=config.get("facility_configs", []),
-        )
-
-        # Save to database
         db_instance = Database.get_instance()
         config_repo = ConfigurationRepository(db_instance)
-        config_template = config_repo.create_configuration(config_create)
+
+        if "configuration_id" in config:
+            # Use existing configuration from database
+            config_template = config_repo.get_configuration(config["configuration_id"])
+            if not config_template:
+                error_msg = f"Configuration {config['configuration_id']} not found"
+                raise ValueError(error_msg)
+        else:
+            # Create configuration template for database
+            config_create = ConfigurationTemplateCreate(
+                name=config.get("name", "Generated Configuration"),
+                description=config.get("description", "Auto-generated configuration"),
+                total_patients=config.get("count", config.get("total_patients", 10)),
+                injury_distribution=config.get(
+                    "injury_distribution", {"Disease": 0.52, "Non-Battle Injury": 0.33, "Battle Injury": 0.15}
+                ),
+                front_configs=config.get("front_configs", []),
+                facility_configs=config.get("facility_configs", []),
+            )
+
+            # Save to database
+            config_template = config_repo.create_configuration(config_create)
 
         # Create generation context
         generation_context = GenerationContext(
@@ -203,11 +211,12 @@ async def _run_generation_task(
         # Run generation
         result = await generation_service.generate_patients(generation_context, progress_callback)
 
-        # Clean up configuration from database after generation
-        try:
-            config_repo.delete_configuration(config_template.id)
-        except Exception as e:
-            print(f"Warning: Could not clean up temporary configuration {config_template.id}: {e}")
+        # Clean up temporary configuration from database after generation (only if we created it)
+        if "configuration_id" not in config:
+            try:
+                config_repo.delete_configuration(config_template.id)
+            except Exception as e:
+                print(f"Warning: Could not clean up temporary configuration {config_template.id}: {e}")
 
         # Update job with results
         await job_service.set_job_results(

@@ -98,6 +98,8 @@ def create_app() -> FastAPI:
     app.include_router(jobs.router, prefix=v1_prefix)
     app.include_router(downloads.router, prefix=v1_prefix)
     app.include_router(visualizations.router, prefix=v1_prefix)
+    # Timeline router temporarily disabled - requires additional JobService methods
+    # app.include_router(timeline.router, prefix=v1_prefix)
 
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")

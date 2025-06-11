@@ -48,8 +48,10 @@ class TestCacheService:
     @pytest.mark.asyncio()
     async def test_initialize_failure(self):
         """Test cache initialization with invalid URL."""
+        import redis.exceptions
+
         service = CacheService("redis://invalid:9999/0", default_ttl=60)
-        with pytest.raises(Exception):
+        with pytest.raises((ConnectionError, OSError, redis.exceptions.ConnectionError)):
             await service.initialize()
 
     @pytest.mark.asyncio()

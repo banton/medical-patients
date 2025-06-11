@@ -1,5 +1,5 @@
 # patient_generator/models_db.py
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base  # Changed from relationship
 from sqlalchemy.sql import func  # For server-side default timestamps
@@ -55,6 +55,53 @@ class JobDBModel(Base):
     file_types = Column(JSONB, nullable=True)
     total_size = Column(Integer, default=0)
     total_size_formatted = Column(String, nullable=True)
+
+
+class PatientDBModel(Base):
+    """
+    Database model for storing patient data with timeline tracking.
+    This is optional - patients can also be stored as JSON in job results.
+    """
+
+    __tablename__ = "patients"
+
+    # Primary key - composite of job_id and patient_id for uniqueness
+    job_id = Column(String, ForeignKey("jobs.job_id"), primary_key=True, index=True)
+    patient_id = Column(Integer, primary_key=True, index=True)
+
+    # Core patient information
+    demographics = Column(JSONB, nullable=False)
+    medical_data = Column(JSONB, nullable=False)
+    treatment_history = Column(JSONB, nullable=False)
+    current_status = Column(String, nullable=False)
+
+    # Patient categorization
+    day_of_injury = Column(String, nullable=True)
+    injury_type = Column(String, nullable=True)
+    triage_category = Column(String, nullable=True)
+    nationality = Column(String, nullable=True)
+    front = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
+
+    # Medical conditions
+    primary_condition = Column(JSONB, nullable=True)
+    primary_conditions = Column(JSONB, nullable=False, default=list)
+    additional_conditions = Column(JSONB, nullable=False, default=list)
+
+    # Enhanced timeline tracking fields
+    last_facility = Column(String, nullable=True)
+    final_status = Column(String, nullable=True)  # KIA, RTD, Remains_Role4
+    movement_timeline = Column(JSONB, nullable=False, default=list)
+    injury_timestamp = Column(DateTime(timezone=True), nullable=True)
+
+    # Timeline summary for quick queries
+    total_duration_hours = Column(Float, nullable=True)
+    facilities_visited = Column(JSONB, nullable=False, default=list)
+    total_events = Column(Integer, nullable=False, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
 # To ensure Alembic can find these models, you might need to import this module
