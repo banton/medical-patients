@@ -1,4 +1,5 @@
 import datetime
+import json
 from typing import Any, Dict, List, Optional
 
 
@@ -208,7 +209,7 @@ class Patient:
         # Check for logical consistency
         evacuation_active = {}  # Track active evacuations by facility
 
-        for i, event in enumerate(self.movement_timeline):
+        for _i, event in enumerate(self.movement_timeline):
             event_type = event["event_type"]
             facility = event["facility"]
 
@@ -236,3 +237,101 @@ class Patient:
                 errors.append("Multiple final status events found")
 
         return {"is_valid": len(errors) == 0, "errors": errors, "warnings": warnings}
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert patient to JSON-serializable dictionary.
+        Handles datetime objects by converting them to ISO strings.
+        """
+        # Convert injury_timestamp to ISO string if it exists
+        injury_timestamp_str = None
+        if self.injury_timestamp:
+            injury_timestamp_str = self.injury_timestamp.isoformat()
+
+        # Convert timeline events, ensuring datetime objects are serialized
+        serialized_timeline = []
+        for event in self.movement_timeline:
+            serialized_event = {}
+            for key, value in event.items():
+                if isinstance(value, datetime.datetime):
+                    serialized_event[key] = value.isoformat()
+                elif key == "timestamp" and isinstance(value, str):
+                    # Already serialized - keep as is
+                    serialized_event[key] = value
+                else:
+                    serialized_event[key] = value
+            serialized_timeline.append(serialized_event)
+
+        return {
+            # Core patient data
+            "id": self.id,
+            "demographics": self.demographics,
+            "medical_data": self.medical_data,
+            "treatment_history": self.treatment_history,
+            "current_status": self.current_status,
+            "day_of_injury": self.day_of_injury,
+            "injury_type": self.injury_type,
+            "triage_category": self.triage_category,
+            "nationality": self.nationality,
+            "front": self.front,
+            "primary_condition": self.primary_condition,
+            "primary_conditions": self.primary_conditions,
+            "additional_conditions": self.additional_conditions,
+            "gender": self.gender,
+            # Enhanced timeline tracking fields (JSON serializable)
+            "last_facility": self.last_facility,
+            "final_status": self.final_status,
+            "movement_timeline": serialized_timeline,
+            "injury_timestamp": injury_timestamp_str,
+            # Timeline summary for quick access
+            "timeline_summary": self.get_timeline_summary(),
+        }
+
+    def to_json(self) -> str:
+        """
+        Convert patient to JSON string.
+        """
+        return json.dumps(self.to_dict(), indent=2)
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Patient":
+        """
+        Create Patient instance from dictionary.
+        Handles deserializing datetime strings back to datetime objects.
+        """
+        patient = cls(data["id"])
+
+        # Set basic attributes
+        patient.demographics = data.get("demographics", {})
+        patient.medical_data = data.get("medical_data", {})
+        patient.treatment_history = data.get("treatment_history", [])
+        patient.current_status = data.get("current_status", "POI")
+        patient.day_of_injury = data.get("day_of_injury")
+        patient.injury_type = data.get("injury_type")
+        patient.triage_category = data.get("triage_category")
+        patient.nationality = data.get("nationality")
+        patient.front = data.get("front")
+        patient.primary_condition = data.get("primary_condition")
+        patient.primary_conditions = data.get("primary_conditions", [])
+        patient.additional_conditions = data.get("additional_conditions", [])
+        patient.gender = data.get("gender")
+
+        # Enhanced timeline fields
+        patient.last_facility = data.get("last_facility")
+        patient.final_status = data.get("final_status")
+        patient.movement_timeline = data.get("movement_timeline", [])
+
+        # Convert injury_timestamp back to datetime if present
+        injury_timestamp_str = data.get("injury_timestamp")
+        if injury_timestamp_str:
+            patient.injury_timestamp = datetime.datetime.fromisoformat(injury_timestamp_str)
+
+        return patient
+
+    @classmethod
+    def from_json(cls, json_str: str) -> "Patient":
+        """
+        Create Patient instance from JSON string.
+        """
+        data = json.loads(json_str)
+        return cls.from_dict(data)

@@ -49,7 +49,7 @@ class TestCacheService:
     async def test_initialize_failure(self):
         """Test cache initialization with invalid URL."""
         service = CacheService("redis://invalid:9999/0", default_ttl=60)
-        with pytest.raises(Exception):
+        with pytest.raises((ConnectionError, OSError)):
             await service.initialize()
 
     @pytest.mark.asyncio()

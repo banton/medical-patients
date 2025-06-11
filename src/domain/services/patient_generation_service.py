@@ -130,10 +130,15 @@ class PatientGenerationPipeline:
                 yield patient
 
     async def _create_patient_async(self, patient_id: int, context: GenerationContext) -> Patient:
-        """Create a single patient asynchronously."""
+        """Create a single patient asynchronously with complete flow simulation."""
         # Create patient using the flow simulator's method
         # The flow simulator already has access to the config via config_manager
-        return await to_thread(self.flow_simulator._create_initial_patient, patient_id)
+        patient = await to_thread(self.flow_simulator._create_initial_patient, patient_id)
+
+        # CRITICAL: Run the enhanced flow simulation for evacuation timeline tracking
+        await to_thread(self.flow_simulator._simulate_patient_flow_single, patient)
+
+        return patient
 
     async def _add_demographics(self, patient: Patient, context: GenerationContext) -> Patient:
         """Add demographics to patient asynchronously."""
@@ -282,8 +287,8 @@ class AsyncPatientGenerationService:
                         if not first_patient:
                             stream.write(",\n")
 
-                        # Create combined data structure
-                        patient_data = {"patient": patient.__dict__, "fhir_bundle": bundle}
+                        # Create combined data structure with JSON-serializable patient data
+                        patient_data = {"patient": patient.to_dict(), "fhir_bundle": bundle}
 
                         import json
 
@@ -294,15 +299,21 @@ class AsyncPatientGenerationService:
                     elif format == "csv":
                         # CSV format - write header on first patient
                         if first_patient:
-                            stream.write("patient_id,name,age,gender,nationality,injury,triage\n")
+                            stream.write("patient_id,name,age,gender,nationality,injury,triage,front,final_status,last_facility,total_timeline_events,injury_timestamp\n")
 
                         # Extract patient data from demographics and attributes
                         first_name = patient.demographics.get("first_name", "Unknown")
                         last_name = patient.demographics.get("last_name", "Unknown")
                         age = patient.get_age() if hasattr(patient, "get_age") else "Unknown"
+                        
+                        # Extract evacuation timeline data
+                        final_status = patient.final_status or "Active"
+                        last_facility = patient.last_facility or patient.current_status
+                        timeline_count = len(patient.movement_timeline) if hasattr(patient, 'movement_timeline') else 0
+                        injury_time = patient.injury_timestamp.isoformat() if patient.injury_timestamp else "Unknown"
 
                         stream.write(
-                            f'{patient.id},"{first_name} {last_name}",{age},{patient.gender},{patient.nationality},{patient.injury_type},{patient.triage_category}\n'
+                            f'{patient.id},"{first_name} {last_name}",{age},{patient.gender},{patient.nationality},{patient.injury_type},{patient.triage_category},{patient.front},{final_status},{last_facility},{timeline_count},{injury_time}\n'
                         )
 
                 first_patient = False

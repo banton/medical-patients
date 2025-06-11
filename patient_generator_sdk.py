@@ -54,17 +54,21 @@ class PatientGeneratorClient:
             # Attempt to parse error detail from response if JSON
             try:
                 error_detail = http_err.response.json().get("detail", http_err.response.text)
-                raise Exception(f"API Error: {error_detail}") from http_err
+                msg = f"API Error: {error_detail}"
+                raise Exception(msg) from http_err
             except json.JSONDecodeError:
-                raise Exception(f"API Error: {http_err.response.status_code} - {http_err.response.text}") from http_err
+                msg = f"API Error: {http_err.response.status_code} - {http_err.response.text}"
+                raise Exception(msg) from http_err
         except requests.exceptions.RequestException as req_err:
             print(f"Request exception occurred: {req_err}")
-            raise Exception(f"Request failed: {req_err}") from req_err
+            msg = f"Request failed: {req_err}"
+            raise Exception(msg) from req_err
         except json.JSONDecodeError as json_err:
             # This case might be tricky if response.text was already used above.
             # For safety, let's assume response might not be available or already consumed.
             print(f"JSON decode error: {json_err}")
-            raise Exception(f"Failed to decode JSON response: {json_err}") from json_err
+            msg = f"Failed to decode JSON response: {json_err}"
+            raise Exception(msg) from json_err
 
     # Configuration Template Endpoints
     def create_configuration(self, config_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -153,9 +157,11 @@ class PatientGeneratorClient:
                 error_detail = http_err.response.json().get("detail", error_content)
             except json.JSONDecodeError:
                 error_detail = error_content
-            raise Exception(f"API Error downloading file: {error_detail}") from http_err
+            msg = f"API Error downloading file: {error_detail}"
+            raise Exception(msg) from http_err
         except requests.exceptions.RequestException as req_err:
-            raise Exception(f"Request failed downloading file: {req_err}") from req_err
+            msg = f"Request failed downloading file: {req_err}"
+            raise Exception(msg) from req_err
 
     # Reference Data Endpoints
     def list_reference_nationalities(self) -> List[Dict[str, str]]:

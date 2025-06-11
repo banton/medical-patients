@@ -89,6 +89,7 @@ class AccordionComponent {
         // Set up JSON validators for each section
         this.validators.set(0, this.validateBattleFronts.bind(this));
         this.validators.set(1, this.validateInjuries.bind(this));
+        this.validators.set(2, this.validateEvacuationTimes.bind(this));
     }
 
     handleKeyDown(e, index) {
@@ -352,6 +353,95 @@ class AccordionComponent {
             }
 
             return { valid: true, message: 'Injury distribution is properly configured' };
+        } catch (e) {
+            return { valid: false, message: `JSON syntax error: ${e.message}` };
+        }
+    }
+
+    validateEvacuationTimes(content) {
+        if (!content) {
+            return { valid: false, message: 'Evacuation timing configuration is required' };
+        }
+
+        try {
+            const config = JSON.parse(content);
+
+            // Required top-level sections
+            const requiredSections = ['evacuation_times', 'transit_times', 'kia_rate_modifiers', 'rtd_rate_modifiers'];
+            const missingSections = requiredSections.filter(section => !config[section]);
+            if (missingSections.length > 0) {
+                return { valid: false, message: `Missing required sections: ${missingSections.join(', ')}` };
+            }
+
+            // Required facilities and triage categories
+            const requiredFacilities = ['POI', 'Role1', 'Role2', 'Role3', 'Role4'];
+            const requiredTriageCategories = ['T1', 'T2', 'T3'];
+            const requiredTransitRoutes = ['POI_to_Role1', 'Role1_to_Role2', 'Role2_to_Role3', 'Role3_to_Role4'];
+
+            // Validate evacuation_times structure
+            for (const facility of requiredFacilities) {
+                if (!config.evacuation_times[facility]) {
+                    return { valid: false, message: `Missing evacuation times for facility: ${facility}` };
+                }
+
+                for (const triage of requiredTriageCategories) {
+                    const timeConfig = config.evacuation_times[facility][triage];
+                    if (!timeConfig || typeof timeConfig.min_hours !== 'number' || typeof timeConfig.max_hours !== 'number') {
+                        return { valid: false, message: `Invalid time configuration for ${facility} ${triage}` };
+                    }
+
+                    if (timeConfig.min_hours < 0 || timeConfig.max_hours < 0) {
+                        return { valid: false, message: `Times must be positive for ${facility} ${triage}` };
+                    }
+
+                    if (timeConfig.min_hours > timeConfig.max_hours) {
+                        return { valid: false, message: `Min time must be ≤ max time for ${facility} ${triage}` };
+                    }
+                }
+            }
+
+            // Validate transit_times structure
+            for (const route of requiredTransitRoutes) {
+                if (!config.transit_times[route]) {
+                    return { valid: false, message: `Missing transit times for route: ${route}` };
+                }
+
+                for (const triage of requiredTriageCategories) {
+                    const timeConfig = config.transit_times[route][triage];
+                    if (!timeConfig || typeof timeConfig.min_hours !== 'number' || typeof timeConfig.max_hours !== 'number') {
+                        return { valid: false, message: `Invalid transit time configuration for ${route} ${triage}` };
+                    }
+
+                    if (timeConfig.min_hours < 0 || timeConfig.max_hours < 0) {
+                        return { valid: false, message: `Transit times must be positive for ${route} ${triage}` };
+                    }
+
+                    if (timeConfig.min_hours > timeConfig.max_hours) {
+                        return { valid: false, message: `Min transit time must be ≤ max time for ${route} ${triage}` };
+                    }
+                }
+            }
+
+            // Validate rate modifiers
+            for (const triage of requiredTriageCategories) {
+                if (typeof config.kia_rate_modifiers[triage] !== 'number' || config.kia_rate_modifiers[triage] < 0) {
+                    return { valid: false, message: `Invalid KIA rate modifier for ${triage} (must be positive number)` };
+                }
+
+                if (typeof config.rtd_rate_modifiers[triage] !== 'number' || config.rtd_rate_modifiers[triage] < 0) {
+                    return { valid: false, message: `Invalid RTD rate modifier for ${triage} (must be positive number)` };
+                }
+            }
+
+            // Calculate total configured routes and timing ranges
+            const totalRoutes = requiredTransitRoutes.length;
+            const totalFacilities = requiredFacilities.length;
+            const totalConfigurations = totalRoutes * requiredTriageCategories.length + totalFacilities * requiredTriageCategories.length;
+
+            return { 
+                valid: true, 
+                message: `Valid evacuation configuration: ${totalFacilities} facilities, ${totalRoutes} routes, ${totalConfigurations} timing configurations` 
+            };
         } catch (e) {
             return { valid: false, message: `JSON syntax error: ${e.message}` };
         }

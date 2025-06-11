@@ -219,7 +219,7 @@ class TestE2EPatientGeneration:
 
         # Start multiple jobs
         job_ids = []
-        for i in range(3):
+        for _i in range(3):
             generation_payload = {
                 "configuration_id": config_id,
                 "output_formats": ["json"],
@@ -254,7 +254,8 @@ class TestE2EPatientGeneration:
 
             time.sleep(1)
 
-        raise TimeoutError(f"Job {job_id} did not complete within {timeout} seconds")
+        msg = f"Job {job_id} did not complete within {timeout} seconds"
+        raise TimeoutError(msg)
 
 
 class TestE2EVisualization:
@@ -293,7 +294,7 @@ class TestE2EVisualization:
 
         # Wait for completion
         e2e_test = TestE2EPatientGeneration()
-        job_status = e2e_test._wait_for_job_completion(job_id)
+        e2e_test._wait_for_job_completion(job_id)
 
         # Get visualization data
         viz_response = requests.get(f"{BASE_URL}/api/v1/visualizations/{job_id}", headers=HEADERS)

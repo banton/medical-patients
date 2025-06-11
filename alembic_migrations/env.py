@@ -8,6 +8,11 @@ from sqlalchemy import engine_from_config, pool
 # Ensure the application's modules can be imported by Alembic
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+# add your model's MetaData object here
+# for 'autogenerate' support
+# Import your models' MetaData object here.
+from patient_generator.models_db import Base  # Import Base from our models file
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -16,11 +21,6 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-# add your model's MetaData object here
-# for 'autogenerate' support
-# Import your models' MetaData object here.
-from patient_generator.models_db import Base  # Import Base from our models file
 
 target_metadata = Base.metadata  # Point Alembic to our models' metadata
 
@@ -69,9 +69,8 @@ def run_migrations_online() -> None:
         ini_section = config.get_section(config.config_ini_section, {})
         # Ensure 'sqlalchemy.url' is present in the ini_section or handle its absence
         if "sqlalchemy.url" not in ini_section:
-            raise ValueError(
-                "sqlalchemy.url not found in alembic.ini and DATABASE_URL environment variable is not set."
-            )
+            msg = "sqlalchemy.url not found in alembic.ini and DATABASE_URL environment variable is not set."
+            raise ValueError(msg)
         connectable = engine_from_config(
             ini_section,
             prefix="sqlalchemy.",

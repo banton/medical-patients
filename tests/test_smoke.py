@@ -62,7 +62,7 @@ class TestSmoke:
         """Test that static files are being served"""
         response = requests.get(f"{base_url}/static/index.html", timeout=10)
         assert response.status_code == 200
-        assert "Military Medical Exercise Patient Generator" in response.text
+        assert "Military Patient Generator" in response.text
 
     def test_create_minimal_job(self, base_url, api_headers):
         """Test creating a minimal patient generation job"""
@@ -70,12 +70,21 @@ class TestSmoke:
         config_payload = {
             "name": "Smoke Test Config",
             "total_patients": 10,
-            "injury_distribution": {"Disease": 50.0, "Non-Battle Injury": 30.0, "Battle Injury": 20.0},
+            "injury_distribution": {"Disease": 0.5, "Non-Battle Injury": 0.3, "Battle Injury": 0.2},
             "front_configs": [
                 {
+                    "id": "test_front",
                     "name": "Test Front",
                     "casualty_rate": 1.0,
-                    "nationality_distribution": [{"nationality_code": "US", "percentage": 100.0}],
+                    "nationality_distribution": [{"nationality_code": "USA", "percentage": 100.0}],
+                }
+            ],
+            "facility_configs": [
+                {
+                    "id": "test_facility",
+                    "name": "Test Facility",
+                    "kia_rate": 0.1,
+                    "rtd_rate": 0.3,
                 }
             ],
         }
@@ -84,7 +93,10 @@ class TestSmoke:
         create_response = requests.post(
             f"{base_url}/api/v1/configurations/", json=config_payload, headers=api_headers, timeout=10
         )
-        assert create_response.status_code == 200
+        if create_response.status_code != 201:
+            print(f"Configuration creation failed: {create_response.status_code}")
+            print(f"Response: {create_response.text}")
+        assert create_response.status_code == 201
         config_id = create_response.json()["id"]
 
         # Start generation job
@@ -95,8 +107,10 @@ class TestSmoke:
             "use_encryption": False,
         }
 
-        job_response = requests.post(f"{base_url}/api/v1/generate/", json=job_payload, headers=api_headers, timeout=10)
-        assert job_response.status_code == 200
+        job_response = requests.post(
+            f"{base_url}/api/v1/generation/", json=job_payload, headers=api_headers, timeout=10
+        )
+        assert job_response.status_code == 201
         job_id = job_response.json()["job_id"]
 
         # Poll job status (with timeout)

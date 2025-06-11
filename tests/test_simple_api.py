@@ -88,7 +88,7 @@ class TestSimpleAPI:
 
         # Poll for completion
         max_attempts = 60
-        for attempt in range(max_attempts):
+        for _attempt in range(max_attempts):
             response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=headers)
             assert response.status_code == 200
 
