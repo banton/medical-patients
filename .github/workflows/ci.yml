@@ -120,6 +120,10 @@ jobs:
           npm ci
           cd patient-timeline-viewer && npm ci
 
+      - name: Build timeline viewer
+        run: |
+          cd patient-timeline-viewer && npm run build
+
       - name: Run migrations
         env:
           DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/test_db
