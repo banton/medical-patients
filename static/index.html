@@ -4,142 +4,287 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Military Patient Generator</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f5f5f5;
-            }
-            .container {
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-            }
-            .header {
-                background-color: #1a73e8;
-                color: white;
-                padding: 20px;
-                margin: -20px -20px 20px -20px;
-                text-align: center;
-            }
-            .info-box {
-                background-color: #e3f2fd;
-                border: 1px solid #1976d2;
-                border-radius: 4px;
-                padding: 20px;
-                margin-bottom: 30px;
-            }
-            .info-box h2 {
-                margin-top: 0;
-                color: #1976d2;
-            }
-            .file-list {
-                background-color: white;
-                padding: 15px;
-                border-radius: 4px;
-                margin: 10px 0;
-                font-family: monospace;
-            }
-            .generate-button {
-                background-color: #4caf50;
-                color: white;
-                border: none;
-                padding: 20px 40px;
-                font-size: 20px;
-                border-radius: 4px;
-                cursor: pointer;
-                display: block;
-                margin: 0 auto;
-                transition: background-color 0.3s;
-            }
-            .generate-button:hover {
-                background-color: #45a049;
-            }
-            .generate-button:disabled {
-                background-color: #cccccc;
-                cursor: not-allowed;
-            }
-            .status-box {
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 20px;
-                margin-top: 30px;
-                display: none;
-            }
-            .status-box.show {
-                display: block;
-            }
-            .success {
-                color: #4caf50;
-            }
-            .error {
-                color: #f44336;
-            }
-            .progress {
-                background-color: #e0e0e0;
-                border-radius: 4px;
-                height: 20px;
-                margin: 10px 0;
-                overflow: hidden;
-            }
-            .progress-bar {
-                background-color: #1a73e8;
-                height: 100%;
-                width: 0%;
-                transition: width 0.3s;
-            }
-            .download-link {
-                display: inline-block;
-                background-color: #4caf50;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 4px;
-                margin-top: 10px;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: bold;
-                text-decoration: none;
-            }
-            .download-link:hover {
-                background-color: #45a049;
-            }
-        </style>
+
+        <!-- Modern Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+        <!-- CSS Frameworks -->
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+
+        <!-- Custom Stylesheets -->
+        <link rel="stylesheet" href="/static/css/variables.css" />
+        <link rel="stylesheet" href="/static/css/main.css" />
+        <link rel="stylesheet" href="/static/css/components/banner.css" />
+        <link rel="stylesheet" href="/static/css/components/accordion.css" />
+
+        <!-- Icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Military Patient Generator</h1>
-                <p>Simple Interface for Patient Data Generation</p>
-            </div>
-
-            <div class="info-box">
-                <h2>Configuration Files</h2>
-                <p>The patient generator uses the following JSON configuration files located in the <code>patient_generator/</code> directory:</p>
-
-                <div class="file-list"><strong>demographics.json</strong> - Contains nationality data, names, and ID formats for NATO nations</div>
-
-                <div class="file-list"><strong>fronts_config.json</strong> - Defines battle fronts with casualty ratios and nationality distributions</div>
-
-                <div class="file-list"><strong>injuries.json</strong> - Specifies the distribution of injuries (disease, non-battle injuries, battle injuries)</div>
-
-                <p><strong>To modify the generation parameters, edit these JSON files directly before clicking Generate.</strong></p>
-            </div>
-
-            <button class="generate-button" id="generateBtn">Generate Patients</button>
-
-            <div class="status-box" id="statusBox">
-                <h3>Generation Status</h3>
-                <div id="statusMessage"></div>
-                <div class="progress" id="progressContainer" style="display: none">
-                    <div class="progress-bar" id="progressBar"></div>
-                </div>
-                <div id="downloadContainer"></div>
+    <body class="bg-slate-50 font-inter">
+        <!-- API Notice Bar -->
+        <div class="api-banner">
+            <div class="api-banner__content">
+                <span class="api-banner__text">
+                    <i class="fas fa-code api-banner__icon"></i>
+                    API Available - Integrate patient generation programmatically
+                </span>
+                <a href="/docs" class="api-banner__link">
+                    View Documentation
+                    <i class="fas fa-external-link-alt api-banner__arrow"></i>
+                </a>
             </div>
         </div>
 
-        <script src="/static/js/simple-app.js"></script>
+        <!-- Main Container -->
+        <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+            <div class="container mx-auto px-4 py-8 max-w-6xl">
+                <!-- Header Section -->
+                <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
+                    <div class="px-6 py-4 text-center">
+                        <div class="flex items-center justify-center mb-2">
+                            <div class="bg-cyan-100 rounded-lg p-2 mr-3">
+                                <i class="fas fa-user-md text-xl text-cyan-600"></i>
+                            </div>
+                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Military Patient Generator</h1>
+                        </div>
+                        <p class="text-sm text-slate-600 max-w-xl mx-auto">Professional medical training data generation platform</p>
+                    </div>
+                </div>
+
+                <!-- Main Content Grid -->
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- Configuration Panel -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                            <!-- Section Header -->
+                            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+                                <div class="flex items-center">
+                                    <div class="bg-cyan-100 rounded-lg p-2 mr-3">
+                                        <i class="fas fa-cogs text-cyan-600"></i>
+                                    </div>
+                                    <h2 class="text-lg font-semibold text-slate-800">Configuration Settings</h2>
+                                </div>
+                            </div>
+
+                            <!-- Configuration Content -->
+                            <div class="p-6">
+                                <div class="accordion">
+                                    <!-- Battle Fronts Configuration -->
+                                    <div class="accordion__item">
+                                        <button class="accordion__header" type="button">
+                                            <div class="accordion__title">
+                                                <span class="accordion__status accordion__status--unknown">?</span>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-map-marked-alt text-slate-500 mr-2"></i>
+                                                    <span>Battle Fronts Configuration</span>
+                                                </div>
+                                            </div>
+                                            <i class="accordion__icon fas fa-chevron-down text-slate-400"></i>
+                                        </button>
+                                        <div class="accordion__content">
+                                            <div class="space-y-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2"> Battle Front Setup (JSON Format) </label>
+                                                    <textarea class="accordion__editor" id="fronts-editor" placeholder="Enter battle fronts configuration JSON..." rows="15">
+{
+  "front_configs": [
+    {
+      "id": "poland",
+      "name": "Poland Front",
+      "casualty_rate": 0.6,
+      "nationality_distribution": [
+        { "nationality_code": "POL", "percentage": 50.0 },
+        { "nationality_code": "LTU", "percentage": 25.0 },
+        { "nationality_code": "NLD", "percentage": 20.0 },
+        { "nationality_code": "ESP", "percentage": 5.0 }
+      ]
+    },
+    {
+      "id": "estonia",
+      "name": "Estonia Front",
+      "casualty_rate": 0.3,
+      "nationality_distribution": [
+        { "nationality_code": "EST", "percentage": 50.0 },
+        { "nationality_code": "GBR", "percentage": 50.0 }
+      ]
+    },
+    {
+      "id": "finland",
+      "name": "Finland Front",
+      "casualty_rate": 0.1,
+      "nationality_distribution": [
+        { "nationality_code": "FIN", "percentage": 50.0 },
+        { "nationality_code": "USA", "percentage": 50.0 }
+      ]
+    }
+  ]
+}</textarea
+                                                    >
+                                                </div>
+                                                <div class="accordion__validation"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Injury Distribution -->
+                                    <div class="accordion__item">
+                                        <button class="accordion__header" type="button">
+                                            <div class="accordion__title">
+                                                <span class="accordion__status accordion__status--unknown">?</span>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-chart-pie text-slate-500 mr-2"></i>
+                                                    <span>Injury Distribution</span>
+                                                </div>
+                                            </div>
+                                            <i class="accordion__icon fas fa-chevron-down text-slate-400"></i>
+                                        </button>
+                                        <div class="accordion__content">
+                                            <div class="space-y-4">
+                                                <div>
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2"> Medical Case Distribution (JSON Format) </label>
+                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter injury distribution JSON..." rows="10">
+{
+  "injury_distribution": {
+    "Disease": 0.52,
+    "Non-Battle Injury": 0.33,
+    "Battle Injury": 0.15
+  },
+  "total_patients": 1440
+}</textarea
+                                                    >
+                                                </div>
+                                                <div class="accordion__validation"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Panel -->
+                    <div class="lg:col-span-1">
+                        <!-- Generate Section -->
+                        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-6">
+                            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+                                <div class="flex items-center">
+                                    <div class="bg-emerald-100 rounded-lg p-2 mr-3">
+                                        <i class="fas fa-play text-emerald-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-800">Generate Data</h3>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <p class="text-sm text-slate-600 mb-6">Ready to generate medical training data based on your configuration settings.</p>
+
+                                <button id="generateBtn" class="generate-button">
+                                    <div class="flex items-center justify-center">
+                                        <i class="fas fa-bolt mr-2"></i>
+                                        <span>Generate Patients</span>
+                                    </div>
+                                </button>
+
+                                <div class="mt-4 text-xs text-slate-500 text-center">
+                                    <kbd class="px-2 py-1 bg-slate-100 rounded text-slate-600 font-mono">Ctrl</kbd> +
+                                    <kbd class="px-2 py-1 bg-slate-100 rounded text-slate-600 font-mono">Enter</kbd>
+                                    to generate
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Configurations -->
+                        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden mb-6">
+                            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+                                <div class="flex items-center">
+                                    <div class="bg-purple-100 rounded-lg p-2 mr-3">
+                                        <i class="fas fa-history text-purple-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-800">Recent Configurations</h3>
+                                </div>
+                            </div>
+
+                            <div class="p-4">
+                                <div id="configHistoryPanel">
+                                    <!-- Configuration history will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Stats -->
+                        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+                                <div class="flex items-center">
+                                    <div class="bg-amber-100 rounded-lg p-2 mr-3">
+                                        <i class="fas fa-chart-bar text-amber-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-800">Quick Overview</h3>
+                                </div>
+                            </div>
+
+                            <div class="p-6">
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-slate-600">Total Patients:</span>
+                                        <span class="font-semibold text-slate-800" id="totalPatients">1,440</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-slate-600">Battle Fronts:</span>
+                                        <span class="font-semibold text-slate-800" id="totalFronts">3</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-slate-600">Output Formats:</span>
+                                        <div class="flex space-x-1">
+                                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">JSON</span>
+                                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">CSV</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Section -->
+                <div id="statusBox" class="status-box">
+                    <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 rounded-lg p-2 mr-3">
+                                    <i class="fas fa-tasks text-blue-600"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-slate-800">Generation Status</h3>
+                            </div>
+                        </div>
+
+                        <div class="status-content">
+                            <div id="statusMessage"></div>
+
+                            <!-- Progress Bar -->
+                            <div id="progressContainer" class="progress" style="display: none">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+
+                            <!-- Download Container -->
+                            <div id="downloadContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+        <script src="/static/js/services/api.js"></script>
+        <script src="/static/js/components/accordion.js"></script>
+        <script src="/static/js/app.js"></script>
+
+        <!-- Development Tests -->
+        <script src="/static/js/tests/banner.test.js"></script>
+        <script src="/static/js/tests/accordion.test.js"></script>
+        <script src="/static/js/tests/api.test.js"></script>
     </body>
 </html>

@@ -46,7 +46,8 @@
       "Bash(pkill:*)",
       "Bash(true)",
       "Bash(rg:*)",
-      "Bash(gh pr list:*)"
+      "Bash(gh pr list:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   },

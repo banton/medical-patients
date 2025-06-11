@@ -301,12 +301,12 @@ if __name__ == "__main__":
         job_payload = {
             "configuration": {
                 "name": "SDK Generated Test",
-                "total_patients": 5  # Small test
+                "total_patients": 5,  # Small test
             },
             "output_formats": ["json"],
             "use_compression": False,
             "use_encryption": False,
-            "priority": "normal"
+            "priority": "normal",
         }
         print("\nStarting generation job with payload:", json.dumps(job_payload, indent=2))
         job_info = client.start_generation_job(job_payload)
