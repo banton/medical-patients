@@ -123,8 +123,8 @@ class TestE2EPatientGeneration:
             with zipfile.ZipFile(tmp_path, "r") as zip_file:
                 file_list = zip_file.namelist()
                 # Check for various file extensions (compressed and uncompressed)
-                json_files = [f for f in file_list if f.endswith(".json") or f.endswith(".json.gz")]
-                csv_files = [f for f in file_list if f.endswith(".csv") or f.endswith(".csv.gz")]
+                json_files = [f for f in file_list if f.endswith((".json", ".json.gz"))]
+                csv_files = [f for f in file_list if f.endswith((".csv", ".csv.gz"))]
 
                 # We expect JSON and CSV files
                 assert len(json_files) > 0
@@ -135,26 +135,26 @@ class TestE2EPatientGeneration:
                 for data_file in data_files[:1]:
                     with zip_file.open(data_file) as zf:
                         raw_content = zf.read()
-                        
+
                         # Handle compressed vs uncompressed files
-                        if data_file.endswith('.gz'):
+                        if data_file.endswith(".gz"):
                             import gzip
                             content = gzip.decompress(raw_content)
                         else:
                             content = raw_content
-                        
+
                         # Parse JSON content
                         data = json.loads(content)
-                        
+
                         # Verify patient data structure
                         assert isinstance(data, list), "Expected list of patient data"
                         assert len(data) > 0, "Expected at least one patient"
-                        
+
                         # Check first patient structure
                         first_patient = data[0]
                         assert "patient" in first_patient, "Expected patient data"
                         assert "fhir_bundle" in first_patient, "Expected FHIR bundle"
-                        
+
                         patient_data = first_patient["patient"]
                         assert "id" in patient_data, "Expected patient ID"
                         assert "demographics" in patient_data, "Expected demographics"

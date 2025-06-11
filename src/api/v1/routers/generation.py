@@ -175,7 +175,8 @@ async def _run_generation_task(
             # Use existing configuration from database
             config_template = config_repo.get_configuration(config["configuration_id"])
             if not config_template:
-                raise ValueError(f"Configuration {config['configuration_id']} not found")
+                error_msg = f"Configuration {config['configuration_id']} not found"
+                raise ValueError(error_msg)
         else:
             # Create configuration template for database
             config_create = ConfigurationTemplateCreate(
