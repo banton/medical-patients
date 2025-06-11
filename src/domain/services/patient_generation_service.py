@@ -305,11 +305,11 @@ class AsyncPatientGenerationService:
                         first_name = patient.demographics.get("first_name", "Unknown")
                         last_name = patient.demographics.get("last_name", "Unknown")
                         age = patient.get_age() if hasattr(patient, "get_age") else "Unknown"
-                        
+
                         # Extract evacuation timeline data
                         final_status = patient.final_status or "Active"
                         last_facility = patient.last_facility or patient.current_status
-                        timeline_count = len(patient.movement_timeline) if hasattr(patient, 'movement_timeline') else 0
+                        timeline_count = len(patient.movement_timeline) if hasattr(patient, "movement_timeline") else 0
                         injury_time = patient.injury_timestamp.isoformat() if patient.injury_timestamp else "Unknown"
 
                         stream.write(

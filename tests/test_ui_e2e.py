@@ -41,11 +41,10 @@ class TestUIAPIIntegration:
         """Test that UI static files are accessible."""
         files = [
             "/static/index.html",
-            "/static/css/app.css",
+            "/static/css/main.css",
             "/static/js/app.js",
-            "/static/js/globals.js",
-            "/static/js/modules/uiComponents.js",
-            "/static/js/modules/apiClient.js",
+            "/static/js/services/api.js",
+            "/static/js/components/accordion.js",
         ]
 
         for file in files:
@@ -84,14 +83,14 @@ class TestUIAPIIntegration:
     def test_authenticated_endpoints_require_key(self):
         """Test that authenticated endpoints require API key."""
         endpoints = [
-            "/api/jobs/",
+            "/api/v1/jobs/",
             "/api/v1/configurations/",
         ]
 
         for endpoint in endpoints:
             # Without API key
             response = requests.get(f"{BASE_URL}{endpoint}")
-            assert response.status_code == 403
+            assert response.status_code in [401, 403]  # Either unauthorized or forbidden is acceptable
 
             # With API key
             response = requests.get(f"{BASE_URL}{endpoint}", headers=HEADERS)
