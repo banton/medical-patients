@@ -18,7 +18,7 @@ export interface TimelineEvent {
 }
 
 export interface Patient {
-  id: string;
+  id: string | number;
   nationality: string;
   gender?: string;
   injury_type?: string;
@@ -29,13 +29,27 @@ export interface Patient {
   movement_timeline: TimelineEvent[];
   injury_timestamp?: string;
   current_status?: string;
+  
+  // Name fields (can be at top level or in demographics)
+  given_name?: string;
+  family_name?: string;
+  
+  // Additional fields that might be present in generator output
+  demographics?: any;
+  medical_data?: any;
+  treatment_history?: any;
+  front?: string;
+  primary_condition?: any;
+  primary_conditions?: any;
+  additional_conditions?: any;
+  timeline_summary?: any;
 }
 
 export type FacilityName = 'POI' | 'Role1' | 'Role2' | 'Role3' | 'Role4';
 
 export interface PatientLocation {
   facility: FacilityName | null;
-  status: 'active' | 'kia' | 'rtd' | 'transit' | 'completed';
+  status: 'active' | 'kia' | 'rtd' | 'transit' | 'completed' | 'hidden';
   eventType?: string;
 }
 

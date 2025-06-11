@@ -10,6 +10,13 @@ A React-based visualizer for military medical evacuation patient flow. This appl
 - **Facility Overview**: 5-column layout showing all medical evacuation levels
 - **File Upload**: Drag-and-drop interface for loading patients.json files
 - **Statistics Dashboard**: Real-time counts and status summaries
+- **Patient Names**: Displays patient names in "FirstInitial. LastName, Nationality" format
+- **Front Information**: Shows battlefield front assignments alongside patient activities
+- **Cumulative KIA/RTD Tracking**: Smart tallying system with POI capturing pre-Role1 deaths
+- **Fixed Column Headers**: Consistent header heights with always-visible counters
+- **Compact Design**: 50% more patients visible with tighter, efficient layout
+- **Viewport Indicators**: Shows count of patients below visible area with scroll hints
+- **Auto-Hide Terminal Cases**: KIA/RTD patients disappear after 15 minutes to reduce clutter
 
 ## Tech Stack
 
@@ -62,10 +69,17 @@ npm run preview
    - **Seek**: Click on the progress bar to jump to specific times
 
 3. **Patient Visualization**:
-   - Patients appear as cards in facility columns
+   - Patients appear as compact cards showing name, nationality, and front
    - Color coding indicates triage category (T1=Red, T2=Yellow, T3=Green)
    - Status indicators show KIA (red), RTD (green), or active (blue)
    - Animations show transit between facilities
+   - Cards automatically hide after 15 minutes for KIA/RTD to reduce clutter
+
+4. **KIA/RTD Tallying System**:
+   - **POI Column**: Tracks all deaths that occur before reaching Role1 medical care
+   - **Role1-4 Columns**: Track facility-specific deaths and RTDs during treatment
+   - **Fixed Headers**: Counters always visible with consistent layout
+   - **Real-time Updates**: Cumulative counts update as timeline progresses
 
 ## Patient Data Format
 
@@ -74,24 +88,34 @@ The application expects JSON files with the following structure:
 ```json
 [
   {
-    "id": "string",
-    "nationality": "string",
-    "triage_category": "T1" | "T2" | "T3",
-    "final_status": "KIA" | "RTD" | "Remains_Role4",
-    "injury_timestamp": "ISO 8601 datetime",
-    "movement_timeline": [
-      {
-        "event_type": "arrival" | "evacuation_start" | "transit_start" | "kia" | "rtd",
-        "facility": "POI" | "Role1" | "Role2" | "Role3" | "Role4",
-        "timestamp": "ISO 8601 datetime",
-        "hours_since_injury": number,
-        "evacuation_duration_hours": number,
-        "transit_duration_hours": number
-      }
-    ]
+    "patient": {
+      "id": "string | number",
+      "nationality": "string",
+      "triage_category": "T1" | "T2" | "T3",
+      "final_status": "KIA" | "RTD" | "Remains_Role4",
+      "injury_timestamp": "ISO 8601 datetime",
+      "front": "string",
+      "demographics": {
+        "given_name": "string",
+        "family_name": "string",
+        "nationality": "string"
+      },
+      "movement_timeline": [
+        {
+          "event_type": "arrival" | "evacuation_start" | "transit_start" | "kia" | "rtd",
+          "facility": "POI" | "Role1" | "Role2" | "Role3" | "Role4",
+          "timestamp": "ISO 8601 datetime",
+          "hours_since_injury": number,
+          "evacuation_duration_hours": number,
+          "transit_duration_hours": number
+        }
+      ]
+    }
   }
 ]
 ```
+
+**Note**: The application supports both wrapped format (with `patient` key) and direct patient objects. Names can be in `demographics` or at the top level.
 
 ## Project Structure
 
@@ -120,17 +144,21 @@ patient-timeline-viewer/
 Calculates patient locations at any given time based on their movement timeline. Handles complex scenarios like evacuation periods, transit times, and terminal events (KIA/RTD).
 
 ### PatientCard
-Animated patient representation with:
-- Triage category color coding
+Compact animated patient representation with:
+- Patient name display (FirstInitial. LastName, Nationality)
+- Triage category color coding with smaller badges
 - Status indicators and animations
-- Nationality and injury type display
-- Smooth layout transitions
+- Activity status and battlefield front information
+- Auto-hide functionality for KIA/RTD after 15 minutes
+- Smooth layout transitions with optimized spacing
 
 ### FacilityColumn
-Medical facility representation showing:
-- Facility metadata and descriptions
-- Patient count and status summaries
-- Organized patient display with animations
+Medical facility representation with fixed-height headers showing:
+- Facility metadata and descriptions in compact layout
+- Cumulative KIA/RTD counters (POI shows pre-Role1 deaths, others show facility-specific)
+- Current patient counts and status summaries
+- Scroll indicators for patients below viewport
+- Organized patient display with optimized spacing
 
 ## Sample Data
 

@@ -28,14 +28,14 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
     ((currentTime.getTime() - startTime.getTime()) / totalDuration) * 100
   ));
 
-  // Speed options
+  // Speed options (adjusted for slower playback)
   const speedOptions = [
+    { value: 0.25, label: '0.25x' },
     { value: 0.5, label: '0.5x' },
     { value: 1, label: '1x' },
+    { value: 2, label: '2x' },
     { value: 5, label: '5x' },
-    { value: 10, label: '10x' },
-    { value: 30, label: '30x' },
-    { value: 60, label: '60x' }
+    { value: 10, label: '10x' }
   ];
 
   // Handle progress bar click

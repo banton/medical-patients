@@ -31,8 +31,16 @@ export function getPatientLocationAtTime(patient: Patient, currentTime: Date): P
     return { facility: 'POI', status: 'active' };
   }
 
-  // Check for terminal events (KIA, RTD)
+  // Check for terminal events (KIA, RTD) - hide after 15 minutes (0.25 hours)
   if (activeEvent.event_type === 'kia') {
+    const timeFromEvent = currentHours - activeEvent.hours_since_injury;
+    if (timeFromEvent >= 0.25) { // 15 minutes in hours
+      return { 
+        facility: activeEvent.facility as FacilityName || 'POI', 
+        status: 'hidden',
+        eventType: activeEvent.event_type 
+      };
+    }
     return { 
       facility: activeEvent.facility as FacilityName || 'POI', 
       status: 'kia',
@@ -41,6 +49,14 @@ export function getPatientLocationAtTime(patient: Patient, currentTime: Date): P
   }
 
   if (activeEvent.event_type === 'rtd') {
+    const timeFromEvent = currentHours - activeEvent.hours_since_injury;
+    if (timeFromEvent >= 0.25) { // 15 minutes in hours
+      return { 
+        facility: activeEvent.facility as FacilityName || 'POI', 
+        status: 'hidden',
+        eventType: activeEvent.event_type 
+      };
+    }
     return { 
       facility: activeEvent.facility as FacilityName || 'POI', 
       status: 'rtd',

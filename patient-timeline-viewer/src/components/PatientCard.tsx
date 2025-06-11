@@ -65,7 +65,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
 
   return (
     <motion.div
-      layoutId={layoutId || `patient-${patient.id}`}
+      layoutId={layoutId || `patient-${patient.id.toString()}`}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
@@ -81,15 +81,15 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       }}
       className={`
         ${styles.bg} ${styles.text}
-        border-2 rounded-lg p-3 m-1 shadow-sm hover:shadow-md
+        border rounded p-1.5 mb-1 shadow-sm hover:shadow-md
         transition-shadow duration-200 cursor-pointer
         min-w-0 relative
       `}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
-      {/* Status indicator */}
-      <div className="flex items-center justify-between mb-2">
+      {/* Header row with status and triage */}
+      <div className="flex items-center justify-between mb-0.5">
         <div className="flex items-center space-x-1">
           <span className="text-sm">{styles.icon}</span>
           <span className="text-xs font-medium">{styles.statusText}</span>
@@ -98,36 +98,41 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         {/* Triage category */}
         <div className={`
           ${getTriageColor(patient.triage_category)}
-          text-white text-xs font-bold px-2 py-1 rounded-full
-          min-w-[24px] text-center
+          text-white text-xs font-bold px-1 py-0.5 rounded-full
+          min-w-[18px] text-center
         `}>
           {patient.triage_category}
         </div>
       </div>
 
-      {/* Patient ID */}
-      <div className="font-medium text-sm mb-1 truncate">
-        ID: {patient.id}
+      {/* Patient name and nationality */}
+      <div className="font-medium text-sm mb-0.5 truncate">
+        {(() => {
+          const firstName = patient.demographics?.given_name || patient.given_name || '';
+          const lastName = patient.demographics?.family_name || patient.family_name || '';
+          const nationality = patient.nationality || patient.demographics?.nationality || '';
+          
+          if (firstName && lastName) {
+            return `${firstName.charAt(0)}. ${lastName}, ${nationality}`;
+          }
+          return `ID: ${patient.id}, ${nationality}`;
+        })()}
       </div>
 
-      {/* Nationality */}
-      <div className="text-xs opacity-75 mb-1">
-        {patient.nationality}
+      {/* Activity and Front info */}
+      <div className="flex items-center justify-between text-xs opacity-75">
+        <span className="truncate">
+          {location.eventType && location.eventType !== 'active' 
+            ? location.eventType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+            : 'Active'
+          }
+        </span>
+        {patient.front && (
+          <span className="text-xs opacity-60 ml-1 truncate">
+            {patient.front}
+          </span>
+        )}
       </div>
-
-      {/* Injury type if available */}
-      {patient.injury_type && (
-        <div className="text-xs opacity-60 truncate">
-          {patient.injury_type}
-        </div>
-      )}
-
-      {/* Event type indicator */}
-      {location.eventType && location.eventType !== 'active' && (
-        <div className="text-xs mt-1 font-medium capitalize">
-          {location.eventType.replace('_', ' ')}
-        </div>
-      )}
 
       {/* Animation for transit status */}
       {location.status === 'transit' && (

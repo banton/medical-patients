@@ -38,7 +38,9 @@ function App() {
 
     const interval = setInterval(() => {
       setPlaybackState(prev => {
-        const nextTime = new Date(prev.currentTime.getTime() + (3600000 * prev.speed)); // Advance by 1 hour * speed
+        // Adjust speed to make timeline much slower - divide by 10 for more realistic playback
+        const adjustedSpeed = prev.speed / 10;
+        const nextTime = new Date(prev.currentTime.getTime() + (3600000 * adjustedSpeed)); // Advance by 1 hour * adjustedSpeed
         
         // Stop if we've reached the end
         if (nextTime >= prev.endTime) {
@@ -95,7 +97,7 @@ function App() {
     console.log(`Loaded ${loadedPatients.length} patients`);
   };
 
-  // Calculate statistics
+  // Calculate statistics and cumulative KIA/RTD counts
   const statistics = useMemo(() => {
     if (patients.length === 0) return null;
 
@@ -117,17 +119,72 @@ function App() {
     };
   }, [patients]);
 
+  // Calculate cumulative KIA/RTD counts up to current time for each facility
+  const cumulativeCounts = useMemo(() => {
+    if (patients.length === 0) return {};
+
+    const counts: Record<FacilityName, { kia: number; rtd: number }> = {
+      POI: { kia: 0, rtd: 0 },
+      Role1: { kia: 0, rtd: 0 },
+      Role2: { kia: 0, rtd: 0 },
+      Role3: { kia: 0, rtd: 0 },
+      Role4: { kia: 0, rtd: 0 }
+    };
+
+    patients.forEach(patient => {
+      // Check if patient has ever been KIA or RTD up to this point in time
+      if (patient.movement_timeline) {
+        const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
+        const currentHours = (playbackState.currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
+        
+        const eventsSoFar = patient.movement_timeline.filter(event => event.hours_since_injury <= currentHours);
+        const kiaEvent = eventsSoFar.find(event => event.event_type === 'kia');
+        const rtdEvent = eventsSoFar.find(event => event.event_type === 'rtd');
+        
+        if (kiaEvent) {
+          // POI gets all KIAs that happen before Role1 (including at POI)
+          const facilityAtDeath = kiaEvent.facility as FacilityName || 'POI';
+          
+          // Check if patient ever reached Role1 before dying
+          const role1Event = eventsSoFar.find(event => 
+            event.facility === 'Role1' && event.hours_since_injury < kiaEvent.hours_since_injury
+          );
+          
+          if (!role1Event || facilityAtDeath === 'POI') {
+            // Patient died before reaching Role1, or died at POI - count as POI KIA
+            counts.POI.kia++;
+          } else {
+            // Patient died at specific facility after reaching Role1
+            if (counts[facilityAtDeath]) {
+              counts[facilityAtDeath].kia++;
+            }
+          }
+        } else if (rtdEvent) {
+          // RTD always goes to the facility where it happened
+          const facilityAtRTD = rtdEvent.facility as FacilityName || 'POI';
+          if (counts[facilityAtRTD]) {
+            counts[facilityAtRTD].rtd++;
+          }
+        }
+      }
+    });
+
+    return counts;
+  }, [patients, playbackState.currentTime]);
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 p-4">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Patient Timeline Visualizer
-          </h1>
-          <p className="text-gray-600">
-            Military Medical Evacuation Flow Simulator - Load patients.json to visualize patient movement through medical facilities
-          </p>
+      <header className="bg-white shadow-sm border-b border-gray-200 p-2">
+        <div className="w-full px-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">
+              Patient Timeline Visualizer
+            </h1>
+            <p className="text-sm text-gray-600">
+              Military Medical Evacuation Flow Simulator
+            </p>
+          </div>
         </div>
       </header>
 
@@ -157,13 +214,13 @@ function App() {
           <>
             {/* Statistics bar */}
             {statistics && (
-              <div className="bg-white border-b border-gray-200 p-4">
-                <div className="max-w-6xl mx-auto flex items-center justify-between">
-                  <div className="flex items-center space-x-6 text-sm">
+              <div className="bg-white border-b border-gray-200 p-2">
+                <div className="w-full px-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-4 text-sm">
                     <span className="font-medium">
-                      Total Patients: {statistics.total}
+                      Total: {statistics.total}
                     </span>
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-2">
                       <span className="text-red-600">
                         KIA: {statistics.finalStatuses.KIA || 0}
                       </span>
@@ -175,14 +232,14 @@ function App() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex space-x-3 text-sm">
-                    <span className="bg-red-100 text-red-800 px-2 py-1 rounded">
+                  <div className="flex space-x-2 text-sm">
+                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded">
                       T1: {statistics.triageCounts.T1 || 0}
                     </span>
-                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                    <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">
                       T2: {statistics.triageCounts.T2 || 0}
                     </span>
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                    <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded">
                       T3: {statistics.triageCounts.T3 || 0}
                     </span>
                   </div>
@@ -191,7 +248,7 @@ function App() {
             )}
 
             {/* Facility columns */}
-            <div className="flex-1 grid grid-cols-5 gap-4 p-4 overflow-hidden">
+            <div className="flex-1 grid grid-cols-5 gap-2 p-2 overflow-hidden">
               <AnimatePresence>
                 {FACILITIES.map((facility) => (
                   <FacilityColumn
@@ -199,6 +256,7 @@ function App() {
                     name={facility}
                     patients={patients}
                     currentTime={playbackState.currentTime}
+                    cumulativeCounts={(cumulativeCounts as any)[facility] || { kia: 0, rtd: 0 }}
                     className="h-full"
                   />
                 ))}

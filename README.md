@@ -19,6 +19,7 @@ This application generates simulated patient data for military medical exercises
     - Detailed nationality distributions per front (goal: all 32 NATO nations).
     - Overall injury type distributions (Disease, Non-Battle Injury, Battle Injury).
 - **Simple Web Interface**: Clean HTML/JavaScript interface for patient generation and job monitoring.
+- **React Timeline Viewer**: Advanced interactive visualization tool for patient flow through medical facilities with animated timeline playback, patient name display, cumulative KIA/RTD tracking, and compact design for optimal visibility.
 - **Database-Backed Configurations**: Scenarios are stored and versioned in a PostgreSQL database.
 - **Standardized RESTful API**: v1 API endpoints with consistent request/response models and comprehensive validation.
 - **Python SDK**: Simplifies interaction with the API for automation and integration.
@@ -74,6 +75,7 @@ The application features a clean, domain-driven architecture with clear separati
 │   ├── fhir_generator.py     # FHIR bundle generation
 │   └── formatter.py          # Output formatting
 ├── static/                   # Frontend assets
+├── patient-timeline-viewer/  # React timeline visualization app
 ├── alembic_migrations/       # Database migrations
 └── config.py                 # Application configuration
 ```
@@ -143,6 +145,12 @@ The application now includes a comprehensive Makefile for streamlined developmen
     *   Main Application: `http://localhost:8000/static/index.html`
     *   API Documentation: `http://localhost:8000/docs`
     *   Alternative API Docs: `http://localhost:8000/redoc`
+
+4.  **Start the timeline viewer** (optional):
+    ```bash
+    make timeline-viewer
+    ```
+    *   Timeline Viewer: `http://localhost:5174`
 
 ### Development Commands
 
@@ -350,6 +358,14 @@ military-patient-generator/
 │   ├── index.html                      # Main UI
 │   └── js/                             # JavaScript files
 │
+├── patient-timeline-viewer/            # React timeline visualization
+│   ├── src/                            # React app source code
+│   │   ├── components/                 # React components
+│   │   ├── types/                      # TypeScript definitions
+│   │   └── utils/                      # Timeline utilities
+│   ├── public/                         # Static assets
+│   └── package.json                    # React app dependencies
+│
 ├── tests/                              # Test files
 ├── config.py                           # Environment configuration
 ├── Dockerfile                          # Container definition
@@ -359,6 +375,60 @@ military-patient-generator/
 ```
 
 For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## React Timeline Viewer
+
+The React Timeline Viewer is a standalone visualization tool that provides interactive playback of patient movement through medical evacuation facilities. It's designed to help analyze patient flow patterns and evacuation timing.
+
+### Features
+
+- **Interactive Timeline Playback**: Play, pause, and control speed (0.25x-10x) of patient movement visualization
+- **Facility Visualization**: 5-column layout with fixed-height headers showing POI → Role1 → Role2 → Role3 → Role4 progression
+- **Patient Status Tracking**: Visual indicators for KIA, RTD, and active patients with smooth animations
+- **Patient Name Display**: Shows "FirstInitial. LastName, Nationality" format with battlefield front information
+- **Smart KIA/RTD Tallying**: POI tracks pre-Role1 deaths, other facilities track treatment-specific outcomes
+- **Compact Design**: 50% more patients visible with optimized spacing and tighter layout
+- **Auto-Hide Terminal Cases**: KIA/RTD patients disappear after 15 minutes to reduce visual clutter
+- **Viewport Indicators**: Shows count of patients below visible area with scroll hints
+- **File Upload Interface**: Drag-and-drop support for patients.json files with format validation
+- **Real-time Statistics**: Cumulative and current patient counts with always-visible counters
+
+### Usage
+
+1. **Start the timeline viewer**:
+   ```bash
+   make timeline-viewer
+   ```
+
+2. **Generate patient data** from the main application and download the results
+
+3. **Upload the patients.json file** to the timeline viewer via drag-and-drop
+
+4. **Use playback controls** to visualize patient flow:
+   - Play/Pause timeline progression
+   - Adjust speed (0.5x to 60x)
+   - Seek to specific time points
+   - Reset to beginning
+
+### Timeline Viewer Commands
+
+```bash
+make timeline-viewer    # Start development server (port 5174)
+make timeline-build     # Build for production
+make timeline-test      # Test build process
+make timeline-deps      # Install dependencies
+make timeline-clean     # Clean build files
+make dev-full          # Start both backend and timeline viewer
+```
+
+### Integration Workflow
+
+The timeline viewer is designed to work seamlessly with the main patient generator:
+
+1. Configure and generate patients using the main application
+2. Download the generated patients.json file
+3. Load the file into the timeline viewer for visualization
+4. Analyze patient flow patterns and evacuation timing
 
 ## Standards Compliance
 

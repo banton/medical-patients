@@ -32,20 +32,80 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onLoad, isLoading = 
         return;
       }
 
-      // Basic validation of patient structure
-      const validPatients = data.filter((item: any) => {
-        return (
-          item &&
-          typeof item.id === 'string' &&
-          typeof item.nationality === 'string' &&
-          ['T1', 'T2', 'T3'].includes(item.triage_category) &&
-          ['KIA', 'RTD', 'Remains_Role4'].includes(item.final_status) &&
-          Array.isArray(item.movement_timeline)
-        );
+      // Handle both direct patient objects and wrapped format
+      const extractedPatients = data.map((item: any) => {
+        // Check if this is a wrapped format (has 'patient' key)
+        if (item.patient) {
+          return item.patient;
+        }
+        // Otherwise treat as direct patient object
+        return item;
+      });
+
+      // Enhanced validation with detailed debugging
+      const validPatients = extractedPatients.filter((patient: any, index: number) => {
+        if (!patient) {
+          console.warn(`Patient ${index}: patient is null/undefined`);
+          return false;
+        }
+
+        // Extract nationality from demographics if needed
+        const nationality = patient.nationality || patient.demographics?.nationality;
+        
+        // Extract triage from timeline events if not at top level
+        let triage = patient.triage_category;
+        if (!triage && patient.movement_timeline && Array.isArray(patient.movement_timeline)) {
+          const triageEvent = patient.movement_timeline.find((event: any) => event.triage_category);
+          triage = triageEvent?.triage_category;
+        }
+
+        const checks = {
+          hasId: patient.id !== undefined && patient.id !== null,
+          idType: typeof patient.id === 'string' || typeof patient.id === 'number',
+          hasNationality: typeof nationality === 'string',
+          hasTriage: ['T1', 'T2', 'T3'].includes(triage),
+          hasFinalStatus: ['KIA', 'RTD', 'Remains_Role4'].includes(patient.final_status),
+          hasTimeline: Array.isArray(patient.movement_timeline)
+        };
+
+        const isValid = Object.values(checks).every(check => check);
+        
+        if (!isValid) {
+          console.warn(`Patient ${index} validation failed:`, {
+            patient,
+            checks,
+            extractedNationality: nationality,
+            extractedTriage: triage,
+            actualKeys: Object.keys(patient)
+          });
+        }
+
+        // Normalize the patient object for the timeline viewer
+        if (isValid) {
+          patient.nationality = nationality;
+          patient.triage_category = triage;
+          patient.gender = patient.gender || patient.demographics?.gender;
+        }
+
+        return isValid;
       });
 
       if (validPatients.length === 0) {
-        setError('No valid patients found in file');
+        // Provide detailed error information
+        const sampleItem = data[0];
+        const samplePatient = extractedPatients[0];
+        const detailedError = `No valid patients found. Sample structure:
+
+Raw item keys: ${Object.keys(sampleItem || {}).join(', ')}
+Patient ID: ${samplePatient?.id} (type: ${typeof samplePatient?.id})
+Nationality: ${samplePatient?.nationality || samplePatient?.demographics?.nationality} 
+Triage: ${samplePatient?.triage_category || 'not found at top level'}
+Final Status: ${samplePatient?.final_status}
+Timeline: ${Array.isArray(samplePatient?.movement_timeline) ? `array with ${samplePatient.movement_timeline.length} events` : typeof samplePatient?.movement_timeline}
+
+Expected: id (string/number), nationality (string), triage_category (T1/T2/T3), final_status (KIA/RTD/Remains_Role4), movement_timeline (array)`;
+        
+        setError(detailedError);
         return;
       }
 
