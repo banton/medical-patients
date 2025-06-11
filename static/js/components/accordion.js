@@ -368,7 +368,7 @@ class AccordionComponent {
 
             // Required top-level sections
             const requiredSections = ['evacuation_times', 'transit_times', 'kia_rate_modifiers', 'rtd_rate_modifiers'];
-            const missingSections = requiredSections.filter(section => !config[section]);
+            const missingSections = requiredSections.filter((section) => !config[section]);
             if (missingSections.length > 0) {
                 return { valid: false, message: `Missing required sections: ${missingSections.join(', ')}` };
             }
@@ -386,7 +386,11 @@ class AccordionComponent {
 
                 for (const triage of requiredTriageCategories) {
                     const timeConfig = config.evacuation_times[facility][triage];
-                    if (!timeConfig || typeof timeConfig.min_hours !== 'number' || typeof timeConfig.max_hours !== 'number') {
+                    if (
+                        !timeConfig ||
+                        typeof timeConfig.min_hours !== 'number' ||
+                        typeof timeConfig.max_hours !== 'number'
+                    ) {
                         return { valid: false, message: `Invalid time configuration for ${facility} ${triage}` };
                     }
 
@@ -408,7 +412,11 @@ class AccordionComponent {
 
                 for (const triage of requiredTriageCategories) {
                     const timeConfig = config.transit_times[route][triage];
-                    if (!timeConfig || typeof timeConfig.min_hours !== 'number' || typeof timeConfig.max_hours !== 'number') {
+                    if (
+                        !timeConfig ||
+                        typeof timeConfig.min_hours !== 'number' ||
+                        typeof timeConfig.max_hours !== 'number'
+                    ) {
                         return { valid: false, message: `Invalid transit time configuration for ${route} ${triage}` };
                     }
 
@@ -425,22 +433,29 @@ class AccordionComponent {
             // Validate rate modifiers
             for (const triage of requiredTriageCategories) {
                 if (typeof config.kia_rate_modifiers[triage] !== 'number' || config.kia_rate_modifiers[triage] < 0) {
-                    return { valid: false, message: `Invalid KIA rate modifier for ${triage} (must be positive number)` };
+                    return {
+                        valid: false,
+                        message: `Invalid KIA rate modifier for ${triage} (must be positive number)`
+                    };
                 }
 
                 if (typeof config.rtd_rate_modifiers[triage] !== 'number' || config.rtd_rate_modifiers[triage] < 0) {
-                    return { valid: false, message: `Invalid RTD rate modifier for ${triage} (must be positive number)` };
+                    return {
+                        valid: false,
+                        message: `Invalid RTD rate modifier for ${triage} (must be positive number)`
+                    };
                 }
             }
 
             // Calculate total configured routes and timing ranges
             const totalRoutes = requiredTransitRoutes.length;
             const totalFacilities = requiredFacilities.length;
-            const totalConfigurations = totalRoutes * requiredTriageCategories.length + totalFacilities * requiredTriageCategories.length;
+            const totalConfigurations =
+                totalRoutes * requiredTriageCategories.length + totalFacilities * requiredTriageCategories.length;
 
-            return { 
-                valid: true, 
-                message: `Valid evacuation configuration: ${totalFacilities} facilities, ${totalRoutes} routes, ${totalConfigurations} timing configurations` 
+            return {
+                valid: true,
+                message: `Valid evacuation configuration: ${totalFacilities} facilities, ${totalRoutes} routes, ${totalConfigurations} timing configurations`
             };
         } catch (e) {
             return { valid: false, message: `JSON syntax error: ${e.message}` };
