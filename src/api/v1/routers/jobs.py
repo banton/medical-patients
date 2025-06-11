@@ -113,6 +113,32 @@ async def delete_job(job_id: str, job_service: JobService = Depends(get_job_serv
         )
 
 
+@router.post(
+    "/{job_id}/cancel",
+    response_model=JobResponse,
+    summary="Cancel Job",
+    description="Cancel a running or pending job",
+    response_description="Job cancellation status",
+)
+async def cancel_job(job_id: str, job_service: JobService = Depends(get_job_service)) -> JobResponse:
+    """Cancel a running or pending job."""
+    try:
+        job = await job_service.cancel_job(job_id)
+        return _job_to_response(job)
+    except JobNotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
+    except Exception as e:
+        # Check if it's an InvalidOperationError (job already completed/cancelled)
+        error_msg = str(e)
+        if "Cannot cancel job" in error_msg and "with status" in error_msg:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
+
+        # For other unexpected errors
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to cancel job {job_id}: {error_msg}"
+        )
+
+
 def _job_to_response(job) -> JobResponse:
     """Convert domain job object to JobResponse model."""
     from src.api.v1.models.responses import JobProgressDetails

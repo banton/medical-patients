@@ -39,3 +39,7 @@ class GenerationError(PatientGeneratorException):
 
 class StorageError(PatientGeneratorException):
     """Raised when file storage operations fail."""
+
+
+class InvalidOperationError(PatientGeneratorException):
+    """Raised when an invalid operation is attempted."""

@@ -161,35 +161,35 @@ class TestUIAPIIntegration:
             "use_encryption": False,
         }
 
-        response = requests.post(f"{BASE_URL}/api/generate", headers=HEADERS, json=ui_config)
+        response = requests.post(f"{BASE_URL}/api/v1/generation/", headers=HEADERS, json=ui_config)
 
-        assert response.status_code == 200
+        assert response.status_code == 201
         result = response.json()
         assert "job_id" in result
         assert "message" in result
 
         # Clean up - cancel the job
         job_id = result["job_id"]
-        requests.post(f"{BASE_URL}/api/jobs/{job_id}/cancel", headers=HEADERS)
+        requests.post(f"{BASE_URL}/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
 
     def test_job_lifecycle(self):
         """Test complete job lifecycle from UI perspective."""
         # 1. Create a job
         config = self._get_test_config()
-        response = requests.post(f"{BASE_URL}/api/generate", headers=HEADERS, json=config)
-        assert response.status_code == 200
+        response = requests.post(f"{BASE_URL}/api/v1/generation/", headers=HEADERS, json=config)
+        assert response.status_code == 201
         job_id = response.json()["job_id"]
 
         try:
             # 2. Check job status
-            response = requests.get(f"{BASE_URL}/api/jobs/{job_id}", headers=HEADERS)
+            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=HEADERS)
             assert response.status_code == 200
             job_data = response.json()
             assert job_data["job_id"] == job_id
             assert job_data["status"] in ["pending", "running", "completed", "failed"]
 
             # 3. List jobs
-            response = requests.get(f"{BASE_URL}/api/jobs/", headers=HEADERS)
+            response = requests.get(f"{BASE_URL}/api/v1/jobs/", headers=HEADERS)
             assert response.status_code == 200
             jobs = response.json()
             assert any(job["job_id"] == job_id for job in jobs)
@@ -198,7 +198,7 @@ class TestUIAPIIntegration:
             time.sleep(2)
 
             # 5. Check progress update
-            response = requests.get(f"{BASE_URL}/api/jobs/{job_id}", headers=HEADERS)
+            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=HEADERS)
             assert response.status_code == 200
             job_data = response.json()
             assert "progress" in job_data
@@ -206,9 +206,9 @@ class TestUIAPIIntegration:
 
         finally:
             # 6. Cancel job (cleanup)
-            response = requests.post(f"{BASE_URL}/api/jobs/{job_id}/cancel", headers=HEADERS)
-            # Cancel might fail if job already completed, that's ok
-            assert response.status_code in [200, 404]
+            response = requests.post(f"{BASE_URL}/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
+            # Cancel might fail if job already completed/cancelled, that's ok
+            assert response.status_code in [200, 400, 404]
 
     def test_configuration_crud(self):
         """Test configuration CRUD operations from UI perspective."""
@@ -288,7 +288,8 @@ class TestUIAPIIntegration:
         error_detail = response.json()
         assert "detail" in error_detail
         # Check that it caught the negative total_patients
-        assert any("total_patients" in str(err) for err in error_detail["detail"])
+        # Our custom error handler returns detail as a string, not a list
+        assert "total_patients" in str(error_detail["detail"])
 
     def test_ui_nationality_mapping(self):
         """Test that UI nationality names map correctly to codes."""
@@ -316,12 +317,12 @@ class TestUIAPIIntegration:
                 config = self._get_test_config()
                 config["configuration"]["name"] = f"Concurrent Test {i + 1}"
 
-                response = requests.post(f"{BASE_URL}/api/generate", headers=HEADERS, json=config)
-                assert response.status_code == 200
+                response = requests.post(f"{BASE_URL}/api/v1/generation/", headers=HEADERS, json=config)
+                assert response.status_code == 201
                 job_ids.append(response.json()["job_id"])
 
             # Check all jobs are listed
-            response = requests.get(f"{BASE_URL}/api/jobs/", headers=HEADERS)
+            response = requests.get(f"{BASE_URL}/api/v1/jobs/", headers=HEADERS)
             assert response.status_code == 200
             jobs = response.json()
 
@@ -331,7 +332,7 @@ class TestUIAPIIntegration:
         finally:
             # Clean up all jobs
             for job_id in job_ids:
-                requests.post(f"{BASE_URL}/api/jobs/{job_id}/cancel", headers=HEADERS)
+                requests.post(f"{BASE_URL}/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
 
     # Helper methods
     def _get_test_config(self) -> Dict[str, Any]:

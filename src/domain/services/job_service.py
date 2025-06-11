@@ -99,6 +99,22 @@ class JobService:
         zip_buffer.seek(0)
         return zip_buffer
 
+    async def cancel_job(self, job_id: str) -> Job:
+        """Cancel a running or pending job."""
+        job = await self.repository.get(job_id)
+
+        # Only allow cancellation of pending or running jobs
+        if job.status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]:
+            from src.core.exceptions import InvalidOperationError
+            raise InvalidOperationError(f"Cannot cancel job {job_id} with status {job.status.value}")
+
+        job.status = JobStatus.CANCELLED
+        job.completed_at = datetime.utcnow()
+        job.error = "Job cancelled by user"
+
+        await self.repository.update(job)
+        return job
+
     async def cleanup_job_files(self, job_id: str) -> None:
         """Clean up job output files."""
         try:
