@@ -299,7 +299,9 @@ class AsyncPatientGenerationService:
                     elif format == "csv":
                         # CSV format - write header on first patient
                         if first_patient:
-                            stream.write("patient_id,name,age,gender,nationality,injury,triage,front,final_status,last_facility,total_timeline_events,injury_timestamp\n")
+                            stream.write(
+                                "patient_id,name,age,gender,nationality,injury,triage,front,final_status,last_facility,total_timeline_events,injury_timestamp\n"
+                            )
 
                         # Extract patient data from demographics and attributes
                         first_name = patient.demographics.get("first_name", "Unknown")
