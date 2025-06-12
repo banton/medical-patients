@@ -1,0 +1,371 @@
+{
+  "version": "1.0",
+  "description": "Warfare pattern definitions for patient generation algorithms",
+  
+  "warfare_types": {
+    "conventional": {
+      "display_name": "Conventional Warfare",
+      "weight_multiplier": 1.0,
+      "temporal_pattern": {
+        "type": "sustained_combat",
+        "peak_hours": [6, 7, 8, 9, 16, 17, 18, 19],
+        "peak_intensity": 2.5,
+        "base_intensity": 0.5,
+        "night_reduction": 0.3
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.3,
+        "cluster_size_range": [10, 30],
+        "individual_spacing_minutes": [5, 20]
+      },
+      "injury_modifier": {
+        "Battle Injury": 1.5,
+        "Disease": 0.8,
+        "Non-Battle Injury": 0.9
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.35, "T2": 0.45, "T3": 0.20},
+        "Non-Battle Injury": {"T1": 0.15, "T2": 0.35, "T3": 0.50},
+        "Disease": {"T1": 0.10, "T2": 0.30, "T3": 0.60}
+      }
+    },
+    
+    "artillery": {
+      "display_name": "Artillery/Indirect Fire",
+      "weight_multiplier": 1.2,
+      "temporal_pattern": {
+        "type": "surge",
+        "surges_per_day": 3,
+        "surge_duration_hours": 2,
+        "surge_intensity": 5.0,
+        "between_surge_intensity": 0.1,
+        "preferred_hours": [5, 6, 11, 12, 17, 18, 22, 23]
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.8,
+        "cluster_size_range": [15, 50],
+        "cluster_duration_minutes": [5, 15]
+      },
+      "injury_modifier": {
+        "Battle Injury": 2.5,
+        "Disease": 0.3,
+        "Non-Battle Injury": 0.6
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.50, "T2": 0.35, "T3": 0.15},
+        "Non-Battle Injury": {"T1": 0.25, "T2": 0.45, "T3": 0.30},
+        "Disease": {"T1": 0.10, "T2": 0.40, "T3": 0.50}
+      }
+    },
+    
+    "urban": {
+      "display_name": "Urban Warfare",
+      "weight_multiplier": 1.1,
+      "temporal_pattern": {
+        "type": "phased_assault",
+        "assault_phases": [
+          {"start_hour": 6, "duration": 4, "intensity": 3.0},
+          {"start_hour": 14, "duration": 3, "intensity": 2.5}
+        ],
+        "baseline_intensity": 0.8
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.4,
+        "cluster_size_range": [5, 20],
+        "building_collapse_probability": 0.1,
+        "building_collapse_size": [20, 60]
+      },
+      "injury_modifier": {
+        "Battle Injury": 1.3,
+        "Disease": 1.2,
+        "Non-Battle Injury": 1.4
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.40, "T2": 0.40, "T3": 0.20},
+        "Non-Battle Injury": {"T1": 0.30, "T2": 0.40, "T3": 0.30},
+        "Disease": {"T1": 0.15, "T2": 0.35, "T3": 0.50}
+      }
+    },
+    
+    "guerrilla": {
+      "display_name": "Guerrilla/Insurgency",
+      "weight_multiplier": 0.8,
+      "temporal_pattern": {
+        "type": "sporadic",
+        "events_per_day_range": [3, 7],
+        "event_spacing_hours": [1, 4],
+        "dawn_dusk_preference": 1.4,
+        "night_activity_level": 0.7
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.15,
+        "cluster_size_range": [2, 8],
+        "ied_probability": 0.4,
+        "ied_size_range": [3, 15]
+      },
+      "injury_modifier": {
+        "Battle Injury": 1.0,
+        "Disease": 1.5,
+        "Non-Battle Injury": 1.3
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.25, "T2": 0.50, "T3": 0.25},
+        "Non-Battle Injury": {"T1": 0.10, "T2": 0.40, "T3": 0.50},
+        "Disease": {"T1": 0.05, "T2": 0.35, "T3": 0.60}
+      }
+    },
+    
+    "drone": {
+      "display_name": "Drone/Remote Warfare",
+      "weight_multiplier": 0.6,
+      "temporal_pattern": {
+        "type": "precision_strike",
+        "strikes_per_day_range": [1, 4],
+        "strike_window_preference": "daylight",
+        "time_randomization": 0.8,
+        "loiter_strike_probability": 0.3
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.1,
+        "cluster_size_range": [1, 5],
+        "precision_single_target": 0.7,
+        "collateral_range": [0, 3]
+      },
+      "injury_modifier": {
+        "Battle Injury": 2.0,
+        "Disease": 0.2,
+        "Non-Battle Injury": 0.5
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.60, "T2": 0.30, "T3": 0.10},
+        "Non-Battle Injury": {"T1": 0.20, "T2": 0.50, "T3": 0.30},
+        "Disease": {"T1": 0.05, "T2": 0.35, "T3": 0.60}
+      }
+    },
+    
+    "naval": {
+      "display_name": "Naval/Amphibious Warfare",
+      "weight_multiplier": 0.9,
+      "temporal_pattern": {
+        "type": "wave_assault",
+        "wave_times": [4, 5, 6, 10, 11, 16, 17],
+        "wave_intensity": 3.0,
+        "between_wave_intensity": 0.3
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.4,
+        "cluster_size_range": [10, 25],
+        "drowning_probability": 0.2
+      },
+      "injury_modifier": {
+        "Battle Injury": 1.4,
+        "Disease": 0.7,
+        "Non-Battle Injury": 1.1
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.40, "T2": 0.40, "T3": 0.20},
+        "Non-Battle Injury": {"T1": 0.25, "T2": 0.40, "T3": 0.35},
+        "Disease": {"T1": 0.10, "T2": 0.35, "T3": 0.55}
+      }
+    },
+    
+    "cbrn": {
+      "display_name": "Chemical/Biological/Radiological/Nuclear",
+      "weight_multiplier": 2.0,
+      "temporal_pattern": {
+        "type": "contamination_spread",
+        "initial_exposure_hours": [0, 1, 2],
+        "delayed_symptom_hours": [6, 12, 24, 48],
+        "spread_rate": 1.5
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.95,
+        "cluster_size_range": [50, 200],
+        "delayed_onset_probability": 0.7
+      },
+      "injury_modifier": {
+        "Battle Injury": 0.1,
+        "Disease": 5.0,
+        "Non-Battle Injury": 0.3
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.80, "T2": 0.15, "T3": 0.05},
+        "Non-Battle Injury": {"T1": 0.40, "T2": 0.40, "T3": 0.20},
+        "Disease": {"T1": 0.70, "T2": 0.25, "T3": 0.05}
+      }
+    },
+    
+    "peacekeeping": {
+      "display_name": "Peacekeeping/Stabilization",
+      "weight_multiplier": 0.4,
+      "temporal_pattern": {
+        "type": "low_intensity",
+        "incident_hours": [8, 9, 10, 11, 14, 15, 16, 17],
+        "incident_probability": 0.3,
+        "crowd_control_hours": [10, 11, 14, 15]
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.05,
+        "cluster_size_range": [1, 5],
+        "civilian_casualty_probability": 0.4
+      },
+      "injury_modifier": {
+        "Battle Injury": 0.3,
+        "Disease": 2.0,
+        "Non-Battle Injury": 1.8
+      },
+      "triage_weights": {
+        "Battle Injury": {"T1": 0.10, "T2": 0.40, "T3": 0.50},
+        "Non-Battle Injury": {"T1": 0.05, "T2": 0.30, "T3": 0.65},
+        "Disease": {"T1": 0.05, "T2": 0.25, "T3": 0.70}
+      }
+    }
+  },
+  
+  "intensity_levels": {
+    "low": {
+      "patient_multiplier": 0.5,
+      "event_frequency": 0.6,
+      "mass_casualty_reduction": 0.5
+    },
+    "medium": {
+      "patient_multiplier": 1.0,
+      "event_frequency": 1.0,
+      "mass_casualty_reduction": 1.0
+    },
+    "high": {
+      "patient_multiplier": 1.5,
+      "event_frequency": 1.3,
+      "mass_casualty_reduction": 1.2
+    },
+    "extreme": {
+      "patient_multiplier": 2.0,
+      "event_frequency": 1.6,
+      "mass_casualty_reduction": 1.5
+    }
+  },
+  
+  "tempo_patterns": {
+    "sustained": {
+      "daily_intensity": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+      "description": "Consistent operational tempo throughout"
+    },
+    "escalating": {
+      "daily_intensity": [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8],
+      "description": "Gradually increasing combat intensity"
+    },
+    "surge": {
+      "daily_intensity": [0.5, 1.5, 2.0, 1.5, 0.5, 0.8, 1.2, 0.6],
+      "description": "Major offensive with peak and decline"
+    },
+    "declining": {
+      "daily_intensity": [1.8, 1.6, 1.4, 1.2, 1.0, 0.8, 0.6, 0.4],
+      "description": "Winding down operations"
+    },
+    "intermittent": {
+      "daily_intensity": [1.0, 0.3, 1.5, 0.4, 1.2, 0.2, 1.0, 0.5],
+      "description": "Alternating high and low activity"
+    }
+  },
+  
+  "special_event_templates": {
+    "major_offensive": {
+      "duration_hours": 4,
+      "casualty_multiplier": 3.0,
+      "mass_casualty_probability": 0.8,
+      "preferred_start_hours": [5, 6, 7],
+      "injury_severity_increase": 1.3
+    },
+    "ambush": {
+      "duration_hours": 1,
+      "casualty_multiplier": 2.0,
+      "mass_casualty_probability": 0.5,
+      "preferred_start_hours": [6, 7, 17, 18, 19],
+      "injury_severity_increase": 1.2
+    },
+    "mass_casualty": {
+      "duration_hours": 0.5,
+      "casualty_multiplier": 5.0,
+      "mass_casualty_probability": 1.0,
+      "size_range": [30, 100],
+      "injury_severity_increase": 1.5
+    }
+  },
+  
+  "environmental_modifiers": {
+    "rain": {
+      "visibility": 0.8,
+      "mobility": 0.9,
+      "casualty_modifier": 0.95,
+      "evacuation_delay_minutes": 15,
+      "disease_multiplier": 1.2
+    },
+    "fog": {
+      "visibility": 0.5,
+      "mobility": 0.8,
+      "casualty_modifier": 0.7,
+      "evacuation_delay_minutes": 30,
+      "disease_multiplier": 1.0
+    },
+    "storm": {
+      "visibility": 0.3,
+      "mobility": 0.5,
+      "casualty_modifier": 0.5,
+      "evacuation_delay_minutes": 90,
+      "disease_multiplier": 1.1
+    },
+    "extreme_heat": {
+      "visibility": 1.0,
+      "mobility": 0.7,
+      "casualty_modifier": 1.1,
+      "evacuation_delay_minutes": 0,
+      "disease_multiplier": 1.4,
+      "heat_casualty_probability": 0.15
+    },
+    "extreme_cold": {
+      "visibility": 0.9,
+      "mobility": 0.8,
+      "casualty_modifier": 1.05,
+      "evacuation_delay_minutes": 10,
+      "disease_multiplier": 1.3,
+      "cold_injury_probability": 0.1
+    },
+    "dust_storm": {
+      "visibility": 0.4,
+      "mobility": 0.6,
+      "casualty_modifier": 0.8,
+      "evacuation_delay_minutes": 45,
+      "disease_multiplier": 1.2
+    },
+    "night_operations": {
+      "visibility": 0.6,
+      "mobility": 0.8,
+      "casualty_modifier": 0.9,
+      "evacuation_delay_minutes": 20,
+      "disease_multiplier": 1.0
+    },
+    "mountainous_terrain": {
+      "visibility": 0.9,
+      "mobility": 0.6,
+      "casualty_modifier": 1.2,
+      "evacuation_delay_minutes": 60,
+      "disease_multiplier": 1.1,
+      "fall_injury_probability": 0.2
+    },
+    "urban_debris": {
+      "visibility": 0.8,
+      "mobility": 0.7,
+      "casualty_modifier": 1.15,
+      "evacuation_delay_minutes": 40,
+      "disease_multiplier": 1.3,
+      "crush_injury_probability": 0.1
+    }
+  },
+  
+  "hourly_activity_baseline": [
+    0.3, 0.2, 0.2, 0.3, 0.5, 0.8,
+    1.2, 1.5, 1.3, 1.0, 0.9, 1.0,
+    1.1, 1.0, 0.9, 1.0, 1.3, 1.5,
+    1.2, 0.8, 0.6, 0.5, 0.4, 0.3
+  ]
+}

@@ -9,6 +9,11 @@ export function getPatientLocationAtTime(patient: Patient, currentTime: Date): P
   const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
   const currentHours = (currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
 
+  // Check if injury has happened yet - if not, patient doesn't exist yet
+  if (currentHours < 0) {
+    return { facility: 'POI', status: 'hidden' };
+  }
+
   // Sort timeline events by hours_since_injury
   const sortedEvents = [...patient.movement_timeline].sort((a, b) => a.hours_since_injury - b.hours_since_injury);
 
@@ -26,7 +31,7 @@ export function getPatientLocationAtTime(patient: Patient, currentTime: Date): P
     }
   }
 
-  // If no events have occurred yet, patient is at POI
+  // If no events have occurred yet (but injury has happened), patient is at POI
   if (!activeEvent) {
     return { facility: 'POI', status: 'active' };
   }
@@ -139,7 +144,7 @@ export function getTimelineExtent(patients: Patient[]): { start: Date; end: Date
     };
   }
 
-  let earliestTime = new Date();
+  let earliestTime = new Date('2099-12-31T23:59:59Z'); // Start with far future date
   let latestTime = new Date(0);
 
   patients.forEach(patient => {
@@ -177,4 +182,15 @@ export function formatTimeDisplay(date: Date): string {
 
 export function calculateHoursSinceInjury(currentTime: Date, injuryTime: Date): number {
   return (currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
+}
+
+export function formatElapsedTime(totalHours: number): string {
+  const days = Math.floor(totalHours / 24);
+  const hours = Math.floor(totalHours % 24);
+  
+  if (days === 0) {
+    return `${totalHours.toFixed(1)} hours elapsed`;
+  } else {
+    return `${totalHours.toFixed(1)} hours elapsed (${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''})`;
+  }
 }

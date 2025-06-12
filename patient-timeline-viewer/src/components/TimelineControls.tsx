@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { PlaybackState } from '../types/patient.types';
-import { formatTimeDisplay, calculateHoursSinceInjury } from '../utils/timelineEngine';
+import { formatTimeDisplay, calculateHoursSinceInjury, formatElapsedTime } from '../utils/timelineEngine';
 
 interface TimelineControlsProps {
   playbackState: PlaybackState;
@@ -9,6 +9,7 @@ interface TimelineControlsProps {
   onSpeedChange: (speed: number) => void;
   onReset: () => void;
   onTimeSeek?: (time: Date) => void;
+  onLoopToggle?: () => void;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
   onSpeedChange,
   onReset,
   onTimeSeek,
+  onLoopToggle,
   className = ''
 }) => {
   const { isPlaying, currentTime, speed, startTime, endTime } = playbackState;
@@ -61,7 +63,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
           <div className="flex justify-between items-center text-sm text-gray-600">
             <span>{formatTimeDisplay(currentTime)}</span>
             <span className="font-medium">
-              {hoursSinceStart.toFixed(1)} hours elapsed
+              {formatElapsedTime(hoursSinceStart)}
             </span>
             <span>{formatTimeDisplay(endTime)}</span>
           </div>
@@ -108,7 +110,7 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
               </svg>
             ) : (
-              <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
               </svg>
             )}
@@ -126,6 +128,27 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
             </svg>
             <span className="font-medium">Reset</span>
           </motion.button>
+
+          {/* Loop button */}
+          {onLoopToggle && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onLoopToggle}
+              className={`
+                flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors duration-200
+                ${playbackState.isLooping 
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }
+              `}
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+              </svg>
+              <span className="font-medium">Loop</span>
+            </motion.button>
+          )}
 
           {/* Speed control */}
           <div className="flex items-center space-x-2">

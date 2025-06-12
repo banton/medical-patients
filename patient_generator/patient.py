@@ -28,6 +28,12 @@ class Patient:
         self.movement_timeline: List[Dict[str, Any]] = []  # Detailed movement timeline
         self.injury_timestamp: Optional[datetime.datetime] = None  # When injury occurred
 
+        # Temporal generation fields
+        self.warfare_scenario: Optional[str] = None  # Type of warfare that caused injury
+        self.casualty_event_id: Optional[str] = None  # Unique event identifier
+        self.is_mass_casualty: bool = False  # Part of mass casualty event
+        self.environmental_conditions: List[str] = []  # Active environmental factors
+
     def add_treatment(
         self,
         facility: str,
@@ -285,6 +291,11 @@ class Patient:
             "injury_timestamp": injury_timestamp_str,
             # Timeline summary for quick access
             "timeline_summary": self.get_timeline_summary(),
+            # Temporal generation fields
+            "warfare_scenario": self.warfare_scenario,
+            "casualty_event_id": self.casualty_event_id,
+            "is_mass_casualty": self.is_mass_casualty,
+            "environmental_conditions": self.environmental_conditions,
         }
 
     def to_json(self) -> str:
@@ -325,6 +336,12 @@ class Patient:
         injury_timestamp_str = data.get("injury_timestamp")
         if injury_timestamp_str:
             patient.injury_timestamp = datetime.datetime.fromisoformat(injury_timestamp_str)
+
+        # Temporal generation fields
+        patient.warfare_scenario = data.get("warfare_scenario")
+        patient.casualty_event_id = data.get("casualty_event_id")
+        patient.is_mass_casualty = data.get("is_mass_casualty", False)
+        patient.environmental_conditions = data.get("environmental_conditions", [])
 
         return patient
 

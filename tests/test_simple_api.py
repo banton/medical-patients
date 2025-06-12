@@ -30,12 +30,12 @@ def load_json_config():
     config = {
         "name": "Test Configuration from JSON",
         "description": "Configuration built from JSON files",
-        "total_patients": injuries_data["patients"],
-        "injury_distribution": {
-            "Disease": injuries_data["Disease"],
-            "Non-Battle Injury": injuries_data["Non-Battle Injury"],
-            "Battle Injury": injuries_data["Battle Injury"],
-        },
+        "total_patients": injuries_data.get("total_patients", injuries_data.get("patients", 1440)),
+        "injury_distribution": injuries_data.get("injury_mix", {
+            "Disease": injuries_data.get("Disease", 0.52),
+            "Non-Battle Injury": injuries_data.get("Non-Battle Injury", 0.33),
+            "Battle Injury": injuries_data.get("Battle Injury", 0.15),
+        }),
         "front_configs": [],
         "facility_configs": [],
     }
@@ -54,7 +54,7 @@ def load_json_config():
         facility_config = {
             "id": f"role2_{front['name'].lower()}",
             "name": f"Role 2 {front['name']}",
-            "capacity": int(injuries_data["patients"] * front["ratio"]),
+            "capacity": int(injuries_data.get("total_patients", injuries_data.get("patients", 1440)) * front["ratio"]),
             "role": "Role 2",
             "nationality": front["nations"][0]["nationality_code"],  # Use primary nationality
             "front_id": front_config["id"],

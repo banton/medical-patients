@@ -40,14 +40,21 @@ class PatientGeneratorApp {
             'Rolling dice for combat injuries...',
             'Consulting field medics for realistic injuries...',
             'Distributing casualties across battle fronts...',
+            'Generating temporal warfare patterns...',
+            'Simulating artillery bombardment timing...',
+            'Calculating environmental impact on casualties...',
+            'Processing mass casualty event clusters...',
             'Assigning triage categories...',
             'Creating believable medical histories...',
-            'Randomizing arrival patterns...',
+            'Randomizing arrival patterns with temporal data...',
             'Double-checking NATO personnel IDs...',
             'Simulating evacuation priorities...',
             'Adding battlefield dust for authenticity...',
+            'Modeling dawn/dusk operational patterns...',
             'Generating convincing vital signs...',
-            'Cross-referencing injury patterns...'
+            'Cross-referencing warfare-specific injury patterns...',
+            'Applying night operations modifiers...',
+            'Synchronizing timeline viewer compatibility...'
         ];
 
         this.currentMessageIndex = 0;
@@ -284,20 +291,40 @@ class PatientGeneratorApp {
     }
 
     buildConfiguration() {
-        const [frontsJson, injuriesJson] = this.accordion.getAllContent();
+        const [frontsJson, temporalJson] = this.accordion.getAllContent();
 
         const fronts = JSON.parse(frontsJson);
-        const injuries = JSON.parse(injuriesJson);
+        const temporal = JSON.parse(temporalJson);
 
-        return {
-            name: `Patient Generation ${new Date().toLocaleString()}`,
-            description: 'Generated from web interface',
-            total_patients: injuries.total_patients || 1440,
-            injury_distribution: injuries.injury_distribution,
-            front_configs: fronts.front_configs,
-            facility_configs: this.generateFacilityConfigs(fronts.front_configs)
-            // Demographics are loaded automatically from the backend's demographics.json
-        };
+        // Check if temporal format is being used
+        if (temporal.warfare_types || temporal.environmental_conditions || temporal.special_events) {
+            // New temporal configuration format
+            return {
+                name: `Temporal Generation ${new Date().toLocaleString()}`,
+                description: 'Generated from web interface with temporal patterns',
+                total_patients: temporal.total_patients || 1440,
+                days_of_fighting: temporal.days_of_fighting || 8,
+                base_date: temporal.base_date || '2025-06-01',
+                warfare_types: temporal.warfare_types || {},
+                intensity: temporal.intensity || 'medium',
+                tempo: temporal.tempo || 'sustained',
+                special_events: temporal.special_events || {},
+                environmental_conditions: temporal.environmental_conditions || {},
+                injury_mix: temporal.injury_mix || temporal.injury_distribution,
+                front_configs: fronts.front_configs,
+                facility_configs: this.generateFacilityConfigs(fronts.front_configs)
+            };
+        } else {
+            // Legacy configuration format (backward compatibility)
+            return {
+                name: `Patient Generation ${new Date().toLocaleString()}`,
+                description: 'Generated from web interface',
+                total_patients: temporal.total_patients || 1440,
+                injury_distribution: temporal.injury_distribution,
+                front_configs: fronts.front_configs,
+                facility_configs: this.generateFacilityConfigs(fronts.front_configs)
+            };
+        }
     }
 
     generateFacilityConfigs(frontConfigs) {
@@ -328,6 +355,33 @@ class PatientGeneratorApp {
             for (const natDist of front.nationality_distribution) {
                 if (!this.validNationalityCodes.has(natDist.nationality_code)) {
                     console.warn(`Unknown nationality code: ${natDist.nationality_code}`);
+                }
+            }
+        }
+
+        // Temporal configuration validation
+        if (config.warfare_types) {
+            // Validate temporal-specific fields
+            if (config.days_of_fighting && config.days_of_fighting < 1) {
+                throw new Error('Days of fighting must be at least 1');
+            }
+
+            if (config.intensity && !['low', 'medium', 'high', 'extreme'].includes(config.intensity)) {
+                throw new Error('Intensity must be one of: low, medium, high, extreme');
+            }
+
+            if (
+                config.tempo &&
+                !['sustained', 'escalating', 'surge', 'declining', 'intermittent'].includes(config.tempo)
+            ) {
+                throw new Error('Tempo must be one of: sustained, escalating, surge, declining, intermittent');
+            }
+
+            // Validate injury mix percentages sum to 1.0
+            if (config.injury_mix) {
+                const sum = Object.values(config.injury_mix).reduce((acc, val) => acc + val, 0);
+                if (Math.abs(sum - 1.0) > 0.01) {
+                    throw new Error('Injury mix percentages must sum to 1.0');
                 }
             }
         }
@@ -705,6 +759,17 @@ class PatientGeneratorApp {
             totalPatients: configuration.total_patients,
             frontCount: configuration.front_configs?.length || 0,
             nationalities: this.extractNationalities(configuration.front_configs || []),
+            isTemporal: !!(
+                configuration.warfare_types ||
+                configuration.environmental_conditions ||
+                configuration.special_events
+            ),
+            warfareTypes: configuration.warfare_types
+                ? Object.keys(configuration.warfare_types).filter((k) => configuration.warfare_types[k])
+                : [],
+            intensity: configuration.intensity,
+            tempo: configuration.tempo,
+            daysOfFighting: configuration.days_of_fighting,
             configuration: configuration
         };
 
@@ -735,6 +800,13 @@ class PatientGeneratorApp {
         const signature = {
             total_patients: configuration.total_patients,
             injury_distribution: configuration.injury_distribution,
+            injury_mix: configuration.injury_mix,
+            warfare_types: configuration.warfare_types,
+            intensity: configuration.intensity,
+            tempo: configuration.tempo,
+            special_events: configuration.special_events,
+            environmental_conditions: configuration.environmental_conditions,
+            days_of_fighting: configuration.days_of_fighting,
             front_configs: configuration.front_configs
                 ?.map((front) => ({
                     id: front.id,
@@ -773,7 +845,7 @@ class PatientGeneratorApp {
         try {
             const config = historyItem.configuration;
 
-            // Extract front configs and injury distribution
+            // Extract front configs and temporal/injury configuration
             const frontsJson = JSON.stringify(
                 {
                     front_configs: config.front_configs
@@ -782,18 +854,40 @@ class PatientGeneratorApp {
                 2
             );
 
-            const injuriesJson = JSON.stringify(
-                {
-                    injury_distribution: config.injury_distribution,
-                    total_patients: config.total_patients
-                },
-                null,
-                2
-            );
+            // Check if this is temporal or legacy configuration
+            let configJson;
+            if (config.warfare_types || config.environmental_conditions || config.special_events) {
+                // Temporal configuration format
+                configJson = JSON.stringify(
+                    {
+                        total_patients: config.total_patients,
+                        days_of_fighting: config.days_of_fighting,
+                        base_date: config.base_date,
+                        warfare_types: config.warfare_types,
+                        intensity: config.intensity,
+                        tempo: config.tempo,
+                        special_events: config.special_events,
+                        environmental_conditions: config.environmental_conditions,
+                        injury_mix: config.injury_mix
+                    },
+                    null,
+                    2
+                );
+            } else {
+                // Legacy configuration format
+                configJson = JSON.stringify(
+                    {
+                        injury_distribution: config.injury_distribution,
+                        total_patients: config.total_patients
+                    },
+                    null,
+                    2
+                );
+            }
 
             // Set accordion content
             this.accordion.setContent(0, frontsJson); // Battle Fronts
-            this.accordion.setContent(1, injuriesJson); // Injuries
+            this.accordion.setContent(1, configJson); // Temporal/Injury Configuration
 
             // Trigger validation
             setTimeout(() => {
@@ -829,14 +923,27 @@ class PatientGeneratorApp {
                     item.nationalities.slice(0, 3).join(', ') +
                     (item.nationalities.length > 3 ? ` +${item.nationalities.length - 3}` : '');
 
+                // Create temporal or legacy indicator
+                const typeIndicator = item.isTemporal
+                    ? `<span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium mr-2">Temporal</span>`
+                    : `<span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium mr-2">Legacy</span>`;
+
+                // Create warfare types display for temporal configs
+                const warfareDisplay =
+                    item.isTemporal && item.warfareTypes.length > 0
+                        ? item.warfareTypes.slice(0, 2).join(', ') +
+                          (item.warfareTypes.length > 2 ? ` +${item.warfareTypes.length - 2}` : '')
+                        : '';
+
                 return `
                 <div class="config-history-item">
                     <div class="config-history-header">
                         <div class="config-history-title">
-                            <i class="fas fa-cog text-cyan-600 mr-2"></i>
+                            <i class="fas fa-${item.isTemporal ? 'clock' : 'cog'} text-cyan-600 mr-2"></i>
                             <span class="font-medium text-slate-800">${this.escapeHtml(item.name)}</span>
                         </div>
                         <div class="config-history-time">
+                            ${typeIndicator}
                             <i class="fas fa-clock text-slate-400 mr-1"></i>
                             <span class="text-xs text-slate-500">${timeAgo}</span>
                         </div>
@@ -854,6 +961,20 @@ class PatientGeneratorApp {
                             <i class="fas fa-users text-slate-500"></i>
                             <span>${item.totalPatients?.toLocaleString() || 'Unknown'} patients</span>
                         </div>
+                        ${
+                            item.isTemporal
+                                ? `
+                        <div class="stat">
+                            <i class="fas fa-crosshairs text-slate-500"></i>
+                            <span title="${item.warfareTypes.join(', ')}">${warfareDisplay || 'No warfare'}</span>
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-calendar text-slate-500"></i>
+                            <span>${item.daysOfFighting || 1}d ${item.intensity || 'med'}</span>
+                        </div>
+                        `
+                                : ''
+                        }
                     </div>
                     <button 
                         onclick="app.loadConfiguration('${item.id}')" 

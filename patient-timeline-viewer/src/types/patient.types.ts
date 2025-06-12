@@ -39,7 +39,12 @@ export interface Patient {
   medical_data?: any;
   treatment_history?: any;
   front?: string;
-  primary_condition?: any;
+  primary_condition?: {
+    code: string;
+    display: string;
+    severity?: string;
+    severity_code?: string;
+  };
   primary_conditions?: any;
   additional_conditions?: any;
   timeline_summary?: any;
@@ -59,6 +64,7 @@ export interface PlaybackState {
   speed: number;
   startTime: Date;
   endTime: Date;
+  isLooping?: boolean;
 }
 
 export interface PatientsByFacility {

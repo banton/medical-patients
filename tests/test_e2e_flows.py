@@ -151,14 +151,11 @@ class TestE2EPatientGeneration:
                         assert isinstance(data, list), "Expected list of patient data"
                         assert len(data) > 0, "Expected at least one patient"
 
-                        # Check first patient structure
+                        # Check first patient structure (FHIR removed, flat structure now)
                         first_patient = data[0]
-                        assert "patient" in first_patient, "Expected patient data"
-                        assert "fhir_bundle" in first_patient, "Expected FHIR bundle"
-
-                        patient_data = first_patient["patient"]
-                        assert "id" in patient_data, "Expected patient ID"
-                        assert "demographics" in patient_data, "Expected demographics"
+                        assert "id" in first_patient, "Expected patient ID"
+                        assert "demographics" in first_patient, "Expected demographics"
+                        assert "movement_timeline" in first_patient, "Expected movement timeline for timeline viewer compatibility"
         finally:
             os.unlink(tmp_path)
 
