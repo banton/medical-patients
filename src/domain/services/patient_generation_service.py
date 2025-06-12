@@ -26,7 +26,8 @@ else:
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import Database
 from patient_generator.demographics import DemographicsGenerator
-from patient_generator.fhir_generator import FHIRBundleGenerator
+# FHIR generator disabled
+# from patient_generator.fhir_generator import FHIRBundleGenerator
 from patient_generator.flow_simulator import PatientFlowSimulator
 from patient_generator.formatter import OutputFormatter
 from patient_generator.medical import MedicalConditionGenerator
@@ -60,13 +61,13 @@ class PatientGenerationPipeline:
         flow_simulator: PatientFlowSimulator,
         demographics_generator: DemographicsGenerator,
         medical_generator: MedicalConditionGenerator,
-        fhir_generator: FHIRBundleGenerator,
+        # fhir_generator: FHIRBundleGenerator,  # DISABLED
         output_formatter: OutputFormatter,
     ):
         self.flow_simulator = flow_simulator
         self.demographics_generator = demographics_generator
         self.medical_generator = medical_generator
-        self.fhir_generator = fhir_generator
+        # self.fhir_generator = fhir_generator  # DISABLED
         self.output_formatter = output_formatter
 
     async def generate(
@@ -86,16 +87,16 @@ class PatientGenerationPipeline:
             # Stage 3: Add medical conditions
             patient = await self._add_medical_conditions(patient, context)
 
-            # Stage 4: Generate FHIR bundle
-            bundle = await self._create_fhir_bundle(patient)
+            # Stage 4: Generate FHIR bundle - DISABLED
+            # bundle = await self._create_fhir_bundle(patient)
 
-            # Yield for streaming processing
-            yield patient, bundle
+            # Yield for streaming processing - just patient data now
+            yield patient
 
             patient_count += 1
             if progress_callback:
-                # Calculate progress percentage
-                progress = patient_count / context.config.total_patients
+                # Calculate progress percentage, capped at 100%
+                progress = min(patient_count / context.config.total_patients, 1.0)
                 phase_description = f"Generated {patient_count} of {context.config.total_patients} patients"
 
                 await progress_callback(
@@ -114,20 +115,34 @@ class PatientGenerationPipeline:
         # For now, we'll use the existing synchronous initialization
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
-        """Generate base patients in batches."""
-        batch_size = min(100, context.config.total_patients)
-        total = context.config.total_patients
-
-        for start in range(0, total, batch_size):
-            end = min(start + batch_size, total)
-
-            # Generate batch asynchronously
-            tasks = [self._create_patient_async(i, context) for i in range(start, end)]
-
-            patients = await asyncio.gather(*tasks)
-
+        """Generate base patients - check for temporal vs legacy generation."""
+        
+        # Check if temporal configuration exists by calling the flow simulator's decision logic
+        try:
+            # Use the flow simulator's generate_casualty_flow method which handles temporal vs legacy decision
+            patients = await to_thread(self.flow_simulator.generate_casualty_flow)
+            
+            # Yield patients one by one for streaming
             for patient in patients:
                 yield patient
+                
+        except Exception as e:
+            print(f"Error in bulk generation, falling back to individual patient creation: {e}")
+            
+            # Fallback to individual patient creation if bulk generation fails
+            batch_size = min(100, context.config.total_patients)
+            total = context.config.total_patients
+
+            for start in range(0, total, batch_size):
+                end = min(start + batch_size, total)
+
+                # Generate batch asynchronously
+                tasks = [self._create_patient_async(i, context) for i in range(start, end)]
+
+                patients = await asyncio.gather(*tasks)
+
+                for patient in patients:
+                    yield patient
 
     async def _create_patient_async(self, patient_id: int, context: GenerationContext) -> Patient:
         """Create a single patient asynchronously with complete flow simulation."""
@@ -195,9 +210,10 @@ class PatientGenerationPipeline:
 
         return patient
 
-    async def _create_fhir_bundle(self, patient: Patient) -> Dict[str, Any]:
-        """Create FHIR bundle asynchronously."""
-        return await to_thread(self.fhir_generator.create_patient_bundle, patient)
+    # FHIR bundle creation disabled
+    # async def _create_fhir_bundle(self, patient: Patient) -> Dict[str, Any]:
+    #     """Create FHIR bundle asynchronously."""
+    #     return await to_thread(self.fhir_generator.create_patient_bundle, patient)
 
 
 class AsyncPatientGenerationService:
@@ -222,7 +238,7 @@ class AsyncPatientGenerationService:
             flow_simulator=PatientFlowSimulator(self.config_manager),
             demographics_generator=self.cached_demographics.get_demographics_generator(),
             medical_generator=self.cached_medical._get_condition_generator(),
-            fhir_generator=FHIRBundleGenerator(),
+            # fhir_generator=FHIRBundleGenerator(),  # DISABLED
             output_formatter=OutputFormatter(),
         )
 
@@ -275,7 +291,7 @@ class AsyncPatientGenerationService:
             patient_count = 0
 
             # Stream patients and write to files
-            async for patient, bundle in self.pipeline.generate(context, progress_callback):
+            async for patient in self.pipeline.generate(context, progress_callback):
                 patient_count += 1
 
                 # Write to each format
@@ -287,8 +303,8 @@ class AsyncPatientGenerationService:
                         if not first_patient:
                             stream.write(",\n")
 
-                        # Create combined data structure with JSON-serializable patient data
-                        patient_data = {"patient": patient.to_dict(), "fhir_bundle": bundle}
+                        # Create patient data structure (no FHIR bundle wrapping)
+                        patient_data = patient.to_dict()
 
                         import json
 
