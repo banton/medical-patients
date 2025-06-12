@@ -304,10 +304,10 @@ class PatientGeneratorApp {
                 description: 'Generated from web interface with temporal patterns',
                 total_patients: temporal.total_patients || 1440,
                 days_of_fighting: temporal.days_of_fighting || 8,
-                base_date: temporal.base_date || "2025-06-01",
+                base_date: temporal.base_date || '2025-06-01',
                 warfare_types: temporal.warfare_types || {},
-                intensity: temporal.intensity || "medium",
-                tempo: temporal.tempo || "sustained",
+                intensity: temporal.intensity || 'medium',
+                tempo: temporal.tempo || 'sustained',
                 special_events: temporal.special_events || {},
                 environmental_conditions: temporal.environmental_conditions || {},
                 injury_mix: temporal.injury_mix || temporal.injury_distribution,
@@ -365,15 +365,18 @@ class PatientGeneratorApp {
             if (config.days_of_fighting && config.days_of_fighting < 1) {
                 throw new Error('Days of fighting must be at least 1');
             }
-            
+
             if (config.intensity && !['low', 'medium', 'high', 'extreme'].includes(config.intensity)) {
                 throw new Error('Intensity must be one of: low, medium, high, extreme');
             }
-            
-            if (config.tempo && !['sustained', 'escalating', 'surge', 'declining', 'intermittent'].includes(config.tempo)) {
+
+            if (
+                config.tempo &&
+                !['sustained', 'escalating', 'surge', 'declining', 'intermittent'].includes(config.tempo)
+            ) {
                 throw new Error('Tempo must be one of: sustained, escalating, surge, declining, intermittent');
             }
-            
+
             // Validate injury mix percentages sum to 1.0
             if (config.injury_mix) {
                 const sum = Object.values(config.injury_mix).reduce((acc, val) => acc + val, 0);
@@ -756,8 +759,14 @@ class PatientGeneratorApp {
             totalPatients: configuration.total_patients,
             frontCount: configuration.front_configs?.length || 0,
             nationalities: this.extractNationalities(configuration.front_configs || []),
-            isTemporal: !!(configuration.warfare_types || configuration.environmental_conditions || configuration.special_events),
-            warfareTypes: configuration.warfare_types ? Object.keys(configuration.warfare_types).filter(k => configuration.warfare_types[k]) : [],
+            isTemporal: !!(
+                configuration.warfare_types ||
+                configuration.environmental_conditions ||
+                configuration.special_events
+            ),
+            warfareTypes: configuration.warfare_types
+                ? Object.keys(configuration.warfare_types).filter((k) => configuration.warfare_types[k])
+                : [],
             intensity: configuration.intensity,
             tempo: configuration.tempo,
             daysOfFighting: configuration.days_of_fighting,
@@ -915,14 +924,16 @@ class PatientGeneratorApp {
                     (item.nationalities.length > 3 ? ` +${item.nationalities.length - 3}` : '');
 
                 // Create temporal or legacy indicator
-                const typeIndicator = item.isTemporal 
+                const typeIndicator = item.isTemporal
                     ? `<span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium mr-2">Temporal</span>`
                     : `<span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium mr-2">Legacy</span>`;
 
                 // Create warfare types display for temporal configs
-                const warfareDisplay = item.isTemporal && item.warfareTypes.length > 0
-                    ? item.warfareTypes.slice(0, 2).join(', ') + (item.warfareTypes.length > 2 ? ` +${item.warfareTypes.length - 2}` : '')
-                    : '';
+                const warfareDisplay =
+                    item.isTemporal && item.warfareTypes.length > 0
+                        ? item.warfareTypes.slice(0, 2).join(', ') +
+                          (item.warfareTypes.length > 2 ? ` +${item.warfareTypes.length - 2}` : '')
+                        : '';
 
                 return `
                 <div class="config-history-item">
@@ -950,7 +961,9 @@ class PatientGeneratorApp {
                             <i class="fas fa-users text-slate-500"></i>
                             <span>${item.totalPatients?.toLocaleString() || 'Unknown'} patients</span>
                         </div>
-                        ${item.isTemporal ? `
+                        ${
+                            item.isTemporal
+                                ? `
                         <div class="stat">
                             <i class="fas fa-crosshairs text-slate-500"></i>
                             <span title="${item.warfareTypes.join(', ')}">${warfareDisplay || 'No warfare'}</span>
@@ -959,7 +972,9 @@ class PatientGeneratorApp {
                             <i class="fas fa-calendar text-slate-500"></i>
                             <span>${item.daysOfFighting || 1}d ${item.intensity || 'med'}</span>
                         </div>
-                        ` : ''}
+                        `
+                                : ''
+                        }
                     </div>
                     <button 
                         onclick="app.loadConfiguration('${item.id}')" 
