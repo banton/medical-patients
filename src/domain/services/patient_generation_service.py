@@ -26,8 +26,6 @@ else:
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import Database
 from patient_generator.demographics import DemographicsGenerator
-# FHIR generator disabled
-# from patient_generator.fhir_generator import FHIRBundleGenerator
 from patient_generator.flow_simulator import PatientFlowSimulator
 from patient_generator.formatter import OutputFormatter
 from patient_generator.medical import MedicalConditionGenerator
@@ -61,13 +59,11 @@ class PatientGenerationPipeline:
         flow_simulator: PatientFlowSimulator,
         demographics_generator: DemographicsGenerator,
         medical_generator: MedicalConditionGenerator,
-        # fhir_generator: FHIRBundleGenerator,  # DISABLED
         output_formatter: OutputFormatter,
     ):
         self.flow_simulator = flow_simulator
         self.demographics_generator = demographics_generator
         self.medical_generator = medical_generator
-        # self.fhir_generator = fhir_generator  # DISABLED
         self.output_formatter = output_formatter
 
     async def generate(
@@ -87,10 +83,7 @@ class PatientGenerationPipeline:
             # Stage 3: Add medical conditions
             patient = await self._add_medical_conditions(patient, context)
 
-            # Stage 4: Generate FHIR bundle - DISABLED
-            # bundle = await self._create_fhir_bundle(patient)
-
-            # Yield for streaming processing - just patient data now
+            # Yield for streaming processing
             yield patient
 
             patient_count += 1
@@ -238,7 +231,6 @@ class AsyncPatientGenerationService:
             flow_simulator=PatientFlowSimulator(self.config_manager),
             demographics_generator=self.cached_demographics.get_demographics_generator(),
             medical_generator=self.cached_medical._get_condition_generator(),
-            # fhir_generator=FHIRBundleGenerator(),  # DISABLED
             output_formatter=OutputFormatter(),
         )
 

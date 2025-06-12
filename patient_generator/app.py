@@ -19,7 +19,6 @@ if TYPE_CHECKING:
 try:
     from .config_manager import ConfigurationManager  # New import
     from .demographics import DemographicsGenerator
-    from .fhir_generator import FHIRBundleGenerator
     from .flow_simulator import PatientFlowSimulator
     from .formatter import OutputFormatter
     from .medical import MedicalConditionGenerator
@@ -27,7 +26,6 @@ try:
 except ImportError:
     from patient_generator.config_manager import ConfigurationManager
     from patient_generator.demographics import DemographicsGenerator
-    from patient_generator.fhir_generator import FHIRBundleGenerator
     from patient_generator.flow_simulator import PatientFlowSimulator
     from patient_generator.formatter import OutputFormatter
     from patient_generator.medical import MedicalConditionGenerator
@@ -196,11 +194,12 @@ class PatientGeneratorApp:
                 )
         return patients
 
-    def _create_fhir_bundles_batch(self, patients: List[Any]) -> List[Any]:  # Patient type hint
-        bundle_generator = FHIRBundleGenerator(
-            self.demographics_generator
-        )  # Demographics generator might need nationality provider too
-        return [bundle_generator.create_patient_bundle(patient) for patient in patients]
+    # FHIR bundle creation disabled
+    # def _create_fhir_bundles_batch(self, patients: List[Any]) -> List[Any]:  # Patient type hint
+    #     bundle_generator = FHIRBundleGenerator(
+    #         self.demographics_generator
+    #     )  # Demographics generator might need nationality provider too
+    #     return [bundle_generator.create_patient_bundle(patient) for patient in patients]
 
     def run(
         self,
@@ -226,7 +225,7 @@ class PatientGeneratorApp:
             {"name": "Generating Patient Flow", "weight": 15, "description": "Simulating casualty flow"},
             {"name": "Creating Demographics", "weight": 20, "description": "Generating patient personal info"},
             {"name": "Adding Medical Conditions", "weight": 15, "description": "Adding medical conditions"},
-            {"name": "Creating FHIR Bundles", "weight": 25, "description": "Converting to HL7 FHIR"},
+            # {"name": "Creating FHIR Bundles", "weight": 25, "description": "Converting to HL7 FHIR"},  # DISABLED
             {"name": "Formatting Output", "weight": 10, "description": "Preparing output files"},
             {"name": "Compressing Data", "weight": 5, "description": "Compressing files"},
             {"name": "Encrypting Data", "weight": 5, "description": "Encrypting files"},
@@ -292,36 +291,40 @@ class PatientGeneratorApp:
                         self.logger.error(f"Error in phase '{phase_name}': {e}")
             self._update_progress(progress_callback, current_phase_idx, 100, phases)
 
-        current_phase_idx = 4  # Creating FHIR Bundles
-        self._start_new_phase()
-        self._update_progress(progress_callback, current_phase_idx, 0, phases, {"processed_patients": 0})
-        bundles: List[Any] = []
-        processed_count = 0
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            patient_batches = [patients[j : j + self.batch_size] for j in range(0, len(patients), self.batch_size)]
-            future_to_batch = {
-                executor.submit(self._create_fhir_bundles_batch, batch): batch for batch in patient_batches
-            }
-            for future in concurrent.futures.as_completed(future_to_batch):
-                try:
-                    batch_bundles = future.result()
-                    bundles.extend(batch_bundles)
-                    processed_count += len(future_to_batch[future])  # length of original patient batch
-                    phase_prog = min(100, int((processed_count / len(patients)) * 100))
-                    self._update_progress(
-                        progress_callback,
-                        current_phase_idx,
-                        phase_prog,
-                        phases,
-                        {"processed_patients": processed_count},
-                    )
-                except Exception as e:
-                    self.logger.error(f"FHIR bundle creation error: {e}")
-        self._update_progress(progress_callback, current_phase_idx, 100, phases)
+        # FHIR Bundle creation phase - DISABLED
+        # current_phase_idx = 4  # Creating FHIR Bundles
+        # self._start_new_phase()
+        # self._update_progress(progress_callback, current_phase_idx, 0, phases, {"processed_patients": 0})
+        # bundles: List[Any] = []
+        # processed_count = 0
+        # with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+        #     patient_batches = [patients[j : j + self.batch_size] for j in range(0, len(patients), self.batch_size)]
+        #     future_to_batch = {
+        #         executor.submit(self._create_fhir_bundles_batch, batch): batch for batch in patient_batches
+        #     }
+        #     for future in concurrent.futures.as_completed(future_to_batch):
+        #         try:
+        #             batch_bundles = future.result()
+        #             bundles.extend(batch_bundles)
+        #             processed_count += len(future_to_batch[future])  # length of original patient batch
+        #             phase_prog = min(100, int((processed_count / len(patients)) * 100))
+        #             self._update_progress(
+        #                 progress_callback,
+        #                 current_phase_idx,
+        #                 phase_prog,
+        #                 phases,
+        #                 {"processed_patients": processed_count},
+        #             )
+        #         except Exception as e:
+        #             self.logger.error(f"FHIR bundle creation error: {e}")
+        # self._update_progress(progress_callback, current_phase_idx, 100, phases)
+        
+        # Skip FHIR bundle creation - use patients directly as bundles
+        bundles = [patient.to_dict() for patient in patients]
 
         formatter = OutputFormatter()
         # Output phase combines formatting, compression, encryption
-        output_phase_start_index = 5
+        output_phase_start_index = 4  # Adjusted since FHIR phase is disabled
 
         # For simplicity, group these into one progress update block
         self._update_progress(progress_callback, output_phase_start_index, 0, phases)  # Start Formatting
