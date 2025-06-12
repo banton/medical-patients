@@ -33,28 +33,28 @@ export const FacilityColumn: React.FC<FacilityColumnProps> = ({
         };
       case 'Role1':
         return {
-          displayName: 'Role 1 Medical',
+          displayName: 'Role 1',
           icon: '🏕️',
           color: 'border-orange-400 bg-orange-50',
           description: 'Forward medical care'
         };
       case 'Role2':
         return {
-          displayName: 'Role 2 Medical',
+          displayName: 'Role 2',
           icon: '🏥',
           color: 'border-blue-400 bg-blue-50',
           description: 'Field hospital'
         };
       case 'Role3':
         return {
-          displayName: 'Role 3 Medical',
+          displayName: 'Role 3',
           icon: '🏢',
           color: 'border-purple-400 bg-purple-50',
           description: 'Combat support hospital'
         };
       case 'Role4':
         return {
-          displayName: 'Role 4 Medical',
+          displayName: 'Role 4',
           icon: '🏛️',
           color: 'border-green-400 bg-green-50',
           description: 'Definitive medical care'
@@ -137,7 +137,7 @@ export const FacilityColumn: React.FC<FacilityColumnProps> = ({
             {name === 'POI' ? (
               // POI shows only KIA (gets all pre-Role1 deaths)
               <span className={`
-                px-2 py-0.5 rounded-full font-bold
+                px-2 py-0.5 rounded-full font-bold text-xs min-w-[40px] text-center
                 ${cumulativeCounts.kia > 0 
                   ? 'bg-red-200 text-red-900' 
                   : 'bg-gray-100 text-gray-500'
@@ -149,7 +149,7 @@ export const FacilityColumn: React.FC<FacilityColumnProps> = ({
               // Other facilities show both KIA and RTD
               <>
                 <span className={`
-                  px-1.5 py-0.5 rounded-full font-bold text-xs
+                  px-2 py-0.5 rounded-full font-bold text-xs min-w-[40px] text-center
                   ${cumulativeCounts.kia > 0 
                     ? 'bg-red-200 text-red-900' 
                     : 'bg-gray-100 text-gray-500'
@@ -158,7 +158,7 @@ export const FacilityColumn: React.FC<FacilityColumnProps> = ({
                   ⚰️ {cumulativeCounts.kia}
                 </span>
                 <span className={`
-                  px-1.5 py-0.5 rounded-full font-bold text-xs
+                  px-2 py-0.5 rounded-full font-bold text-xs min-w-[40px] text-center
                   ${cumulativeCounts.rtd > 0 
                     ? 'bg-green-200 text-green-900' 
                     : 'bg-gray-100 text-gray-500'
@@ -191,7 +191,7 @@ export const FacilityColumn: React.FC<FacilityColumnProps> = ({
       <div className="flex-1 border-l-2 border-r-2 border-gray-300 bg-white overflow-hidden relative">
         <div 
           ref={scrollContainerRef}
-          className="h-full overflow-y-auto"
+          className="h-full overflow-y-auto scrollbar-hide"
         >
           <div className="p-1">
             <AnimatePresence mode="popLayout">

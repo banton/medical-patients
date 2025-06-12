@@ -1,5 +1,6 @@
 import concurrent.futures
 import datetime
+import json
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -10,10 +11,12 @@ try:
     from .config_manager import ConfigurationManager
     from .evacuation_time_manager import EvacuationTimeManager
     from .patient import Patient
+    from .temporal_generator import CasualtyEvent, TemporalPatternGenerator
 except ImportError:
     from patient_generator.config_manager import ConfigurationManager
     from patient_generator.evacuation_time_manager import EvacuationTimeManager
     from patient_generator.patient import Patient
+    from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
 
 
 class PatientFlowSimulator:
@@ -80,7 +83,12 @@ class PatientFlowSimulator:
             "NON_BATTLE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
             "DISEASE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
         }
-        self._base_date_str = active_config.created_at.strftime("%Y-%m-%d")  # Or a dedicated config field
+        # Load base date from injuries.json for temporal scenarios
+        try:
+            injuries_config = self._load_injuries_config()
+            self._base_date_str = injuries_config.get("base_date", active_config.created_at.strftime("%Y-%m-%d"))
+        except Exception:
+            self._base_date_str = active_config.created_at.strftime("%Y-%m-%d")
 
         # Parallelization settings
         self.batch_size = 100
@@ -184,7 +192,25 @@ class PatientFlowSimulator:
         return matrix
 
     def generate_casualty_flow(self):  # total_casualties now comes from config
-        """Generate the initial casualties and their flow through facilities"""
+        """Generate casualties - check for temporal configuration"""
+
+        # Check if temporal configuration exists
+        import os
+        injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
+
+        try:
+            with open(injuries_path) as f:
+                injuries_config = json.load(f)
+
+            # Check if new format (has warfare_types)
+            if "warfare_types" in injuries_config:
+                print(f"Using temporal generation with base_date: {injuries_config.get('base_date', 'NOT_FOUND')}")
+                return self.generate_temporal_casualties()
+            print("No warfare_types found, using legacy generation")
+        except Exception as e:
+            print(f"Error loading injuries config: {e}")
+
+        # Fall back to original method
         total_casualties = self.total_patients_to_generate
         use_parallel = total_casualties >= 500 and self.num_workers > 1
 
@@ -331,10 +357,8 @@ class PatientFlowSimulator:
         # Track current time through evacuation chain
         facility_hierarchy = self.evacuation_manager.get_facility_hierarchy()
 
-        # Skip POI since patient is already there
+        # Always start from POI (index 0) to ensure proper timeline events
         start_index = 0
-        if facility_hierarchy[0] == "POI" and patient.current_status == "POI":
-            start_index = 1
 
         for i in range(start_index, len(facility_hierarchy)):
             facility = facility_hierarchy[i]
@@ -619,3 +643,258 @@ class PatientFlowSimulator:
         hours_to_add = self._transit_hours.get(transit_key, 1)  # Default 1hr if specific transit not found
 
         return base_event_time + datetime.timedelta(hours=hours_to_add)
+
+    def generate_temporal_casualties(self):
+        """Generate casualties with temporal distribution based on warfare scenarios"""
+
+        # Load injuries.json configuration
+        injuries_config = self._load_injuries_config()
+
+        # Initialize temporal generator
+        import os
+        warfare_patterns_path = os.path.join(
+            os.path.dirname(__file__), "warfare_patterns.json"
+        )
+        temporal_gen = TemporalPatternGenerator(warfare_patterns_path)
+
+        # Generate casualty timeline
+        casualty_timeline = temporal_gen.generate_timeline(
+            days=injuries_config["days_of_fighting"],
+            total_patients=injuries_config["total_patients"],
+            active_warfare_types=injuries_config["warfare_types"],
+            intensity=injuries_config["intensity"],
+            tempo=injuries_config["tempo"],
+            environmental_conditions=injuries_config["environmental_conditions"],
+            special_events=injuries_config["special_events"],
+            base_date=injuries_config["base_date"]
+        )
+
+        # Generate patients based on timeline
+        print(f"Generated {len(casualty_timeline)} casualty events")
+        print(f"First 3 events: {[(e.timestamp.isoformat(), e.patient_count) for e in casualty_timeline[:3]]}")
+        patients = self._generate_patients_from_timeline(
+            casualty_timeline, injuries_config["injury_mix"]
+        )
+        print(f"Generated {len(patients)} patients from timeline")
+        if patients:
+            print(f"First patient injury time: {patients[0].injury_timestamp}")
+            print(f"Last patient injury time: {patients[-1].injury_timestamp}")
+
+        # Simulate flow for each patient
+        if len(patients) >= 500 and self.num_workers > 1:
+            self._simulate_flow_parallel(patients)
+        else:
+            for patient in patients:
+                self._simulate_patient_flow_single(patient)
+
+        return patients
+
+    def _load_injuries_config(self) -> Dict[str, Any]:
+        """Load injuries.json configuration"""
+        import os
+        injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
+
+        with open(injuries_path) as f:
+            return json.load(f)
+
+    def _generate_patients_from_timeline(self,
+                                       timeline: List[CasualtyEvent],
+                                       base_injury_mix: Dict[str, float]) -> List[Patient]:
+        """Generate actual patients from casualty events with specific timestamps"""
+
+        patients = []
+        patient_id_counter = 0
+
+        # Load warfare patterns for injury distributions
+        import os
+        warfare_patterns_path = os.path.join(
+            os.path.dirname(__file__), "warfare_patterns.json"
+        )
+        with open(warfare_patterns_path) as f:
+            warfare_patterns = json.load(f)
+
+        for event in timeline:
+            for _ in range(event.patient_count):
+                patient = self._create_temporal_patient(
+                    patient_id=patient_id_counter,
+                    injury_timestamp=event.timestamp,
+                    warfare_type=event.warfare_type,
+                    event_id=event.event_id,
+                    is_mass_casualty=event.is_mass_casualty,
+                    base_injury_mix=base_injury_mix,
+                    warfare_patterns=warfare_patterns,
+                    environmental_factors=event.environmental_factors
+                )
+                patients.append(patient)
+                patient_id_counter += 1
+
+        return patients
+
+    def _create_temporal_patient(self,
+                               patient_id: int,
+                               injury_timestamp: datetime.datetime,
+                               warfare_type: str,
+                               event_id: str,
+                               is_mass_casualty: bool,
+                               base_injury_mix: Dict[str, float],
+                               warfare_patterns: Dict,
+                               environmental_factors: List[str]) -> Patient:
+        """Create a patient with specific temporal characteristics"""
+
+        patient = Patient(patient_id)
+        patient.set_injury_timestamp(injury_timestamp)
+
+        # Store temporal metadata
+        patient.warfare_scenario = warfare_type
+        patient.casualty_event_id = event_id
+        patient.is_mass_casualty = is_mass_casualty
+        patient.environmental_conditions = environmental_factors
+
+        # Calculate day of injury
+        base_date = datetime.datetime.strptime(self._base_date_str, "%Y-%m-%d")
+        days_since_start = (injury_timestamp.date() - base_date.date()).days
+        patient.day_of_injury = f"Day {days_since_start + 1}"
+
+        # Get warfare-specific injury distribution
+        injury_distribution = self._get_warfare_injury_distribution(
+            warfare_type, base_injury_mix, warfare_patterns
+        )
+        patient.injury_type = self._select_weighted_item(injury_distribution)
+
+        # Get warfare-specific triage distribution
+        triage_weights = self._get_warfare_triage_weights(
+            warfare_type, patient.injury_type, warfare_patterns
+        )
+        patient.triage_category = self._select_weighted_item(triage_weights)
+
+        # Set demographics
+        patient.gender = random.choice(["male", "female"])
+
+        # Set front and nationality (using existing logic)
+        self._assign_front_and_nationality(patient)
+
+        # Add initial treatment at POI
+        patient.add_treatment(
+            facility="POI",
+            date=injury_timestamp,
+            treatments=[],
+            observations=[]
+        )
+
+        return patient
+
+    def _get_warfare_injury_distribution(self,
+                                       warfare_type: str,
+                                       base_mix: Dict[str, float],
+                                       warfare_patterns: Dict) -> Dict[str, float]:
+        """Calculate injury distribution based on warfare type"""
+
+        if warfare_type == "mixed":
+            # Special events use base distribution
+            return base_mix
+
+        # Get warfare-specific modifiers
+        modifiers = warfare_patterns["warfare_types"][warfare_type]["injury_modifier"]
+
+        # Apply modifiers to base distribution
+        adjusted_distribution = {}
+        for injury_type, base_rate in base_mix.items():
+            modifier = modifiers.get(injury_type, 1.0)
+            adjusted_distribution[injury_type] = base_rate * modifier
+
+        # Normalize
+        total = sum(adjusted_distribution.values())
+        if total > 0:
+            for injury_type in adjusted_distribution:
+                adjusted_distribution[injury_type] /= total
+
+        return adjusted_distribution
+
+    def _get_warfare_triage_weights(self,
+                                   warfare_type: str,
+                                   injury_type: str,
+                                   warfare_patterns: Dict) -> Dict[str, float]:
+        """Get triage distribution based on warfare and injury type"""
+
+        if warfare_type == "mixed":
+            # Use default weights for special events
+            return self._triage_weights.get(injury_type, {"T1": 0.3, "T2": 0.4, "T3": 0.3})
+
+        # Get warfare-specific triage weights
+        warfare_config = warfare_patterns["warfare_types"][warfare_type]
+        return warfare_config["triage_weights"].get(
+            injury_type,
+            {"T1": 0.3, "T2": 0.4, "T3": 0.3}
+        )
+
+    def _assign_front_and_nationality(self, patient: Patient):
+        """Assign front and nationality to patient using existing logic"""
+        # This uses your existing front assignment logic
+        # Just extracted to a separate method for clarity
+
+        static_front_defs = self.config_manager.get_static_front_definitions()
+
+        if static_front_defs:
+            # Existing static front logic...
+            front_distribution_static = {
+                front_def.name: front_def.ratio
+                for front_def in static_front_defs if front_def.ratio > 0
+            }
+
+            if front_distribution_static:
+                selected_front_name = self._select_weighted_item(front_distribution_static)
+                selected_front_def = next(
+                    (fdef for fdef in static_front_defs if fdef.name == selected_front_name),
+                    None
+                )
+
+                if selected_front_def:
+                    patient.front = selected_front_def.name
+                    nat_dist_static = {
+                        nat_def.nationality_code: nat_def.percentage
+                        for nat_def in selected_front_def.nations
+                        if nat_def.percentage > 0
+                    }
+                    if nat_dist_static:
+                        patient.nationality = self._select_weighted_item(nat_dist_static)
+                    else:
+                        patient.nationality = "N/A_FrontHasNoNations"
+        elif self.front_distribution:
+            # Existing DB-based front logic...
+            front_id = self._select_weighted_item(self.front_distribution)
+            selected_front_config_db = next(
+                (fc for fc in self.front_configs if fc["id"] == front_id),
+                None
+            )
+
+            if selected_front_config_db:
+                patient.front = selected_front_config_db.get("name", front_id)
+                current_front_nat_dist_list = selected_front_config_db.get(
+                    "nationality_distribution", []
+                )
+                if current_front_nat_dist_list:
+                    weights_for_selection = {
+                        item["nationality_code"]: item["percentage"]
+                        for item in current_front_nat_dist_list
+                        if "nationality_code" in item
+                        and "percentage" in item
+                        and item["percentage"] > 0
+                    }
+                    if weights_for_selection:
+                        patient.nationality = self._select_weighted_item(weights_for_selection)
+
+    def _simulate_flow_parallel(self, patients: List[Patient]):
+        """Simulate patient flow in parallel batches"""
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            patient_batches = [
+                patients[i:i + self.batch_size]
+                for i in range(0, len(patients), self.batch_size)
+            ]
+
+            future_to_batch = {
+                executor.submit(self._simulate_patient_flow_batch, batch): batch
+                for batch in patient_batches
+            }
+
+            for future in concurrent.futures.as_completed(future_to_batch):
+                _ = future.result()

@@ -16,7 +16,8 @@ function App() {
     currentTime: new Date('2024-01-01T00:00:00Z'),
     speed: 1,
     startTime: new Date('2024-01-01T00:00:00Z'),
-    endTime: new Date('2024-01-01T24:00:00Z')
+    endTime: new Date('2024-01-01T24:00:00Z'),
+    isLooping: false
   });
 
   // Update timeline extent when patients change
@@ -42,13 +43,22 @@ function App() {
         const adjustedSpeed = prev.speed / 10;
         const nextTime = new Date(prev.currentTime.getTime() + (3600000 * adjustedSpeed)); // Advance by 1 hour * adjustedSpeed
         
-        // Stop if we've reached the end
+        // Handle end of timeline
         if (nextTime >= prev.endTime) {
-          return {
-            ...prev,
-            currentTime: prev.endTime,
-            isPlaying: false
-          };
+          if (prev.isLooping) {
+            // Loop back to start
+            return {
+              ...prev,
+              currentTime: prev.startTime
+            };
+          } else {
+            // Stop at end
+            return {
+              ...prev,
+              currentTime: prev.endTime,
+              isPlaying: false
+            };
+          }
         }
         
         return {
@@ -59,7 +69,7 @@ function App() {
     }, 100); // Update every 100ms for smooth animation
 
     return () => clearInterval(interval);
-  }, [playbackState.isPlaying, playbackState.speed]);
+  }, [playbackState.isPlaying, playbackState.speed, playbackState.isLooping]);
 
   // Control handlers
   const handlePlayPause = () => {
@@ -92,6 +102,13 @@ function App() {
     }));
   };
 
+  const handleLoopToggle = () => {
+    setPlaybackState(prev => ({
+      ...prev,
+      isLooping: !prev.isLooping
+    }));
+  };
+
   const handleLoadPatients = (loadedPatients: Patient[]) => {
     setPatients(loadedPatients);
     console.log(`Loaded ${loadedPatients.length} patients`);
@@ -112,12 +129,38 @@ function App() {
       return acc;
     }, {} as Record<string, number>);
 
+    // Calculate current status counts (how many have reached each status by current time)
+    const currentStatuses = { KIA: 0, RTD: 0, Active: 0 };
+    
+    patients.forEach(patient => {
+      if (patient.movement_timeline) {
+        const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
+        const currentHours = (playbackState.currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
+        
+        // Only count patients whose injury has occurred
+        if (currentHours >= 0) {
+          const eventsSoFar = patient.movement_timeline.filter(event => event.hours_since_injury <= currentHours);
+          const kiaEvent = eventsSoFar.find(event => event.event_type === 'kia');
+          const rtdEvent = eventsSoFar.find(event => event.event_type === 'rtd');
+          
+          if (kiaEvent) {
+            currentStatuses.KIA++;
+          } else if (rtdEvent) {
+            currentStatuses.RTD++;
+          } else {
+            currentStatuses.Active++;
+          }
+        }
+      }
+    });
+
     return {
       total: totalPatients,
       finalStatuses,
-      triageCounts
+      triageCounts,
+      currentStatuses
     };
-  }, [patients]);
+  }, [patients, playbackState.currentTime]);
 
   // Calculate cumulative KIA/RTD counts up to current time for each facility
   const cumulativeCounts = useMemo(() => {
@@ -218,17 +261,17 @@ function App() {
                 <div className="w-full px-4 flex items-center justify-between">
                   <div className="flex items-center space-x-4 text-sm">
                     <span className="font-medium">
-                      Total: {statistics.total}
+                      Total: {statistics.currentStatuses.Active + statistics.currentStatuses.KIA + statistics.currentStatuses.RTD}/{statistics.total}
                     </span>
                     <div className="flex space-x-2">
                       <span className="text-red-600">
-                        KIA: {statistics.finalStatuses.KIA || 0}
+                        KIA: {statistics.currentStatuses.KIA}/{statistics.finalStatuses.KIA || 0}
                       </span>
                       <span className="text-green-600">
-                        RTD: {statistics.finalStatuses.RTD || 0}
+                        RTD: {statistics.currentStatuses.RTD}/{statistics.finalStatuses.RTD || 0}
                       </span>
                       <span className="text-blue-600">
-                        Remains: {statistics.finalStatuses.Remains_Role4 || 0}
+                        Active: {statistics.currentStatuses.Active}
                       </span>
                     </div>
                   </div>
@@ -270,6 +313,7 @@ function App() {
               onSpeedChange={handleSpeedChange}
               onReset={handleReset}
               onTimeSeek={handleTimeSeek}
+              onLoopToggle={handleLoopToggle}
             />
           </>
         )}

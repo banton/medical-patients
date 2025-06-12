@@ -84,7 +84,8 @@ class PatientGenerationPipeline:
             patient = await self._add_medical_conditions(patient, context)
 
             # Yield for streaming processing
-            yield patient
+            patient_dict = patient.to_dict()
+            yield patient, patient_dict
 
             patient_count += 1
             if progress_callback:
@@ -109,19 +110,19 @@ class PatientGenerationPipeline:
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate base patients - check for temporal vs legacy generation."""
-        
+
         # Check if temporal configuration exists by calling the flow simulator's decision logic
         try:
             # Use the flow simulator's generate_casualty_flow method which handles temporal vs legacy decision
             patients = await to_thread(self.flow_simulator.generate_casualty_flow)
-            
+
             # Yield patients one by one for streaming
             for patient in patients:
                 yield patient
-                
+
         except Exception as e:
             print(f"Error in bulk generation, falling back to individual patient creation: {e}")
-            
+
             # Fallback to individual patient creation if bulk generation fails
             batch_size = min(100, context.config.total_patients)
             total = context.config.total_patients
@@ -283,7 +284,7 @@ class AsyncPatientGenerationService:
             patient_count = 0
 
             # Stream patients and write to files
-            async for patient in self.pipeline.generate(context, progress_callback):
+            async for patient, patient_data in self.pipeline.generate(context, progress_callback):
                 patient_count += 1
 
                 # Write to each format
@@ -295,15 +296,14 @@ class AsyncPatientGenerationService:
                         if not first_patient:
                             stream.write(",\n")
 
-                        # Create patient data structure (no FHIR bundle wrapping)
-                        patient_data = patient.to_dict()
+                        # Use patient_data from generator (already converted to dict)
 
                         import json
 
                         json.dump(patient_data, stream, indent=2)
                     elif format == "xml":
                         # Use formatter for XML
-                        await to_thread(formatter.format_xml, [bundle], stream)
+                        await to_thread(formatter.format_xml, [patient_data], stream)
                     elif format == "csv":
                         # CSV format - write header on first patient
                         if first_patient:

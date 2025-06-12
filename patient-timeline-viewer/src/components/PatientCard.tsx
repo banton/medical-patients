@@ -119,13 +119,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         })()}
       </div>
 
-      {/* Activity and Front info */}
+      {/* Primary condition and Front info */}
       <div className="flex items-center justify-between text-xs opacity-75">
         <span className="truncate">
-          {location.eventType && location.eventType !== 'active' 
-            ? location.eventType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
-            : 'Active'
-          }
+          {patient.primary_condition?.display || 'No condition'}
         </span>
         {patient.front && (
           <span className="text-xs opacity-60 ml-1 truncate">

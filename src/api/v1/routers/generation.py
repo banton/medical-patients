@@ -167,20 +167,20 @@ async def _run_generation_task(
         # Handle temporal configuration if present
         # Check both root level and nested configuration object
         inner_config = config.get("configuration", config)
-        temporal_config_present = any(key in inner_config for key in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'])
-        
+        temporal_config_present = any(key in inner_config for key in ["warfare_types", "environmental_conditions", "special_events", "base_date"])
+
         print(f"🔍 TEMPORAL DEBUG: Root config keys: {list(config.keys())}")
         print(f"🔍 TEMPORAL DEBUG: Inner config keys: {list(inner_config.keys())}")
         print(f"🔍 TEMPORAL DEBUG: Detection result: {temporal_config_present}")
         if temporal_config_present:
             print(f"🔍 TEMPORAL DEBUG: Found temporal keys: {[k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in inner_config]}")
-        
+
         if temporal_config_present:
             # Write temporal configuration to injuries.json for flow simulator
             import os
             # Use the path relative to current working directory (works in both dev and Docker)
-            injuries_path = os.path.abspath('patient_generator/injuries.json')
-            
+            injuries_path = os.path.abspath("patient_generator/injuries.json")
+
             temporal_injuries_config = {
                 "total_patients": inner_config.get("total_patients", 1440),
                 "days_of_fighting": inner_config.get("days_of_fighting", 8),
@@ -211,22 +211,22 @@ async def _run_generation_task(
                     "Battle Injury": 0.15
                 }))
             }
-            
+
             # Backup existing injuries.json
-            backup_path = injuries_path + '.backup'
+            backup_path = injuries_path + ".backup"
             if os.path.exists(injuries_path):
                 import shutil
                 shutil.copy2(injuries_path, backup_path)
-            
+
             # Write temporal config to injuries.json
-            with open(injuries_path, 'w') as f:
+            with open(injuries_path, "w") as f:
                 import json
                 json.dump(temporal_injuries_config, f, indent=2)
-            
-            print(f"✅ Temporal configuration written to injuries.json")
-            print(f"   Warfare types: {list(k for k, v in temporal_injuries_config['warfare_types'].items() if v)}")
+
+            print("✅ Temporal configuration written to injuries.json")
+            print(f"   Warfare types: {[k for k, v in temporal_injuries_config['warfare_types'].items() if v]}")
             print(f"   Base date: {temporal_injuries_config['base_date']}")
-        
+
         # Handle configuration source
         from patient_generator.database import ConfigurationRepository, Database
         from patient_generator.schemas_config import ConfigurationTemplateCreate
@@ -246,7 +246,7 @@ async def _run_generation_task(
             injury_dist = inner_config.get("injury_mix") or inner_config.get(
                 "injury_distribution", {"Disease": 0.52, "Non-Battle Injury": 0.33, "Battle Injury": 0.15}
             )
-            
+
             config_create = ConfigurationTemplateCreate(
                 name=inner_config.get("name", "Generated Configuration"),
                 description=inner_config.get("description", "Auto-generated configuration"),
@@ -292,15 +292,15 @@ async def _run_generation_task(
             import os
             # Get the project root directory and construct correct path
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
-            injuries_path = os.path.join(project_root, 'patient_generator', 'injuries.json')
-            backup_path = injuries_path + '.backup'
-            
+            injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
+            backup_path = injuries_path + ".backup"
+
             if os.path.exists(backup_path):
                 import shutil
                 shutil.move(backup_path, injuries_path)
-                print(f"✅ Restored original injuries.json")
+                print("✅ Restored original injuries.json")
             else:
-                print(f"⚠️  No backup found to restore injuries.json")
+                print("⚠️  No backup found to restore injuries.json")
 
         # Update job with results
         await job_service.set_job_results(
@@ -320,16 +320,16 @@ async def _run_generation_task(
                 import os
                 # Get the project root directory and construct correct path
                 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
-                injuries_path = os.path.join(project_root, 'patient_generator', 'injuries.json')
-                backup_path = injuries_path + '.backup'
-                
+                injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
+                backup_path = injuries_path + ".backup"
+
                 if os.path.exists(backup_path):
                     import shutil
                     shutil.move(backup_path, injuries_path)
-                    print(f"✅ Restored original injuries.json after failure")
+                    print("✅ Restored original injuries.json after failure")
             except Exception as cleanup_error:
                 print(f"⚠️  Failed to restore injuries.json: {cleanup_error}")
-        
+
         # Mark job as failed
         await job_service.update_job_status(job_id, JobStatus.FAILED, error=str(e))
         print(f"Generation task failed for job {job_id}: {e}")
@@ -353,35 +353,35 @@ async def debug_temporal_configuration(
     """
     import json
     from pathlib import Path
-    
+
     # Get the raw configuration
     config_dict = {}
     if request.configuration:
         config_dict = request.configuration.copy()
-    
+
     # Check both locations for temporal config
-    direct_temporal_keys = [k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in config_dict]
-    
+    direct_temporal_keys = [k for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"] if k in config_dict]
+
     configuration_data = config_dict.get("configuration", config_dict)
-    nested_temporal_keys = [k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in configuration_data]
-    
+    nested_temporal_keys = [k for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"] if k in configuration_data]
+
     # Check current injuries.json
     project_root = Path(__file__).parent.parent.parent.parent.parent
-    injuries_path = project_root / 'patient_generator' / 'injuries.json'
-    
+    injuries_path = project_root / "patient_generator" / "injuries.json"
+
     current_injuries = None
     if injuries_path.exists():
         try:
-            with open(injuries_path, 'r') as f:
+            with open(injuries_path) as f:
                 current_injuries = json.load(f)
-        except:
+        except Exception:
             current_injuries = {"error": "Could not read injuries.json"}
-    
+
     # Build debug response
-    debug_info = {
+    debug_info: Dict[str, Any] = {
         "request_structure": {
-            "has_configuration_field": hasattr(request, 'configuration') and request.configuration is not None,
-            "has_configuration_id": hasattr(request, 'configuration_id') and request.configuration_id is not None,
+            "has_configuration_field": hasattr(request, "configuration") and request.configuration is not None,
+            "has_configuration_id": hasattr(request, "configuration_id") and request.configuration_id is not None,
             "configuration_keys": list(config_dict.keys()) if config_dict else [],
         },
         "temporal_detection": {
@@ -403,7 +403,7 @@ async def debug_temporal_configuration(
         },
         "recommendation": "",
     }
-    
+
     # Add recommendation
     if debug_info["temporal_detection"]["direct_has_temporal"]:
         debug_info["recommendation"] = "✅ Temporal configuration found directly in request. Backend should work correctly."
@@ -411,7 +411,7 @@ async def debug_temporal_configuration(
         debug_info["recommendation"] = "⚠️ Temporal configuration found nested under 'configuration'. Backend needs to check config.get('configuration', config)."
     else:
         debug_info["recommendation"] = "❌ No temporal configuration found. Check frontend is sending warfare_types, etc."
-    
+
     return debug_info
 
 
@@ -429,11 +429,11 @@ async def check_injuries_config(
     """
     import json
     from pathlib import Path
-    
+
     project_root = Path(__file__).parent.parent.parent.parent.parent
-    injuries_path = project_root / 'patient_generator' / 'injuries.json'
-    backup_path = injuries_path.with_suffix('.json.backup')
-    
+    injuries_path = project_root / "patient_generator" / "injuries.json"
+    backup_path = injuries_path.with_suffix(".json.backup")
+
     result = {
         "injuries_json": {
             "path": str(injuries_path),
@@ -446,14 +446,14 @@ async def check_injuries_config(
             "path": str(backup_path),
         }
     }
-    
+
     if injuries_path.exists():
         try:
-            with open(injuries_path, 'r') as f:
+            with open(injuries_path) as f:
                 content = json.load(f)
             result["injuries_json"]["content"] = content
             result["injuries_json"]["has_temporal_config"] = "warfare_types" in content
-            
+
             # Add analysis
             if "warfare_types" in content:
                 active_warfare = [k for k, v in content.get("warfare_types", {}).items() if v]
@@ -462,5 +462,5 @@ async def check_injuries_config(
                 result["injuries_json"]["days_of_fighting"] = content.get("days_of_fighting", "NOT SET")
         except Exception as e:
             result["injuries_json"]["error"] = str(e)
-    
+
     return result

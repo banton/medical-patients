@@ -318,7 +318,7 @@ class PatientGeneratorApp:
         #         except Exception as e:
         #             self.logger.error(f"FHIR bundle creation error: {e}")
         # self._update_progress(progress_callback, current_phase_idx, 100, phases)
-        
+
         # Skip FHIR bundle creation - use patients directly as bundles
         bundles = [patient.to_dict() for patient in patients]
 

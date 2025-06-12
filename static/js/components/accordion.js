@@ -325,34 +325,77 @@ class AccordionComponent {
 
     validateInjuries(content) {
         if (!content) {
-            return { valid: false, message: 'Injury distribution is required' };
+            return { valid: false, message: 'Scenario configuration is required' };
         }
 
         try {
             const config = JSON.parse(content);
 
-            if (!config.injury_distribution || typeof config.injury_distribution !== 'object') {
-                return { valid: false, message: 'Missing or invalid "injury_distribution" object' };
+            // Check if this is temporal or legacy format
+            const isTemporal = config.warfare_types || config.environmental_conditions || config.special_events;
+
+            if (isTemporal) {
+                // Validate temporal configuration
+                if (!config.total_patients || typeof config.total_patients !== 'number' || config.total_patients < 1) {
+                    return { valid: false, message: 'total_patients must be a positive number' };
+                }
+
+                if (config.days_of_fighting && (typeof config.days_of_fighting !== 'number' || config.days_of_fighting < 1)) {
+                    return { valid: false, message: 'days_of_fighting must be a positive number' };
+                }
+
+                if (config.intensity && !['low', 'medium', 'high', 'extreme'].includes(config.intensity)) {
+                    return { valid: false, message: 'intensity must be one of: low, medium, high, extreme' };
+                }
+
+                if (config.tempo && !['sustained', 'escalating', 'surge', 'declining', 'intermittent'].includes(config.tempo)) {
+                    return { valid: false, message: 'tempo must be one of: sustained, escalating, surge, declining, intermittent' };
+                }
+
+                // Validate injury_mix if present
+                if (config.injury_mix) {
+                    const requiredTypes = ['Disease', 'Non-Battle Injury', 'Battle Injury'];
+                    const missing = requiredTypes.filter((type) => !(type in config.injury_mix));
+                    
+                    if (missing.length > 0) {
+                        return { valid: false, message: `Missing injury types in injury_mix: ${missing.join(', ')}` };
+                    }
+
+                    const total = Object.values(config.injury_mix).reduce((sum, val) => sum + (val || 0), 0);
+                    if (Math.abs(total - 1) > 0.01) {
+                        return {
+                            valid: false,
+                            message: `Injury mix percentages should sum to 1.0 (currently ${total.toFixed(2)})`
+                        };
+                    }
+                }
+
+                return { valid: true, message: 'Temporal scenario configuration is valid' };
+            } else {
+                // Legacy format validation
+                if (!config.injury_distribution || typeof config.injury_distribution !== 'object') {
+                    return { valid: false, message: 'Missing or invalid "injury_distribution" object' };
+                }
+
+                // Check for required injury types
+                const requiredTypes = ['Disease', 'Non-Battle Injury', 'Battle Injury'];
+                const missing = requiredTypes.filter((type) => !(type in config.injury_distribution));
+
+                if (missing.length > 0) {
+                    return { valid: false, message: `Missing injury types: ${missing.join(', ')}` };
+                }
+
+                // Check if percentages are valid
+                const total = Object.values(config.injury_distribution).reduce((sum, val) => sum + (val || 0), 0);
+                if (Math.abs(total - 1) > 0.01) {
+                    return {
+                        valid: false,
+                        message: `Injury percentages should sum to 1.0 (currently ${total.toFixed(2)})`
+                    };
+                }
+
+                return { valid: true, message: 'Injury distribution is properly configured' };
             }
-
-            // Check for required injury types
-            const requiredTypes = ['Disease', 'Non-Battle Injury', 'Battle Injury'];
-            const missing = requiredTypes.filter((type) => !(type in config.injury_distribution));
-
-            if (missing.length > 0) {
-                return { valid: false, message: `Missing injury types: ${missing.join(', ')}` };
-            }
-
-            // Check if percentages are valid
-            const total = Object.values(config.injury_distribution).reduce((sum, val) => sum + (val || 0), 0);
-            if (Math.abs(total - 1) > 0.01) {
-                return {
-                    valid: false,
-                    message: `Injury percentages should sum to 1.0 (currently ${total.toFixed(2)})`
-                };
-            }
-
-            return { valid: true, message: 'Injury distribution is properly configured' };
         } catch (e) {
             return { valid: false, message: `JSON syntax error: ${e.message}` };
         }

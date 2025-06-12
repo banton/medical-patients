@@ -1,8 +1,46 @@
 {
-      "patients": 1440,
-      "days_of_fighting": 8,
-      "type_of_battle": "skirmish",
-      "Disease": 0.52,
-      "Non-Battle Injury": 0.33,
-      "Battle Injury": 0.15
-    }
+  "total_patients": 1440,
+  "days_of_fighting": 8,
+  "base_date": "2025-06-01",
+  
+  "warfare_types": {
+    "conventional": true,
+    "artillery": true,
+    "urban": false,
+    "guerrilla": false,
+    "drone": true,
+    "naval": false,
+    "cbrn": false,
+    "peacekeeping": false
+  },
+  
+  "_intensity_options": ["low", "medium", "high", "extreme"],
+  "intensity": "high",
+  
+  "_tempo_options": ["sustained", "escalating", "surge", "declining", "intermittent"],
+  "tempo": "sustained",
+  
+  "special_events": {
+    "major_offensive": false,
+    "ambush": false,
+    "mass_casualty": true
+  },
+  
+  "environmental_conditions": {
+    "rain": false,
+    "fog": false,
+    "storm": false,
+    "extreme_heat": false,
+    "extreme_cold": false,
+    "dust_storm": false,
+    "night_operations": true,
+    "mountainous_terrain": false,
+    "urban_debris": false
+  },
+  
+  "injury_mix": {
+    "Disease": 0.52,
+    "Non-Battle Injury": 0.33,
+    "Battle Injury": 0.15
+  }
+}

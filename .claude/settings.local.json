@@ -47,7 +47,15 @@
       "Bash(true)",
       "Bash(rg:*)",
       "Bash(gh pr list:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(docker build:*)",
+      "Bash(npm ci:*)",
+      "Bash(patient_generator/temporal_generator.py )",
+      "Bash(src/domain/services/patient_generation_service.py )",
+      "Bash(src/api/v1/routers/generation.py )",
+      "Bash(memory/fixes/temporal-generation-system-fixed.md )",
+      "Bash(memory/current-session.md)"
     ],
     "deny": []
   },

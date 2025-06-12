@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Military Patient Generator</title>
+        <title>Temporal Military Patient Generator</title>
 
         <!-- Modern Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,7 +29,7 @@
             <div class="api-banner__content">
                 <span class="api-banner__text">
                     <i class="fas fa-code api-banner__icon"></i>
-                    API Available - Integrate patient generation programmatically
+                    Temporal API Available - Integrate realistic warfare scenario simulation programmatically
                 </span>
                 <a href="/docs" class="api-banner__link">
                     View Documentation
@@ -48,9 +48,9 @@
                             <div class="bg-cyan-100 rounded-lg p-2 mr-3">
                                 <i class="fas fa-user-md text-xl text-cyan-600"></i>
                             </div>
-                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Military Patient Generator</h1>
+                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Temporal Military Patient Generator</h1>
                         </div>
-                        <p class="text-sm text-slate-600 max-w-xl mx-auto">Professional medical training data generation platform</p>
+                        <p class="text-sm text-slate-600 max-w-xl mx-auto">Advanced temporal medical training simulation with realistic warfare scenarios</p>
                     </div>
                 </div>
 
@@ -65,7 +65,7 @@
                                     <div class="bg-cyan-100 rounded-lg p-2 mr-3">
                                         <i class="fas fa-cogs text-cyan-600"></i>
                                     </div>
-                                    <h2 class="text-lg font-semibold text-slate-800">Configuration Settings</h2>
+                                    <h2 class="text-lg font-semibold text-slate-800">Temporal Generation Settings</h2>
                                 </div>
                             </div>
 
@@ -129,14 +129,14 @@
                                         </div>
                                     </div>
 
-                                    <!-- Injury Distribution -->
+                                    <!-- Scenario Configuration -->
                                     <div class="accordion__item">
                                         <button class="accordion__header" type="button">
                                             <div class="accordion__title">
                                                 <span class="accordion__status accordion__status--unknown">?</span>
                                                 <div class="flex items-center">
-                                                    <i class="fas fa-chart-pie text-slate-500 mr-2"></i>
-                                                    <span>Injury Distribution</span>
+                                                    <i class="fas fa-clock text-slate-500 mr-2"></i>
+                                                    <span>Scenario Configuration</span>
                                                 </div>
                                             </div>
                                             <i class="accordion__icon fas fa-chevron-down text-slate-400"></i>
@@ -144,19 +144,69 @@
                                         <div class="accordion__content">
                                             <div class="space-y-4">
                                                 <div>
-                                                    <label class="block text-sm font-medium text-slate-700 mb-2"> Medical Case Distribution (JSON Format) </label>
-                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter injury distribution JSON..." rows="10">
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2"> 
+                                                        Temporal Generation Configuration (JSON Format)
+                                                        <span class="text-xs text-slate-500 ml-2">Warfare scenarios, environmental conditions, and temporal patterns</span>
+                                                    </label>
+                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter temporal scenario configuration JSON..." rows="25">
 {
-  "injury_distribution": {
+  "total_patients": 1440,
+  "days_of_fighting": 8,
+  "base_date": "2025-06-01",
+  
+  "warfare_types": {
+    "conventional": true,
+    "artillery": true,
+    "urban": false,
+    "guerrilla": false,
+    "drone": true,
+    "naval": false,
+    "cbrn": false,
+    "peacekeeping": false
+  },
+  
+  "intensity": "high",
+  "tempo": "sustained",
+  
+  "special_events": {
+    "major_offensive": false,
+    "ambush": true,
+    "mass_casualty": true
+  },
+  
+  "environmental_conditions": {
+    "rain": false,
+    "fog": false,
+    "storm": false,
+    "extreme_heat": false,
+    "extreme_cold": false,
+    "dust_storm": false,
+    "night_operations": true,
+    "mountainous_terrain": false,
+    "urban_debris": false
+  },
+  
+  "injury_mix": {
     "Disease": 0.52,
     "Non-Battle Injury": 0.33,
     "Battle Injury": 0.15
-  },
-  "total_patients": 1440
+  }
 }</textarea
                                                     >
                                                 </div>
                                                 <div class="accordion__validation"></div>
+                                                <div class="text-xs text-slate-500 mt-2 mb-4">
+                                                    <div class="grid grid-cols-2 gap-4 text-xs">
+                                                        <div>
+                                                            <strong>Warfare Types:</strong> 8 scenarios (conventional, artillery, urban, guerrilla, drone, naval, cbrn, peacekeeping)<br />
+                                                            <strong>Intensity:</strong> low, medium, high, extreme | <strong>Tempo:</strong> sustained, escalating, surge, declining, intermittent
+                                                        </div>
+                                                        <div>
+                                                            <strong>Special Events:</strong> major_offensive, ambush, mass_casualty<br />
+                                                            <strong>Environmental:</strong> Weather, terrain, and operational conditions affecting casualty patterns
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -314,14 +364,14 @@
                             </div>
                         </div>
 
-                        <!-- Quick Stats -->
+                        <!-- Temporal Generation Overview -->
                         <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
                             <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
                                 <div class="flex items-center">
                                     <div class="bg-amber-100 rounded-lg p-2 mr-3">
                                         <i class="fas fa-chart-bar text-amber-600"></i>
                                     </div>
-                                    <h3 class="text-lg font-semibold text-slate-800">Quick Overview</h3>
+                                    <h3 class="text-lg font-semibold text-slate-800">Generation Overview</h3>
                                 </div>
                             </div>
 
@@ -334,6 +384,20 @@
                                     <div class="flex justify-between items-center">
                                         <span class="text-sm text-slate-600">Battle Fronts:</span>
                                         <span class="font-semibold text-slate-800" id="totalFronts">3</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-slate-600">Generation Type:</span>
+                                        <div class="flex space-x-1">
+                                            <span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium">Temporal</span>
+                                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">8 Warfare Types</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm text-slate-600">Capabilities:</span>
+                                        <div class="flex space-x-1">
+                                            <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-medium">Timeline</span>
+                                            <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">Environmental</span>
+                                        </div>
                                     </div>
                                     <div class="flex justify-between items-center">
                                         <span class="text-sm text-slate-600">Output Formats:</span>
