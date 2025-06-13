@@ -7,7 +7,7 @@
 
 class PatientGeneratorApp {
     constructor() {
-        this.apiClient = window.apiClient;
+        this.apiClient = null; // Will be set when config is ready
         this.accordion = null;
         this.currentJobId = null;
         this.pollingPromise = null;
@@ -73,6 +73,9 @@ class PatientGeneratorApp {
         // Wait for accordion to be ready
         this.waitForAccordion();
 
+        // Wait for API client to be ready
+        await this.waitForApiClient();
+
         // Load initial data
         await this.loadInitialData();
 
@@ -133,6 +136,21 @@ class PatientGeneratorApp {
             }
         };
         checkAccordion();
+    }
+
+    async waitForApiClient() {
+        // Wait for API client to be initialized
+        return new Promise((resolve) => {
+            const checkApiClient = () => {
+                if (window.apiClient) {
+                    this.apiClient = window.apiClient;
+                    resolve();
+                } else {
+                    setTimeout(checkApiClient, 100);
+                }
+            };
+            checkApiClient();
+        });
     }
 
     async loadInitialData() {
@@ -351,10 +369,12 @@ class PatientGeneratorApp {
         }
 
         // Validate nationality codes against loaded data
-        for (const front of config.front_configs) {
-            for (const natDist of front.nationality_distribution) {
-                if (!this.validNationalityCodes.has(natDist.nationality_code)) {
-                    console.warn(`Unknown nationality code: ${natDist.nationality_code}`);
+        if (this.validNationalityCodes) {
+            for (const front of config.front_configs) {
+                for (const natDist of front.nationality_distribution) {
+                    if (!this.validNationalityCodes.has(natDist.nationality_code)) {
+                        console.warn(`Unknown nationality code: ${natDist.nationality_code}`);
+                    }
                 }
             }
         }

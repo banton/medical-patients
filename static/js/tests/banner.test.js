@@ -134,7 +134,9 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Export to window for other test files
 if (typeof window !== 'undefined') {
-    window.TestFramework = { TestFramework, assert, querySelector };
+    window.TestFramework = TestFramework;
+    window.TestFramework.assert = assert;
+    window.TestFramework.querySelector = querySelector;
 }
 
 // Auto-run tests if this file is loaded directly

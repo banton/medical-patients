@@ -5,11 +5,13 @@
 
 /* eslint no-console: "off", no-unused-vars: "off" */
 
-// Import test framework from banner tests
+// Use test framework from banner tests
 // Note: In a real project, this would be a proper module import
-const { TestFramework, assert, querySelector } = window.TestFramework || {};
+const testFramework = window.TestFramework;
+const assert = window.TestFramework?.assert;
+const querySelector = window.TestFramework?.querySelector;
 
-if (!TestFramework) {
+if (!testFramework) {
     throw new Error('Test framework not loaded. Please include banner.test.js first.');
 }
 
@@ -47,7 +49,7 @@ function clickAccordionHeader(index) {
 }
 
 // Accordion Tests
-TestFramework.test('Accordion should have correct structure', () => {
+testFramework.test('Accordion should have correct structure', () => {
     const accordion = querySelector('.accordion');
     const items = accordion.querySelectorAll('.accordion__item');
 
@@ -64,7 +66,7 @@ TestFramework.test('Accordion should have correct structure', () => {
     });
 });
 
-TestFramework.test('Accordion should have proper section titles', () => {
+testFramework.test('Accordion should have proper section titles', () => {
     const expectedTitles = ['Battle Fronts Configuration', 'Injury Distribution'];
 
     expectedTitles.forEach((title, index) => {
@@ -75,7 +77,7 @@ TestFramework.test('Accordion should have proper section titles', () => {
     });
 });
 
-TestFramework.test('Accordion should have validation status indicators', () => {
+testFramework.test('Accordion should have validation status indicators', () => {
     const items = document.querySelectorAll('.accordion__item');
 
     items.forEach((item, index) => {
@@ -91,12 +93,12 @@ TestFramework.test('Accordion should have validation status indicators', () => {
     });
 });
 
-TestFramework.test('Only one accordion section should be expanded initially', () => {
+testFramework.test('Only one accordion section should be expanded initially', () => {
     const expandedCount = document.querySelectorAll('.accordion__content--expanded').length;
     assert(expandedCount <= 1, 'At most one section should be expanded initially');
 });
 
-TestFramework.test('Accordion should expand section when header clicked', async () => {
+testFramework.test('Accordion should expand section when header clicked', async () => {
     // Ensure all sections are collapsed first
     const items = document.querySelectorAll('.accordion__item');
     items.forEach((item, index) => {
@@ -115,7 +117,7 @@ TestFramework.test('Accordion should expand section when header clicked', async 
     assert(header.classList.contains('accordion__header--active'), 'First header should be active after click');
 });
 
-TestFramework.test('Accordion should collapse other sections when new one is opened', async () => {
+testFramework.test('Accordion should collapse other sections when new one is opened', async () => {
     // Expand first section
     await clickAccordionHeader(0);
     assert(isExpanded(0), 'First section should be expanded');
@@ -133,7 +135,7 @@ TestFramework.test('Accordion should collapse other sections when new one is ope
     assert(secondHeader.classList.contains('accordion__header--active'), 'Second header should be active');
 });
 
-TestFramework.test('Accordion should toggle section when same header clicked twice', async () => {
+testFramework.test('Accordion should toggle section when same header clicked twice', async () => {
     // Expand first section
     await clickAccordionHeader(0);
     assert(isExpanded(0), 'First section should be expanded');
@@ -146,7 +148,7 @@ TestFramework.test('Accordion should toggle section when same header clicked twi
     assert(!header.classList.contains('accordion__header--active'), 'Header should not be active after collapse');
 });
 
-TestFramework.test('Accordion should be keyboard accessible', () => {
+testFramework.test('Accordion should be keyboard accessible', () => {
     const firstHeader = getAccordionHeader(0);
 
     // Check if header is focusable
@@ -161,7 +163,7 @@ TestFramework.test('Accordion should be keyboard accessible', () => {
     assert(hasAriaExpanded, 'Header should have aria-expanded attribute');
 });
 
-TestFramework.test('Accordion editors should have proper attributes', () => {
+testFramework.test('Accordion editors should have proper attributes', () => {
     const items = document.querySelectorAll('.accordion__item');
 
     items.forEach((item, index) => {
@@ -175,7 +177,7 @@ TestFramework.test('Accordion editors should have proper attributes', () => {
     });
 });
 
-TestFramework.test('Accordion should validate JSON in editors', () => {
+testFramework.test('Accordion should validate JSON in editors', () => {
     const firstEditor = getAccordionItem(0).querySelector('.accordion__editor');
 
     // Test invalid JSON

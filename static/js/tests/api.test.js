@@ -5,10 +5,11 @@
 
 /* eslint no-console: "off", no-unused-vars: "off", no-undef: "off" */
 
-// Import test framework
-const { TestFramework, assert } = window.TestFramework || {};
+// Use test framework from banner tests
+const testFramework = window.TestFramework;
+const assert = window.TestFramework?.assert;
 
-if (!TestFramework) {
+if (!testFramework) {
     throw new Error('Test framework not loaded. Please include banner.test.js first.');
 }
 
@@ -54,7 +55,7 @@ function teardownMockFetch() {
 }
 
 // API Client Tests
-TestFramework.test('ApiClient should initialize with correct defaults', () => {
+testFramework.test('ApiClient should initialize with correct defaults', () => {
     const client = new ApiClient();
 
     assert(client.baseUrl === '', 'Base URL should default to empty string');
@@ -63,7 +64,7 @@ TestFramework.test('ApiClient should initialize with correct defaults', () => {
     assert(client.defaultHeaders['X-API-Key'] === client.apiKey, 'Should include API key in headers');
 });
 
-TestFramework.test('ApiClient should construct proper URLs', async () => {
+testFramework.test('ApiClient should construct proper URLs', async () => {
     setupMockFetch();
     mockFetch.setup([{ ok: true, status: 200, json: { success: true } }]);
 
@@ -76,7 +77,7 @@ TestFramework.test('ApiClient should construct proper URLs', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient should include authentication headers', async () => {
+testFramework.test('ApiClient should include authentication headers', async () => {
     setupMockFetch();
     mockFetch.setup([{ ok: true, status: 200, json: { success: true } }]);
 
@@ -90,7 +91,7 @@ TestFramework.test('ApiClient should include authentication headers', async () =
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient should handle successful responses', async () => {
+testFramework.test('ApiClient should handle successful responses', async () => {
     setupMockFetch();
     mockFetch.setup([
         {
@@ -109,7 +110,7 @@ TestFramework.test('ApiClient should handle successful responses', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient should handle API errors', async () => {
+testFramework.test('ApiClient should handle API errors', async () => {
     setupMockFetch();
     mockFetch.setup([
         {
@@ -138,7 +139,7 @@ TestFramework.test('ApiClient should handle API errors', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient should handle network errors', async () => {
+testFramework.test('ApiClient should handle network errors', async () => {
     setupMockFetch();
     window.fetch = async () => {
         throw new Error('Network error');
@@ -158,7 +159,7 @@ TestFramework.test('ApiClient should handle network errors', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient should send POST data correctly', async () => {
+testFramework.test('ApiClient should send POST data correctly', async () => {
     setupMockFetch();
     mockFetch.setup([{ ok: true, status: 201, json: { id: '123' } }]);
 
@@ -174,7 +175,7 @@ TestFramework.test('ApiClient should send POST data correctly', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient generation endpoint should work', async () => {
+testFramework.test('ApiClient generation endpoint should work', async () => {
     setupMockFetch();
     mockFetch.setup([
         {
@@ -206,7 +207,7 @@ TestFramework.test('ApiClient generation endpoint should work', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient job polling should work', async () => {
+testFramework.test('ApiClient job polling should work', async () => {
     setupMockFetch();
     // First call: running, second call: completed
     mockFetch.setup([
@@ -229,7 +230,7 @@ TestFramework.test('ApiClient job polling should work', async () => {
     teardownMockFetch();
 });
 
-TestFramework.test('ApiClient should handle blob responses for downloads', async () => {
+testFramework.test('ApiClient should handle blob responses for downloads', async () => {
     setupMockFetch();
     const testBlob = new Blob(['test data'], { type: 'application/zip' });
     mockFetch.setup([{ ok: true, status: 200, blob: testBlob }]);
@@ -245,7 +246,7 @@ TestFramework.test('ApiClient should handle blob responses for downloads', async
     teardownMockFetch();
 });
 
-TestFramework.test('ApiError should provide utility methods', () => {
+testFramework.test('ApiError should provide utility methods', () => {
     const networkError = new ApiError(0, 'Network Error', 'Connection failed');
     const authError = new ApiError(401, 'Unauthorized', 'Invalid API key');
     const notFoundError = new ApiError(404, 'Not Found', 'Resource not found');
@@ -263,7 +264,7 @@ TestFramework.test('ApiError should provide utility methods', () => {
     assert(errorJson.error === 'Unauthorized', 'Should serialize error type');
 });
 
-TestFramework.test('Global API client should be available', () => {
+testFramework.test('Global API client should be available', () => {
     assert(typeof window.apiClient !== 'undefined', 'Global apiClient should be available');
     assert(window.apiClient instanceof ApiClient, 'Should be ApiClient instance');
     assert(typeof window.ApiError !== 'undefined', 'ApiError should be available globally');
