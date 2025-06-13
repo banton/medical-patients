@@ -148,7 +148,7 @@ class ApiClient {
     // Utility methods
     async healthCheck() {
         try {
-            const response = await fetch(`${this.baseUrl}/health`);
+            const response = await fetch(`${this.baseUrl}/docs`);
             return response.ok;
         } catch {
             return false;
