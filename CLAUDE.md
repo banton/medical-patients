@@ -221,6 +221,8 @@ python demo.py
 3. **Focus on functionality** - UI should be clean and functional
 4. **Document everything** - Future Claude sessions need context
 5. **Test everything** - TDD is mandatory
+6. **🚨 NEVER DECLARE VICTORY WITHOUT TESTING** - Always verify with actual tests before claiming something works
+7. **🚦 DO NOT TEST DO THINGS BEFORE GH CI HAS PASSED WITH FLYING COLOURS** - Wait for GitHub CI to pass completely before testing deployments or claiming fixes work
 
 ---
 
