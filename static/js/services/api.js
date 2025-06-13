@@ -9,7 +9,9 @@ class ApiClient {
     constructor(baseUrl = '', apiKey = null) {
         this.baseUrl = baseUrl;
         // Use config API key if available, fallback to parameter or default
-        this.apiKey = apiKey || (typeof window !== 'undefined' && window.config ? window.config.apiKey : 'your_secret_api_key_here');
+        this.apiKey =
+            apiKey ||
+            (typeof window !== 'undefined' && window.config ? window.config.apiKey : 'your_secret_api_key_here');
         this.defaultHeaders = {
             'Content-Type': 'application/json',
             'X-API-Key': this.apiKey
@@ -259,7 +261,7 @@ if (typeof window !== 'undefined') {
             window.apiClient = apiClient;
             console.log('🔌 v1 API Client initialized with environment config');
         });
-        
+
         // Fallback timeout in case configReady event doesn't fire
         setTimeout(() => {
             if (!apiClient) {

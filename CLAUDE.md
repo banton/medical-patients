@@ -224,6 +224,10 @@ python demo.py
 6. **🚨 NEVER DECLARE VICTORY WITHOUT TESTING** - Always verify with actual tests before claiming something works
 7. **🚦 DO NOT TEST DO THINGS BEFORE GH CI HAS PASSED WITH FLYING COLOURS** - Wait for GitHub CI to pass completely before testing deployments or claiming fixes work
 
+## 🚨 Workflow Memory
+- Always use Makefile and stop being a hacker :D
+- Do not test Digitalocean before GH tests pass
+
 ---
 
 *Last Updated: Complete React Timeline Viewer + CI/CD Pipeline Integration*
@@ -283,3 +287,5 @@ memory/fixes/
 - **Data Processing**: Handles complex patient data with timeline events and facility tracking
 - **CI/CD Pipeline**: Automated testing and validation for both backend and React application
 - **Production Deployment**: Ready for immediate use with comprehensive documentation
+
+```

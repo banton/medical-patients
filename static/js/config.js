@@ -9,16 +9,16 @@ class Config {
     constructor() {
         // Auto-detect environment based on hostname
         this.environment = this.detectEnvironment();
-        
+
         // Environment-specific configuration
         this.config = this.getEnvironmentConfig();
-        
+
         // Initialize API key from backend
         this._initializeApiKey();
-        
+
         console.log(`🔧 Frontend configured for ${this.environment} environment`);
     }
-    
+
     async _initializeApiKey() {
         // Only fetch API key from backend in production
         if (this.environment === 'production') {
@@ -28,7 +28,7 @@ class Config {
                     const backendConfig = await response.json();
                     this.config.apiKey = backendConfig.apiKey;
                     console.log('🔑 API key fetched from backend');
-                    
+
                     // Notify that config is ready
                     if (window.dispatchEvent) {
                         window.dispatchEvent(new CustomEvent('configReady'));
@@ -48,10 +48,10 @@ class Config {
             }, 100);
         }
     }
-    
+
     detectEnvironment() {
         const hostname = window.location.hostname;
-        
+
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'local';
         } else if (hostname.includes('staging') || hostname.includes('z9rms')) {
@@ -63,7 +63,7 @@ class Config {
             return 'local';
         }
     }
-    
+
     getEnvironmentConfig() {
         const configs = {
             local: {
@@ -79,37 +79,37 @@ class Config {
                 environment: 'staging'
             },
             production: {
-                apiKey: 'fetching_from_backend',  // Will be replaced by _initializeApiKey
+                apiKey: 'fetching_from_backend', // Will be replaced by _initializeApiKey
                 apiBaseUrl: '',
                 debug: false,
                 environment: 'production'
             }
         };
-        
+
         return configs[this.environment] || configs.local;
     }
-    
+
     // Getter methods for easy access
     get apiKey() {
         return this.config.apiKey;
     }
-    
+
     get apiBaseUrl() {
         return this.config.apiBaseUrl;
     }
-    
+
     get debug() {
         return this.config.debug;
     }
-    
+
     get isProduction() {
         return this.environment === 'production';
     }
-    
+
     get isStaging() {
         return this.environment === 'staging';
     }
-    
+
     get isLocal() {
         return this.environment === 'local';
     }

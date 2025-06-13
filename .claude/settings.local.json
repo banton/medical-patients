@@ -57,7 +57,10 @@
       "Bash(memory/fixes/temporal-generation-system-fixed.md )",
       "Bash(memory/current-session.md)",
       "mcp__digitalocean-mcp-local__list_apps",
-      "mcp__digitalocean-mcp-local__get_app"
+      "mcp__digitalocean-mcp-local__get_app",
+      "mcp__digitalocean-mcp-local__list_deployments",
+      "mcp__digitalocean-mcp-local__get_deployment",
+      "Bash(gh run list:*)"
     ],
     "deny": []
   },
