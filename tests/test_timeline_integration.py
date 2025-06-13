@@ -59,10 +59,7 @@ class TestTimelineIntegration:
 
         # Validate first patient structure
         patient = patients_data[0]
-        required_fields = [
-            "id", "nationality", "triage_category",
-            "final_status", "movement_timeline"
-        ]
+        required_fields = ["id", "nationality", "triage_category", "final_status", "movement_timeline"]
 
         for field in required_fields:
             assert field in patient, f"Required field '{field}' missing from patient data"
@@ -99,19 +96,13 @@ class TestTimelineIntegration:
                 "name": "Timeline Integration Test",
                 "description": "Test configuration for timeline integration",
                 "total_patients": 5,
-                "injury_distribution": {
-                    "Battle Injury": 0.6,
-                    "Non-Battle Injury": 0.3,
-                    "Disease": 0.1
-                },
+                "injury_distribution": {"Battle Injury": 0.6, "Non-Battle Injury": 0.3, "Disease": 0.1},
                 "front_configs": [
                     {
                         "id": "test_front_1",
                         "name": "Test Front Alpha",
                         "casualty_rate": 1.0,
-                        "nationality_distribution": [
-                            {"nationality_code": "USA", "percentage": 100.0}
-                        ]
+                        "nationality_distribution": [{"nationality_code": "USA", "percentage": 100.0}],
                     }
                 ],
                 "facility_configs": [
@@ -122,11 +113,11 @@ class TestTimelineIntegration:
                         "role": "Role 2",
                         "front_id": "test_front_1",
                         "kia_rate": 0.05,
-                        "rtd_rate": 0.85
+                        "rtd_rate": 0.85,
                     }
-                ]
+                ],
             },
-            "output_formats": ["json"]
+            "output_formats": ["json"],
         }
 
         # Generate patients
@@ -135,7 +126,7 @@ class TestTimelineIntegration:
                 "http://localhost:8000/api/v1/generation/",
                 json=test_config,
                 headers={"X-API-Key": "your_secret_api_key_here"},
-                timeout=30
+                timeout=30,
             )
             assert response.status_code == 201
             generation_data = response.json()
@@ -150,7 +141,7 @@ class TestTimelineIntegration:
                 response = requests.get(
                     f"http://localhost:8000/api/v1/jobs/{job_id}",
                     headers={"X-API-Key": "your_secret_api_key_here"},
-                    timeout=10
+                    timeout=10,
                 )
                 assert response.status_code == 200
                 job_status = response.json()
@@ -168,7 +159,7 @@ class TestTimelineIntegration:
             response = requests.get(
                 f"http://localhost:8000/api/v1/downloads/{job_id}",
                 headers={"X-API-Key": "your_secret_api_key_here"},
-                timeout=30
+                timeout=30,
             )
             assert response.status_code == 200
 
@@ -192,11 +183,7 @@ class TestTimelineIntegration:
 
         # Test timeline-test command
         result = subprocess.run(
-            ["make", "timeline-test"],
-            cwd=Path.cwd(),
-            capture_output=True,
-            text=True,
-            timeout=120, check=False
+            ["make", "timeline-test"], cwd=Path.cwd(), capture_output=True, text=True, timeout=120, check=False
         )
 
         assert result.returncode == 0, f"make timeline-test failed: {result.stderr}"
@@ -210,12 +197,14 @@ class TestTimelineIntegration:
         if not dist_dir.exists():
             # Run build if dist doesn't exist
             import subprocess
+
             result = subprocess.run(
                 ["npm", "run", "build"],
                 cwd=Path("patient-timeline-viewer"),
                 capture_output=True,
                 text=True,
-                timeout=120, check=False
+                timeout=120,
+                check=False,
             )
             assert result.returncode == 0, f"Build failed: {result.stderr}"
 

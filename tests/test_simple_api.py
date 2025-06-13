@@ -31,11 +31,14 @@ def load_json_config():
         "name": "Test Configuration from JSON",
         "description": "Configuration built from JSON files",
         "total_patients": injuries_data.get("total_patients", injuries_data.get("patients", 1440)),
-        "injury_distribution": injuries_data.get("injury_mix", {
-            "Disease": injuries_data.get("Disease", 0.52),
-            "Non-Battle Injury": injuries_data.get("Non-Battle Injury", 0.33),
-            "Battle Injury": injuries_data.get("Battle Injury", 0.15),
-        }),
+        "injury_distribution": injuries_data.get(
+            "injury_mix",
+            {
+                "Disease": injuries_data.get("Disease", 0.52),
+                "Non-Battle Injury": injuries_data.get("Non-Battle Injury", 0.33),
+                "Battle Injury": injuries_data.get("Battle Injury", 0.15),
+            },
+        ),
         "front_configs": [],
         "facility_configs": [],
     }

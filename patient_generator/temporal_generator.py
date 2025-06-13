@@ -9,6 +9,7 @@ import uuid
 @dataclass
 class CasualtyEvent:
     """Represents a single casualty or mass casualty event"""
+
     timestamp: datetime
     patient_count: int
     warfare_type: str
@@ -28,15 +29,17 @@ class TemporalPatternGenerator:
 
         self.hourly_baseline = self.warfare_patterns["hourly_activity_baseline"]
 
-    def generate_timeline(self,
-                         days: int,
-                         total_patients: int,
-                         active_warfare_types: Dict[str, bool],
-                         intensity: str,
-                         tempo: str,
-                         environmental_conditions: Dict[str, bool],
-                         special_events: Dict[str, bool],
-                         base_date: str) -> List[CasualtyEvent]:
+    def generate_timeline(
+        self,
+        days: int,
+        total_patients: int,
+        active_warfare_types: Dict[str, bool],
+        intensity: str,
+        tempo: str,
+        environmental_conditions: Dict[str, bool],
+        special_events: Dict[str, bool],
+        base_date: str,
+    ) -> List[CasualtyEvent]:
         """Generate a complete timeline of casualty events"""
 
         # Parse base date
@@ -59,9 +62,7 @@ class TemporalPatternGenerator:
         adjusted_total = int(total_patients * intensity_mod["patient_multiplier"])
 
         # Distribute patients across days based on tempo
-        daily_distribution = self._distribute_patients_by_day(
-            adjusted_total, days, tempo_pattern["daily_intensity"]
-        )
+        daily_distribution = self._distribute_patients_by_day(adjusted_total, days, tempo_pattern["daily_intensity"])
 
         # Generate events for each day
         all_events = []
@@ -71,9 +72,7 @@ class TemporalPatternGenerator:
             day_datetime = base_datetime + timedelta(days=day)
 
             # Check for special events on this day
-            day_special_events = self._get_special_events_for_day(
-                day + 1, special_events, day_patients, base_date
-            )
+            day_special_events = self._get_special_events_for_day(day + 1, special_events, day_patients, base_date)
 
             # Distribute patients among warfare types for this day
             warfare_distribution = self._distribute_patients_by_warfare(
@@ -84,8 +83,7 @@ class TemporalPatternGenerator:
             for warfare_type, type_patients in warfare_distribution.items():
                 if type_patients > 0:
                     events = self._generate_warfare_type_events(
-                        warfare_type, type_patients, day, day_datetime,
-                        environmental_conditions, intensity_mod
+                        warfare_type, type_patients, day, day_datetime, environmental_conditions, intensity_mod
                     )
                     all_events.extend(events)
 
@@ -93,9 +91,7 @@ class TemporalPatternGenerator:
             all_events.extend(day_special_events)
 
         # Apply environmental modifiers to all events
-        all_events = self._apply_environmental_modifiers(
-            all_events, environmental_conditions
-        )
+        all_events = self._apply_environmental_modifiers(all_events, environmental_conditions)
 
         # Sort events by timestamp
         all_events.sort(key=lambda e: e.timestamp)
@@ -127,8 +123,7 @@ class TemporalPatternGenerator:
 
         return weights
 
-    def _distribute_patients_by_day(self, total: int, days: int,
-                                   daily_intensity: List[float]) -> List[int]:
+    def _distribute_patients_by_day(self, total: int, days: int, daily_intensity: List[float]) -> List[int]:
         """Distribute patients across days based on tempo pattern"""
         # Ensure we have intensity values for all days
         if len(daily_intensity) < days:
@@ -154,9 +149,9 @@ class TemporalPatternGenerator:
 
         return daily_patients
 
-    def _distribute_patients_by_warfare(self, day_patients: int,
-                                       warfare_weights: Dict[str, float],
-                                       special_events: List[CasualtyEvent]) -> Dict[str, int]:
+    def _distribute_patients_by_warfare(
+        self, day_patients: int, warfare_weights: Dict[str, float], special_events: List[CasualtyEvent]
+    ) -> Dict[str, int]:
         """Distribute patients among warfare types for a day"""
         # Reserve patients for special events
         special_event_patients = sum(e.patient_count for e in special_events)
@@ -180,27 +175,26 @@ class TemporalPatternGenerator:
 
         return distribution
 
-    def _generate_warfare_type_events(self, warfare_type: str, total_patients: int,
-                                     day: int, day_datetime: datetime,
-                                     environmental_conditions: Dict[str, bool],
-                                     intensity_mod: Dict) -> List[CasualtyEvent]:
+    def _generate_warfare_type_events(
+        self,
+        warfare_type: str,
+        total_patients: int,
+        day: int,
+        day_datetime: datetime,
+        environmental_conditions: Dict[str, bool],
+        intensity_mod: Dict,
+    ) -> List[CasualtyEvent]:
         """Generate casualty events for a specific warfare type on a day"""
         warfare_config = self.warfare_patterns["warfare_types"][warfare_type]
         pattern_type = warfare_config["temporal_pattern"]["type"]
 
         # Generate hourly distribution based on pattern type
         if pattern_type == "sustained_combat":
-            hourly_distribution = self._generate_sustained_pattern(
-                total_patients, warfare_config["temporal_pattern"]
-            )
+            hourly_distribution = self._generate_sustained_pattern(total_patients, warfare_config["temporal_pattern"])
         elif pattern_type == "surge":
-            hourly_distribution = self._generate_surge_pattern(
-                total_patients, day, warfare_config["temporal_pattern"]
-            )
+            hourly_distribution = self._generate_surge_pattern(total_patients, day, warfare_config["temporal_pattern"])
         elif pattern_type == "sporadic":
-            hourly_distribution = self._generate_sporadic_pattern(
-                total_patients, warfare_config["temporal_pattern"]
-            )
+            hourly_distribution = self._generate_sporadic_pattern(total_patients, warfare_config["temporal_pattern"])
         elif pattern_type == "precision_strike":
             hourly_distribution = self._generate_precision_strike_pattern(
                 total_patients, warfare_config["temporal_pattern"]
@@ -220,16 +214,20 @@ class TemporalPatternGenerator:
         for hour, hour_patients in hourly_distribution:
             if hour_patients > 0:
                 hour_events = self._generate_hour_events(
-                    warfare_type, hour_patients, day, hour,
-                    day_datetime, warfare_config["casualty_clustering"],
-                    active_env, intensity_mod
+                    warfare_type,
+                    hour_patients,
+                    day,
+                    hour,
+                    day_datetime,
+                    warfare_config["casualty_clustering"],
+                    active_env,
+                    intensity_mod,
                 )
                 events.extend(hour_events)
 
         return events
 
-    def _generate_sustained_pattern(self, total_patients: int,
-                                   params: Dict) -> List[Tuple[int, int]]:
+    def _generate_sustained_pattern(self, total_patients: int, params: Dict) -> List[Tuple[int, int]]:
         """Generate sustained combat pattern (conventional warfare)"""
         hourly_casualties = []
         peak_hours = params["peak_hours"]
@@ -281,8 +279,7 @@ class TemporalPatternGenerator:
 
         return hourly_casualties
 
-    def _generate_surge_pattern(self, total_patients: int, day: int,
-                               params: Dict) -> List[Tuple[int, int]]:
+    def _generate_surge_pattern(self, total_patients: int, day: int, params: Dict) -> List[Tuple[int, int]]:
         """Generate surge pattern (artillery)"""
         surges_per_day = params["surges_per_day"]
         surge_duration = params["surge_duration_hours"]
@@ -299,8 +296,7 @@ class TemporalPatternGenerator:
                 start = random.choice(available_hours)
                 surge_starts.append(start)
                 # Remove this hour and nearby hours to prevent overlap
-                available_hours = [h for h in available_hours
-                                 if abs(h - start) > surge_duration]
+                available_hours = [h for h in available_hours if abs(h - start) > surge_duration]
 
         # Build surge hours set
         surge_hours = set()
@@ -336,8 +332,7 @@ class TemporalPatternGenerator:
         # Validate distribution to avoid hour 0 clustering
         return self._validate_hourly_distribution(hourly_casualties, total_patients)
 
-    def _generate_sporadic_pattern(self, total_patients: int,
-                                  params: Dict) -> List[Tuple[int, int]]:
+    def _generate_sporadic_pattern(self, total_patients: int, params: Dict) -> List[Tuple[int, int]]:
         """Generate sporadic pattern (guerrilla warfare)"""
         events_range = params["events_per_day_range"]
         dawn_dusk_pref = params["dawn_dusk_preference"]
@@ -388,8 +383,7 @@ class TemporalPatternGenerator:
 
         return [(h, p) for h, p in enumerate(hourly_casualties)]
 
-    def _generate_precision_strike_pattern(self, total_patients: int,
-                                         params: Dict) -> List[Tuple[int, int]]:
+    def _generate_precision_strike_pattern(self, total_patients: int, params: Dict) -> List[Tuple[int, int]]:
         """Generate precision strike pattern (drone warfare)"""
         strikes_range = params["strikes_per_day_range"]
         preference = params["strike_window_preference"]
@@ -430,8 +424,7 @@ class TemporalPatternGenerator:
 
         return [(h, p) for h, p in enumerate(hourly_casualties)]
 
-    def _generate_phased_assault_pattern(self, total_patients: int,
-                                       params: Dict) -> List[Tuple[int, int]]:
+    def _generate_phased_assault_pattern(self, total_patients: int, params: Dict) -> List[Tuple[int, int]]:
         """Generate phased assault pattern (urban warfare)"""
         phases = params["assault_phases"]
         baseline = params["baseline_intensity"]
@@ -486,10 +479,17 @@ class TemporalPatternGenerator:
 
         return hourly_casualties
 
-    def _generate_hour_events(self, warfare_type: str, hour_patients: int,
-                            day: int, hour: int, day_datetime: datetime,
-                            clustering_params: Dict, environmental_factors: List[str],
-                            intensity_mod: Dict) -> List[CasualtyEvent]:
+    def _generate_hour_events(
+        self,
+        warfare_type: str,
+        hour_patients: int,
+        day: int,
+        hour: int,
+        day_datetime: datetime,
+        clustering_params: Dict,
+        environmental_factors: List[str],
+        intensity_mod: Dict,
+    ) -> List[CasualtyEvent]:
         """Generate specific casualty events for an hour"""
         events = []
         remaining_patients = hour_patients
@@ -514,7 +514,7 @@ class TemporalPatternGenerator:
                 warfare_type=warfare_type,
                 is_mass_casualty=True,
                 event_id=f"MC_{warfare_type}_{day}_{hour}_{minute}_{uuid.uuid4().hex[:8]}",
-                environmental_factors=environmental_factors
+                environmental_factors=environmental_factors,
             )
             events.append(event)
             remaining_patients -= size
@@ -535,15 +535,16 @@ class TemporalPatternGenerator:
                 warfare_type=warfare_type,
                 is_mass_casualty=False,
                 event_id=f"IND_{warfare_type}_{day}_{hour}_{minute}_{uuid.uuid4().hex[:8]}",
-                environmental_factors=environmental_factors
+                environmental_factors=environmental_factors,
             )
             events.append(event)
             remaining_patients -= group_size
 
         return events
 
-    def _get_special_events_for_day(self, day: int, special_events: Dict[str, bool],
-                                   day_patients: int, base_date: str) -> List[CasualtyEvent]:
+    def _get_special_events_for_day(
+        self, day: int, special_events: Dict[str, bool], day_patients: int, base_date: str
+    ) -> List[CasualtyEvent]:
         """Generate special events for a specific day"""
         events = []
 
@@ -562,7 +563,7 @@ class TemporalPatternGenerator:
             patients = int(day_patients * casualty_percentage * template["casualty_multiplier"])
             patients = min(patients, 100)  # Cap at 100 for single event
 
-            timestamp = base_datetime + timedelta(days=day-1, hours=hour)
+            timestamp = base_datetime + timedelta(days=day - 1, hours=hour)
 
             event = CasualtyEvent(
                 timestamp=timestamp,
@@ -570,7 +571,7 @@ class TemporalPatternGenerator:
                 warfare_type="mixed",
                 is_mass_casualty=True,
                 event_id=f"SE_mass_casualty_{day}_{hour}_{uuid.uuid4().hex[:8]}",
-                special_event_type="mass_casualty"
+                special_event_type="mass_casualty",
             )
             events.append(event)
 
@@ -579,7 +580,7 @@ class TemporalPatternGenerator:
             hour = random.choice(template["preferred_start_hours"])
             patients = int(day_patients * 0.3 * template["casualty_multiplier"])
 
-            timestamp = base_datetime + timedelta(days=day-1, hours=hour)
+            timestamp = base_datetime + timedelta(days=day - 1, hours=hour)
 
             event = CasualtyEvent(
                 timestamp=timestamp,
@@ -587,7 +588,7 @@ class TemporalPatternGenerator:
                 warfare_type="mixed",
                 is_mass_casualty=True,
                 event_id=f"SE_major_offensive_{day}_{hour}_{uuid.uuid4().hex[:8]}",
-                special_event_type="major_offensive"
+                special_event_type="major_offensive",
             )
             events.append(event)
 
@@ -596,7 +597,7 @@ class TemporalPatternGenerator:
             hour = random.choice(template["preferred_start_hours"])
             patients = int(day_patients * 0.1 * template["casualty_multiplier"])
 
-            timestamp = base_datetime + timedelta(days=day-1, hours=hour)
+            timestamp = base_datetime + timedelta(days=day - 1, hours=hour)
 
             event = CasualtyEvent(
                 timestamp=timestamp,
@@ -604,14 +605,15 @@ class TemporalPatternGenerator:
                 warfare_type="mixed",
                 is_mass_casualty=True,
                 event_id=f"SE_ambush_{day}_{hour}_{uuid.uuid4().hex[:8]}",
-                special_event_type="ambush"
+                special_event_type="ambush",
             )
             events.append(event)
 
         return events
 
-    def _apply_environmental_modifiers(self, events: List[CasualtyEvent],
-                                     environmental_conditions: Dict[str, bool]) -> List[CasualtyEvent]:
+    def _apply_environmental_modifiers(
+        self, events: List[CasualtyEvent], environmental_conditions: Dict[str, bool]
+    ) -> List[CasualtyEvent]:
         """Apply environmental effects to all events"""
         active_conditions = [cond for cond, active in environmental_conditions.items() if active]
 
@@ -651,15 +653,14 @@ class TemporalPatternGenerator:
                 is_mass_casualty=event.is_mass_casualty,
                 event_id=event.event_id,
                 environmental_factors=active_conditions,
-                special_event_type=event.special_event_type
+                special_event_type=event.special_event_type,
             )
 
             modified_events.append(modified_event)
 
         return modified_events
 
-    def _adjust_hourly_total(self, hourly_casualties: List[Tuple[int, int]],
-                           target_total: int):
+    def _adjust_hourly_total(self, hourly_casualties: List[Tuple[int, int]], target_total: int):
         """Adjust hourly casualties to match target total"""
         current_total = sum(h[1] for h in hourly_casualties)
 
@@ -706,8 +707,9 @@ class TemporalPatternGenerator:
             if not made_progress:
                 break
 
-    def _validate_hourly_distribution(self, hourly_casualties: List[Tuple[int, int]],
-                                     total_patients: int) -> List[Tuple[int, int]]:
+    def _validate_hourly_distribution(
+        self, hourly_casualties: List[Tuple[int, int]], total_patients: int
+    ) -> List[Tuple[int, int]]:
         """Validate hourly distribution and redistribute if too concentrated at hour 0"""
         if not hourly_casualties or total_patients == 0:
             return hourly_casualties

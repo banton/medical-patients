@@ -155,7 +155,9 @@ class TestE2EPatientGeneration:
                         first_patient = data[0]
                         assert "id" in first_patient, "Expected patient ID"
                         assert "demographics" in first_patient, "Expected demographics"
-                        assert "movement_timeline" in first_patient, "Expected movement timeline for timeline viewer compatibility"
+                        assert "movement_timeline" in first_patient, (
+                            "Expected movement timeline for timeline viewer compatibility"
+                        )
         finally:
             os.unlink(tmp_path)
 

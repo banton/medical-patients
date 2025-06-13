@@ -196,6 +196,7 @@ class PatientFlowSimulator:
 
         # Check if temporal configuration exists
         import os
+
         injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
 
         try:
@@ -652,9 +653,8 @@ class PatientFlowSimulator:
 
         # Initialize temporal generator
         import os
-        warfare_patterns_path = os.path.join(
-            os.path.dirname(__file__), "warfare_patterns.json"
-        )
+
+        warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
         temporal_gen = TemporalPatternGenerator(warfare_patterns_path)
 
         # Generate casualty timeline
@@ -666,15 +666,13 @@ class PatientFlowSimulator:
             tempo=injuries_config["tempo"],
             environmental_conditions=injuries_config["environmental_conditions"],
             special_events=injuries_config["special_events"],
-            base_date=injuries_config["base_date"]
+            base_date=injuries_config["base_date"],
         )
 
         # Generate patients based on timeline
         print(f"Generated {len(casualty_timeline)} casualty events")
         print(f"First 3 events: {[(e.timestamp.isoformat(), e.patient_count) for e in casualty_timeline[:3]]}")
-        patients = self._generate_patients_from_timeline(
-            casualty_timeline, injuries_config["injury_mix"]
-        )
+        patients = self._generate_patients_from_timeline(casualty_timeline, injuries_config["injury_mix"])
         print(f"Generated {len(patients)} patients from timeline")
         if patients:
             print(f"First patient injury time: {patients[0].injury_timestamp}")
@@ -692,14 +690,15 @@ class PatientFlowSimulator:
     def _load_injuries_config(self) -> Dict[str, Any]:
         """Load injuries.json configuration"""
         import os
+
         injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
 
         with open(injuries_path) as f:
             return json.load(f)
 
-    def _generate_patients_from_timeline(self,
-                                       timeline: List[CasualtyEvent],
-                                       base_injury_mix: Dict[str, float]) -> List[Patient]:
+    def _generate_patients_from_timeline(
+        self, timeline: List[CasualtyEvent], base_injury_mix: Dict[str, float]
+    ) -> List[Patient]:
         """Generate actual patients from casualty events with specific timestamps"""
 
         patients = []
@@ -707,9 +706,8 @@ class PatientFlowSimulator:
 
         # Load warfare patterns for injury distributions
         import os
-        warfare_patterns_path = os.path.join(
-            os.path.dirname(__file__), "warfare_patterns.json"
-        )
+
+        warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
         with open(warfare_patterns_path) as f:
             warfare_patterns = json.load(f)
 
@@ -723,22 +721,24 @@ class PatientFlowSimulator:
                     is_mass_casualty=event.is_mass_casualty,
                     base_injury_mix=base_injury_mix,
                     warfare_patterns=warfare_patterns,
-                    environmental_factors=event.environmental_factors
+                    environmental_factors=event.environmental_factors,
                 )
                 patients.append(patient)
                 patient_id_counter += 1
 
         return patients
 
-    def _create_temporal_patient(self,
-                               patient_id: int,
-                               injury_timestamp: datetime.datetime,
-                               warfare_type: str,
-                               event_id: str,
-                               is_mass_casualty: bool,
-                               base_injury_mix: Dict[str, float],
-                               warfare_patterns: Dict,
-                               environmental_factors: List[str]) -> Patient:
+    def _create_temporal_patient(
+        self,
+        patient_id: int,
+        injury_timestamp: datetime.datetime,
+        warfare_type: str,
+        event_id: str,
+        is_mass_casualty: bool,
+        base_injury_mix: Dict[str, float],
+        warfare_patterns: Dict,
+        environmental_factors: List[str],
+    ) -> Patient:
         """Create a patient with specific temporal characteristics"""
 
         patient = Patient(patient_id)
@@ -756,15 +756,11 @@ class PatientFlowSimulator:
         patient.day_of_injury = f"Day {days_since_start + 1}"
 
         # Get warfare-specific injury distribution
-        injury_distribution = self._get_warfare_injury_distribution(
-            warfare_type, base_injury_mix, warfare_patterns
-        )
+        injury_distribution = self._get_warfare_injury_distribution(warfare_type, base_injury_mix, warfare_patterns)
         patient.injury_type = self._select_weighted_item(injury_distribution)
 
         # Get warfare-specific triage distribution
-        triage_weights = self._get_warfare_triage_weights(
-            warfare_type, patient.injury_type, warfare_patterns
-        )
+        triage_weights = self._get_warfare_triage_weights(warfare_type, patient.injury_type, warfare_patterns)
         patient.triage_category = self._select_weighted_item(triage_weights)
 
         # Set demographics
@@ -774,19 +770,13 @@ class PatientFlowSimulator:
         self._assign_front_and_nationality(patient)
 
         # Add initial treatment at POI
-        patient.add_treatment(
-            facility="POI",
-            date=injury_timestamp,
-            treatments=[],
-            observations=[]
-        )
+        patient.add_treatment(facility="POI", date=injury_timestamp, treatments=[], observations=[])
 
         return patient
 
-    def _get_warfare_injury_distribution(self,
-                                       warfare_type: str,
-                                       base_mix: Dict[str, float],
-                                       warfare_patterns: Dict) -> Dict[str, float]:
+    def _get_warfare_injury_distribution(
+        self, warfare_type: str, base_mix: Dict[str, float], warfare_patterns: Dict
+    ) -> Dict[str, float]:
         """Calculate injury distribution based on warfare type"""
 
         if warfare_type == "mixed":
@@ -810,10 +800,9 @@ class PatientFlowSimulator:
 
         return adjusted_distribution
 
-    def _get_warfare_triage_weights(self,
-                                   warfare_type: str,
-                                   injury_type: str,
-                                   warfare_patterns: Dict) -> Dict[str, float]:
+    def _get_warfare_triage_weights(
+        self, warfare_type: str, injury_type: str, warfare_patterns: Dict
+    ) -> Dict[str, float]:
         """Get triage distribution based on warfare and injury type"""
 
         if warfare_type == "mixed":
@@ -822,10 +811,7 @@ class PatientFlowSimulator:
 
         # Get warfare-specific triage weights
         warfare_config = warfare_patterns["warfare_types"][warfare_type]
-        return warfare_config["triage_weights"].get(
-            injury_type,
-            {"T1": 0.3, "T2": 0.4, "T3": 0.3}
-        )
+        return warfare_config["triage_weights"].get(injury_type, {"T1": 0.3, "T2": 0.4, "T3": 0.3})
 
     def _assign_front_and_nationality(self, patient: Patient):
         """Assign front and nationality to patient using existing logic"""
@@ -837,15 +823,13 @@ class PatientFlowSimulator:
         if static_front_defs:
             # Existing static front logic...
             front_distribution_static = {
-                front_def.name: front_def.ratio
-                for front_def in static_front_defs if front_def.ratio > 0
+                front_def.name: front_def.ratio for front_def in static_front_defs if front_def.ratio > 0
             }
 
             if front_distribution_static:
                 selected_front_name = self._select_weighted_item(front_distribution_static)
                 selected_front_def = next(
-                    (fdef for fdef in static_front_defs if fdef.name == selected_front_name),
-                    None
+                    (fdef for fdef in static_front_defs if fdef.name == selected_front_name), None
                 )
 
                 if selected_front_def:
@@ -862,23 +846,16 @@ class PatientFlowSimulator:
         elif self.front_distribution:
             # Existing DB-based front logic...
             front_id = self._select_weighted_item(self.front_distribution)
-            selected_front_config_db = next(
-                (fc for fc in self.front_configs if fc["id"] == front_id),
-                None
-            )
+            selected_front_config_db = next((fc for fc in self.front_configs if fc["id"] == front_id), None)
 
             if selected_front_config_db:
                 patient.front = selected_front_config_db.get("name", front_id)
-                current_front_nat_dist_list = selected_front_config_db.get(
-                    "nationality_distribution", []
-                )
+                current_front_nat_dist_list = selected_front_config_db.get("nationality_distribution", [])
                 if current_front_nat_dist_list:
                     weights_for_selection = {
                         item["nationality_code"]: item["percentage"]
                         for item in current_front_nat_dist_list
-                        if "nationality_code" in item
-                        and "percentage" in item
-                        and item["percentage"] > 0
+                        if "nationality_code" in item and "percentage" in item and item["percentage"] > 0
                     }
                     if weights_for_selection:
                         patient.nationality = self._select_weighted_item(weights_for_selection)
@@ -886,14 +863,10 @@ class PatientFlowSimulator:
     def _simulate_flow_parallel(self, patients: List[Patient]):
         """Simulate patient flow in parallel batches"""
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-            patient_batches = [
-                patients[i:i + self.batch_size]
-                for i in range(0, len(patients), self.batch_size)
-            ]
+            patient_batches = [patients[i : i + self.batch_size] for i in range(0, len(patients), self.batch_size)]
 
             future_to_batch = {
-                executor.submit(self._simulate_patient_flow_batch, batch): batch
-                for batch in patient_batches
+                executor.submit(self._simulate_patient_flow_batch, batch): batch for batch in patient_batches
             }
 
             for future in concurrent.futures.as_completed(future_to_batch):

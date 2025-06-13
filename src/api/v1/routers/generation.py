@@ -167,17 +167,22 @@ async def _run_generation_task(
         # Handle temporal configuration if present
         # Check both root level and nested configuration object
         inner_config = config.get("configuration", config)
-        temporal_config_present = any(key in inner_config for key in ["warfare_types", "environmental_conditions", "special_events", "base_date"])
+        temporal_config_present = any(
+            key in inner_config for key in ["warfare_types", "environmental_conditions", "special_events", "base_date"]
+        )
 
         print(f"🔍 TEMPORAL DEBUG: Root config keys: {list(config.keys())}")
         print(f"🔍 TEMPORAL DEBUG: Inner config keys: {list(inner_config.keys())}")
         print(f"🔍 TEMPORAL DEBUG: Detection result: {temporal_config_present}")
         if temporal_config_present:
-            print(f"🔍 TEMPORAL DEBUG: Found temporal keys: {[k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in inner_config]}")
+            print(
+                f"🔍 TEMPORAL DEBUG: Found temporal keys: {[k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in inner_config]}"
+            )
 
         if temporal_config_present:
             # Write temporal configuration to injuries.json for flow simulator
             import os
+
             # Use the path relative to current working directory (works in both dev and Docker)
             injuries_path = os.path.abspath("patient_generator/injuries.json")
 
@@ -185,42 +190,44 @@ async def _run_generation_task(
                 "total_patients": inner_config.get("total_patients", 1440),
                 "days_of_fighting": inner_config.get("days_of_fighting", 8),
                 "base_date": inner_config.get("base_date", "2025-06-01"),
-                "warfare_types": inner_config.get("warfare_types", {
-                    "conventional": True,
-                    "artillery": True,
-                    "urban": False,
-                    "guerrilla": False,
-                    "drone": True,
-                    "naval": False,
-                    "cbrn": False,
-                    "peacekeeping": False
-                }),
+                "warfare_types": inner_config.get(
+                    "warfare_types",
+                    {
+                        "conventional": True,
+                        "artillery": True,
+                        "urban": False,
+                        "guerrilla": False,
+                        "drone": True,
+                        "naval": False,
+                        "cbrn": False,
+                        "peacekeeping": False,
+                    },
+                ),
                 "intensity": inner_config.get("intensity", "medium"),
                 "tempo": inner_config.get("tempo", "sustained"),
-                "special_events": inner_config.get("special_events", {
-                    "major_offensive": False,
-                    "ambush": False,
-                    "mass_casualty": True
-                }),
-                "environmental_conditions": inner_config.get("environmental_conditions", {
-                    "night_operations": True
-                }),
-                "injury_mix": inner_config.get("injury_mix", inner_config.get("injury_distribution", {
-                    "Disease": 0.52,
-                    "Non-Battle Injury": 0.33,
-                    "Battle Injury": 0.15
-                }))
+                "special_events": inner_config.get(
+                    "special_events", {"major_offensive": False, "ambush": False, "mass_casualty": True}
+                ),
+                "environmental_conditions": inner_config.get("environmental_conditions", {"night_operations": True}),
+                "injury_mix": inner_config.get(
+                    "injury_mix",
+                    inner_config.get(
+                        "injury_distribution", {"Disease": 0.52, "Non-Battle Injury": 0.33, "Battle Injury": 0.15}
+                    ),
+                ),
             }
 
             # Backup existing injuries.json
             backup_path = injuries_path + ".backup"
             if os.path.exists(injuries_path):
                 import shutil
+
                 shutil.copy2(injuries_path, backup_path)
 
             # Write temporal config to injuries.json
             with open(injuries_path, "w") as f:
                 import json
+
                 json.dump(temporal_injuries_config, f, indent=2)
 
             print("✅ Temporal configuration written to injuries.json")
@@ -290,6 +297,7 @@ async def _run_generation_task(
         # Restore original injuries.json if we modified it
         if temporal_config_present:
             import os
+
             # Get the project root directory and construct correct path
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
             injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
@@ -297,6 +305,7 @@ async def _run_generation_task(
 
             if os.path.exists(backup_path):
                 import shutil
+
                 shutil.move(backup_path, injuries_path)
                 print("✅ Restored original injuries.json")
             else:
@@ -318,13 +327,17 @@ async def _run_generation_task(
         if temporal_config_present:
             try:
                 import os
+
                 # Get the project root directory and construct correct path
-                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
+                project_root = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+                )
                 injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
                 backup_path = injuries_path + ".backup"
 
                 if os.path.exists(backup_path):
                     import shutil
+
                     shutil.move(backup_path, injuries_path)
                     print("✅ Restored original injuries.json after failure")
             except Exception as cleanup_error:
@@ -360,10 +373,16 @@ async def debug_temporal_configuration(
         config_dict = request.configuration.copy()
 
     # Check both locations for temporal config
-    direct_temporal_keys = [k for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"] if k in config_dict]
+    direct_temporal_keys = [
+        k for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"] if k in config_dict
+    ]
 
     configuration_data = config_dict.get("configuration", config_dict)
-    nested_temporal_keys = [k for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"] if k in configuration_data]
+    nested_temporal_keys = [
+        k
+        for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"]
+        if k in configuration_data
+    ]
 
     # Check current injuries.json
     project_root = Path(__file__).parent.parent.parent.parent.parent
@@ -406,11 +425,17 @@ async def debug_temporal_configuration(
 
     # Add recommendation
     if debug_info["temporal_detection"]["direct_has_temporal"]:
-        debug_info["recommendation"] = "✅ Temporal configuration found directly in request. Backend should work correctly."
+        debug_info["recommendation"] = (
+            "✅ Temporal configuration found directly in request. Backend should work correctly."
+        )
     elif debug_info["temporal_detection"]["nested_has_temporal"]:
-        debug_info["recommendation"] = "⚠️ Temporal configuration found nested under 'configuration'. Backend needs to check config.get('configuration', config)."
+        debug_info["recommendation"] = (
+            "⚠️ Temporal configuration found nested under 'configuration'. Backend needs to check config.get('configuration', config)."
+        )
     else:
-        debug_info["recommendation"] = "❌ No temporal configuration found. Check frontend is sending warfare_types, etc."
+        debug_info["recommendation"] = (
+            "❌ No temporal configuration found. Check frontend is sending warfare_types, etc."
+        )
 
     return debug_info
 
@@ -444,7 +469,7 @@ async def check_injuries_config(
         "backup": {
             "exists": backup_path.exists(),
             "path": str(backup_path),
-        }
+        },
     }
 
     if injuries_path.exists():
