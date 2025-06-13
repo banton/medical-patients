@@ -27,8 +27,8 @@ services:
     success_threshold: 1
   
   # Build and run commands
-  build_command: pip install -r requirements.txt
-  run_command: ./start.sh
+  build_command: make deps
+  run_command: make migrate && python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
   
   # Routes
   routes:
