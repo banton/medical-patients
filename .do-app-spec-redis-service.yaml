@@ -1,0 +1,113 @@
+name: medical-patients-generator-redis
+region: nyc
+
+# OPTIMAL SETUP: $20/month total ($5 FastAPI + $5 Redis + $10 PostgreSQL)
+# Auto-deploy from main branch
+services:
+# FastAPI Backend
+- name: api
+  source_dir: /
+  github:
+    repo: banton/medical-patients
+    branch: main
+    deploy_on_push: true
+  
+  # Smallest Python runtime configuration
+  environment_slug: python
+  instance_size_slug: apps-s-1vcpu-0.5gb  # $5/month
+  instance_count: 1
+  
+  # Health check
+  health_check:
+    http_path: /docs
+    initial_delay_seconds: 30
+    period_seconds: 30
+    timeout_seconds: 10
+    failure_threshold: 3
+    success_threshold: 1
+  
+  # Build and run commands
+  build_command: pip install -r requirements.txt
+  run_command: ./start.sh
+  
+  # Routes
+  routes:
+  - path: /api
+    preserve_path_prefix: true
+  - path: /docs
+    preserve_path_prefix: true
+  - path: /openapi.json
+    preserve_path_prefix: true
+  
+  # Environment variables
+  envs:
+  - key: API_KEY
+    value: ${API_KEY}
+    type: SECRET
+  - key: DATABASE_URL
+    value: ${medical_patients_db.DATABASE_URL}
+  - key: REDIS_URL
+    value: "redis://redis-service:6379"  # Internal service connection
+  - key: CACHE_ENABLED
+    value: "true"
+  - key: DEBUG
+    value: "false"
+  - key: CORS_ORIGINS
+    value: "https://milmed.tech"
+
+# Redis Service (in-app container)
+- name: redis-service
+  image:
+    registry_type: DOCKER_HUB
+    repository: redis
+    tag: "7-alpine"
+  
+  # Smallest instance for Redis
+  instance_size_slug: apps-s-1vcpu-0.5gb  # $5/month
+  instance_count: 1
+  
+  # Redis configuration
+  run_command: redis-server --appendonly yes --dir /data
+  
+  # Health check for Redis
+  health_check:
+    http_path: /
+    port: 6379
+    initial_delay_seconds: 10
+    period_seconds: 30
+    timeout_seconds: 5
+    failure_threshold: 3
+    success_threshold: 1
+  
+  # Internal ports (no external access needed)
+  internal_ports:
+  - 6379
+
+# Static frontend
+static_sites:
+- name: frontend
+  source_dir: /static
+  github:
+    repo: banton/medical-patients
+    branch: main
+    deploy_on_push: true
+  
+  # Routes - serve everything else through the static site
+  routes:
+  - path: /
+    preserve_path_prefix: false
+
+# PostgreSQL database (smallest available)
+databases:
+- name: medical-patients-db
+  engine: PG
+  version: "17"
+  size: db-s-1vcpu-1gb  # ~$15/month (smallest available)
+  num_nodes: 1
+  production: false
+
+# Domain configuration
+domains:
+- domain: milmed.tech
+  type: PRIMARY
+  wildcard: false
