@@ -27,8 +27,12 @@ services:
     success_threshold: 1
   
   # Build and run commands
-  build_command: make deps
-  run_command: make migrate && python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+  build_command: pip install -r requirements.txt
+  run_command: |
+    if [ ! -z "$DATABASE_URL" ]; then
+      alembic upgrade head
+    fi
+    python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
   
   # Routes
   routes:
