@@ -253,9 +253,21 @@ let apiClient;
 // Initialize API client when DOM is ready
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
-        apiClient = new ApiClient();
-        window.apiClient = apiClient;
-        console.log('🔌 v1 API Client initialized with environment config');
+        // Wait for config to be ready before initializing API client
+        window.addEventListener('configReady', () => {
+            apiClient = new ApiClient();
+            window.apiClient = apiClient;
+            console.log('🔌 v1 API Client initialized with environment config');
+        });
+        
+        // Fallback timeout in case configReady event doesn't fire
+        setTimeout(() => {
+            if (!apiClient) {
+                apiClient = new ApiClient();
+                window.apiClient = apiClient;
+                console.log('🔌 v1 API Client initialized with fallback timeout');
+            }
+        }, 3000);
     });
 }
 

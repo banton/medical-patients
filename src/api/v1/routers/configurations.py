@@ -115,6 +115,22 @@ async def validate_configuration(request: Request, config: ConfigurationTemplate
     return {"valid": True, "errors": []}
 
 
+# Public configuration endpoint (no authentication required)
+public_router = APIRouter(prefix="/config", tags=["public"])
+
+@public_router.get("/frontend")
+async def get_frontend_config() -> Dict[str, Any]:
+    """Get frontend configuration including API key."""
+    from config import get_settings
+    settings = get_settings()
+    
+    return {
+        "apiKey": settings.API_KEY,
+        "appName": settings.APP_NAME,
+        "version": settings.VERSION,
+        "debug": settings.DEBUG
+    }
+
 # Reference data endpoints (don't require API key, prefix will be added by main app)
 reference_router = APIRouter(prefix="/configurations/reference", tags=["reference"])
 

@@ -55,7 +55,9 @@
       "Bash(src/domain/services/patient_generation_service.py )",
       "Bash(src/api/v1/routers/generation.py )",
       "Bash(memory/fixes/temporal-generation-system-fixed.md )",
-      "Bash(memory/current-session.md)"
+      "Bash(memory/current-session.md)",
+      "mcp__digitalocean-mcp-local__list_apps",
+      "mcp__digitalocean-mcp-local__get_app"
     ],
     "deny": []
   },
