@@ -6,9 +6,10 @@
 /* eslint no-console: "off" */
 
 class ApiClient {
-    constructor(baseUrl = '', apiKey = 'your_secret_api_key_here') {
+    constructor(baseUrl = '', apiKey = null) {
         this.baseUrl = baseUrl;
-        this.apiKey = apiKey;
+        // Use config API key if available, fallback to parameter or default
+        this.apiKey = apiKey || (typeof window !== 'undefined' && window.config ? window.config.apiKey : 'your_secret_api_key_here');
         this.defaultHeaders = {
             'Content-Type': 'application/json',
             'X-API-Key': this.apiKey
@@ -246,8 +247,17 @@ class ApiError extends Error {
     }
 }
 
-// Create global API client instance
-const apiClient = new ApiClient();
+// Create global API client instance (after config is loaded)
+let apiClient;
+
+// Initialize API client when DOM is ready
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        apiClient = new ApiClient();
+        window.apiClient = apiClient;
+        console.log('🔌 v1 API Client initialized with environment config');
+    });
+}
 
 // Export for modules and global use
 if (typeof module !== 'undefined' && module.exports) {

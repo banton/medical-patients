@@ -71,7 +71,7 @@ TestFramework.test('API banner should contain required elements', () => {
 
 TestFramework.test('API banner should have correct text content', () => {
     const text = querySelector('.api-banner__text');
-    const expectedText = 'API Available! This tool can also be used programmatically';
+    const expectedText = 'Temporal API Available';
 
     assert(text.textContent.includes(expectedText), `Banner text should include: "${expectedText}"`);
 });
@@ -80,7 +80,7 @@ TestFramework.test('API banner link should point to documentation', () => {
     const link = querySelector('.api-banner__link');
 
     assert(link.getAttribute('href') === '/docs', 'Link should point to /docs');
-    assert(link.textContent.includes('View API Documentation'), 'Link should contain documentation text');
+    assert(link.textContent.includes('View Documentation'), 'Link should contain documentation text');
 });
 
 TestFramework.test('API banner should have proper styling classes', () => {
