@@ -16,6 +16,7 @@ includes:
   frontend: ./tasks/frontend.yml
   lint: ./tasks/linting.yml
   timeline: ./tasks/timeline.yml
+  platform: ./tasks/platform.yml
 
 tasks:
   default:
@@ -38,6 +39,7 @@ tasks:
       - echo "  task frontend - Frontend build tasks"
       - echo "  task lint     - Code quality and linting"
       - echo "  task timeline - React timeline viewer"
+      - echo "  task platform - Cross-platform tools"
       - echo ""
       - echo "Run 'task --list-all' to see all available tasks"
 
