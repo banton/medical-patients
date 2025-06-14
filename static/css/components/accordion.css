@@ -146,7 +146,7 @@
 }
 
 .accordion__content--expanded {
-    max-height: 800px; /* Sufficient space for all content including intensity/tempo descriptions */
+    max-height: 850px; /* Extra white space for comfortable viewing of all content */
     padding: var(--space-md) var(--space-lg) var(--space-lg);
 }
 
