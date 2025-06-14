@@ -11,6 +11,8 @@ env:
 includes:
   docker: ./tasks/docker.yml
   dev: ./tasks/development.yml
+  test: ./tasks/testing.yml
+  db: ./tasks/database.yml
 
 tasks:
   default:
@@ -28,6 +30,8 @@ tasks:
       - echo "Available task groups"
       - echo "  task docker   - Docker operations"
       - echo "  task dev      - Development environment"
+      - echo "  task test     - Testing commands"
+      - echo "  task db       - Database operations"
       - echo ""
       - echo "Run 'task --list-all' to see all available tasks"
 
@@ -79,6 +83,11 @@ tasks:
     desc: Start development environment (main command)
     cmds:
       - task: dev:start
+
+  test:
+    desc: Run all tests (main command)
+    cmds:
+      - task: test:all
 
   clean:
     desc: Clean up generated files and Docker resources

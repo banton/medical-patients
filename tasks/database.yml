@@ -1,0 +1,335 @@
+version: '3'
+
+# Database Operations Module
+# Handles database migrations, management, and utilities
+
+tasks:
+  migrate:
+    desc: Run database migrations to latest version
+    aliases: [up]
+    cmds:
+      - echo "🗃️  Running database migrations..."
+      - task: check-alembic
+      - alembic upgrade head
+      - echo "✅ Migrations completed successfully"
+
+  migrate-create:
+    desc: Create a new database migration
+    aliases: [new]
+    cmds:
+      - echo "📝 Creating new migration..."
+      - task: check-alembic
+      - task: prompt-migration-message
+
+  prompt-migration-message:
+    desc: Prompt for migration message and create migration
+    interactive: true
+    cmds:
+      - |
+        echo "Enter migration message:"
+        read -r msg
+        if [ -z "$msg" ]; then
+          echo "❌ Migration message cannot be empty"
+          exit 1
+        fi
+        echo "Creating migration: $msg"
+        alembic revision --autogenerate -m "$msg"
+        echo "✅ Migration created successfully"
+
+  migrate-down:
+    desc: Rollback database migration by one version
+    prompt: This will rollback the database. Continue?
+    cmds:
+      - echo "⬇️  Rolling back database migration..."
+      - task: check-alembic
+      - alembic downgrade -1
+      - echo "✅ Migration rolled back"
+
+  migrate-history:
+    desc: Show migration history
+    cmds:
+      - echo "📚 Database migration history:"
+      - task: check-alembic
+      - alembic history --verbose
+
+  migrate-current:
+    desc: Show current migration version
+    cmds:
+      - echo "📍 Current migration version:"
+      - task: check-alembic
+      - alembic current
+
+  migrate-heads:
+    desc: Show migration heads
+    cmds:
+      - echo "🎯 Migration heads:"
+      - task: check-alembic
+      - alembic heads
+
+  # Database connection and shell access
+  shell:
+    desc: Connect to database shell (psql)
+    aliases: [psql]
+    cmds:
+      - echo "🔗 Connecting to database..."
+      - task: check-db-running
+      - docker compose exec db psql -U medgen_user -d medgen_db
+
+  shell-root:
+    desc: Connect to database as root user
+    cmds:
+      - echo "🔗 Connecting to database as root..."
+      - task: check-db-running
+      - docker compose exec db psql -U postgres
+
+  # Database service management
+  start:
+    desc: Start only the database service
+    aliases: [up]
+    cmds:
+      - echo "🗃️  Starting PostgreSQL database..."
+      - docker compose up -d db
+      - task: wait-for-db
+      - echo "✅ Database started on localhost:5432"
+
+  stop:
+    desc: Stop the database service
+    aliases: [down]
+    cmds:
+      - echo "🛑 Stopping database..."
+      - docker compose stop db
+      - echo "✅ Database stopped"
+
+  restart:
+    desc: Restart the database service
+    cmds:
+      - echo "🔄 Restarting database..."
+      - task: stop
+      - task: start
+
+  # Database utilities
+  status:
+    desc: Check database connection status
+    cmds:
+      - echo "📊 Database status:"
+      - task: check-db-running
+      - docker compose exec db pg_isready -U medgen_user -d medgen_db
+
+  info:
+    desc: Show database information
+    cmds:
+      - echo "ℹ️  Database information:"
+      - task: check-db-running
+      - |
+        echo "Connection details"
+        echo "  Host - localhost"
+        echo "  Port - 5432"
+        echo "  Database - medgen_db"
+        echo "  User - medgen_user"
+        echo ""
+        echo "Container status:"
+        docker compose ps db
+        echo ""
+        echo "Database size"
+        docker compose exec db psql -U medgen_user -d medgen_db -c "SELECT pg_size_pretty(pg_database_size('medgen_db')) AS database_size;"
+
+  # Database backup and restore
+  backup:
+    desc: Create database backup
+    cmds:
+      - echo "💾 Creating database backup..."
+      - task: check-db-running
+      - |
+        BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
+        echo "Creating backup - $BACKUP_FILE"
+        docker compose exec db pg_dump -U medgen_user -d medgen_db > "output/$BACKUP_FILE"
+        echo "✅ Backup created: output/$BACKUP_FILE"
+
+  restore:
+    desc: Restore database from backup (usage - task db restore -- backup_file.sql)
+    prompt: This will restore the database and may overwrite existing data. Continue?
+    cmds:
+      - echo "📥 Restoring database from backup..."
+      - task: check-db-running
+      - |
+        BACKUP_FILE="{{.CLI_ARGS}}"
+        if [ -z "$BACKUP_FILE" ]; then
+          echo "❌ Please specify backup file - task db restore -- backup_file.sql"
+          exit 1
+        fi
+        if [ ! -f "$BACKUP_FILE" ]; then
+          echo "❌ Backup file not found - $BACKUP_FILE"
+          exit 1
+        fi
+        echo "Restoring from - $BACKUP_FILE"
+        docker compose exec -T db psql -U medgen_user -d medgen_db < "$BACKUP_FILE"
+        echo "✅ Database restored successfully"
+
+  # Database reset and initialization
+  reset:
+    desc: Reset database (WARNING - destroys all data)
+    prompt: This will destroy all database data and recreate from migrations. Continue?
+    cmds:
+      - echo "🔄 Resetting database..."
+      - task: stop
+      - echo "Removing database volume..."
+      - docker volume rm medical-patients_postgres_data 2>/dev/null || true
+      - task: start
+      - echo "⏳ Waiting for database to be ready..."
+      - sleep 5
+      - task: migrate
+      - echo "✅ Database reset complete!"
+
+  init:
+    desc: Initialize database for first time
+    cmds:
+      - echo "🚀 Initializing database..."
+      - task: start
+      - task: migrate
+      - echo "✅ Database initialized successfully"
+
+  # Database maintenance
+  vacuum:
+    desc: Run database vacuum (maintenance)
+    cmds:
+      - echo "🧹 Running database vacuum..."
+      - task: check-db-running
+      - docker compose exec db psql -U medgen_user -d medgen_db -c "VACUUM ANALYZE;"
+      - echo "✅ Database vacuum completed"
+
+  analyze:
+    desc: Update database statistics
+    cmds:
+      - echo "📊 Updating database statistics..."
+      - task: check-db-running
+      - docker compose exec db psql -U medgen_user -d medgen_db -c "ANALYZE;"
+      - echo "✅ Database analysis completed"
+
+  # Redis operations (since it's often used with the database)
+  redis-start:
+    desc: Start Redis cache service
+    cmds:
+      - echo "🔴 Starting Redis cache..."
+      - docker compose up -d redis
+      - echo "✅ Redis started on localhost:6379"
+
+  redis-stop:
+    desc: Stop Redis cache service
+    cmds:
+      - echo "🛑 Stopping Redis..."
+      - docker compose stop redis
+      - echo "✅ Redis stopped"
+
+  redis-cli:
+    desc: Connect to Redis CLI
+    cmds:
+      - echo "🔴 Connecting to Redis CLI..."
+      - docker compose exec redis redis-cli
+
+  redis-flush:
+    desc: Flush Redis cache
+    prompt: This will clear all cached data. Continue?
+    cmds:
+      - echo "🧹 Flushing Redis cache..."
+      - docker compose exec redis redis-cli FLUSHDB
+      - echo "✅ Redis cache flushed"
+
+  redis-info:
+    desc: Show Redis information
+    cmds:
+      - echo "ℹ️  Redis information:"
+      - docker compose exec redis redis-cli INFO memory
+      - echo ""
+      - echo "Keys count:"
+      - docker compose exec redis redis-cli DBSIZE
+
+  # Combined services
+  services:
+    desc: Start both database and Redis services
+    cmds:
+      - echo "🗄️  Starting database and Redis services..."
+      - docker compose up -d db redis
+      - task: wait-for-services
+      - echo "✅ Services started:"
+      - echo "   📊 PostgreSQL on localhost:5432"
+      - echo "   🔴 Redis on localhost:6379"
+
+  services-stop:
+    desc: Stop both database and Redis services
+    cmds:
+      - echo "🛑 Stopping database and Redis services..."
+      - docker compose stop db redis
+      - echo "✅ Services stopped"
+
+  # Utility tasks
+  check-alembic:
+    desc: Check if Alembic is available
+    silent: true
+    cmds:
+      - |
+        if ! command -v alembic >/dev/null 2>&1; then
+          echo "❌ Alembic not found. Please install: pip install -r requirements.txt"
+          exit 1
+        fi
+
+  check-db-running:
+    desc: Check if database is running
+    silent: true
+    cmds:
+      - |
+        if ! docker compose ps db | grep -q "running"; then
+          echo "❌ Database is not running. Please run: task db:start"
+          exit 1
+        fi
+
+  wait-for-db:
+    desc: Wait for database to be ready
+    silent: true
+    cmds:
+      - |
+        echo "⏳ Waiting for database to be ready..."
+        timeout 60 bash -c 'until docker compose exec db pg_isready -U medgen_user >/dev/null 2>&1; do sleep 2; done'
+        echo "✅ Database is ready"
+
+  wait-for-services:
+    desc: Wait for both database and Redis to be ready
+    silent: true
+    cmds:
+      - |
+        echo "⏳ Waiting for services to be ready..."
+        timeout 60 bash -c 'until docker compose exec db pg_isready -U medgen_user >/dev/null 2>&1; do sleep 2; done'
+        timeout 30 bash -c 'until docker compose exec redis redis-cli ping >/dev/null 2>&1; do sleep 1; done'
+        echo "✅ All services are ready"
+
+  # Development utilities
+  logs:
+    desc: Show database logs
+    cmds:
+      - docker compose logs -f db
+
+  redis-logs:
+    desc: Show Redis logs
+    cmds:
+      - docker compose logs -f redis
+
+  # Testing utilities
+  test-connection:
+    desc: Test database connection
+    cmds:
+      - echo "🔍 Testing database connection..."
+      - task: check-db-running
+      - docker compose exec db psql -U medgen_user -d medgen_db -c "SELECT version();"
+      - echo "✅ Database connection successful"
+
+  seed:
+    desc: Seed database with sample data (if available)
+    cmds:
+      - echo "🌱 Seeding database with sample data..."
+      - task: check-db-running
+      - |
+        if [ -f "scripts/seed_data.sql" ]; then
+          docker compose exec -T db psql -U medgen_user -d medgen_db < scripts/seed_data.sql
+          echo "✅ Database seeded successfully"
+        else
+          echo "⚠️  No seed data file found (scripts/seed_data.sql)"
+        fi

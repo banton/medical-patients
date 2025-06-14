@@ -1,0 +1,263 @@
+version: '3'
+
+# Testing Module
+# Replaces run_tests.sh script with cross-platform testing capabilities
+
+vars:
+  PYTEST_CMD:
+    sh: |
+      if command -v pytest >/dev/null 2>&1; then
+        echo "pytest"
+      elif command -v python3 -m pytest >/dev/null 2>&1; then
+        echo "python3 -m pytest"
+      else
+        echo "python -m pytest"
+      fi
+
+tasks:
+  all:
+    desc: Run all test suites
+    aliases: [test]
+    cmds:
+      - echo "🧪 Running all tests..."
+      - task: check-env
+      - task: unit
+      - task: integration
+      - task: api
+      - task: cache
+      - echo "✅ All tests completed!"
+
+  unit:
+    desc: Run unit tests only
+    cmds:
+      - echo "🔬 Running unit tests..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ -m 'unit' {{.CLI_ARGS}}"
+
+  integration:
+    desc: Run integration tests (database + API)
+    cmds:
+      - echo "🔗 Running integration tests..."
+      - task: check-env
+      - task: check-docker
+      - task: integration-db
+      - task: integration-api
+
+  integration-db:
+    desc: Run database integration tests
+    cmds:
+      - echo "🗃️  Running database integration tests..."
+      - "{{.PYTEST_CMD}} tests/test_db_integration.py -v {{.CLI_ARGS}}"
+
+  integration-api:
+    desc: Run API integration tests
+    cmds:
+      - echo "🌐 Running API integration tests..."
+      - task: check-server-or-start
+      - "{{.PYTEST_CMD}} tests/test_simple_api.py tests/test_api_standardization.py -v {{.CLI_ARGS}}"
+
+  e2e:
+    desc: Run end-to-end tests
+    cmds:
+      - echo "🎯 Running end-to-end tests..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/test_e2e_flows.py -v {{.CLI_ARGS}}"
+
+  api:
+    desc: Run API tests
+    cmds:
+      - echo "🔌 Running API tests..."
+      - task: check-env
+      - task: check-server-or-start
+      - "{{.PYTEST_CMD}} tests/test_simple_api.py tests/test_api_standardization.py -v {{.CLI_ARGS}}"
+
+  db:
+    desc: Run database tests with testcontainers
+    cmds:
+      - echo "🐳 Running database tests with testcontainers..."
+      - task: check-env
+      - task: check-docker
+      - "{{.PYTEST_CMD}} tests/test_db_integration.py -v {{.CLI_ARGS}}"
+
+  cache:
+    desc: Run cache-specific tests
+    cmds:
+      - echo "🔴 Running cache tests..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/test_cache_service.py tests/test_cached_services.py -xvs {{.CLI_ARGS}}"
+
+  ui:
+    desc: Run UI integration tests
+    cmds:
+      - echo "🖥️  Running UI integration tests..."
+      - npm run test:ui
+
+  ui-e2e:
+    desc: Run UI end-to-end tests (requires running server)
+    cmds:
+      - echo "🎮 Running UI end-to-end tests..."
+      - echo "NOTE - Requires server running (task dev)"
+      - task: check-server
+      - "{{.PYTEST_CMD}} tests/test_ui_e2e.py -v {{.CLI_ARGS}}"
+
+  quick:
+    desc: Run quick tests (no external dependencies)
+    cmds:
+      - echo "⚡ Running quick tests..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ -m 'not slow' {{.CLI_ARGS}}"
+
+  docker:
+    desc: Run tests in Docker containers
+    cmds:
+      - echo "🐳 Running tests in Docker containers..."
+      - task: check-docker
+      - docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test-runner
+
+  docker-integration:
+    desc: Run integration tests in Docker
+    cmds:
+      - echo "🐳 Starting Docker test environment..."
+      - task: check-docker
+      - echo "Starting test services..."
+      - docker compose -f docker-compose.test.yml up -d test-db test-redis test-integration
+      - echo "⏳ Waiting for services to be ready..."
+      - sleep 10
+      - echo "Running integration tests..."
+      - "{{.PYTEST_CMD}} tests/test_simple_api.py tests/test_api_standardization.py tests/test_e2e_flows.py -v --base-url=http://localhost:8001 {{.CLI_ARGS}}"
+      - echo "🧹 Cleaning up..."
+      - docker compose -f docker-compose.test.yml down
+
+  clean:
+    desc: Clean test containers and volumes
+    cmds:
+      - echo "🧹 Cleaning test containers and volumes..."
+      - docker compose -f docker-compose.test.yml down -v 2>/dev/null || true
+
+  # Coverage tasks
+  coverage:
+    desc: Run tests with coverage report
+    cmds:
+      - echo "📊 Running tests with coverage..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ --cov=src --cov=patient_generator --cov-report=html --cov-report=term {{.CLI_ARGS}}"
+      - echo "📈 Coverage report generated in htmlcov/"
+
+  coverage-xml:
+    desc: Generate XML coverage report for CI
+    cmds:
+      - echo "📊 Generating XML coverage report..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ --cov=src --cov=patient_generator --cov-report=xml {{.CLI_ARGS}}"
+
+  # Utility tasks
+  check-env:
+    desc: Check if testing environment is ready
+    silent: true
+    cmds:
+      - |
+        # Check if pytest is available
+        if ! command -v {{.PYTEST_CMD}} >/dev/null 2>&1; then
+          echo "❌ pytest not found. Please install: pip install -r requirements.txt"
+          exit 1
+        fi
+        
+        # Check if in virtual environment (skip in CI)
+        if [[ -z "${VIRTUAL_ENV}" ]] && [[ -z "${CI}" ]]; then
+          echo "⚠️  Virtual environment not activated"
+          if [ -f .venv/bin/activate ]; then
+            echo "Activating .venv..."
+            # Note: This doesn't persist across task commands
+            echo "Please run: source .venv/bin/activate"
+          else
+            echo "❌ Virtual environment not found. Please run: python -m venv .venv"
+            exit 1
+          fi
+        fi
+
+  check-docker:
+    desc: Check if Docker is running
+    silent: true
+    cmds:
+      - |
+        if ! docker info >/dev/null 2>&1; then
+          echo "❌ Docker is not running. Please start Docker."
+          exit 1
+        fi
+
+  check-server:
+    desc: Check if development server is running
+    silent: true
+    cmds:
+      - |
+        if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/docs | grep -q "200"; then
+          echo "❌ Development server not running. Please run: task dev"
+          exit 1
+        fi
+
+  check-server-or-start:
+    desc: Check if server is running, start if needed
+    silent: true
+    cmds:
+      - |
+        if curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/docs | grep -q "200"; then
+          echo "✅ Server is running"
+        else
+          echo "⚠️  Server not running. Tests may need a running server."
+          echo "To start server: task dev"
+        fi
+
+  # Performance and load testing
+  performance:
+    desc: Run performance tests
+    cmds:
+      - echo "🚀 Running performance tests..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ -m 'performance' {{.CLI_ARGS}}"
+
+  load:
+    desc: Run load tests (requires locust)
+    cmds:
+      - echo "⚡ Running load tests..."
+      - |
+        if command -v locust >/dev/null 2>&1; then
+          locust -f tests/load_tests.py --headless -u 10 -r 2 -t 60s
+        else
+          echo "❌ Locust not found. Install with: pip install locust"
+          exit 1
+        fi
+
+  # Test specific files or patterns
+  file:
+    desc: Run tests for specific file (usage - task test file -- tests/test_example.py)
+    cmds:
+      - echo "🎯 Running tests for specific file..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} {{.CLI_ARGS}}"
+
+  pattern:
+    desc: Run tests matching pattern (usage - task test pattern -- -k "test_pattern")
+    cmds:
+      - echo "🔍 Running tests matching pattern..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ {{.CLI_ARGS}}"
+
+  # Debug and development
+  debug:
+    desc: Run tests with debugging enabled
+    cmds:
+      - echo "🐛 Running tests with debugging..."
+      - task: check-env
+      - "{{.PYTEST_CMD}} tests/ -s -v --pdb {{.CLI_ARGS}}"
+
+  watch:
+    desc: Watch for changes and run tests automatically
+    cmds:
+      - echo "👀 Watching for changes..."
+      - |
+        if command -v watchmedo >/dev/null 2>&1; then
+          watchmedo auto-restart -d src -d tests -d patient_generator -p "*.py" -- {{.PYTEST_CMD}} tests/ {{.CLI_ARGS}}
+        else
+          echo "❌ watchdog not found. Install with: pip install watchdog"
+          exit 1
+        fi
