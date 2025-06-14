@@ -127,7 +127,7 @@ patient_generator/
 - 🏗️ **Multi-Tenant API Key Management** (Priority 1) 
 - 🏗️ **Production Scalability Improvements** (Priority 1)
 - 🏗️ **DigitalOcean Staging Environment** (Priority 2)
-- 🏗️ **Timeline Viewer Standalone Deployment** (Priority 3)
+- 📋 **Timeline Viewer Standalone Deployment to viewer.milmed.tech** (Priority 3)
 
 ### Frontend Enhancements - PLANNED 📋
 - ❌ API promotion banner with live demo key
@@ -209,9 +209,9 @@ Current task context, work in progress, temporary notes
 - ✅ API key management system specification completed
 
 ### Current Focus 🎯
-- 🎉 **EPIC-001 Phase 1-2 COMPLETED**: Cross-platform development environment
-- 🚧 **EPIC-001 Phase 3 READY**: Platform optimization and documentation
-- 🏗️ React timeline viewer cleanup
+- 🎉 **EPIC-001 Phase 1-2 COMPLETED**: Cross-platform development environment (Makefile → Task migration)
+- 🚧 **EPIC-001 Phase 3 IN PROGRESS**: Complete Task runner migration and documentation
+- 📋 **Future**: Timeline viewer standalone deployment to viewer.milmed.tech (separate epic)
 - 🏗️ Remaining epic documentation (5 epics)
 
 ## 🔐 Security Notes
@@ -300,6 +300,19 @@ Before ANY development work, MUST verify:
 - **Production Issues**: Use hotfix branches only
 - **Workflow Violations**: Immediate branch correction required
 - **CI Failures**: No deployment testing until resolved
+
+### 🚨 CRITICAL DEPLOYMENT CONTEXT (MUST READ)
+**Historical Context**: Previous timeline viewer deployment to DigitalOcean broke the main API due to configuration conflicts. This caused production issues.
+
+**IMPORTANT DISTINCTIONS**:
+- **"Timeline cleanup"** = Fixing broken DigitalOcean deployment issues, NOT removing working code
+- **"Timeline viewer standalone deployment"** = Future task to deploy timeline viewer to `viewer.milmed.tech` separately
+- **React Timeline Viewer** = Working solution in `patient-timeline-viewer/` directory - KEEP INTACT
+
+**NEVER**:
+- Remove working solutions just because deployment strategy changes
+- Confuse "cleanup" with "removal" of working features
+- Remove React Timeline Viewer components from main project
 
 ## 🗂️ Epic Documentation Structure
 ```
