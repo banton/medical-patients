@@ -111,6 +111,7 @@ class PatientGeneratorApp {
         // Accordion events
         document.addEventListener('accordion:validate', (e) => {
             this.updateGenerateButtonState();
+            this.updateConfigurationOverview();
         });
 
         // Keyboard shortcuts
@@ -130,6 +131,7 @@ class PatientGeneratorApp {
                 // Wait a bit more for initial validation to complete
                 setTimeout(() => {
                     this.updateGenerateButtonState();
+                    this.updateConfigurationOverview();
                 }, 50);
             } else {
                 setTimeout(checkAccordion, 100);
@@ -253,6 +255,132 @@ class PatientGeneratorApp {
             `;
             this.generateBtn.title = 'Start patient generation with current configuration';
         }
+    }
+
+    updateConfigurationOverview() {
+        if (!this.accordion) return;
+
+        try {
+            // Get current accordion content
+            const [frontsJson, scenarioJson] = this.accordion.getAllContent();
+
+            // Parse JSON safely
+            let fronts, scenario;
+            try {
+                fronts = JSON.parse(frontsJson || '{"front_configs": []}');
+                scenario = JSON.parse(scenarioJson || '{"total_patients": 1440}');
+            } catch (parseError) {
+                // If JSON is invalid, use defaults
+                this.setDefaultConfigurationOverview();
+                return;
+            }
+
+            // Update Total Patients
+            const totalPatientsEl = document.getElementById('totalPatients');
+            if (totalPatientsEl) {
+                const totalPatients = scenario.total_patients || 1440;
+                totalPatientsEl.textContent = totalPatients.toLocaleString();
+            }
+
+            // Update Battle Fronts count
+            const totalFrontsEl = document.getElementById('totalFronts');
+            if (totalFrontsEl) {
+                const frontCount = fronts.front_configs?.length || 0;
+                totalFrontsEl.textContent = frontCount.toString();
+            }
+
+            // Update Nationalities list
+            const nationalityListEl = document.getElementById('nationalityList');
+            if (nationalityListEl) {
+                const nationalities = this.extractNationalitiesFromFronts(fronts.front_configs || []);
+                nationalityListEl.textContent = nationalities.length > 0 ? nationalities.join(', ') : 'None configured';
+            }
+
+            // Update Battle Duration
+            const battleDurationEl = document.getElementById('battleDuration');
+            if (battleDurationEl) {
+                const days = scenario.days_of_fighting || 1;
+                battleDurationEl.textContent = `${days} day${days !== 1 ? 's' : ''}`;
+            }
+
+            // Update Warfare Types
+            const warfareTypesEl = document.getElementById('warfareTypes');
+            if (warfareTypesEl) {
+                this.updateWarfareTypesDisplay(warfareTypesEl, scenario.warfare_types || {});
+            }
+        } catch (error) {
+            console.warn('Failed to update configuration overview:', error);
+            this.setDefaultConfigurationOverview();
+        }
+    }
+
+    extractNationalitiesFromFronts(frontConfigs) {
+        const nationalitySet = new Set();
+        frontConfigs.forEach((front) => {
+            if (front.nationality_distribution) {
+                front.nationality_distribution.forEach((natDist) => {
+                    if (natDist.nationality_code) {
+                        nationalitySet.add(natDist.nationality_code);
+                    }
+                });
+            }
+        });
+        return Array.from(nationalitySet).sort();
+    }
+
+    updateWarfareTypesDisplay(container, warfareTypes) {
+        // Define warfare type colors
+        const warfareColors = {
+            conventional: 'bg-red-100 text-red-700',
+            artillery: 'bg-orange-100 text-orange-700',
+            urban: 'bg-yellow-100 text-yellow-700',
+            guerrilla: 'bg-green-100 text-green-700',
+            drone: 'bg-blue-100 text-blue-700',
+            naval: 'bg-indigo-100 text-indigo-700',
+            cbrn: 'bg-purple-100 text-purple-700',
+            peacekeeping: 'bg-pink-100 text-pink-700'
+        };
+
+        // Get enabled warfare types
+        const enabledTypes = Object.keys(warfareTypes).filter((type) => warfareTypes[type]);
+
+        if (enabledTypes.length === 0) {
+            container.innerHTML = '<span class="text-slate-500 text-xs">None configured</span>';
+            return;
+        }
+
+        // Create warfare type badges
+        const badges = enabledTypes
+            .map((type) => {
+                const colorClass = warfareColors[type] || 'bg-slate-100 text-slate-700';
+                const displayName = type.charAt(0).toUpperCase() + type.slice(1);
+                return `<span class="${colorClass} px-2 py-1 rounded text-xs font-medium">${displayName}</span>`;
+            })
+            .join('');
+
+        container.innerHTML = badges;
+    }
+
+    setDefaultConfigurationOverview() {
+        // Set default values when configuration cannot be parsed
+        const elements = {
+            totalPatients: '1,440',
+            totalFronts: '0',
+            nationalityList: 'None configured',
+            battleDuration: '1 day',
+            warfareTypes: '<span class="text-slate-500 text-xs">None configured</span>'
+        };
+
+        Object.entries(elements).forEach(([id, defaultValue]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (id === 'warfareTypes') {
+                    element.innerHTML = defaultValue;
+                } else {
+                    element.textContent = defaultValue;
+                }
+            }
+        });
     }
 
     async handleGenerate() {
