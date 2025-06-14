@@ -929,8 +929,7 @@ class PatientGeneratorApp {
             configPanel.innerHTML = `
                 <div class="text-center text-slate-500 py-6">
                     <i class="fas fa-history text-2xl mb-2 opacity-50"></i>
-                    <p class="text-sm">No recent configurations</p>
-                    <p class="text-xs">Generate patients to see configuration history</p>
+                    <p class="text-sm">No configurations generated yet. Try your first one!</p>
                 </div>
             `;
             return;
