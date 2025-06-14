@@ -344,3 +344,108 @@ tasks:
       - task: test-quick
       - echo " "
       - echo "Generated on $(date)"
+
+  # Report generation and management
+  generate-report:
+    desc: Generate comprehensive platform compatibility report
+    cmds:
+      - echo "📋 Generating Platform Compatibility Report"
+      - echo "=========================================="
+      - |
+        case "{{.PLATFORM}}" in
+          Darwin|Linux)
+            if [ -x "./scripts/test-platform.sh" ]; then
+              echo "Running full compatibility test..."
+              ./scripts/test-platform.sh
+            else
+              echo "❌ Platform test script not found"
+              echo "Please run from project root directory"
+              exit 1
+            fi
+            ;;
+          MINGW*|CYGWIN*|MSYS*|Windows*)
+            if [ -f "./scripts/test-platform.ps1" ]; then
+              echo "Running Windows compatibility test..."
+              powershell -ExecutionPolicy Bypass -File "./scripts/test-platform.ps1"
+            else
+              echo "❌ Windows test script not found"
+              echo "Please run from project root directory"
+              exit 1
+            fi
+            ;;
+          *)
+            echo "⚠️  No automated test available for platform: {{.PLATFORM}}"
+            echo "Please use manual testing checklist in PLATFORM-SUPPORT.md"
+            ;;
+        esac
+
+  list-reports:
+    desc: List all generated platform test reports
+    cmds:
+      - echo "📋 Generated Platform Test Reports"
+      - echo "=================================="
+      - |
+        if ls platform-test-report-*.md 1> /dev/null 2>&1; then
+          echo "Found reports:"
+          for report in platform-test-report-*.md; do
+            if [ -f "$report" ]; then
+              echo "  📄 $report"
+              echo "     Size: $(wc -l < "$report") lines"
+              echo "     Date: $(stat -f "%Sm" "$report" 2>/dev/null || stat -c "%y" "$report" 2>/dev/null || echo "unknown")"
+              echo ""
+            fi
+          done
+          echo "💡 Send any of these reports to the development team"
+        else
+          echo "No reports found."
+          echo "Run 'task platform:generate-report' to create a report"
+        fi
+
+  clean-reports:
+    desc: Clean up old platform test reports
+    cmds:
+      - echo "🧹 Cleaning Platform Test Reports"
+      - echo "================================="
+      - |
+        if ls platform-test-report-*.md 1> /dev/null 2>&1; then
+          echo "Removing old reports..."
+          rm -f platform-test-report-*.md
+          echo "✅ Reports cleaned"
+        else
+          echo "No reports to clean"
+        fi
+
+  send-report-help:
+    desc: Show instructions for sending reports to development team
+    cmds:
+      - echo "📧 How to Send Platform Test Reports"
+      - echo "===================================="
+      - echo ""
+      - echo "1️⃣  **Generate a report** (if you haven't already):"
+      - echo "   task platform:generate-report"
+      - echo ""
+      - echo "2️⃣  **Find your report file**:"
+      - echo "   task platform:list-reports"
+      - echo ""
+      - echo "3️⃣  **Send via email**:"
+      - echo "   • Attach the .md report file to your email"
+      - echo "   • Include any additional error messages you saw"
+      - echo "   • Subject - Platform Test Your Platform Name"
+      - echo ""
+      - echo "4️⃣  **Alternative methods**:"
+      - echo "   • Copy report content and paste in email/chat"
+      - echo "   • Share via GitHub issue if applicable"
+      - echo "   • Include in team communication channel"
+      - echo ""
+      - echo "📋 **Report contains**:"
+      - echo "   • Complete test results with pass/fail for each test"
+      - echo "   • System information (OS, architecture, versions)"
+      - echo "   • Tool availability and versions"
+      - echo "   • Platform-specific recommendations"
+      - echo "   • Troubleshooting guidance"
+      - echo ""
+      - echo "✅ **What happens next**:"
+      - echo "   • Development team reviews your report"
+      - echo "   • Any issues are identified and solutions provided"
+      - echo "   • Platform-specific fixes or workarounds shared"
+      - echo "   • Follow-up testing guidance if needed"
