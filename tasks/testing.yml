@@ -21,10 +21,8 @@ tasks:
     cmds:
       - echo "🧪 Running all tests..."
       - task: check-env
-      - task: unit
-      - task: integration
-      - task: api
-      - task: cache
+      - echo "🔬 Running all available tests..."
+      - "{{.PYTEST_CMD}} tests/ {{.CLI_ARGS}}"
       - echo "✅ All tests completed!"
 
   unit:

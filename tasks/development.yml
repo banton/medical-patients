@@ -8,7 +8,7 @@ tasks:
     desc: Start complete development environment
     cmds:
       - echo "Starting Medical Patients Generator development environment..."
-      - task: ../docker:services
+      - task: :docker:services
       - echo "✅ Development environment started"
       - echo "Visit http://localhost:8000"
 
