@@ -1,0 +1,24 @@
+version: '3'
+
+# Development Environment Management
+# Replaces start-dev.sh and related development scripts
+
+tasks:
+  start:
+    desc: Start complete development environment
+    cmds:
+      - echo "Starting Medical Patients Generator development environment..."
+      - task: ../docker:services
+      - echo "✅ Development environment started"
+      - echo "Visit http://localhost:8000"
+
+  logs:
+    desc: Show application logs
+    cmds:
+      - docker compose logs -f app
+
+  status:
+    desc: Show development environment status
+    cmds:
+      - echo "Development Environment Status"
+      - docker compose ps

@@ -1,0 +1,96 @@
+version: '3'
+
+# Medical Patients Generator - Cross-Platform Task Runner
+# Replaces the 358-line Makefile with modular, cross-platform commands
+
+env:
+  COMPOSE_PROJECT_NAME: medical-patients
+  DOCKER_BUILDKIT: 1
+  PYTHONPATH: "{{.ROOT_DIR}}"
+
+includes:
+  docker: ./tasks/docker.yml
+  dev: ./tasks/development.yml
+
+tasks:
+  default:
+    desc: Show available tasks and quick start guide
+    silent: true
+    cmds:
+      - echo "Medical Patients Generator - Cross-Platform Development"
+      - echo "======================================================"
+      - echo ""
+      - echo "Quick Start"
+      - echo "  task setup    - Complete initial setup"
+      - echo "  task dev      - Start development environment"
+      - echo "  task clean    - Clean up generated files"
+      - echo ""
+      - echo "Available task groups"
+      - echo "  task docker   - Docker operations"
+      - echo "  task dev      - Development environment"
+      - echo ""
+      - echo "Run 'task --list-all' to see all available tasks"
+
+  setup:
+    desc: Complete initial development environment setup
+    deps: [check-requirements]
+    cmds:
+      - echo "Setting up Medical Patients Generator development environment..."
+      - task: setup-complete
+
+  check-requirements:
+    desc: Check system requirements
+    silent: true
+    cmds:
+      - echo "Checking system requirements..."
+      - |
+        echo "Platform: {{OS}}/{{ARCH}}"
+        
+        # Check Python
+        if command -v python3 >/dev/null 2>&1; then
+          echo "✅ Python: $(python3 --version)"
+        else
+          echo "❌ Python not found"
+          exit 1
+        fi
+        
+        # Check Docker
+        if command -v docker >/dev/null 2>&1; then
+          echo "✅ Docker: $(docker --version)"
+        else
+          echo "❌ Docker not found"
+          exit 1
+        fi
+
+  setup-complete:
+    desc: Show setup completion message
+    silent: true
+    cmds:
+      - echo ""
+      - echo "Setup complete!"
+      - echo ""
+      - echo "Next steps"
+      - echo "  1. Run task dev"
+      - echo "  2. Visit http://localhost:8000"
+      - echo ""
+
+  # Direct command aliases for backward compatibility
+  dev:
+    desc: Start development environment (main command)
+    cmds:
+      - task: dev:start
+
+  clean:
+    desc: Clean up generated files and Docker resources
+    cmds:
+      - echo "Cleaning up..."
+      - task: docker:clean
+      - task: python-clean
+
+  python-clean:
+    desc: Clean Python cache files
+    cmds:
+      - echo "Cleaning Python cache..."
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type f -name "*.pyc" -delete 2>/dev/null || true
+      - rm -rf .pytest_cache .mypy_cache 2>/dev/null || true
