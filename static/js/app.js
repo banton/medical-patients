@@ -114,6 +114,16 @@ class PatientGeneratorApp {
             this.updateConfigurationOverview();
         });
 
+        // Also listen for accordion changes (when content is loaded)
+        document.addEventListener('accordion:change', (e) => {
+            this.updateConfigurationOverview();
+        });
+
+        // Periodic update as fallback for real-time editing
+        setInterval(() => {
+            this.updateConfigurationOverview();
+        }, 1000);
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
@@ -132,12 +142,27 @@ class PatientGeneratorApp {
                 setTimeout(() => {
                     this.updateGenerateButtonState();
                     this.updateConfigurationOverview();
+                    this.setupDirectTextareaListeners();
                 }, 50);
             } else {
                 setTimeout(checkAccordion, 100);
             }
         };
         checkAccordion();
+    }
+
+    setupDirectTextareaListeners() {
+        // Listen directly to textarea input events for immediate updates
+        const textareas = document.querySelectorAll('.accordion__editor');
+        textareas.forEach((textarea) => {
+            textarea.addEventListener('input', () => {
+                // Debounce the update to avoid excessive calls
+                clearTimeout(this.updateTimeout);
+                this.updateTimeout = setTimeout(() => {
+                    this.updateConfigurationOverview();
+                }, 300);
+            });
+        });
     }
 
     async waitForApiClient() {
@@ -263,6 +288,9 @@ class PatientGeneratorApp {
         try {
             // Get current accordion content
             const [frontsJson, scenarioJson] = this.accordion.getAllContent();
+
+            // Debug: Check if we're getting content
+            // console.log('Updating config overview with:', { frontsJson: frontsJson?.substring(0, 50), scenarioJson: scenarioJson?.substring(0, 50) });
 
             // Parse JSON safely
             let fronts, scenario;
