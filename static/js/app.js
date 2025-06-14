@@ -40,17 +40,17 @@ class PatientGeneratorApp {
             'Rolling dice for combat injuries...',
             'Consulting field medics for realistic injuries...',
             'Distributing casualties across battle fronts...',
-            'Generating realistic warfare patterns...'
+            'Generating realistic warfare patterns...',
             'Simulating artillery bombardment timing...',
             'Calculating environmental impact on casualties...',
             'Processing mass casualty event clusters...',
             'Assigning triage categories...',
             'Creating believable medical histories...',
-            'Randomizing arrival patterns with timeline data...'
+            'Randomizing arrival patterns with timeline data...',
             'Double-checking NATO personnel IDs...',
             'Simulating evacuation priorities...',
             'Adding battlefield dust for authenticity...',
-            'Modeling realistic operational patterns...'
+            'Modeling realistic operational patterns...',
             'Generating convincing vital signs...',
             'Cross-referencing warfare-specific injury patterns...',
             'Applying night operations modifiers...',
