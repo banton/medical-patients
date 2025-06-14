@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Temporal Military Patient Generator</title>
+        <title>Military Medical Exercise Patient Generator</title>
 
         <!-- Favicon -->
         <link rel="icon" type="image/x-icon" href="favicon.ico" />
@@ -32,7 +32,7 @@
             <div class="api-banner__content">
                 <span class="api-banner__text">
                     <i class="fas fa-code api-banner__icon"></i>
-                    Temporal API Available - Integrate realistic warfare scenario simulation programmatically
+                    Medical Training API Available - Integrate realistic warfare scenario simulation programmatically
                 </span>
                 <a href="/docs" class="api-banner__link">
                     View Documentation
@@ -46,14 +46,14 @@
             <div class="container mx-auto px-4 py-8 max-w-6xl">
                 <!-- Header Section -->
                 <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden border border-slate-200">
-                    <div class="px-6 py-4 text-center">
-                        <div class="flex items-center justify-center mb-2">
+                    <div class="px-6 py-3 text-center">
+                        <div class="flex items-center justify-center mb-1">
                             <div class="bg-cyan-100 rounded-lg p-2 mr-3">
-                                <i class="fas fa-user-md text-xl text-cyan-600"></i>
+                                <i class="fas fa-user-md text-lg text-cyan-600"></i>
                             </div>
-                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Temporal Military Patient Generator</h1>
+                            <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Military Medical Exercise Patient Generator</h1>
                         </div>
-                        <p class="text-sm text-slate-600 max-w-xl mx-auto">Advanced temporal medical training simulation with realistic warfare scenarios</p>
+                        <p class="text-sm text-slate-600 max-w-2xl mx-auto">Advanced medical training simulation with realistic warfare scenarios and timeline patterns</p>
                     </div>
                 </div>
 
@@ -68,7 +68,7 @@
                                     <div class="bg-cyan-100 rounded-lg p-2 mr-3">
                                         <i class="fas fa-cogs text-cyan-600"></i>
                                     </div>
-                                    <h2 class="text-lg font-semibold text-slate-800">Temporal Generation Settings</h2>
+                                    <h2 class="text-lg font-semibold text-slate-800">Scenario Generation Configuration</h2>
                                 </div>
                             </div>
 
@@ -148,10 +148,10 @@
                                             <div class="space-y-4">
                                                 <div>
                                                     <label class="block text-sm font-medium text-slate-700 mb-2">
-                                                        Temporal Generation Configuration (JSON Format)
+                                                        Scenario Generation Configuration (JSON Format)
                                                         <span class="text-xs text-slate-500 ml-2">Warfare scenarios, environmental conditions, and temporal patterns</span>
                                                     </label>
-                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter temporal scenario configuration JSON..." rows="25">
+                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter scenario configuration JSON..." rows="25">
 {
   "total_patients": 1440,
   "days_of_fighting": 8,
@@ -332,7 +332,51 @@
                             </div>
 
                             <div class="p-6">
-                                <p class="text-sm text-slate-600 mb-6">Ready to generate medical training data based on your configuration settings.</p>
+                                <p class="text-sm text-slate-600 mb-4">Ready to generate medical training data based on your configuration settings.</p>
+
+                                <!-- Dynamic Configuration Overview -->
+                                <div class="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200">
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Total Patients:</span>
+                                            <span class="font-semibold text-slate-800" id="totalPatients">1,440</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Battle Fronts:</span>
+                                            <span class="font-semibold text-slate-800" id="totalFronts">3</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Nationalities:</span>
+                                            <span class="font-semibold text-slate-800 text-right" id="nationalityList">POL, LTU, NLD, ESP, EST, GBR, FIN, USA</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Battle Duration:</span>
+                                            <span class="font-semibold text-slate-800" id="battleDuration">8 days</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Warfare Types:</span>
+                                            <div class="flex flex-wrap gap-1" id="warfareTypes">
+                                                <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">Conventional</span>
+                                                <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-medium">Artillery</span>
+                                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">Drone</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Capabilities:</span>
+                                            <div class="flex space-x-1">
+                                                <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-medium">Timeline</span>
+                                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">Environmental</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-slate-600">Output Formats:</span>
+                                            <div class="flex space-x-1">
+                                                <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">JSON</span>
+                                                <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">CSV</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <button id="generateBtn" class="generate-button">
                                     <div class="flex items-center justify-center">
@@ -367,51 +411,6 @@
                             </div>
                         </div>
 
-                        <!-- Temporal Generation Overview -->
-                        <div class="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-                            <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
-                                <div class="flex items-center">
-                                    <div class="bg-amber-100 rounded-lg p-2 mr-3">
-                                        <i class="fas fa-chart-bar text-amber-600"></i>
-                                    </div>
-                                    <h3 class="text-lg font-semibold text-slate-800">Generation Overview</h3>
-                                </div>
-                            </div>
-
-                            <div class="p-6">
-                                <div class="space-y-4">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm text-slate-600">Total Patients:</span>
-                                        <span class="font-semibold text-slate-800" id="totalPatients">1,440</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm text-slate-600">Battle Fronts:</span>
-                                        <span class="font-semibold text-slate-800" id="totalFronts">3</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm text-slate-600">Generation Type:</span>
-                                        <div class="flex space-x-1">
-                                            <span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium">Temporal</span>
-                                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">8 Warfare Types</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm text-slate-600">Capabilities:</span>
-                                        <div class="flex space-x-1">
-                                            <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-medium">Timeline</span>
-                                            <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">Environmental</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-sm text-slate-600">Output Formats:</span>
-                                        <div class="flex space-x-1">
-                                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">JSON</span>
-                                            <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium">CSV</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -441,6 +440,19 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="text-center py-8">
+            <a href="https://www.linkedin.com/company/med-atlantis/?viewAsMember=true" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="inline-block hover:opacity-80 transition-opacity duration-200"
+               title="Visit Med Atlantis on LinkedIn">
+                <img src="atlantis-logo.svg" 
+                     alt="Med Atlantis Logo" 
+                     class="h-12 mx-auto opacity-70 hover:opacity-100 transition-opacity duration-200">
+            </a>
         </div>
 
         <!-- Scripts -->

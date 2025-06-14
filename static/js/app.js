@@ -40,17 +40,17 @@ class PatientGeneratorApp {
             'Rolling dice for combat injuries...',
             'Consulting field medics for realistic injuries...',
             'Distributing casualties across battle fronts...',
-            'Generating temporal warfare patterns...',
+            'Generating realistic warfare patterns...'
             'Simulating artillery bombardment timing...',
             'Calculating environmental impact on casualties...',
             'Processing mass casualty event clusters...',
             'Assigning triage categories...',
             'Creating believable medical histories...',
-            'Randomizing arrival patterns with temporal data...',
+            'Randomizing arrival patterns with timeline data...'
             'Double-checking NATO personnel IDs...',
             'Simulating evacuation priorities...',
             'Adding battlefield dust for authenticity...',
-            'Modeling dawn/dusk operational patterns...',
+            'Modeling realistic operational patterns...'
             'Generating convincing vital signs...',
             'Cross-referencing warfare-specific injury patterns...',
             'Applying night operations modifiers...',
@@ -314,12 +314,12 @@ class PatientGeneratorApp {
         const fronts = JSON.parse(frontsJson);
         const temporal = JSON.parse(temporalJson);
 
-        // Check if temporal format is being used
+        // Check if scenario format is being used
         if (temporal.warfare_types || temporal.environmental_conditions || temporal.special_events) {
-            // New temporal configuration format
+            // New scenario configuration format
             return {
-                name: `Temporal Generation ${new Date().toLocaleString()}`,
-                description: 'Generated from web interface with temporal patterns',
+                name: `Patient Generation ${new Date().toLocaleString()}`,
+                description: 'Generated from web interface with scenario patterns',
                 total_patients: temporal.total_patients || 1440,
                 days_of_fighting: temporal.days_of_fighting || 8,
                 base_date: temporal.base_date || '2025-06-01',
@@ -874,10 +874,10 @@ class PatientGeneratorApp {
                 2
             );
 
-            // Check if this is temporal or legacy configuration
+            // Check if this is scenario or legacy configuration
             let configJson;
             if (config.warfare_types || config.environmental_conditions || config.special_events) {
-                // Temporal configuration format
+                // Scenario configuration format
                 configJson = JSON.stringify(
                     {
                         total_patients: config.total_patients,
@@ -907,7 +907,7 @@ class PatientGeneratorApp {
 
             // Set accordion content
             this.accordion.setContent(0, frontsJson); // Battle Fronts
-            this.accordion.setContent(1, configJson); // Temporal/Injury Configuration
+            this.accordion.setContent(1, configJson); // Scenario/Injury Configuration
 
             // Trigger validation
             setTimeout(() => {
@@ -943,12 +943,12 @@ class PatientGeneratorApp {
                     item.nationalities.slice(0, 3).join(', ') +
                     (item.nationalities.length > 3 ? ` +${item.nationalities.length - 3}` : '');
 
-                // Create temporal or legacy indicator
+                // Create scenario or legacy indicator
                 const typeIndicator = item.isTemporal
-                    ? `<span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium mr-2">Temporal</span>`
+                    ? `<span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium mr-2">Scenario</span>`
                     : `<span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-medium mr-2">Legacy</span>`;
 
-                // Create warfare types display for temporal configs
+                // Create warfare types display for scenario configs
                 const warfareDisplay =
                     item.isTemporal && item.warfareTypes.length > 0
                         ? item.warfareTypes.slice(0, 2).join(', ') +

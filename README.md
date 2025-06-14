@@ -1,37 +1,58 @@
 # Military Medical Exercise Patient Generator
 
-A web-based application to generate realistic dummy patient data for military medical exercises. It features a highly configurable system supporting dynamic scenario definitions (multiple treatment facilities, all 32 NATO nations, varied injury types), a PostgreSQL backend, a comprehensive RESTful API with v1 standardization, a Python SDK, and a clean web interface, all following NATO medical standards.
+[![Med Atlantis](atlantis-logo.svg)](https://www.linkedin.com/company/med-atlantis/?viewAsMember=true)
+
+A web-based application to generate realistic dummy patient data for military medical exercises. It features a highly configurable system supporting dynamic scenario definitions with temporal warfare patterns, multiple treatment facilities, all 32 NATO nations, varied injury types, environmental conditions, and realistic timeline distributions. Built with a PostgreSQL backend, comprehensive RESTful API with v1 standardization, Python SDK, and modern web interface, all following NATO medical standards.
 
 ## Overview
 
-This application generates simulated patient data for military medical exercises. It models patient flow through dynamically configurable medical treatment facility chains (e.g., POI, R1, R2, R3, R4) with realistic progression statistics. The system is built upon a PostgreSQL database, managed with Alembic migrations, and offers extensive control via a RESTful API and a Python SDK. The generated data complies with international medical data standards including:
+This application generates simulated patient data for military medical exercises with advanced temporal warfare scenario modeling. It creates realistic patient flow through dynamically configurable medical treatment facility chains (e.g., POI, R1, R2, R3, R4) with authentic timing patterns, environmental conditions, and progression statistics. The system features a temporal generation engine that models 8 distinct warfare types, special events, and environmental factors affecting casualty patterns over time. Built upon a PostgreSQL database with Alembic migrations, it offers extensive control via a RESTful API and Python SDK. The generated data complies with international medical data standards including:
 
 - Minimal Core Medical Data (AMedP-8.1)
 - Medical Warning tag (AMedP-8.8)
 - International Patient Summary ISO27269:2021
-- HL7 FHIR R4 formatted bundles
+- NATO medical interoperability standards
 
 ## Features
 
+- **Advanced Temporal Warfare Modeling**: Comprehensive scenario generation with realistic timing patterns:
+    - **8 Warfare Types**: Conventional, Artillery/Indirect Fire, Urban Warfare, Guerrilla/Insurgency, Drone/Remote, Naval/Amphibious, CBRN, and Peacekeeping operations
+    - **Special Events**: Major offensives, ambush attacks, and mass casualty incidents with dynamic timing
+    - **Environmental Conditions**: Weather effects (rain, fog, storms), terrain modifiers (mountainous, urban debris), and operational factors (night operations, visibility restrictions)
+    - **Intensity & Tempo Control**: Configurable conflict intensity (low/medium/high/extreme) and operational tempo (sustained/escalating/surge/declining/intermittent)
+    - **Realistic Casualty Patterns**: Time-distributed patient generation over configurable battle duration (1-30+ days)
+
 - **Highly Configurable Scenarios**: Define and manage complex exercise scenarios including:
-    - Dynamic medical facility chains (e.g., POI, R1-R4) with custom parameters.
-    - Multiple configurable fronts with specific casualty rates.
-    - Detailed nationality distributions per front (goal: all 32 NATO nations).
-    - Overall injury type distributions (Disease, Non-Battle Injury, Battle Injury).
-- **Simple Web Interface**: Clean HTML/JavaScript interface for patient generation and job monitoring.
-- **React Timeline Viewer**: Advanced interactive visualization tool for patient flow through medical facilities with animated timeline playback, patient name display, cumulative KIA/RTD tracking, and compact design for optimal visibility.
-- **Database-Backed Configurations**: Scenarios are stored and versioned in a PostgreSQL database.
-- **Standardized RESTful API**: v1 API endpoints with consistent request/response models and comprehensive validation.
-- **Python SDK**: Simplifies interaction with the API for automation and integration.
+    - Dynamic medical facility chains (e.g., POI, R1-R4) with custom parameters and evacuation timing
+    - Multiple configurable battle fronts with specific casualty rates and geographic characteristics
+    - Detailed nationality distributions per front supporting all 32 NATO nations
+    - Comprehensive injury type distributions (Disease, Non-Battle Injury, Battle Injury) with warfare-specific modifiers
+
+- **Modern Web Interface**: Clean, responsive interface with enhanced user experience:
+    - **Scenario Generation Configuration**: Intuitive accordion-based JSON editors for complex configurations
+    - **Dynamic Configuration Overview**: Real-time display of selected parameters (patients, fronts, nationalities, warfare types, duration)
+    - **Real-time Progress Tracking**: Detailed generation status with fun progress messages and time estimation
+    - **Configuration History**: Automatic saving and loading of previous configurations with metadata
+
+- **React Timeline Viewer**: Advanced interactive visualization tool for patient flow analysis:
+    - Interactive timeline playback with speed control (0.25x-10x) and patient movement visualization
+    - 5-facility progression display (POI → Role1 → Role2 → Role3 → Role4) with fixed headers
+    - Patient status tracking with visual KIA/RTD indicators and name display
+    - Smart tallying system and auto-hide for terminal cases to reduce visual clutter
+    - File upload interface with drag-and-drop support and format validation
+
+- **Database-Backed Configurations**: Scenarios stored and versioned in PostgreSQL with full audit trail
+- **Standardized RESTful API**: v1 API endpoints with consistent request/response models, comprehensive validation, and OpenAPI documentation
+- **Python SDK**: Simplified API interaction for automation and integration workflows
 - **Realistic Patient Data**:
-    - Demographics generation for a wide range of nationalities.
-    - Medical conditions using SNOMED CT codes.
-    - HL7 FHIR R4 compliant bundles.
-- **Multiple Output Formats**: JSON, XML, with NDEF for NFC tags.
-- **Data Security Options**: gzip compression and AES-256-GCM encryption (using unique salts per encryption).
-- **Dockerized Development Environment**: Easy setup and consistent environment using Docker and `start-dev.sh` script.
-- **Database Schema Management**: Alembic for robust PostgreSQL schema migrations.
-- **Background Job Processing**: Async patient generation with real-time progress tracking.
+    - Demographics generation for all NATO nations with authentic names and ID formats
+    - Medical conditions using SNOMED CT codes with warfare-specific injury patterns
+    - Temporal metadata including casualty event IDs, mass casualty classification, and environmental conditions
+- **Multiple Output Formats**: JSON and CSV formats with compressed ZIP archives
+- **Data Security Options**: AES-256-GCM encryption with unique salts per encryption operation
+- **Dockerized Development Environment**: Complete Docker Compose setup with PostgreSQL and Redis support
+- **Database Schema Management**: Alembic migrations for robust schema versioning
+- **Background Job Processing**: Async patient generation with real-time progress tracking and job management
 
 ## Architecture
 
@@ -96,12 +117,13 @@ The application features a clean, domain-driven architecture with clear separati
    - **Exceptions**: Custom exception hierarchy
 
 4. **Patient Generator** (`patient_generator/`):
-   - **ConfigurationManager**: Manages active scenario configurations
-   - **Database**: PostgreSQL connection pool and data access
-   - **Flow Simulator**: Models patient progression through facilities
-   - **Generators**: Demographics, medical conditions, and FHIR bundles
-   - **PatientGeneratorApp**: Orchestrates patient generation
-   - **Specialized Generators**: Demographics, medical conditions, flow simulation
+   - **ConfigurationManager**: Manages active scenario configurations with temporal pattern support
+   - **Database**: PostgreSQL connection pool and data access with job tracking
+   - **Flow Simulator**: Models patient progression through facilities with temporal distribution
+   - **Temporal Generator**: Advanced warfare scenario engine with 8 warfare types and environmental modeling
+   - **Demographics Generator**: NATO nation-specific name and ID generation
+   - **Medical Generator**: SNOMED CT-based medical conditions with injury pattern distributions
+   - **PatientGeneratorApp**: Orchestrates patient generation with background job processing
 
 5. **Frontend Layer**:
    - **Main Application** (`static/index.html`): Simple web interface for patient generation
@@ -314,15 +336,53 @@ Generated data can be used for:
 
 ## Data Structure and Configuration
 
-Patient data adheres to HL7 FHIR R4 standards, including Patient, Condition, Observation, and Procedure resources.
+Patient data follows NATO medical standards with comprehensive metadata for training scenarios. Each patient includes demographics, medical conditions with SNOMED CT codes, temporal metadata (casualty event ID, mass casualty classification, environmental conditions), and complete evacuation timeline data.
 
-Scenario configurations are complex objects managed via the API and stored in the database. They define all aspects of the generation, such as:
--   Overall exercise parameters (total patients, base date).
--   Front definitions (name, casualty rates, nationality mix).
--   Facility definitions (type, capabilities, progression statistics) arranged in chains.
--   Injury distributions (battle, non-battle, disease percentages).
+### Scenario Configuration Format
 
-Refer to the API documentation (`/docs`) or the `ConfigurationPanel.tsx` UI for details on the structure of configuration templates.
+Scenario configurations are complex JSON objects managed via the API and stored in the database with full versioning. The modern temporal configuration format includes:
+
+#### Core Parameters
+- **total_patients**: Number of patients to generate (1-10,000+)
+- **days_of_fighting**: Battle duration in days (1-30+)
+- **base_date**: Starting date for scenario timeline (ISO 8601 format)
+
+#### Warfare Type Configuration
+- **conventional**: Traditional military operations with sustained combat patterns
+- **artillery**: Indirect fire with surge patterns and bombardment cycles
+- **urban**: Building-to-building combat with phased assault patterns
+- **guerrilla**: Sporadic attacks with dawn/dusk preference and low-intensity operations
+- **drone**: Precision strikes with daylight preference and minimal collateral damage
+- **naval**: Wave assault patterns with coordinated attack timing
+- **cbrn**: Chemical/biological/radiological/nuclear warfare with contamination spread
+- **peacekeeping**: Low-intensity stabilization operations during business hours
+
+#### Operational Parameters
+- **intensity**: Conflict intensity level (low/medium/high/extreme)
+- **tempo**: Operational tempo (sustained/escalating/surge/declining/intermittent)
+
+#### Special Events
+- **major_offensive**: Large-scale operations with 3x casualty multiplier
+- **ambush**: Sudden attacks during vulnerability periods with 2x multiplier
+- **mass_casualty**: Coordinated events with 5x multiplier and guaranteed mass casualties
+
+#### Environmental Conditions
+- **Weather Effects**: rain, fog, storm, extreme_heat, extreme_cold, dust_storm
+- **Terrain Modifiers**: mountainous_terrain, urban_debris
+- **Operational Factors**: night_operations affecting evacuation timing and casualty rates
+
+#### Medical Configuration
+- **injury_mix**: Percentage distribution of injury types
+  - Disease (typically 40-60% in sustained operations)
+  - Non-Battle Injury (typically 25-40%)
+  - Battle Injury (typically 10-25% varying by warfare type)
+
+#### Battle Front Definitions
+- **Front configurations**: Multiple fronts with specific casualty rates, nationality distributions, and geographic characteristics
+- **Nationality distributions**: Percentage allocations for all 32 NATO nations per front
+- **Casualty rates**: Front-specific casualty generation rates
+
+Refer to the API documentation (`/docs`) or the web interface's Scenario Generation Configuration section for complete configuration schema details.
 
 ## Security
 
@@ -433,21 +493,25 @@ The timeline viewer is designed to work seamlessly with the main patient generat
 ## Standards Compliance
 
 This generator creates data compliant with:
-- HL7 FHIR R4 standard
-- SNOMED CT for conditions, procedures and other medical items
-- LOINC for lab values and observations
-- ISO3166 alpha-3 for country codes
-- ISO8601 for dates and times
-- NDEF format specifications for NFC compatibility
+- NATO medical data standards (AMedP-8.1, AMedP-8.8)
+- SNOMED CT for medical conditions, procedures and clinical terminology
+- LOINC for laboratory values and medical observations
+- ISO3166 alpha-3 for country codes and nationality identification
+- ISO8601 for dates and times throughout temporal scenarios
+- International Patient Summary ISO27269:2021 for medical data structure
+- NDEF format specifications for NFC tag compatibility
 
 ## Project Status
 
 ### ✅ Recently Completed (June 2025)
+- **Temporal Patient Generation System**: Complete implementation of advanced warfare scenario modeling with 8 warfare types, environmental conditions, and realistic timing patterns
 - **API v1 Standardization**: Complete API standardization with consistent endpoints, models, and validation
-- **Background Task Processing**: Fixed patient generation with proper async background tasks
+- **Background Task Processing**: Fixed patient generation with proper async background tasks and progress tracking
+- **Modern Web Interface**: Enhanced UI with scenario configuration, dynamic overview, and terminology cleanup
+- **React Timeline Viewer**: Interactive patient flow visualization with timeline playback and facility progression
 - **Clean Codebase Foundation**: Systematic cleanup of deprecated and unused code
-- **Enhanced Download Functionality**: Working file downloads with proper authentication
-- **Comprehensive Testing**: Full API contract test coverage
+- **Enhanced Download Functionality**: Working file downloads with proper authentication and ZIP packaging
+- **Comprehensive Testing**: Full API contract test coverage with temporal system validation
 
 ### 🔄 In Progress
 - Performance optimization with Redis caching
