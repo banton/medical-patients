@@ -15,6 +15,7 @@ includes:
   db: ./tasks/database.yml
   frontend: ./tasks/frontend.yml
   lint: ./tasks/linting.yml
+  timeline: ./tasks/timeline.yml
 
 tasks:
   default:
@@ -36,6 +37,7 @@ tasks:
       - echo "  task db       - Database operations"
       - echo "  task frontend - Frontend build tasks"
       - echo "  task lint     - Code quality and linting"
+      - echo "  task timeline - React timeline viewer"
       - echo ""
       - echo "Run 'task --list-all' to see all available tasks"
 
