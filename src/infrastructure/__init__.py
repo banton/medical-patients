@@ -7,9 +7,9 @@ from src.infrastructure.database_adapter import EnhancedDatabase, get_enhanced_d
 from src.infrastructure.database_pool import EnhancedConnectionPool, close_pool, get_pool
 
 __all__ = [
-    "EnhancedDatabase",
-    "get_enhanced_database",
     "EnhancedConnectionPool",
-    "get_pool",
+    "EnhancedDatabase",
     "close_pool",
+    "get_enhanced_database",
+    "get_pool",
 ]

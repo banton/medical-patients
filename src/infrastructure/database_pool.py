@@ -3,31 +3,30 @@ Enhanced database connection pool with monitoring and optimization.
 Part of EPIC-003: Production Scalability Improvements
 """
 
-import datetime
+from contextlib import contextmanager
 import logging
 import os
 import threading
 import time
-from contextlib import contextmanager
 from typing import Any, Dict, Optional
 
 import psycopg2
+from psycopg2.extensions import connection as Connection
 import psycopg2.extras
 import psycopg2.pool
-from psycopg2.extensions import connection as Connection
 
-from src.core.metrics import db_connections_active, db_connections_total, db_query_duration, get_metrics_collector
+from src.core.metrics import db_connections_active, db_connections_total, db_query_duration
 
 logger = logging.getLogger(__name__)
 
 
 class ConnectionPoolMetrics:
     """Tracks connection pool metrics for monitoring."""
-    
+
     def __init__(self):
         self.lock = threading.Lock()
         self._reset_metrics()
-    
+
     def _reset_metrics(self):
         """Reset all metrics to initial state."""
         self.total_connections_created = 0
@@ -41,40 +40,40 @@ class ConnectionPoolMetrics:
         self.query_time = 0.0
         self.slow_queries = 0
         self.start_time = time.time()
-    
+
     def record_connection_created(self):
         """Record a new connection creation."""
         with self.lock:
             self.total_connections_created += 1
             # Update Prometheus metric
             db_connections_total.inc()
-    
+
     def record_connection_closed(self):
         """Record a connection closure."""
         with self.lock:
             self.total_connections_closed += 1
-    
+
     def record_checkout(self, duration: float):
         """Record a successful connection checkout."""
         with self.lock:
             self.total_checkouts += 1
             self.total_checkout_time += duration
-    
+
     def record_checkin(self):
         """Record a connection checkin."""
         with self.lock:
             self.total_checkins += 1
-    
+
     def record_checkout_failure(self):
         """Record a failed connection checkout."""
         with self.lock:
             self.failed_checkouts += 1
-    
+
     def record_connection_error(self):
         """Record a connection error."""
         with self.lock:
             self.connection_errors += 1
-    
+
     def record_query(self, duration: float, slow_threshold: float = 1.0):
         """Record query execution metrics."""
         with self.lock:
@@ -84,20 +83,14 @@ class ConnectionPoolMetrics:
                 self.slow_queries += 1
             # Update Prometheus metric
             db_query_duration.observe(duration)
-    
+
     def get_metrics(self) -> Dict[str, Any]:
         """Get current metrics snapshot."""
         with self.lock:
             uptime = time.time() - self.start_time
-            avg_checkout_time = (
-                self.total_checkout_time / self.total_checkouts 
-                if self.total_checkouts > 0 else 0
-            )
-            avg_query_time = (
-                self.query_time / self.query_count 
-                if self.query_count > 0 else 0
-            )
-            
+            avg_checkout_time = self.total_checkout_time / self.total_checkouts if self.total_checkouts > 0 else 0
+            avg_query_time = self.query_time / self.query_count if self.query_count > 0 else 0
+
             return {
                 "uptime_seconds": uptime,
                 "connections": {
@@ -127,7 +120,7 @@ class ConnectionPoolMetrics:
 class EnhancedConnectionPool:
     """
     Enhanced PostgreSQL connection pool with monitoring and optimization.
-    
+
     Features:
     - Connection health checks (pre-ping)
     - Connection recycling after timeout
@@ -135,7 +128,7 @@ class EnhancedConnectionPool:
     - Comprehensive metrics collection
     - Query timeout enforcement
     """
-    
+
     def __init__(
         self,
         dsn: str,
@@ -149,7 +142,7 @@ class EnhancedConnectionPool:
     ):
         """
         Initialize enhanced connection pool.
-        
+
         Args:
             dsn: Database connection string
             minconn: Minimum number of connections
@@ -168,20 +161,20 @@ class EnhancedConnectionPool:
         self.pre_ping = pre_ping
         self.query_timeout = query_timeout
         self.application_name = application_name
-        
+
         self.metrics = ConnectionPoolMetrics()
         self._lock = threading.Lock()
         self._connection_timestamps: Dict[int, float] = {}
-        
+
         # Initialize the pool
         self._pool = self._create_pool()
-        
+
         logger.info(
             f"Enhanced connection pool initialized: "
             f"minconn={minconn}, maxconn={maxconn}, "
             f"recycle={pool_recycle}s, timeout={pool_timeout}s"
         )
-    
+
     def _create_pool(self) -> psycopg2.pool.ThreadedConnectionPool:
         """Create the underlying connection pool."""
         try:
@@ -191,37 +184,36 @@ class EnhancedConnectionPool:
                 self.maxconn,
                 self.dsn,
                 connect_timeout=10,
-                options=f"-c statement_timeout={self.query_timeout} "
-                       f"-c application_name={self.application_name}",
+                options=f"-c statement_timeout={self.query_timeout} -c application_name={self.application_name}",
             )
-            
+
             # Initialize minimum connections
             for _ in range(self.minconn):
                 conn = pool.getconn()
                 self._connection_timestamps[id(conn)] = time.time()
                 self.metrics.record_connection_created()
                 pool.putconn(conn)
-                
+
             return pool
-            
+
         except Exception as e:
             logger.error(f"Failed to create connection pool: {e}")
             raise
-    
+
     def _is_connection_expired(self, conn: Connection) -> bool:
         """Check if connection should be recycled."""
         conn_id = id(conn)
         if conn_id not in self._connection_timestamps:
             return True
-        
+
         age = time.time() - self._connection_timestamps[conn_id]
         return age > self.pool_recycle
-    
+
     def _test_connection(self, conn: Connection) -> bool:
         """Test if connection is still alive."""
         if not self.pre_ping:
             return True
-            
+
         try:
             with conn.cursor() as cur:
                 cur.execute("SELECT 1")
@@ -229,28 +221,28 @@ class EnhancedConnectionPool:
             return True
         except Exception:
             return False
-    
+
     @contextmanager
     def get_connection(self):
         """
         Get a connection from the pool with automatic management.
-        
+
         Yields:
             psycopg2 connection object
-            
+
         Raises:
             TimeoutError: If unable to get connection within timeout
             ConnectionError: If unable to establish connection
         """
         start_time = time.time()
         conn = None
-        
+
         try:
             # Get connection with timeout
             conn = self._pool.getconn()
             checkout_time = time.time() - start_time
             self.metrics.record_checkout(checkout_time)
-            
+
             # Check if connection needs recycling
             if self._is_connection_expired(conn):
                 logger.debug(f"Recycling expired connection {id(conn)}")
@@ -259,7 +251,7 @@ class EnhancedConnectionPool:
                 conn = self._pool.getconn()
                 self._connection_timestamps[id(conn)] = time.time()
                 self.metrics.record_connection_created()
-            
+
             # Test connection health
             if not self._test_connection(conn):
                 logger.warning(f"Connection {id(conn)} failed health check")
@@ -268,18 +260,18 @@ class EnhancedConnectionPool:
                 conn = self._pool.getconn()
                 self._connection_timestamps[id(conn)] = time.time()
                 self.metrics.record_connection_created()
-            
+
             yield conn
-            
+
         except psycopg2.pool.PoolError as e:
             self.metrics.record_checkout_failure()
             raise TimeoutError(f"Unable to get connection from pool: {e}")
-            
+
         except Exception as e:
             self.metrics.record_connection_error()
             logger.error(f"Connection error: {e}")
             raise ConnectionError(f"Database connection failed: {e}")
-            
+
         finally:
             if conn:
                 try:
@@ -288,15 +280,15 @@ class EnhancedConnectionPool:
                     self.metrics.record_checkin()
                 except Exception as e:
                     logger.error(f"Error returning connection to pool: {e}")
-    
+
     @contextmanager
     def cursor(self, cursor_factory=psycopg2.extras.DictCursor):
         """
         Get a cursor with automatic connection and metrics management.
-        
+
         Args:
             cursor_factory: Cursor factory to use
-            
+
         Yields:
             Database cursor
         """
@@ -304,7 +296,7 @@ class EnhancedConnectionPool:
             with conn.cursor(cursor_factory=cursor_factory) as cur:
                 # Wrap cursor to track query metrics
                 original_execute = cur.execute
-                
+
                 def execute_with_metrics(query, params=None):
                     start = time.time()
                     try:
@@ -312,10 +304,10 @@ class EnhancedConnectionPool:
                     finally:
                         duration = time.time() - start
                         self.metrics.record_query(duration)
-                
+
                 cur.execute = execute_with_metrics
                 yield cur
-    
+
     def get_pool_status(self) -> Dict[str, Any]:
         """Get current pool status and metrics."""
         with self._lock:
@@ -323,13 +315,13 @@ class EnhancedConnectionPool:
             pool_stats = {
                 "size": self._pool.maxconn,
                 "minconn": self._pool.minconn,
-                "available": len(self._pool._pool) if hasattr(self._pool, '_pool') else 0,
-                "in_use": self._pool.maxconn - len(self._pool._pool) if hasattr(self._pool, '_pool') else 0,
+                "available": len(self._pool._pool) if hasattr(self._pool, "_pool") else 0,
+                "in_use": self._pool.maxconn - len(self._pool._pool) if hasattr(self._pool, "_pool") else 0,
             }
-            
+
             # Update Prometheus gauge
             db_connections_active.set(pool_stats["in_use"])
-            
+
             # Combine with metrics
             return {
                 "pool": pool_stats,
@@ -341,7 +333,7 @@ class EnhancedConnectionPool:
                     "pre_ping": self.pre_ping,
                 },
             }
-    
+
     def close(self):
         """Close all connections in the pool."""
         if self._pool:
@@ -357,16 +349,13 @@ _pool_lock = threading.Lock()
 def get_pool() -> EnhancedConnectionPool:
     """Get or create the global connection pool instance."""
     global _pool_instance
-    
+
     if _pool_instance is None:
         with _pool_lock:
             if _pool_instance is None:
                 # Get configuration from environment
-                dsn = os.getenv(
-                    "DATABASE_URL",
-                    "postgresql://medgen_user:medgen_password@localhost:5432/medgen_db"
-                )
-                
+                dsn = os.getenv("DATABASE_URL", "postgresql://medgen_user:medgen_password@localhost:5432/medgen_db")
+
                 # Pool configuration from environment with defaults
                 minconn = int(os.getenv("DB_POOL_MIN", "5"))
                 maxconn = int(os.getenv("DB_POOL_MAX", "20"))
@@ -374,7 +363,7 @@ def get_pool() -> EnhancedConnectionPool:
                 pool_recycle = int(os.getenv("DB_POOL_RECYCLE", "3600"))
                 pre_ping = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"
                 query_timeout = int(os.getenv("DB_QUERY_TIMEOUT", "30000"))
-                
+
                 _pool_instance = EnhancedConnectionPool(
                     dsn=dsn,
                     minconn=minconn,
@@ -384,14 +373,14 @@ def get_pool() -> EnhancedConnectionPool:
                     pre_ping=pre_ping,
                     query_timeout=query_timeout,
                 )
-    
+
     return _pool_instance
 
 
 def close_pool():
     """Close the global connection pool."""
     global _pool_instance
-    
+
     if _pool_instance:
         with _pool_lock:
             if _pool_instance:

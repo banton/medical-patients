@@ -96,14 +96,14 @@ async def check_job_worker_health() -> Dict[str, Any]:
     try:
         resource_manager = get_resource_manager()
         active_jobs = resource_manager.get_active_jobs()
-        
+
         # Calculate total resource usage
         total_memory_mb = sum(job.get("memory_mb", 0) for job in active_jobs.values())
         total_cpu_seconds = sum(job.get("cpu_seconds", 0) for job in active_jobs.values())
-        
+
         # Check if we can accept new jobs
         can_accept_jobs = resource_manager.can_start_new_job()
-        
+
         return {
             "status": "healthy" if can_accept_jobs else "warning",
             "active_jobs": len(active_jobs),

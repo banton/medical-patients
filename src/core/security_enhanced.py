@@ -7,16 +7,15 @@ and legacy compatibility with the existing single API key system.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Dict, Any
 import os
+from typing import Any, Dict, Optional
 
-from fastapi import HTTPException, Depends, Header
+from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from ..domain.models.api_key import APIKey, DEMO_API_KEY_CONFIG
-from ..domain.repositories.api_key_repository import APIKeyRepository
 from ..api.v1.dependencies.database import get_database
-
+from ..domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
+from ..domain.repositories.api_key_repository import APIKeyRepository
 
 # Legacy single API key support (backward compatibility)
 LEGACY_API_KEY = os.getenv("API_KEY", "your-api-key-here")
@@ -29,42 +28,42 @@ DEMO_API_KEY = DEMO_API_KEY_CONFIG["key"]
 class APIKeyContext:
     """
     Rich context object for API key validation and enforcement.
-    
+
     Provides limit checking, usage tracking, and metadata access
     for API key-based operations.
     """
+
     api_key: APIKey
     is_demo: bool = False
     is_legacy: bool = False
     rate_limit_remaining: Optional[int] = None
     rate_limit_reset: Optional[datetime] = None
-    
+
     def check_patient_limit(self, requested: int) -> None:
         """
         Verify request doesn't exceed patient generation limit.
-        
+
         Args:
             requested: Number of patients requested
-            
+
         Raises:
             HTTPException: If limit exceeded
         """
         if not self.api_key.check_patient_limit(requested):
             raise HTTPException(
                 status_code=400,
-                detail=f"Requested {requested} patients exceeds limit of "
-                       f"{self.api_key.max_patients_per_request}",
+                detail=f"Requested {requested} patients exceeds limit of {self.api_key.max_patients_per_request}",
                 headers={
                     "X-Limit-Type": "patients_per_request",
                     "X-Limit-Value": str(self.api_key.max_patients_per_request),
-                    "X-Requested": str(requested)
-                }
+                    "X-Requested": str(requested),
+                },
             )
-    
+
     def check_daily_limit(self) -> None:
         """
         Verify daily request limit not exceeded.
-        
+
         Raises:
             HTTPException: If daily limit exceeded
         """
@@ -76,31 +75,22 @@ class APIKeyContext:
                     "X-Limit-Type": "requests_per_day",
                     "X-Limit-Value": str(self.api_key.max_requests_per_day),
                     "X-Current-Usage": str(self.api_key.daily_requests),
-                    "Retry-After": str(self._seconds_until_daily_reset())
-                }
+                    "Retry-After": str(self._seconds_until_daily_reset()),
+                },
             )
-    
+
     def check_usability(self) -> None:
         """
         Verify API key is active and not expired.
-        
+
         Raises:
             HTTPException: If key is not usable
         """
         if not self.api_key.is_usable():
             if self.api_key.is_expired():
-                raise HTTPException(
-                    status_code=401,
-                    detail="API key has expired",
-                    headers={"X-Key-Status": "expired"}
-                )
-            else:
-                raise HTTPException(
-                    status_code=401,
-                    detail="API key is inactive",
-                    headers={"X-Key-Status": "inactive"}
-                )
-    
+                raise HTTPException(status_code=401, detail="API key has expired", headers={"X-Key-Status": "expired"})
+            raise HTTPException(status_code=401, detail="API key is inactive", headers={"X-Key-Status": "inactive"})
+
     def get_limits_info(self) -> Dict[str, Any]:
         """Get current limits and usage for response headers."""
         return {
@@ -111,7 +101,7 @@ class APIKeyContext:
             "daily_usage": self.api_key.daily_requests,
             "total_usage": self.api_key.total_requests,
         }
-    
+
     def get_response_headers(self) -> Dict[str, str]:
         """Get headers to include in API responses."""
         headers = {
@@ -120,15 +110,15 @@ class APIKeyContext:
             "X-Daily-Limit": str(self.api_key.max_requests_per_day or "unlimited"),
             "X-Daily-Usage": str(self.api_key.daily_requests),
         }
-        
+
         if self.rate_limit_remaining is not None:
             headers["X-RateLimit-Remaining"] = str(self.rate_limit_remaining)
-        
+
         if self.rate_limit_reset:
             headers["X-RateLimit-Reset"] = str(int(self.rate_limit_reset.timestamp()))
-        
+
         return headers
-    
+
     def _seconds_until_daily_reset(self) -> int:
         """Calculate seconds until daily counters reset."""
         now = datetime.utcnow()
@@ -140,7 +130,7 @@ class APIKeyContext:
 def create_legacy_api_key() -> APIKey:
     """
     Create a virtual APIKey for legacy single-key mode.
-    
+
     Returns:
         APIKey instance representing the legacy key
     """
@@ -151,20 +141,20 @@ def create_legacy_api_key() -> APIKey:
         is_active=True,
         is_demo=False,
         max_patients_per_request=10000,  # High limit for legacy
-        max_requests_per_day=None,       # Unlimited
-        max_requests_per_minute=1000,    # High limit
-        max_requests_per_hour=10000,     # High limit
+        max_requests_per_day=None,  # Unlimited
+        max_requests_per_minute=1000,  # High limit
+        max_requests_per_hour=10000,  # High limit
         total_requests=0,
         total_patients_generated=0,
         daily_requests=0,
-        key_metadata={"legacy_mode": True}
+        key_metadata={"legacy_mode": True},
     )
 
 
 def create_demo_api_key() -> APIKey:
     """
     Create a virtual APIKey for the demo key.
-    
+
     Returns:
         APIKey instance representing the demo key
     """
@@ -181,29 +171,28 @@ def create_demo_api_key() -> APIKey:
         total_requests=0,
         total_patients_generated=0,
         daily_requests=0,
-        key_metadata={"public_demo": True}
+        key_metadata={"public_demo": True},
     )
 
 
 async def verify_api_key(
-    api_key: str = Header(..., alias="X-API-Key"),
-    db: Session = Depends(get_database)
+    api_key: str = Header(..., alias="X-API-Key"), db: Session = Depends(get_database)
 ) -> APIKeyContext:
     """
     Enhanced API key verification with context and legacy support.
-    
+
     Args:
         api_key: API key from X-API-Key header
         db: Database session
-        
+
     Returns:
         APIKeyContext with validated key and metadata
-        
+
     Raises:
         HTTPException: If key is invalid, expired, or inactive
     """
     repo = APIKeyRepository(db)
-    
+
     # Check for demo key first (most common case)
     if api_key == DEMO_API_KEY:
         # For demo key, try to get from database or create virtual
@@ -212,65 +201,48 @@ async def verify_api_key(
             # Create virtual demo key for immediate use
             # In production, this should be pre-created in the database
             demo_key = create_demo_api_key()
-        
-        context = APIKeyContext(
-            api_key=demo_key,
-            is_demo=True,
-            is_legacy=False
-        )
-        
+
+        context = APIKeyContext(api_key=demo_key, is_demo=True, is_legacy=False)
+
         # Check if demo key is usable
         context.check_usability()
         return context
-    
+
     # Check for legacy API key (backward compatibility)
     if api_key == LEGACY_API_KEY:
         legacy_key = create_legacy_api_key()
-        return APIKeyContext(
-            api_key=legacy_key,
-            is_demo=False,
-            is_legacy=True
-        )
-    
+        return APIKeyContext(api_key=legacy_key, is_demo=False, is_legacy=True)
+
     # Look up key in database
     key_record = repo.get_active_key(api_key)
     if not key_record:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or inactive API key",
-            headers={"X-Key-Status": "invalid"}
-        )
-    
+        raise HTTPException(status_code=401, detail="Invalid or inactive API key", headers={"X-Key-Status": "invalid"})
+
     # Create context with database key
-    context = APIKeyContext(
-        api_key=key_record,
-        is_demo=key_record.is_demo,
-        is_legacy=False
-    )
-    
+    context = APIKeyContext(api_key=key_record, is_demo=key_record.is_demo, is_legacy=False)
+
     # Verify key is usable
     context.check_usability()
-    
+
     return context
 
 
 async def verify_api_key_optional(
-    api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    db: Session = Depends(get_database)
+    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: Session = Depends(get_database)
 ) -> Optional[APIKeyContext]:
     """
     Optional API key verification for endpoints that support both authenticated and unauthenticated access.
-    
+
     Args:
         api_key: Optional API key from X-API-Key header
         db: Database session
-        
+
     Returns:
         APIKeyContext if key provided and valid, None otherwise
     """
     if not api_key:
         return None
-    
+
     try:
         return await verify_api_key(api_key, db)
     except HTTPException:
@@ -282,46 +254,43 @@ async def verify_api_key_optional(
 async def verify_api_key_legacy(api_key: str = Header(..., alias="X-API-Key")) -> str:
     """
     Legacy API key verification function.
-    
+
     This maintains backward compatibility with the existing codebase
     while the transition to the new system occurs.
-    
+
     Args:
         api_key: API key from header
-        
+
     Returns:
         The API key string if valid
-        
+
     Raises:
         HTTPException: If key is invalid
     """
     # Accept demo key, legacy key, or any database key
     if api_key in [DEMO_API_KEY, LEGACY_API_KEY]:
         return api_key
-    
+
     # For now, during transition, accept any non-empty key
     # This will be tightened once all endpoints are migrated
     if api_key and len(api_key) > 10:
         return api_key
-    
-    raise HTTPException(
-        status_code=401,
-        detail="Invalid API key"
-    )
+
+    raise HTTPException(status_code=401, detail="Invalid API key")
 
 
 def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
     """
     Get API key information for logging and monitoring.
-    
+
     Args:
         context: API key context
-        
+
     Returns:
         Dictionary with key information (no sensitive data)
     """
     return {
-        "key_id": str(context.api_key.id) if hasattr(context.api_key, 'id') and context.api_key.id else "virtual",
+        "key_id": str(context.api_key.id) if hasattr(context.api_key, "id") and context.api_key.id else "virtual",
         "key_name": context.api_key.name,
         "is_demo": context.is_demo,
         "is_legacy": context.is_legacy,

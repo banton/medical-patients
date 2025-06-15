@@ -28,7 +28,7 @@ class TestJobResourceManager:
         manager.check_interval_seconds = 0.1
         return manager
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_track_job_context_manager(self, resource_manager):
         """Test job tracking with context manager."""
         job_id = "test-job-123"
@@ -49,7 +49,7 @@ class TestJobResourceManager:
         assert job_id not in resource_manager._active_jobs
         assert resource_manager.get_job_status(job_id) is None
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_runtime_limit_exceeded(self, resource_manager):
         """Test runtime limit enforcement."""
         job_id = "test-job-timeout"
@@ -62,7 +62,7 @@ class TestJobResourceManager:
 
         assert "exceeded maximum runtime" in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_memory_limit_exceeded(self, resource_manager):
         """Test memory limit enforcement."""
         job_id = "test-job-memory"
@@ -153,7 +153,7 @@ class TestJobResourceManager:
         mock_cpu.return_value = 95
         assert resource_manager.can_start_new_job() is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     @patch("psutil.virtual_memory")
     @patch("psutil.cpu_percent")
     async def test_wait_for_resources(self, mock_cpu, mock_memory, resource_manager):
@@ -209,7 +209,7 @@ class TestJobResourceMetrics:
         manager.check_interval_seconds = 0.05
         return manager
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_metrics_tracking(self, resource_manager):
         """Test that metrics are tracked during job execution."""
         job_id = "test-metrics-job"

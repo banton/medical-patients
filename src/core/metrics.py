@@ -195,38 +195,38 @@ class MetricsCollector:
     def update_job_queue_size(self, status: str, size: int):
         """Update the job queue size for a given status."""
         job_queue_size.labels(status=status).set(size)
-    
+
     def track_job_started(self, job_id: str):
         """Track job start."""
-        self.active_jobs = getattr(self, 'active_jobs', set())
+        self.active_jobs = getattr(self, "active_jobs", set())
         self.active_jobs.add(job_id)
         job_queue_size.labels(status="running").inc()
-    
+
     def track_job_completed(self, job_id: str, runtime_seconds: float = 0):
         """Track job completion."""
         # Use job_execution_time histogram which is already defined
         if runtime_seconds > 0:
             job_execution_time.labels(job_type="patient_generation").observe(runtime_seconds)
-        
+
         # Track completion as a status change
         self.record_job_status_change("running", "completed")
-        
-        if hasattr(self, 'active_jobs'):
+
+        if hasattr(self, "active_jobs"):
             self.active_jobs.discard(job_id)
         job_queue_size.labels(status="running").dec()
-    
+
     def track_job_failed(self, job_id: str, error_type: str):
         """Track job failure."""
         # Track as generation error
         generation_errors.labels(error_type=error_type).inc()
-        
+
         # Track as status change
         self.record_job_status_change("running", "failed")
-        
-        if hasattr(self, 'active_jobs'):
+
+        if hasattr(self, "active_jobs"):
             self.active_jobs.discard(job_id)
         job_queue_size.labels(status="running").dec()
-    
+
     def track_resource_usage(self, metric_name: str, value: float, labels: Optional[Dict[str, str]] = None):
         """Track resource usage metrics."""
         # For now, we'll use the existing resource metrics
@@ -235,7 +235,7 @@ class MetricsCollector:
         elif metric_name == "job_cpu_seconds":
             # Could add a specific job CPU metric if needed
             pass
-    
+
     def track_generation_error(self, error_type: str):
         """Track generation errors."""
         generation_errors.labels(error_type=error_type).inc()

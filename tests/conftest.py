@@ -2,8 +2,8 @@
 Shared pytest configuration and fixtures
 """
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 
 def pytest_addoption(parser):
@@ -27,4 +27,5 @@ def api_headers():
 def client():
     """Test client for FastAPI app"""
     from src.main import app
+
     return TestClient(app)

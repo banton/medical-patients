@@ -31,7 +31,7 @@ from patient_generator.formatter import OutputFormatter
 from patient_generator.medical import MedicalConditionGenerator
 from patient_generator.patient import Patient
 from patient_generator.schemas_config import ConfigurationTemplateDB
-from src.core.metrics import get_metrics_collector, patients_generated, generation_errors
+from src.core.metrics import get_metrics_collector
 from src.domain.services.cached_demographics_service import CachedDemographicsService
 from src.domain.services.cached_medical_service import CachedMedicalService
 
@@ -241,7 +241,7 @@ class AsyncPatientGenerationService:
     ) -> Dict[str, Any]:
         """Generate patients and save to files."""
         metrics = get_metrics_collector()
-        
+
         # Track generation with metrics
         format_type = context.output_formats[0] if context.output_formats else "json"
         with metrics.track_generation(format_type, context.config.total_patients):

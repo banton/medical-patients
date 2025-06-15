@@ -91,7 +91,7 @@ async def generate_patients_stream(
 
     try:
         # Generate patients in batches
-        async for patient, patient_data in generation_service.pipeline.generate(context):
+        async for _patient, patient_data in generation_service.pipeline.generate(context):
             # Add comma separator if not first patient
             if not first_patient:
                 yield b",\n"
@@ -135,10 +135,10 @@ async def generate_patients_stream(
     summary="Stream Patient Generation",
     description="""
     Generate patients with streaming JSON response for memory-efficient processing.
-    
+
     This endpoint streams patients as they are generated, allowing clients to process
     large datasets without loading everything into memory at once.
-    
+
     The response is a JSON object with a 'patients' array that is streamed incrementally.
     """,
 )
@@ -216,7 +216,7 @@ async def stream_patients(
     summary="Stream Patient Generation with Configuration",
     description="""
     Generate patients with streaming JSON response using inline configuration.
-    
+
     This endpoint accepts a configuration in the request body and streams patients
     as they are generated. Useful for one-off generations without saving configurations.
     """,
