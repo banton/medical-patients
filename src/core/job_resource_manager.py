@@ -4,14 +4,13 @@ Part of EPIC-003: Production Scalability Improvements - Phase 4
 """
 
 import asyncio
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 import os
 import time
 from typing import Any, Dict, Optional
 
 import psutil
 
-from config import get_settings
 from src.core.exceptions import ResourceLimitExceeded
 from src.core.metrics import get_metrics_collector
 
@@ -83,10 +82,8 @@ class JobResourceManager:
         finally:
             # Cancel monitoring
             monitor_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await monitor_task
-            except asyncio.CancelledError:
-                pass
 
             # Clean up tracking
             if job_id in self._active_jobs:
@@ -119,17 +116,15 @@ class JobResourceManager:
                 # Check runtime limit
                 runtime = time.time() - job_info["start_time"]
                 if runtime > self.max_runtime_seconds:
-                    raise ResourceLimitExceeded(
-                        f"Job {job_id} exceeded maximum runtime of {self.max_runtime_seconds} seconds"
-                    )
+                    error_message = f"Job {job_id} exceeded maximum runtime of {self.max_runtime_seconds} seconds"
+                    raise ResourceLimitExceeded(error_message)
 
                 # Check memory usage
                 memory_info = process.memory_info()
                 memory_mb = memory_info.rss / 1024 / 1024
                 if memory_mb > self.max_memory_mb:
-                    raise ResourceLimitExceeded(
-                        f"Job {job_id} exceeded memory limit: {memory_mb:.1f}MB > {self.max_memory_mb}MB"
-                    )
+                    error_message = f"Job {job_id} exceeded memory limit: {memory_mb:.1f}MB > {self.max_memory_mb}MB"
+                    raise ResourceLimitExceeded(error_message)
 
                 # Check CPU time
                 cpu_times = process.cpu_times()
@@ -137,9 +132,8 @@ class JobResourceManager:
                     job_info["start_cpu"].user + job_info["start_cpu"].system
                 )
                 if cpu_seconds > self.max_cpu_seconds:
-                    raise ResourceLimitExceeded(
-                        f"Job {job_id} exceeded CPU time limit: {cpu_seconds:.1f}s > {self.max_cpu_seconds}s"
-                    )
+                    error_message = f"Job {job_id} exceeded CPU time limit: {cpu_seconds:.1f}s > {self.max_cpu_seconds}s"
+                    raise ResourceLimitExceeded(error_message)
 
                 # Record metrics
                 self._metrics.track_resource_usage("job_memory_mb", memory_mb, {"job_id": job_id})
@@ -234,10 +228,7 @@ class JobResourceManager:
             return False
 
         cpu_percent = psutil.cpu_percent(interval=0.1)
-        if cpu_percent > 90:  # CPU usage > 90%
-            return False
-
-        return True
+        return cpu_percent <= 90  # CPU usage <= 90%
 
     async def wait_for_resources(self, timeout: float = 60.0) -> bool:
         """

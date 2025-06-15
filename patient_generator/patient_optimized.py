@@ -143,7 +143,7 @@ class OptimizedPatient:
                 {
                     "event_type": event_type,
                     "facility": facility,
-                    "timestamp": datetime.datetime.fromtimestamp(timestamp).isoformat(),
+                    "timestamp": datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc).isoformat(),
                     "hours_since_injury": hours_since_injury,
                 }
             )
@@ -213,7 +213,7 @@ class OptimizedPatient:
             result["last_facility"] = self.last_facility
 
         if self.injury_timestamp:
-            result["injury_timestamp"] = datetime.datetime.fromtimestamp(self.injury_timestamp).isoformat()
+            result["injury_timestamp"] = datetime.datetime.fromtimestamp(self.injury_timestamp, tz=datetime.timezone.utc).isoformat()
 
         if self.movement_events:
             result["movement_timeline"] = self.movement_timeline

@@ -281,8 +281,6 @@ async def stream_patients_with_config(
                 },
             )
 
-            return response
-
         finally:
             # Schedule cleanup of temporary configuration
             # This will happen after response is sent
@@ -293,7 +291,8 @@ async def stream_patients_with_config(
                 except Exception as e:
                     print(f"Warning: Could not clean up temporary configuration {config_template.id}: {e}")
 
-            asyncio.create_task(cleanup())
+            # Store reference to avoid task being garbage collected
+            _cleanup_task = asyncio.create_task(cleanup())
 
     except HTTPException:
         raise

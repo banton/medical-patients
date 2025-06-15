@@ -14,7 +14,7 @@ from sqlalchemy import and_, desc, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from ..models.api_key import DEMO_API_KEY_CONFIG, APIKey
+from src.domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
 
 
 class APIKeyRepository:

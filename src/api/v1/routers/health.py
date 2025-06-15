@@ -252,7 +252,7 @@ async def get_metrics():
         pool_metrics = pool.get_pool_status()["metrics"]
 
         # Format metrics for monitoring
-        metrics = {
+        return {
             "database": {
                 "connections_created_total": pool_metrics["connections"]["created"],
                 "connections_active": pool_metrics["connections"]["active"],
@@ -268,8 +268,6 @@ async def get_metrics():
                 "disk_percent": psutil.disk_usage("/").percent,
             },
         }
-
-        return metrics
 
     except Exception as e:
         raise HTTPException(status_code=500, detail={"error": str(e)})

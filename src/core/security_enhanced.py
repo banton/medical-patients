@@ -13,9 +13,9 @@ from typing import Any, Dict, Optional
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from ..api.v1.dependencies.database import get_database
-from ..domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
-from ..domain.repositories.api_key_repository import APIKeyRepository
+from src.api.v1.dependencies.database import get_database
+from src.domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
+from src.domain.repositories.api_key_repository import APIKeyRepository
 
 # Legacy single API key support (backward compatibility)
 LEGACY_API_KEY = os.getenv("API_KEY", "your-api-key-here")

@@ -101,21 +101,20 @@ class EnhancedDatabase(LegacyDatabase):
     ):
         """Execute query using enhanced connection pool."""
         try:
-            with self._pool.get_connection() as conn:
-                with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-                    if params is not None:
-                        cur.execute(query, params)
-                    else:
-                        cur.execute(query)
+            with self._pool.get_connection() as conn, conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+                if params is not None:
+                    cur.execute(query, params)
+                else:
+                    cur.execute(query)
 
-                    if commit:
-                        conn.commit()
+                if commit:
+                    conn.commit()
 
-                    if fetch_one:
-                        return cur.fetchone()
-                    if fetch_all:
-                        return cur.fetchall()
-                    return None
+                if fetch_one:
+                    return cur.fetchone()
+                if fetch_all:
+                    return cur.fetchall()
+                return None
 
         except Exception as error:
             print(f"Database Error: {error}")

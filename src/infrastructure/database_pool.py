@@ -11,7 +11,7 @@ import time
 from typing import Any, Dict, Optional
 
 import psycopg2
-from psycopg2.extensions import connection as Connection
+from psycopg2.extensions import connection
 import psycopg2.extras
 import psycopg2.pool
 
@@ -200,7 +200,7 @@ class EnhancedConnectionPool:
             logger.error(f"Failed to create connection pool: {e}")
             raise
 
-    def _is_connection_expired(self, conn: Connection) -> bool:
+    def _is_connection_expired(self, conn: connection) -> bool:
         """Check if connection should be recycled."""
         conn_id = id(conn)
         if conn_id not in self._connection_timestamps:
@@ -209,7 +209,7 @@ class EnhancedConnectionPool:
         age = time.time() - self._connection_timestamps[conn_id]
         return age > self.pool_recycle
 
-    def _test_connection(self, conn: Connection) -> bool:
+    def _test_connection(self, conn: connection) -> bool:
         """Test if connection is still alive."""
         if not self.pre_ping:
             return True
@@ -265,12 +265,14 @@ class EnhancedConnectionPool:
 
         except psycopg2.pool.PoolError as e:
             self.metrics.record_checkout_failure()
-            raise TimeoutError(f"Unable to get connection from pool: {e}")
+            error_message = f"Unable to get connection from pool: {e}"
+            raise TimeoutError(error_message)
 
         except Exception as e:
             self.metrics.record_connection_error()
             logger.error(f"Connection error: {e}")
-            raise ConnectionError(f"Database connection failed: {e}")
+            error_message = f"Database connection failed: {e}"
+            raise ConnectionError(error_message)
 
         finally:
             if conn:
@@ -292,21 +294,20 @@ class EnhancedConnectionPool:
         Yields:
             Database cursor
         """
-        with self.get_connection() as conn:
-            with conn.cursor(cursor_factory=cursor_factory) as cur:
-                # Wrap cursor to track query metrics
-                original_execute = cur.execute
+        with self.get_connection() as conn, conn.cursor(cursor_factory=cursor_factory) as cur:
+            # Wrap cursor to track query metrics
+            original_execute = cur.execute
 
-                def execute_with_metrics(query, params=None):
-                    start = time.time()
-                    try:
-                        return original_execute(query, params)
-                    finally:
-                        duration = time.time() - start
-                        self.metrics.record_query(duration)
+            def execute_with_metrics(query, params=None):
+                start = time.time()
+                try:
+                    return original_execute(query, params)
+                finally:
+                    duration = time.time() - start
+                    self.metrics.record_query(duration)
 
-                cur.execute = execute_with_metrics
-                yield cur
+            cur.execute = execute_with_metrics
+            yield cur
 
     def get_pool_status(self) -> Dict[str, Any]:
         """Get current pool status and metrics."""

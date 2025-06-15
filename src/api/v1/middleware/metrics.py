@@ -125,7 +125,4 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             return True
 
         # Check if it's a job ID format (e.g., job_123456)
-        if segment.startswith("job_") and segment[4:].replace("_", "").isdigit():
-            return True
-
-        return False
+        return segment.startswith("job_") and segment[4:].replace("_", "").isdigit()

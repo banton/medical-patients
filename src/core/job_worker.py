@@ -4,6 +4,7 @@ Part of EPIC-003: Production Scalability Improvements - Phase 4
 """
 
 import asyncio
+from contextlib import suppress
 import gc
 from typing import Any, Dict, Optional
 
@@ -51,10 +52,8 @@ class JobWorker:
         # Cancel current task if any
         if self._current_task and not self._current_task.done():
             self._current_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._current_task
-            except asyncio.CancelledError:
-                pass
 
     async def _worker_loop(self):
         """Main worker loop that processes jobs."""
