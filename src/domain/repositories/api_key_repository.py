@@ -70,7 +70,7 @@ class APIKeyRepository:
             max_requests_per_minute=max_requests_per_minute,
             max_requests_per_hour=max_requests_per_hour,
             expires_at=expires_at,
-            metadata=metadata or {}
+            key_metadata=metadata or {}
         )
         
         try:
@@ -409,7 +409,7 @@ class APIKeyRepository:
             max_requests_per_day=DEMO_API_KEY_CONFIG["max_requests_per_day"],
             max_requests_per_minute=DEMO_API_KEY_CONFIG["max_requests_per_minute"],
             max_requests_per_hour=DEMO_API_KEY_CONFIG["max_requests_per_hour"],
-            metadata={"auto_created": True, "public_demo": True}
+            key_metadata={"auto_created": True, "public_demo": True}
         )
         
         self.db.add(demo_key)

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from ..domain.models.api_key import APIKey, DEMO_API_KEY_CONFIG
 from ..domain.repositories.api_key_repository import APIKeyRepository
-from ..api.v1.dependencies.database import get_db
+from ..api.v1.dependencies.database import get_database
 
 
 # Legacy single API key support (backward compatibility)
@@ -157,7 +157,7 @@ def create_legacy_api_key() -> APIKey:
         total_requests=0,
         total_patients_generated=0,
         daily_requests=0,
-        metadata={"legacy_mode": True}
+        key_metadata={"legacy_mode": True}
     )
 
 
@@ -181,13 +181,13 @@ def create_demo_api_key() -> APIKey:
         total_requests=0,
         total_patients_generated=0,
         daily_requests=0,
-        metadata={"public_demo": True}
+        key_metadata={"public_demo": True}
     )
 
 
 async def verify_api_key(
     api_key: str = Header(..., alias="X-API-Key"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_database)
 ) -> APIKeyContext:
     """
     Enhanced API key verification with context and legacy support.
@@ -256,7 +256,7 @@ async def verify_api_key(
 
 async def verify_api_key_optional(
     api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_database)
 ) -> Optional[APIKeyContext]:
     """
     Optional API key verification for endpoints that support both authenticated and unauthenticated access.
@@ -321,7 +321,7 @@ def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
         Dictionary with key information (no sensitive data)
     """
     return {
-        "key_id": str(context.api_key.id) if hasattr(context.api_key, 'id') else "virtual",
+        "key_id": str(context.api_key.id) if hasattr(context.api_key, 'id') and context.api_key.id else "virtual",
         "key_name": context.api_key.name,
         "is_demo": context.is_demo,
         "is_legacy": context.is_legacy,

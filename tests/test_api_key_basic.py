@@ -15,11 +15,14 @@ class TestAPIKeyModel:
     """Test the APIKey model functionality."""
     
     def test_api_key_creation(self):
-        """Test basic API key creation."""
+        """Test basic API key creation with explicit defaults."""
         api_key = APIKey(
             key="sk_test_123456789",
             name="Test Key",
-            email="test@example.com"
+            email="test@example.com",
+            is_active=True,
+            is_demo=False,
+            max_patients_per_request=1000
         )
         
         assert api_key.key == "sk_test_123456789"

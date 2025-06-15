@@ -14,7 +14,7 @@ import uuid
 
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, JSON
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 
@@ -55,11 +55,27 @@ class APIKey(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=True)
-    metadata = Column(JSON, default=dict, nullable=False)
+    key_metadata = Column(JSON, default=dict, nullable=False)
+    
+    def __init__(self, **kwargs):
+        """Initialize APIKey with minimal required defaults."""
+        # Set only the bare minimum defaults needed for methods to work
+        # These match the SQLAlchemy column defaults for non-nullable fields
+        if 'total_requests' not in kwargs:
+            kwargs['total_requests'] = 0
+        if 'total_patients_generated' not in kwargs:
+            kwargs['total_patients_generated'] = 0
+        if 'daily_requests' not in kwargs:
+            kwargs['daily_requests'] = 0
+        if 'key_metadata' not in kwargs:
+            kwargs['key_metadata'] = {}
+        
+        super().__init__(**kwargs)
     
     def __repr__(self) -> str:
         """String representation for debugging."""
-        return f"<APIKey(name='{self.name}', key='{self.key[:8]}...', active={self.is_active})>"
+        key_preview = self.key[:8] + "..." if len(self.key) > 8 else self.key
+        return f"<APIKey(name='{self.name}', key='{key_preview}', active={self.is_active})>"
     
     def is_expired(self) -> bool:
         """Check if the API key has expired."""
@@ -149,7 +165,7 @@ class APIKey(Base):
                 "total_patients_generated": self.total_patients_generated,
                 "daily_requests": self.daily_requests,
             },
-            "metadata": self.metadata,
+            "metadata": self.key_metadata,
         }
 
 
