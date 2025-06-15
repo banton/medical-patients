@@ -16,6 +16,8 @@ import psycopg2.extras
 import psycopg2.pool
 from psycopg2.extensions import connection as Connection
 
+from src.core.metrics import db_connections_active, db_connections_total, db_query_duration, get_metrics_collector
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,6 +46,8 @@ class ConnectionPoolMetrics:
         """Record a new connection creation."""
         with self.lock:
             self.total_connections_created += 1
+            # Update Prometheus metric
+            db_connections_total.inc()
     
     def record_connection_closed(self):
         """Record a connection closure."""
@@ -78,6 +82,8 @@ class ConnectionPoolMetrics:
             self.query_time += duration
             if duration > slow_threshold:
                 self.slow_queries += 1
+            # Update Prometheus metric
+            db_query_duration.observe(duration)
     
     def get_metrics(self) -> Dict[str, Any]:
         """Get current metrics snapshot."""
@@ -320,6 +326,9 @@ class EnhancedConnectionPool:
                 "available": len(self._pool._pool) if hasattr(self._pool, '_pool') else 0,
                 "in_use": self._pool.maxconn - len(self._pool._pool) if hasattr(self._pool, '_pool') else 0,
             }
+            
+            # Update Prometheus gauge
+            db_connections_active.set(pool_stats["in_use"])
             
             # Combine with metrics
             return {
