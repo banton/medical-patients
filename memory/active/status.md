@@ -120,6 +120,13 @@ See `memory/active/future-work.md` for:
 - Created deployment guide and setup scripts
 - Removed secrets from code and pushed to GitHub successfully
 
+### Update: 2025-06-15 23:35
+- Added streamlined 'task init' setup wizard for beginners
+- Made database migrations run automatically on startup
+- Added prerequisite links in README (Docker Desktop, Python, Node.js)
+- Enhanced docker-compose to auto-run migrations
+- Improved onboarding: clone → task init → task dev
+
 ## Current State - Staging Deployment Ready
 
 ### Completed ✅
