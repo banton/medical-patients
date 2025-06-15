@@ -19,12 +19,19 @@ tasks:
       - echo "Medical Patients Generator - Task Runner"
       - echo "========================================"
       - echo ""
-      - echo "Available commands:"
+      - echo "Main commands:"
       - echo "  task dev        - Start dev mode (local Python + Docker DB)"
       - echo "  task start      - Start all services in Docker"
+      - echo "  task status     - Show service status and errors"
       - echo "  task stop       - Stop all services"
       - echo "  task test       - Run all tests"
       - echo "  task clean      - Clean up Docker resources"
+      - echo ""
+      - echo "Timeline viewer commands:"
+      - echo "  task timeline   - Start timeline viewer (foreground)"
+      - echo "  task timeline-start  - Start timeline viewer (background)"
+      - echo "  task timeline-stop   - Stop timeline viewer"
+      - echo "  task timeline-status - Check timeline viewer status"
       - echo ""
       - echo "Run 'task --list' to see all tasks with descriptions"
 
@@ -60,6 +67,11 @@ tasks:
     cmds:
       - docker compose down
 
+  status:
+    desc: Show service status with error logs
+    cmds:
+      - ./status.sh
+
   clean:
     desc: Clean up Docker resources and Python cache
     cmds:
@@ -80,9 +92,67 @@ tasks:
       - sleep 5
       - alembic upgrade head
 
-  timeline-viewer:
-    desc: Start React timeline viewer
+  timeline:
+    desc: Start React timeline viewer in foreground
     dir: patient-timeline-viewer
     cmds:
       - npm install
       - npm run dev
+
+  timeline-start:
+    desc: Start React timeline viewer in background
+    dir: patient-timeline-viewer
+    cmds:
+      - npm install
+      - |
+        # Start in background using nohup
+        nohup npm run dev > timeline.log 2>&1 &
+        echo "Timeline viewer started in background"
+        echo "Check logs: tail -f patient-timeline-viewer/timeline.log"
+        echo "Access at: http://localhost:5174"
+
+  timeline-stop:
+    desc: Stop React timeline viewer
+    cmds:
+      - |
+        # Find and kill the vite dev server
+        if command -v lsof >/dev/null 2>&1; then
+          PID=$(lsof -ti:5174 2>/dev/null)
+          if [ -n "$PID" ]; then
+            kill $PID
+            echo "Timeline viewer stopped"
+          else
+            echo "Timeline viewer is not running"
+          fi
+        else
+          # Fallback for systems without lsof
+          pkill -f "vite.*5174" || echo "Timeline viewer is not running"
+        fi
+
+  timeline-status:
+    desc: Check timeline viewer status
+    cmds:
+      - |
+        echo "Timeline Viewer Status"
+        echo "====================="
+        if command -v lsof >/dev/null 2>&1; then
+          PID=$(lsof -ti:5174 2>/dev/null)
+          if [ -n "$PID" ]; then
+            echo "✅ Running on http://localhost:5174 (PID: $PID)"
+          else
+            echo "❌ Not running"
+          fi
+        else
+          # Fallback check using curl
+          if curl -s http://localhost:5174 >/dev/null 2>&1; then
+            echo "✅ Running on http://localhost:5174"
+          else
+            echo "❌ Not running"
+          fi
+        fi
+        
+        if [ -f patient-timeline-viewer/timeline.log ]; then
+          echo ""
+          echo "Recent logs:"
+          tail -5 patient-timeline-viewer/timeline.log 2>/dev/null || echo "No logs available"
+        fi
