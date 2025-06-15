@@ -1,6 +1,6 @@
 # Military Medical Exercise Patient Generator
 
-[![Med Atlantis](atlantis-logo.svg)](https://www.linkedin.com/company/med-atlantis/?viewAsMember=true)
+<img src="https://milmed.tech/atlantis-logo.svg" width="250px" alt="Atlantis">
 
 A web-based application to generate realistic dummy patient data for military medical exercises. It features a highly configurable system supporting dynamic scenario definitions with temporal warfare patterns, multiple treatment facilities, all 32 NATO nations, varied injury types, environmental conditions, and realistic timeline distributions. Built with a PostgreSQL backend, comprehensive RESTful API with v1 standardization, Python SDK, and modern web interface, all following NATO medical standards.
 
