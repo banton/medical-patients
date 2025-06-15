@@ -158,9 +158,9 @@ The application now includes a comprehensive Task runner configuration for strea
     cd medical-patients
     ```
 
-2.  **Install dependencies and start development environment**:
+2.  **Start development environment**:
     ```bash
-    task setup && task dev
+    task dev
     ```
 
 3.  **Access the application**:
@@ -176,20 +176,17 @@ The application now includes a comprehensive Task runner configuration for strea
 
 ### Development Commands
 
-Use `task --list` to see all available commands:
+Simple Task commands for development:
 
 ```bash
-task --list               # Show all available commands
-task dev                  # Start development environment (DB + App)
-task test:all             # Run all tests
-task test:api             # Run API integration tests
-task lint:all             # Run linting checks
-task lint:format          # Format code automatically
-task clean                # Clean up generated files and cache
-task frontend:build       # Build all frontend components
-task setup                # Install all dependencies
-task db:migrate           # Run database migrations
-task check-requirements   # Check environment setup
+task --list         # Show all available commands
+task dev            # Start development environment (DB + App)
+task test           # Run all tests
+task stop           # Stop all services
+task clean          # Clean up Docker resources
+task db-migrate     # Run database migrations
+task db-reset       # Reset database (destroys all data)
+task timeline-viewer # Start React timeline viewer
 ```
 
 ### Alternative Setup Methods
@@ -217,37 +214,33 @@ PYTHONPATH=. python src/main.py
 
 For more details on Docker configurations for different environments (production, Traefik), see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
 
-### Testing and Quality Assurance
+### Testing
 
-The application includes comprehensive testing infrastructure:
+The application includes comprehensive testing:
 
 ```bash
 # Run all tests
-task test:all
+task test
 
-# Run only unit tests
-task test:unit
+# Run only unit tests  
+task test-unit
 
-# Run API integration tests (requires running server)
-task test:api
-
-# Check code quality (linting + type checking)
-task lint:all
-
-# Format code automatically
-task lint:format
+# Run integration tests
+task test-integration
 ```
 
 ### Development Workflow
 
 1. **Start Development Environment**: `task dev`
 2. **Make Code Changes**: Edit files as needed
-3. **Test Changes**: `task test:all` or `task test:api`
-4. **Check Code Quality**: `task lint:all`
-5. **Format Code**: `task lint:format`
-6. **Generate Test Data**: `task dev:generate-test`
+3. **Run Tests**: `task test`
+4. **Stop Services**: `task stop`
 
-For complete development guidelines, see the [Git Workflow documentation](memory-bank/git-workflow.md).
+For Python linting and formatting, use standard tools:
+```bash
+ruff check .
+ruff format .
+```
 
 ## Usage
 
@@ -484,7 +477,7 @@ The React Timeline Viewer is a standalone visualization tool that provides inter
 
 1. **Start the timeline viewer**:
    ```bash
-   make timeline-viewer
+   task timeline-viewer
    ```
 
 2. **Generate patient data** from the main application and download the results
@@ -499,16 +492,11 @@ The React Timeline Viewer is a standalone visualization tool that provides inter
 
 ### Timeline Viewer Commands
 
-**Current (Makefile - Legacy)**:
 ```bash
-make timeline-viewer    # Start development server (port 5174)
-make timeline-build     # Build for production
-make timeline-test      # Test build process
-make dev-full          # Start both backend and timeline viewer
+task timeline-viewer    # Start development server (port 5174)
 ```
 
-**Future (Task - Under Migration)**:
-Timeline viewer commands will be migrated to Task runner in the next phase of EPIC-001.
+To build for production, run `npm run build` in the patient-timeline-viewer directory.
 
 ### Integration Workflow
 
