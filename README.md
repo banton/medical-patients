@@ -323,7 +323,34 @@ curl -H "X-API-Key: your_secret_api_key_here" \
   --output patients.zip
 ```
 
-### 4. API Documentation
+### 4. API Key Management CLI
+
+Comprehensive command-line interface for managing API keys:
+
+```bash
+# Create a new API key
+python scripts/api_key_cli.py create --name "Development Team"
+
+# List all API keys
+python scripts/api_key_cli.py list --active
+
+# Show detailed key information
+python scripts/api_key_cli.py show <key-id>
+
+# Update rate limits
+python scripts/api_key_cli.py limits <key-id> --daily 1000 --patients 2000
+
+# Rotate a key for security
+python scripts/api_key_cli.py rotate <key-id>
+
+# Monitor usage statistics
+python scripts/api_key_cli.py usage <key-id>
+python scripts/api_key_cli.py stats --days 7
+```
+
+For complete CLI documentation, see [docs/api-key-cli.md](docs/api-key-cli.md).
+
+### 5. API Documentation
 
 Complete API documentation is available at:
 - Swagger UI: `http://localhost:8000/docs`
