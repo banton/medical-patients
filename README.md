@@ -145,11 +145,11 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
 
 ### Prerequisites
 
--   Git
--   Docker Desktop (or Docker Engine + Docker Compose)
+-   [Git](https://git-scm.com/downloads) - Version control
+-   [Docker Desktop](https://www.docker.com/products/docker-desktop/) - Container runtime (or Docker Engine + Docker Compose)
 -   [Task](https://taskfile.dev/installation/) - Cross-platform task runner
--   Python 3.8+ (for local development)
--   Node.js 18+ and npm (for timeline viewer)
+-   [Python 3.8+](https://www.python.org/downloads/) - For local development (optional)
+-   [Node.js 18+](https://nodejs.org/) - For timeline viewer (optional)
 
 ### Quick Start
 
@@ -172,17 +172,24 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
     scoop install task
     ```
 
-3.  **Start development environment**:
+3.  **Run the setup wizard** (first time only):
     ```bash
-    task dev        # Starts database and application with live reload
+    task init       # Guided setup that checks prerequisites and configures environment
     ```
 
-4.  **Access the application**:
+4.  **Start development environment**:
+    ```bash
+    task dev        # Starts database, runs migrations, and starts app with live reload
+    ```
+    
+    Note: The `task init` command will check all prerequisites, create necessary files, pull Docker images, and set up your development environment. After initial setup, just use `task dev` to start working.
+
+5.  **Access the application**:
     *   Main Application: `http://localhost:8000`
     *   API Documentation: `http://localhost:8000/docs`
     *   Alternative API Docs: `http://localhost:8000/redoc`
 
-5.  **Start the timeline viewer** (optional):
+6.  **Start the timeline viewer** (optional):
     ```bash
     task timeline    # Starts React timeline viewer in development mode
     ```
@@ -191,9 +198,10 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
 ### Development Commands
 
 ```bash
-# Core Commands
-task dev            # Start development environment (DB + App with hot reload)
-task start          # Start all services in background
+# Setup & Core Commands
+task init           # First-time setup wizard (checks prerequisites, configures environment)
+task dev            # Start development environment (runs migrations + hot reload)
+task start          # Start all services in Docker (runs migrations automatically)
 task stop           # Stop all background services
 task status         # Show service status and logs
 task test           # Run all tests
@@ -208,6 +216,12 @@ task timeline       # Start timeline viewer (foreground)
 task timeline-start # Start timeline viewer in background
 task timeline-stop  # Stop background timeline viewer
 task timeline-status# Check timeline viewer status
+
+# Staging Commands (for deployment testing)
+task staging:up     # Start staging environment on port 8001
+task staging:down   # Stop staging environment
+task staging:logs   # View staging logs
+task staging:status # Check staging environment status
 
 # Utility Commands
 task --list         # Show all available commands

@@ -112,6 +112,14 @@ See `memory/active/future-work.md` for:
 ### Update: 2025-06-15 22:54
 - Completed v1.1 consolidation with CI fixes, README updates, and staging deployment planning. Ready to deploy staging using existing DO managed PostgreSQL.
 
+### Update: 2025-06-15 23:11
+- Implemented same-server staging deployment strategy (zero additional cost)
+- Created docker-compose.staging.yml using managed PostgreSQL
+- Added staging Task commands: staging:up/down/logs/status/rebuild/shell
+- Enhanced status.sh to monitor both production and staging
+- Created deployment guide and setup scripts
+- Removed secrets from code and pushed to GitHub successfully
+
 ## Current State - Staging Deployment Ready
 
 ### Completed ✅
