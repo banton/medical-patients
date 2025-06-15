@@ -82,6 +82,31 @@ test-api:
 	@echo "Running API tests..."
 	./run_tests.sh api
 
+# Run CLI unit tests
+test-cli-unit:
+	@echo "Running CLI unit tests..."
+	python3 -m pytest tests/unit/test_api_key_cli_unit.py -v -m cli_unit
+
+# Run CLI integration tests
+test-cli-integration:
+	@echo "Running CLI integration tests..."
+	python3 -m pytest tests/integration/test_api_key_cli_integration.py -v -m cli_integration --requires-docker
+
+# Run CLI end-to-end tests
+test-cli-e2e:
+	@echo "Running CLI end-to-end tests..."
+	python3 -m pytest tests/e2e/test_api_key_cli_e2e.py -v -m cli_e2e --requires-docker
+
+# Run all CLI tests
+test-cli:
+	@echo "Running all CLI tests..."
+	python3 -m pytest tests/unit/test_api_key_cli_unit.py tests/integration/test_api_key_cli_integration.py tests/e2e/test_api_key_cli_e2e.py -v
+
+# Run CLI performance tests
+test-cli-performance:
+	@echo "Running CLI performance tests..."
+	python3 -m pytest tests/e2e/test_api_key_cli_e2e.py -v -m "cli_performance or slow" --requires-docker
+
 # Run UI integration tests
 test-ui:
 	@echo "Running UI integration tests..."
