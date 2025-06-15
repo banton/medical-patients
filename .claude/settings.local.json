@@ -60,7 +60,8 @@
       "mcp__digitalocean-mcp-local__get_app",
       "mcp__digitalocean-mcp-local__list_deployments",
       "mcp__digitalocean-mcp-local__get_deployment",
-      "Bash(gh run list:*)"
+      "Bash(gh run list:*)",
+      "Bash(pip show:*)"
     ],
     "deny": []
   },

@@ -3,6 +3,7 @@ Shared pytest configuration and fixtures
 """
 
 import pytest
+from fastapi.testclient import TestClient
 
 
 def pytest_addoption(parser):
@@ -20,3 +21,10 @@ def base_url(request):
 def api_headers():
     """Common API headers for tests"""
     return {"X-API-Key": "your_secret_api_key_here", "Content-Type": "application/json"}
+
+
+@pytest.fixture()
+def client():
+    """Test client for FastAPI app"""
+    from src.main import app
+    return TestClient(app)

@@ -1,16 +1,32 @@
 # Project Status Dashboard
-Updated: 2025-06-15 12:09
+Updated: 2025-06-15
 
 ## Current Focus
-**EPIC-003**: Production Scalability Improvements COMPLETED ✅
+**V1.1 Consolidation**: Merging all 4 EPICs into unified release
 
-## Completed EPICs
-- **EPIC-002**: API Key Management System ✅
-- **EPIC-003**: Production Scalability Improvements ✅
-  - Phase 1: Database Connection Pooling ✅
-  - Phase 2: Prometheus Metrics ✅
-  - Phase 3: Memory Optimization ✅
-  - Phase 4: Job Worker Resource Limits ✅
+## V1.1 Integration Status
+- ✅ **EPIC-001**: Cross-Platform Development Environment (Merged)
+- ✅ **EPIC-002**: API Key Management System (Merged)
+- ✅ **EPIC-003**: Production Scalability Improvements (Merged)
+- ✅ **EPIC-006**: Intelligent Memory Management System (Merged)
+
+### Merge Summary:
+- Created `feature/v1.1-consolidated` branch
+- All 4 EPICs successfully merged
+- Only conflict: memory/current-session.md (resolved by adopting EPIC-006 structure)
+- Fixed TestClient initialization issue (httpx version incompatibility)
+- 310 tests passing, 113 tests need database fixture fixes
+
+### Integration Issues Fixed:
+- **httpx version incompatibility**: Downgraded httpx from 0.28.1 to 0.24.1
+- **Missing client fixture**: Added global TestClient fixture to conftest.py
+- **Root cause**: EPIC-003 tests relied on client fixture that was never properly provided
+
+## Completed EPIC Features
+- **EPIC-001**: Task runner, cross-platform support, .gitattributes
+- **EPIC-002**: API key management, CLI tool, security enhancements
+- **EPIC-003**: Connection pooling, metrics, streaming, job limits
+- **EPIC-006**: Token-aware memory system, 98.5% compression
 
 ## Future Work
 See `memory/active/future-work.md` for:
