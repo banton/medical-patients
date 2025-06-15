@@ -56,3 +56,24 @@ Updated: 2025-06-15 12:09
   - Patient object memory footprint reduced from 400 bytes to 184 bytes per instance
   - Batch processing with GC prevents memory accumulation during generation
   - All tests passing: 4 streaming tests + 4 memory optimization tests
+
+### Update: 2025-06-15 14:25
+- Completed Phase 4 of EPIC-003: Background Job Worker Resource Optimization
+  - Implemented JobResourceManager for tracking and limiting job resources
+  - Added resource limits: memory (512MB default), CPU time (5 min), runtime (10 min)
+  - Created JobWorker with batch processing support for large jobs
+  - Added job worker health monitoring endpoint (/api/v1/health)
+  - Integrated resource tracking with Prometheus metrics
+  - Added comprehensive tests for resource management (10 tests passing)
+- Key features:
+  - Automatic job cancellation on resource limit exceeded
+  - Concurrent job limits (default 2) with queue management
+  - Memory and CPU usage tracking per job
+  - Graceful shutdown and error handling
+  - Health check shows active jobs and resource usage
+- Environment configuration:
+  - JOB_MAX_MEMORY_MB: Maximum memory per job
+  - JOB_MAX_CPU_SECONDS: Maximum CPU time per job
+  - JOB_MAX_RUNTIME_SECONDS: Maximum runtime per job
+  - MAX_CONCURRENT_JOBS: Maximum concurrent jobs
+  - JOB_BATCH_SIZE: Batch size for large generations
