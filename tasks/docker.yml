@@ -1,0 +1,42 @@
+version: '3'
+
+# Docker Operations Module
+# Replaces Docker-related Makefile commands
+
+tasks:
+  up:
+    desc: Start all Docker services
+    cmds:
+      - echo "Starting all Docker services..."
+      - docker compose up -d
+
+  down:
+    desc: Stop all Docker services
+    cmds:
+      - echo "Stopping all Docker services..."
+      - docker compose down
+
+  ps:
+    desc: Show running containers
+    cmds:
+      - docker compose ps
+
+  logs:
+    desc: Show logs from all services
+    cmds:
+      - docker compose logs -f
+
+  services:
+    desc: Start only database and Redis services
+    cmds:
+      - echo "Starting core services (database + Redis)..."
+      - docker compose up -d db redis
+      - echo "✅ Core services started"
+
+  clean:
+    desc: Clean up Docker resources
+    cmds:
+      - echo "Cleaning Docker resources..."
+      - docker compose down -v
+      - docker system prune -f --volumes
+      - echo "✅ Docker cleanup complete"

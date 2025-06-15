@@ -141,7 +141,7 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Getting Started (Development Environment)
 
-The application now includes a comprehensive Makefile for streamlined development workflows. This is the recommended approach for all development tasks.
+The application now includes a comprehensive Task runner configuration for streamlined cross-platform development workflows. This is the recommended approach for all development tasks.
 
 ### Prerequisites
 
@@ -160,7 +160,7 @@ The application now includes a comprehensive Makefile for streamlined developmen
 
 2.  **Install dependencies and start development environment**:
     ```bash
-    make deps && make dev
+    task setup && task dev
     ```
 
 3.  **Access the application**:
@@ -170,26 +170,26 @@ The application now includes a comprehensive Makefile for streamlined developmen
 
 4.  **Start the timeline viewer** (optional):
     ```bash
-    make timeline-viewer
+    task timeline-viewer
     ```
     *   Timeline Viewer: `http://localhost:5174`
 
 ### Development Commands
 
-Use `make help` to see all available commands:
+Use `task --list` to see all available commands:
 
 ```bash
-make help                 # Show all available commands
-make dev                  # Start development environment (DB + App)
-make test                 # Run all tests
-make api-test             # Run API integration tests
-make lint                 # Run linting checks
-make format               # Format code automatically
-make clean                # Clean up generated files and cache
-make build-frontend       # Build all frontend components
-make deps                 # Install all dependencies
-make migrate              # Run database migrations
-make check-env            # Check environment setup
+task --list               # Show all available commands
+task dev                  # Start development environment (DB + App)
+task test:all             # Run all tests
+task test:api             # Run API integration tests
+task lint:all             # Run linting checks
+task lint:format          # Format code automatically
+task clean                # Clean up generated files and cache
+task frontend:build       # Build all frontend components
+task setup                # Install all dependencies
+task db:migrate           # Run database migrations
+task check-requirements   # Check environment setup
 ```
 
 ### Alternative Setup Methods
@@ -223,29 +223,29 @@ The application includes comprehensive testing infrastructure:
 
 ```bash
 # Run all tests
-make test
+task test:all
 
 # Run only unit tests
-make test-unit
+task test:unit
 
 # Run API integration tests (requires running server)
-make api-test
+task test:api
 
 # Check code quality (linting + type checking)
-make lint
+task lint:all
 
 # Format code automatically
-make format
+task lint:format
 ```
 
 ### Development Workflow
 
-1. **Start Development Environment**: `make dev`
+1. **Start Development Environment**: `task dev`
 2. **Make Code Changes**: Edit files as needed
-3. **Test Changes**: `make test` or `make api-test`
-4. **Check Code Quality**: `make lint`
-5. **Format Code**: `make format`
-6. **Generate Test Data**: `make generate-test`
+3. **Test Changes**: `task test:all` or `task test:api`
+4. **Check Code Quality**: `task lint:all`
+5. **Format Code**: `task lint:format`
+6. **Generate Test Data**: `task dev:generate-test`
 
 For complete development guidelines, see the [Git Workflow documentation](memory-bank/git-workflow.md).
 
@@ -472,14 +472,16 @@ The React Timeline Viewer is a standalone visualization tool that provides inter
 
 ### Timeline Viewer Commands
 
+**Current (Makefile - Legacy)**:
 ```bash
 make timeline-viewer    # Start development server (port 5174)
 make timeline-build     # Build for production
 make timeline-test      # Test build process
-make timeline-deps      # Install dependencies
-make timeline-clean     # Clean build files
 make dev-full          # Start both backend and timeline viewer
 ```
+
+**Future (Task - Under Migration)**:
+Timeline viewer commands will be migrated to Task runner in the next phase of EPIC-001.
 
 ### Integration Workflow
 

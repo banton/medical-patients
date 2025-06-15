@@ -1,0 +1,342 @@
+version: '3'
+
+# Frontend Build and Management Module
+# Handles frontend dependencies, builds, and asset management
+
+tasks:
+  install:
+    desc: Install frontend dependencies
+    aliases: [deps]
+    cmds:
+      - echo "📦 Installing frontend dependencies..."
+      - task: check-node
+      - npm install
+      - echo "✅ Frontend dependencies installed"
+
+  build:
+    desc: Build all frontend components
+    aliases: [build-all]
+    deps: [check-node]
+    cmds:
+      - echo "🏗️  Building all frontend components..."
+      - npm run build:all-frontend
+      - echo "✅ All frontend components built successfully"
+
+  build-viz:
+    desc: Build visualization dashboard component
+    cmds:
+      - echo "📊 Building visualization dashboard..."
+      - task: check-node
+      - npm run build:viz-dashboard
+      - echo "✅ Visualization dashboard built"
+
+  build-config:
+    desc: Build configuration panel component
+    cmds:
+      - echo "⚙️  Building configuration panel..."
+      - task: check-node  
+      - npm run build:config-panel
+      - echo "✅ Configuration panel built"
+
+  build-military:
+    desc: Build military dashboard component
+    cmds:
+      - echo "🎖️  Building military dashboard..."
+      - task: check-node
+      - npm run build:military-dashboard
+      - echo "✅ Military dashboard built"
+
+  # Development and watch tasks
+  dev:
+    desc: Start frontend development server with hot reload
+    cmds:
+      - echo "🔥 Starting frontend development server..."
+      - task: check-node
+      - npm run dev
+
+  watch:
+    desc: Watch for frontend changes and rebuild automatically
+    cmds:
+      - echo "👀 Watching for frontend changes..."
+      - task: check-node
+      - npm run watch
+
+  # Linting and formatting for frontend
+  lint:
+    desc: Run frontend linting checks
+    cmds:
+      - echo "🔍 Running frontend linting..."
+      - task: check-node
+      - npm run lint:check
+
+  lint-fix:
+    desc: Fix frontend linting issues automatically
+    cmds:
+      - echo "🔧 Fixing frontend linting issues..."
+      - task: check-node
+      - npm run lint:fix
+
+  format:
+    desc: Format frontend code with Prettier
+    cmds:
+      - echo "✨ Formatting frontend code..."
+      - task: check-node
+      - npm run format
+
+  format-check:
+    desc: Check frontend code formatting
+    cmds:
+      - echo "🔍 Checking frontend formatting..."
+      - task: check-node
+      - npm run format:check
+
+  # Testing frontend
+  test:
+    desc: Run frontend tests
+    cmds:
+      - echo "🧪 Running frontend tests..."
+      - task: check-node
+      - npm run test
+
+  test-ui:
+    desc: Run UI integration tests
+    cmds:
+      - echo "🖥️  Running UI integration tests..."
+      - task: check-node
+      - npm run test:ui
+
+  # Asset management
+  clean:
+    desc: Clean frontend build artifacts
+    cmds:
+      - echo "🧹 Cleaning frontend build artifacts..."
+      - rm -rf static/dist 2>/dev/null || true
+      - rm -rf node_modules/.cache 2>/dev/null || true
+      - echo "✅ Frontend artifacts cleaned"
+
+  clean-deps:
+    desc: Clean frontend dependencies (node_modules)
+    prompt: This will remove node_modules. Continue?
+    cmds:
+      - echo "🗑️  Removing frontend dependencies..."
+      - rm -rf node_modules
+      - echo "✅ Frontend dependencies removed"
+
+  reinstall:
+    desc: Clean and reinstall frontend dependencies
+    cmds:
+      - echo "🔄 Reinstalling frontend dependencies..."
+      - task: clean-deps
+      - task: install
+      - echo "✅ Frontend dependencies reinstalled"
+
+  # Production builds
+  build-prod:
+    desc: Build frontend for production
+    cmds:
+      - echo "🏭 Building frontend for production..."
+      - task: check-node
+      - NODE_ENV=production npm run build:all-frontend
+      - echo "✅ Production frontend build complete"
+
+  optimize:
+    desc: Optimize frontend assets for production
+    cmds:
+      - echo "⚡ Optimizing frontend assets..."
+      - task: check-node
+      - npm run optimize || echo "No optimization script found"
+      - echo "✅ Frontend optimization complete"
+
+  # Bundle analysis
+  analyze:
+    desc: Analyze frontend bundle size
+    cmds:
+      - echo "📈 Analyzing frontend bundle size..."
+      - task: check-node
+      - npm run analyze || echo "No bundle analysis script found"
+
+  # Static file management
+  serve:
+    desc: Serve frontend files locally
+    cmds:
+      - echo "🌐 Serving frontend files..."
+      - |
+        if command -v python3 >/dev/null 2>&1; then
+          echo "Starting server at http://localhost:8080"
+          cd static && python3 -m http.server 8080
+        elif command -v python >/dev/null 2>&1; then
+          echo "Starting server at http://localhost:8080"
+          cd static && python -m SimpleHTTPServer 8080
+        else
+          echo "❌ Python not found. Cannot serve files."
+          exit 1
+        fi
+
+  # Asset validation
+  validate:
+    desc: Validate frontend assets and structure
+    cmds:
+      - echo "🔍 Validating frontend assets..."
+      - |
+        echo "Checking required files:"
+        
+        if [ -f "static/index.html" ]; then
+          echo "✅ static/index.html exists"
+        else
+          echo "❌ static/index.html missing"
+        fi
+        
+        if [ -f "static/js/app.js" ]; then
+          echo "✅ static/js/app.js exists"
+        else
+          echo "❌ static/js/app.js missing"
+        fi
+        
+        if [ -f "static/css/main.css" ]; then
+          echo "✅ static/css/main.css exists"
+        else
+          echo "❌ static/css/main.css missing"
+        fi
+        
+        if [ -f "package.json" ]; then
+          echo "✅ package.json exists"
+        else
+          echo "❌ package.json missing"
+        fi
+
+  # Dependency management
+  update:
+    desc: Update frontend dependencies
+    cmds:
+      - echo "📦 Updating frontend dependencies..."
+      - task: check-node
+      - npm update
+      - echo "✅ Frontend dependencies updated"
+
+  audit:
+    desc: Audit frontend dependencies for security issues
+    cmds:
+      - echo "🔒 Auditing frontend dependencies..."
+      - task: check-node
+      - npm audit
+      - echo "Frontend security audit complete"
+
+  audit-fix:
+    desc: Fix frontend dependency security issues
+    cmds:
+      - echo "🔧 Fixing frontend security issues..."
+      - task: check-node
+      - npm audit fix
+      - echo "✅ Frontend security issues fixed"
+
+  # Package management
+  list:
+    desc: List installed frontend packages
+    cmds:
+      - echo "📋 Installed frontend packages:"
+      - task: check-node
+      - npm list --depth=0
+
+  outdated:
+    desc: Check for outdated frontend packages
+    cmds:
+      - echo "📦 Checking for outdated packages..."
+      - task: check-node
+      - npm outdated || echo "All packages are up to date"
+
+  # Environment and configuration
+  info:
+    desc: Show frontend environment information
+    cmds:
+      - echo "ℹ️  Frontend environment information:"
+      - |
+        echo "Node.js version:"
+        if command -v node >/dev/null 2>&1; then
+          node --version
+        else
+          echo "  ❌ Node.js not found"
+        fi
+        
+        echo "npm version:"
+        if command -v npm >/dev/null 2>&1; then
+          npm --version
+        else
+          echo "  ❌ npm not found"
+        fi
+        
+        echo "Package.json scripts:"
+        if [ -f "package.json" ]; then
+          npm run | grep -E "^  [a-zA-Z]" || echo "  No scripts found"
+        else
+          echo "  ❌ package.json not found"
+        fi
+
+  # Development utilities
+  check-node:
+    desc: Check if Node.js and npm are available
+    silent: true
+    cmds:
+      - |
+        if ! command -v node >/dev/null 2>&1; then
+          echo "❌ Node.js not found. Please install Node.js 16+ from https://nodejs.org"
+          exit 1
+        fi
+        
+        if ! command -v npm >/dev/null 2>&1; then
+          echo "❌ npm not found. Please install npm"
+          exit 1
+        fi
+        
+        # Check Node.js version (require 16+)
+        NODE_VERSION=$(node --version | cut -d'v' -f2 | cut -d'.' -f1)
+        if [ "$NODE_VERSION" -lt 16 ]; then
+          echo "❌ Node.js version $NODE_VERSION detected. Please install Node.js 16 or higher"
+          exit 1
+        fi
+
+  # Development server management  
+  start:
+    desc: Start frontend development with all services
+    cmds:
+      - echo "🚀 Starting complete frontend development environment..."
+      - task: check-node
+      - echo "Frontend development environment ready"
+      - echo "📱 Static files served from ./static/"
+      - echo "🌐 Access at http://localhost:8000 (when backend running)"
+
+  # Asset optimization
+  minify:
+    desc: Minify frontend assets
+    cmds:
+      - echo "🗜️  Minifying frontend assets..."
+      - task: check-node
+      - npm run minify || echo "No minification script found"
+      - echo "✅ Assets minified"
+
+  # Cache management
+  cache-clear:
+    desc: Clear frontend build caches
+    cmds:
+      - echo "🧹 Clearing frontend caches..."
+      - rm -rf node_modules/.cache 2>/dev/null || true
+      - rm -rf .npm 2>/dev/null || true
+      - npm cache clean --force 2>/dev/null || true
+      - echo "✅ Frontend caches cleared"
+
+  # Documentation
+  docs:
+    desc: Generate frontend documentation
+    cmds:
+      - echo "📚 Generating frontend documentation..."
+      - task: check-node
+      - npm run docs || echo "No documentation script found"
+
+  # Health check
+  health:
+    desc: Check frontend health and configuration
+    cmds:
+      - echo "🏥 Frontend health check:"
+      - task: check-node
+      - task: validate
+      - echo ""
+      - echo "✅ Frontend health check complete"
