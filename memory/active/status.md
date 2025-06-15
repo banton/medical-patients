@@ -105,3 +105,6 @@ See `memory/active/future-work.md` for:
 
 ### Update: 2025-06-15 22:01
 - Fixed all CI linting errors - 24 critical errors resolved, CI pipeline should now pass
+
+### Update: 2025-06-15 22:10
+- Updated README to professional documentation standards - removed legacy script references and documented Task runner properly
