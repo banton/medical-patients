@@ -33,6 +33,12 @@ tasks:
       - echo "  task timeline-stop   - Stop timeline viewer"
       - echo "  task timeline-status - Check timeline viewer status"
       - echo ""
+      - echo "Staging commands:"
+      - echo "  task staging:up     - Start staging environment"
+      - echo "  task staging:down   - Stop staging environment"
+      - echo "  task staging:logs   - View staging logs"
+      - echo "  task staging:status - Check staging status"
+      - echo ""
       - echo "Run 'task --list' to see all tasks with descriptions"
 
   dev:
@@ -68,9 +74,14 @@ tasks:
       - docker compose down
 
   status:
-    desc: Show service status with error logs
+    desc: Show comprehensive status of all services including staging
     cmds:
       - ./status.sh
+
+  staging:shell:
+    desc: Open shell in staging container
+    cmds:
+      - docker exec -it medical-patients-staging /bin/bash
 
   clean:
     desc: Clean up Docker resources and Python cache
@@ -156,3 +167,59 @@ tasks:
           echo "Recent logs:"
           tail -5 patient-timeline-viewer/timeline.log 2>/dev/null || echo "No logs available"
         fi
+
+  # Staging environment tasks
+  staging:up:
+    desc: Start staging environment on port 8001
+    cmds:
+      - |
+        if [ ! -f .env.staging ]; then
+          echo "Error: .env.staging file not found!"
+          echo "Create it with:"
+          echo "  STAGING_DB_PASSWORD=your-password"
+          echo "  STAGING_API_KEY=$(openssl rand -hex 32)"
+          echo "  STAGING_SECRET_KEY=$(openssl rand -hex 16)"
+          exit 1
+        fi
+      - docker compose -f docker-compose.staging.yml up -d
+      - echo "Staging API starting at http://localhost:8001"
+      - echo "Timeline viewer at http://localhost:3001"
+      - echo "Check status with: task staging:status"
+
+  staging:down:
+    desc: Stop staging environment
+    cmds:
+      - docker compose -f docker-compose.staging.yml down
+      - echo "Staging environment stopped"
+
+  staging:logs:
+    desc: View staging logs (follow mode)
+    cmds:
+      - docker compose -f docker-compose.staging.yml logs -f
+
+  staging:status:
+    desc: Check staging environment status
+    cmds:
+      - |
+        echo "=== Staging Environment Status ==="
+        echo ""
+        echo "Containers:"
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "(staging|timeline)" || echo "No staging containers running"
+        echo ""
+        echo "API Health:"
+        if curl -s http://localhost:8001/api/v1/health >/dev/null 2>&1; then
+          curl -s http://localhost:8001/api/v1/health | jq -C '.' || echo "Staging API responding but JSON parse failed"
+        else
+          echo "❌ Staging API not responding on port 8001"
+        fi
+        echo ""
+        echo "Recent Logs:"
+        docker logs medical-patients-staging --tail 10 2>&1 || echo "No logs available"
+
+  staging:rebuild:
+    desc: Rebuild and restart staging environment
+    cmds:
+      - docker compose -f docker-compose.staging.yml down
+      - docker compose -f docker-compose.staging.yml build --no-cache
+      - docker compose -f docker-compose.staging.yml up -d
+      - echo "Staging environment rebuilt and restarted"

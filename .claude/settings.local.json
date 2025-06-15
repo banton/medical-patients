@@ -61,7 +61,13 @@
       "mcp__digitalocean-mcp-local__list_deployments",
       "mcp__digitalocean-mcp-local__get_deployment",
       "Bash(gh run list:*)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "mcp__digitalocean-mcp-local__get_database_options",
+      "mcp__digitalocean-mcp-local__list_databases_cluster",
+      "mcp__digitalocean-mcp-local__get_database_cluster",
+      "mcp__digitalocean-mcp-local__list_database_cluster_databases",
+      "mcp__digitalocean-mcp-local__list_database_cluster_users",
+      "Bash(./memory/update.sh:*)"
     ],
     "deny": []
   },

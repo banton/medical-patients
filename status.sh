@@ -56,8 +56,43 @@ else
 fi
 
 echo ""
+echo "Staging Environment Status:"
+echo "--------------------------"
+# Check staging containers
+STAGING_API=$(docker ps --format "{{.Names}}" | grep -E "medical-patients-staging" | head -1)
+TIMELINE_STAGING=$(docker ps --format "{{.Names}}" | grep -E "timeline-viewer-staging" | head -1)
+
+if [ -n "$STAGING_API" ]; then
+  echo "✅ Staging API running on http://localhost:8001"
+else
+  echo "❌ Staging API not running"
+fi
+
+if [ -n "$TIMELINE_STAGING" ]; then
+  echo "✅ Timeline staging running on http://localhost:3001"
+else
+  echo "❌ Timeline staging not running"
+fi
+
+# Check staging health if running
+if [ -n "$STAGING_API" ]; then
+  if curl -s http://localhost:8001/api/v1/health >/dev/null 2>&1; then
+    echo "✅ Staging API health check passed"
+  else
+    echo "⚠️  Staging API not responding to health checks"
+  fi
+fi
+
+echo ""
 echo "Health Check URLs:"
-echo "- App Health: http://localhost:8000/health"
+echo "Production:"
+echo "- App Health: http://localhost:8000/api/v1/health"
 echo "- API Docs:   http://localhost:8000/docs"
 echo "- Main UI:    http://localhost:8000/static/index.html"
 echo "- Timeline:   http://localhost:5174 (if running)"
+echo ""
+echo "Staging:"
+echo "- App Health: http://localhost:8001/api/v1/health"
+echo "- API Docs:   http://localhost:8001/docs"
+echo "- Main UI:    http://localhost:8001/static/index.html"
+echo "- Timeline:   http://localhost:3001 (if running)"
