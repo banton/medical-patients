@@ -18,6 +18,7 @@ slowapi>=0.1.9
 requests>=2.28.0 # For Patient Generator SDK
 redis>=5.0.0
 hiredis>=2.2.0  # Optional C extension for better performance
+prometheus-client>=0.19.0  # For metrics collection (EPIC-003)
 
 # CLI dependencies
 click>=8.1.0
