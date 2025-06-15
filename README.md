@@ -139,16 +139,17 @@ The application features a clean, domain-driven architecture with clear separati
 
 For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Getting Started (Development Environment)
+## Getting Started
 
-The application now includes a comprehensive Task runner configuration for streamlined cross-platform development workflows. This is the recommended approach for all development tasks.
+The application uses [Task](https://taskfile.dev/) for cross-platform development workflows, providing a consistent experience across Windows, macOS, and Linux.
 
 ### Prerequisites
 
 -   Git
 -   Docker Desktop (or Docker Engine + Docker Compose)
--   Node.js and npm (for frontend development)
+-   [Task](https://taskfile.dev/installation/) - Cross-platform task runner
 -   Python 3.8+ (for local development)
+-   Node.js 18+ and npm (for timeline viewer)
 
 ### Quick Start
 
@@ -158,88 +159,146 @@ The application now includes a comprehensive Task runner configuration for strea
     cd medical-patients
     ```
 
-2.  **Start development environment**:
+2.  **Install Task** (if not already installed):
     ```bash
-    task dev
+    # macOS
+    brew install go-task
+    
+    # Linux
+    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+    
+    # Windows (PowerShell)
+    irm https://get.scoop.sh | iex
+    scoop install task
     ```
 
-3.  **Access the application**:
-    *   Main Application: `http://localhost:8000/static/index.html`
+3.  **Start development environment**:
+    ```bash
+    task dev        # Starts database and application with live reload
+    ```
+
+4.  **Access the application**:
+    *   Main Application: `http://localhost:8000`
     *   API Documentation: `http://localhost:8000/docs`
     *   Alternative API Docs: `http://localhost:8000/redoc`
 
-4.  **Start the timeline viewer** (optional):
+5.  **Start the timeline viewer** (optional):
     ```bash
-    task timeline-viewer
+    task timeline    # Starts React timeline viewer in development mode
     ```
     *   Timeline Viewer: `http://localhost:5174`
 
 ### Development Commands
 
-Simple Task commands for development:
-
 ```bash
-task --list         # Show all available commands
-task dev            # Start development environment (DB + App)
+# Core Commands
+task dev            # Start development environment (DB + App with hot reload)
+task start          # Start all services in background
+task stop           # Stop all background services
+task status         # Show service status and logs
 task test           # Run all tests
-task stop           # Stop all services
 task clean          # Clean up Docker resources
+
+# Database Commands
 task db-migrate     # Run database migrations
-task db-reset       # Reset database (destroys all data)
-task timeline-viewer # Start React timeline viewer
+task db-reset       # Reset database (WARNING: destroys all data)
+
+# Timeline Viewer Commands
+task timeline       # Start timeline viewer (foreground)
+task timeline-start # Start timeline viewer in background
+task timeline-stop  # Stop background timeline viewer
+task timeline-status# Check timeline viewer status
+
+# Utility Commands
+task --list         # Show all available commands
 ```
 
-### Alternative Setup Methods
+### Manual Setup (Advanced)
 
-**Using the legacy script**:
+For development without Task:
+
 ```bash
-chmod +x start-dev.sh
-./start-dev.sh
-```
+# 1. Start PostgreSQL and Redis
+docker compose up -d db redis
 
-**Manual Setup**:
-```bash
-# Start PostgreSQL
-docker compose up -d db
-
-# Install Python dependencies
+# 2. Install Python dependencies
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# Run database migrations
+# 3. Run database migrations
 alembic upgrade head
 
-# Start the application
-PYTHONPATH=. python src/main.py
+# 4. Start the application
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-For more details on Docker configurations for different environments (production, Traefik), see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
+## Production Deployment
+
+The application is designed for deployment on traditional VPS infrastructure or containerized environments.
+
+### Docker Deployment
+
+```bash
+# Build production image
+docker build -t medical-patients:latest .
+
+# Run with external database
+docker run -d \
+  -p 8000:8000 \
+  -e DATABASE_URL="postgresql://user:pass@db-host:5432/medgen_db" \
+  -e API_KEY="your-secure-api-key" \
+  -e SECRET_KEY="your-secret-key" \
+  medical-patients:latest
+```
+
+### Environment Variables
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `API_KEY`: Primary API authentication key
+- `SECRET_KEY`: Application secret for session management
+- `REDIS_URL`: Redis connection (optional, for caching)
+- `ENVIRONMENT`: Set to "production" for production deployments
+
+For advanced deployment configurations including Traefik integration and multi-container setups, see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
 
 ### Testing
 
-The application includes comprehensive testing:
+The application includes comprehensive test coverage:
 
 ```bash
 # Run all tests
 task test
 
-# Run only unit tests  
-task test-unit
-
-# Run integration tests
-task test-integration
+# Check service health
+task status
 ```
+
+Test categories include:
+- **Unit Tests**: Core business logic and utilities
+- **Integration Tests**: API endpoints and database operations
+- **E2E Tests**: Complete user workflows
+- **Frontend Tests**: UI component behavior
+- **Timeline Tests**: React viewer functionality
 
 ### Development Workflow
 
-1. **Start Development Environment**: `task dev`
-2. **Make Code Changes**: Edit files as needed
-3. **Run Tests**: `task test`
-4. **Stop Services**: `task stop`
+1. **Start Development**: `task dev`
+2. **Check Status**: `task status` (shows all services and recent errors)
+3. **Make Changes**: Application auto-reloads on save
+4. **Run Tests**: `task test`
+5. **Background Mode**: `task start` (for long-running development)
+6. **Stop Services**: `task stop`
 
-For Python linting and formatting, use standard tools:
+### Code Quality
+
 ```bash
-ruff check .
-ruff format .
+# Linting and formatting
+ruff check .       # Check for linting errors
+ruff format .      # Auto-format code
+
+# Type checking
+mypy src/         # Static type analysis
 ```
 
 ## Usage
@@ -345,14 +404,26 @@ For complete CLI documentation, see [docs/api-key-cli.md](docs/api-key-cli.md).
 
 ### 5. API Documentation
 
-Complete API documentation is available at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+Interactive API documentation is automatically generated and available at:
+- **Swagger UI**: `http://localhost:8000/docs` - Interactive API explorer
+- **ReDoc**: `http://localhost:8000/redoc` - Clean, readable API documentation
+- **OpenAPI Schema**: `http://localhost:8000/openapi.json` - Machine-readable API specification
 
-Generated data can be used for:
--   Importing into exercise management systems.
--   Deploying to NFC smarttags.
--   Medical treatment facility simulations.
+All API endpoints follow RESTful conventions with:
+- Consistent request/response models
+- Comprehensive input validation
+- Detailed error messages
+- Proper HTTP status codes
+- API key authentication
+
+### Common Use Cases
+
+Generated patient data supports various military medical training scenarios:
+- **Exercise Management Systems**: Import realistic patient loads for training exercises
+- **NFC Smart Tags**: Deploy patient data to smart medical tags for field exercises  
+- **Medical Facility Simulations**: Test treatment protocols with realistic patient flow
+- **Training Analytics**: Analyze evacuation patterns and treatment timelines
+- **Interoperability Testing**: Validate NATO medical data exchange standards
 
 ## Data Structure and Configuration
 
@@ -477,14 +548,20 @@ The React Timeline Viewer is a standalone visualization tool that provides inter
 
 1. **Start the timeline viewer**:
    ```bash
-   task timeline-viewer
+   task timeline       # Development mode
+   # or
+   task timeline-start # Background mode
    ```
 
 2. **Generate patient data** from the main application and download the results
 
-3. **Upload the patients.json file** to the timeline viewer via drag-and-drop
+3. **Upload the patients.json file** to the timeline viewer via drag-and-drop or file selection
 
 4. **Use playback controls** to visualize patient flow:
+   - Play/Pause button for timeline control
+   - Speed selector (0.25x to 10x)
+   - Progress bar showing current time
+   - Reset button to restart visualization
    - Play/Pause timeline progression
    - Adjust speed (0.5x to 60x)
    - Seek to specific time points
