@@ -14,6 +14,7 @@ from fastapi.security import HTTPBearer
 from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.services import get_patient_generation_service
+from src.api.v1.models.responses import StreamingPatientResponse
 from src.core.security import verify_api_key
 from src.domain.services.patient_generation_service import (
     AsyncPatientGenerationService,
@@ -145,6 +146,26 @@ async def generate_patients_stream(
 
     The response is a JSON object with a 'patients' array that is streamed incrementally.
     """,
+    responses={
+        200: {
+            "description": "Streaming JSON response",
+            "content": {
+                "application/json": {
+                    "schema": StreamingPatientResponse.schema(),
+                    "example": {
+                        "patients": [
+                            {
+                                "patient_id": "NATO-BEL-12345",
+                                "name": "John Doe",
+                                "injury_type": "Battle Injury"
+                            }
+                        ],
+                        "total_patients": 100
+                    }
+                }
+            },
+        }
+    },
 )
 async def stream_patients(
     configuration_id: str = Query(..., description="Configuration ID to use for generation"),
@@ -224,6 +245,26 @@ async def stream_patients(
     This endpoint accepts a configuration in the request body and streams patients
     as they are generated. Useful for one-off generations without saving configurations.
     """,
+    responses={
+        200: {
+            "description": "Streaming JSON response",
+            "content": {
+                "application/json": {
+                    "schema": StreamingPatientResponse.schema(),
+                    "example": {
+                        "patients": [
+                            {
+                                "patient_id": "NATO-BEL-12345",
+                                "name": "John Doe",
+                                "injury_type": "Battle Injury"
+                            }
+                        ],
+                        "total_patients": 100
+                    }
+                }
+            },
+        }
+    },
 )
 async def stream_patients_with_config(
     config: dict,
