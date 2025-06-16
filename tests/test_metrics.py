@@ -15,6 +15,7 @@ from src.core.metrics import (
     patients_generated,
     request_count,
 )
+from tests.test_metrics_helper import get_metric_value
 
 
 class TestMetricsCollector:
@@ -31,14 +32,14 @@ class TestMetricsCollector:
         collector = get_metrics_collector()
 
         # Get initial count
-        initial_count = request_count._value.get(("GET", "/api/test", "200"), 0)
+        initial_count = get_metric_value(request_count, {"method": "GET", "endpoint": "/api/test", "status": "200"})
 
         # Track a successful request
         with collector.track_request("GET", "/api/test"):
             pass
 
         # Check metric was incremented
-        new_count = request_count._value.get(("GET", "/api/test", "200"), 0)
+        new_count = get_metric_value(request_count, {"method": "GET", "endpoint": "/api/test", "status": "200"})
         assert new_count == initial_count + 1
 
     def test_track_request_failure(self):
@@ -46,7 +47,7 @@ class TestMetricsCollector:
         collector = get_metrics_collector()
 
         # Get initial count
-        initial_count = request_count._value.get(("POST", "/api/test", "500"), 0)
+        initial_count = get_metric_value(request_count, {"method": "POST", "endpoint": "/api/test", "status": "500"})
 
         # Track a failed request
         try:
@@ -56,7 +57,7 @@ class TestMetricsCollector:
             pass
 
         # Check metric was incremented with error status
-        new_count = request_count._value.get(("POST", "/api/test", "500"), 0)
+        new_count = get_metric_value(request_count, {"method": "POST", "endpoint": "/api/test", "status": "500"})
         assert new_count == initial_count + 1
 
     def test_track_db_query(self):
@@ -76,28 +77,23 @@ class TestMetricsCollector:
         collector = get_metrics_collector()
 
         # Get initial count
-        initial_value = 0
-        for labels, value in patients_generated._metrics.items():
-            if labels == ("json",):
-                initial_value = value
-                break
+        initial_value = get_metric_value(patients_generated, {"format": "json"})
 
         # Track successful generation
         with collector.track_generation("json", 100):
             pass
 
         # Check metric was incremented
-        new_value = 0
-        for labels, value in patients_generated._metrics.items():
-            if labels == ("json",):
-                new_value = value
-                break
-
+        new_value = get_metric_value(patients_generated, {"format": "json"})
         assert new_value == initial_value + 100
 
     def test_cache_metrics(self):
         """Test cache hit/miss tracking."""
         collector = get_metrics_collector()
+
+        # Get initial values
+        initial_hits = get_metric_value(cache_hits, {"cache_name": "demographics"})
+        initial_misses = get_metric_value(cache_misses, {"cache_name": "demographics"})
 
         # Record cache operations
         collector.record_cache_hit("demographics")
@@ -105,8 +101,8 @@ class TestMetricsCollector:
         collector.record_cache_eviction("demographics", "size_limit")
 
         # Verify metrics were recorded
-        assert cache_hits._value.get(("demographics",), 0) > 0
-        assert cache_misses._value.get(("demographics",), 0) > 0
+        assert get_metric_value(cache_hits, {"cache_name": "demographics"}) > initial_hits
+        assert get_metric_value(cache_misses, {"cache_name": "demographics"}) > initial_misses
 
     def test_job_metrics(self):
         """Test job-related metrics."""
