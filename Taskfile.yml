@@ -271,3 +271,23 @@ tasks:
       - docker compose -f docker-compose.staging.yml build --no-cache
       - docker compose -f docker-compose.staging.yml up -d
       - echo "Staging environment rebuilt and restarted"
+
+  # Timeline Viewer Deployment Tasks
+  timeline:deploy:
+    desc: Deploy timeline viewer to viewer.milmed.tech
+    cmds:
+      - ./scripts/deploy-timeline-viewer.sh
+
+  timeline:build:
+    desc: Build timeline viewer for production
+    dir: patient-timeline-viewer
+    cmds:
+      - npm ci
+      - npm run build
+      - echo "Build complete in patient-timeline-viewer/dist/"
+
+  timeline:preview:
+    desc: Preview production build locally
+    dir: patient-timeline-viewer
+    cmds:
+      - npm run preview

@@ -1,0 +1,59 @@
+name: Deploy Timeline Viewer
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'patient-timeline-viewer/**'
+      - '.github/workflows/deploy-timeline-viewer.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: patient-timeline-viewer/package-lock.json
+
+    - name: Install dependencies
+      working-directory: patient-timeline-viewer
+      run: npm ci
+
+    - name: Build application
+      working-directory: patient-timeline-viewer
+      run: npm run build
+      env:
+        VITE_API_URL: https://api.milmed.tech
+
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+    - name: Deploy to App Platform
+      run: |
+        # Check if app exists
+        APP_ID=$(doctl apps list --format ID,Spec.Name --no-header | grep "medical-timeline-viewer" | awk '{print $1}' || true)
+        
+        if [ -z "$APP_ID" ]; then
+          echo "Creating new app..."
+          doctl apps create --spec timeline-viewer-app-spec.yaml --wait
+        else
+          echo "Updating existing app..."
+          doctl apps update $APP_ID --spec timeline-viewer-app-spec.yaml --wait
+        fi
+
+    - name: Get app URL
+      run: |
+        APP_URL=$(doctl apps get medical-timeline-viewer --format LiveURL --no-header)
+        echo "App deployed to: $APP_URL"
+        echo "Custom domain: https://viewer.milmed.tech"

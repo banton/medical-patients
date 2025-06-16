@@ -592,6 +592,9 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 The React Timeline Viewer is a standalone visualization tool that provides interactive playback of patient movement through medical evacuation facilities. It's designed to help analyze patient flow patterns and evacuation timing.
 
+### Live Demo
+The Timeline Viewer is available at: **[https://viewer.milmed.tech](https://viewer.milmed.tech)**
+
 ### Features
 
 - **Interactive Timeline Playback**: Play, pause, and control speed (0.25x-10x) of patient movement visualization
@@ -680,6 +683,28 @@ This generator creates data compliant with:
 - Advanced analytics and reporting
 
 For detailed progress tracking, see the memory system documentation in the `memory/` directory.
+
+## Deployment
+
+### Main Application
+The main patient generator application can be deployed on:
+- Traditional VPS with Docker
+- DigitalOcean App Platform
+- Any Docker-compatible hosting service
+
+See [Production Deployment](#production-deployment) section for details.
+
+### Timeline Viewer Deployment
+The Timeline Viewer is deployed separately at [viewer.milmed.tech](https://viewer.milmed.tech):
+
+```bash
+# Deploy to DigitalOcean App Platform
+./scripts/deploy-timeline-viewer.sh
+
+# Or use GitHub Actions (automatic on push to main)
+```
+
+For detailed deployment instructions, see [docs/timeline-viewer-deployment.md](docs/timeline-viewer-deployment.md).
 
 ## Contributing
 

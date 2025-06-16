@@ -1,0 +1,43 @@
+name: medical-timeline-viewer
+region: nyc
+domains:
+  - domain: viewer.milmed.tech
+    type: PRIMARY
+
+static_sites:
+  - name: timeline-viewer
+    environment_slug: node-js
+    github:
+      repo: banton/medical-patients
+      branch: main
+      deploy_on_push: true
+    source_dir: patient-timeline-viewer
+    build_command: npm ci && npm run build
+    output_dir: dist
+    index_document: index.html
+    error_document: index.html
+    
+    # Environment variables (if needed)
+    envs:
+      - key: VITE_API_URL
+        value: "https://api.milmed.tech"
+        type: GENERAL
+    
+    # CORS settings for the static site
+    cors:
+      allow_origins:
+        - exact: "https://api.milmed.tech"
+        - exact: "https://milmed.tech"
+      allow_methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allow_headers:
+        - Content-Type
+        - Authorization
+      expose_headers:
+        - Content-Length
+      max_age: "300"
+      allow_credentials: true
