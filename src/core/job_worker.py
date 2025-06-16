@@ -172,9 +172,11 @@ class JobWorker:
 
         # Update job with batching info
         progress_details = JobProgressDetails(
-            batching=True,
-            batch_size=batch_size,
-            total_batches=(total_patients + batch_size - 1) // batch_size,
+            current_phase="batching",
+            phase_description=f"Processing in batches of {batch_size}",
+            phase_progress=0,
+            total_patients=total_patients,
+            processed_patients=0,
         )
         await self.job_service.update_job_progress(job_id, 0, progress_details)
 
@@ -212,9 +214,11 @@ class JobWorker:
             progress = min(patients_generated / total_patients, 1.0)
 
             progress_details = JobProgressDetails(
-                patients_generated=patients_generated,
-                current_batch=batch_num,
-                total_batches=(total_patients + batch_size - 1) // batch_size,
+                current_phase="generating",
+                phase_description=f"Batch {batch_num} of {(total_patients + batch_size - 1) // batch_size}",
+                phase_progress=int(progress * 100),
+                total_patients=total_patients,
+                processed_patients=patients_generated,
             )
             await self.job_service.update_job_progress(job_id, int(progress * 100), progress_details)
 

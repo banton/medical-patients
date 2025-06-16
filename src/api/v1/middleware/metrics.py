@@ -4,7 +4,7 @@ Part of EPIC-003: Production Scalability Improvements - Phase 2
 """
 
 import time
-from typing import Callable
+from typing import Callable, List
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -82,7 +82,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         """
         # Split path into segments
         segments = path.split("/")
-        normalized_segments: list[str] = []
+        normalized_segments: List[str] = []
 
         for i, segment in enumerate(segments):
             # Skip empty segments

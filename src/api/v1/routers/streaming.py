@@ -83,6 +83,7 @@ async def generate_patients_stream(
     )
 
     # Initialize the generation pipeline
+    assert generation_service is not None, "Generation service is required"
     generation_service._initialize_pipeline(config_id)
 
     # Track progress
