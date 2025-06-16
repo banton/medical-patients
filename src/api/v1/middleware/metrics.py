@@ -127,10 +127,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         # Check if it's a job ID format (e.g., job_123456)
         if segment.startswith("job_") and segment[4:].replace("_", "").isdigit():
             return True
-            
+
         # Check for generic ID pattern (contains letters, numbers, and hyphens)
         # but must have at least one number
-        if "-" in segment and any(c.isdigit() for c in segment):
-            return True
-            
-        return False
+        return "-" in segment and any(c.isdigit() for c in segment)
