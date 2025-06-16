@@ -116,7 +116,7 @@ class TestAPIKeyModel:
         repr_str = repr(api_key)
 
         assert "Test Key" in repr_str
-        assert "sk_test_1" in repr_str  # First 8 chars
+        assert "sk_test_" in repr_str  # First 8 chars
         assert "active=True" in repr_str
 
     def test_limits_info_generation(self):

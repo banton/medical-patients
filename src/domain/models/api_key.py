@@ -70,6 +70,10 @@ class APIKey(Base):
             kwargs["daily_requests"] = 0
         if "key_metadata" not in kwargs:
             kwargs["key_metadata"] = {}
+        if "is_active" not in kwargs:
+            kwargs["is_active"] = True
+        if "is_demo" not in kwargs:
+            kwargs["is_demo"] = False
 
         super().__init__(**kwargs)
 
@@ -127,7 +131,7 @@ class APIKey(Base):
             "total_patients_generated": self.total_patients_generated,
             "daily_requests": self.daily_requests,
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
-            "created_at": self.created_at.isoformat(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
             "is_demo": self.is_demo,
             "is_active": self.is_active,
             "is_expired": self.is_expired(),
@@ -151,13 +155,13 @@ class APIKey(Base):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses."""
         return {
-            "id": str(self.id),
+            "id": str(self.id) if self.id else None,
             "name": self.name,
             "email": self.email,
             "is_active": self.is_active,
             "is_demo": self.is_demo,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
             "limits": self.get_limits_info(),
@@ -166,8 +170,9 @@ class APIKey(Base):
                 "total_patients_generated": self.total_patients_generated,
                 "daily_requests": self.daily_requests,
             },
-            "metadata": self.key_metadata,
+            "metadata": self.key_metadata if self.key_metadata is not None else {},
         }
+
 
 
 # Demo key configuration - used by security module
