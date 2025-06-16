@@ -47,19 +47,7 @@ tasks:
   init:
     desc: First-time setup wizard for new users
     cmds:
-      - |
-        # Check if running on Ubuntu 24.04
-        if [ -f /etc/os-release ]; then
-          . /etc/os-release
-          if [[ "$VERSION_ID" == "24.04" ]]; then
-            echo "🐧 Ubuntu 24.04 detected - using dedicated setup script"
-            ./scripts/setup-ubuntu-24.sh
-          else
-            ./scripts/init-setup.sh
-          fi
-        else
-          ./scripts/init-setup.sh
-        fi
+      - ./scripts/init-setup.sh
 
   dev:
     desc: Start development environment with logs (database + app)
@@ -67,8 +55,23 @@ tasks:
     cmds:
       - docker compose up -d db redis
       - sleep 5  # Wait for database to be ready
-      - alembic upgrade head  # Run migrations
-      - "{{.PYTHON}} -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000"
+      - |
+        # Check if we're in a virtual environment or if alembic is available
+        if command -v alembic &> /dev/null; then
+          echo "Running migrations with local alembic..."
+          alembic upgrade head
+        else
+          echo "Running migrations with Docker..."
+          docker compose run --rm app alembic upgrade head
+        fi
+      - |
+        # Ensure we use the right Python
+        if [ -n "$VIRTUAL_ENV" ]; then
+          echo "Using virtual environment Python"
+          python3 -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+        else
+          {{.PYTHON}} -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+        fi
 
   check-init:
     desc: Check if initialization has been run
@@ -79,6 +82,18 @@ tasks:
           echo "⚠️  It looks like this is your first time running the project."
           echo "   Please run 'task init' first to set up your environment."
           exit 1
+        fi
+        
+        # Check if running on Ubuntu without virtual environment
+        if [ -f /etc/os-release ]; then
+          . /etc/os-release
+          if [[ "$ID" == "ubuntu" ]] && [[ "$VERSION_ID" == "24.04" ]] && [ -z "$VIRTUAL_ENV" ] && [ -d ".venv" ]; then
+            echo "⚠️  Ubuntu 24.04 detected - virtual environment required"
+            echo "   Please activate your virtual environment first:"
+            echo "   source .venv/bin/activate"
+            echo "   (or use: ./activate.sh if available)"
+            exit 1
+          fi
         fi
 
   start:
