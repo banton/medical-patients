@@ -45,7 +45,7 @@ class TestSimpleUI:
         response = requests.get(f"{BASE_URL}/")
 
         # Find script tag (new app structure)
-        assert 'src="/static/js/app.js"' in response.text
+        assert 'src="js/app.js"' in response.text
 
         # Verify the JS file exists
         js_response = requests.get(f"{BASE_URL}/static/js/app.js")
@@ -70,6 +70,6 @@ class TestSimpleUI:
         response = requests.get(f"{BASE_URL}/")
 
         # Check for external CSS files
-        assert "/static/css/main.css" in response.text
-        assert "/static/css/components/banner.css" in response.text
-        assert "/static/css/components/accordion.css" in response.text
+        assert "css/main.css" in response.text
+        assert "css/components/banner.css" in response.text
+        assert "css/components/accordion.css" in response.text

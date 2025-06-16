@@ -186,7 +186,7 @@ async def create(name, email, demo, expires_days, patients, daily, hourly, minut
                     "created_at": api_key.created_at.isoformat(),
                     "limits": cli_app.format_limits(api_key),
                 }
-                console.print_json(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2))
             else:
                 console.print("[green]✓[/green] API Key created successfully!")
                 console.print(f"[bold]ID:[/bold] {api_key.id}")
@@ -262,7 +262,7 @@ async def list(active, demo, search, format, limit):
                             "limits": cli_app.format_limits(key),
                         }
                     )
-                console.print_json(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2))
 
             elif format == "csv":
                 output = StringIO()
@@ -388,7 +388,7 @@ async def show(key_id, format):
                     "limits": cli_app.format_limits(api_key),
                     "metadata": api_key.key_metadata,
                 }
-                console.print_json(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2))
             else:
                 console.print("[bold]API Key Details[/bold]")
                 console.print(f"ID: {api_key.id}")
@@ -545,7 +545,7 @@ async def usage(key_id, format):
                     "usage": cli_app.format_usage_stats(api_key),
                     "limits": cli_app.format_limits(api_key),
                 }
-                console.print_json(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2))
             else:
                 console.print(f"[bold]Usage Statistics for '{api_key.name}'[/bold]")
                 console.print(f"Key ID: {api_key.id}")
@@ -601,7 +601,7 @@ async def stats(days, format):
 
             if format == "json":
                 result = {"period_days": days, "statistics": stats_data, "generated_at": datetime.utcnow().isoformat()}
-                console.print_json(json.dumps(result, indent=2))
+                print(json.dumps(result, indent=2))
             else:
                 console.print(f"[bold]API Usage Statistics (Last {days} days)[/bold]")
 

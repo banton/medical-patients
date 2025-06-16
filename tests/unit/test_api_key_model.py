@@ -22,11 +22,11 @@ class TestAPIKeyModelCore:
 
         assert api_key.key == "test_key"
         assert api_key.name == "Test Key"
-        # Check defaults - some are None until database assigns them
+        # Check defaults - the __init__ sets these defaults
         assert api_key.email is None
-        assert api_key.is_active is None  # Database default
-        assert api_key.is_demo is None  # Database default
-        assert api_key.max_patients_per_request is None  # Database default
+        assert api_key.is_active is True  # Default set in __init__
+        assert api_key.is_demo is False  # Default set in __init__
+        assert api_key.max_patients_per_request == 1000  # Default set in __init__
 
     def test_init_with_all_fields(self):
         """Test APIKey creation with all fields specified."""

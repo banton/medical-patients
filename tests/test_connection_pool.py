@@ -300,11 +300,16 @@ class TestEnhancedConnectionPool:
         mock_pool_class.return_value = mock_pool
         mock_conn = Mock()
         mock_pool.getconn.return_value = mock_conn
+        
+        # Setup connection context manager
+        mock_conn.__enter__ = Mock(return_value=mock_conn)
+        mock_conn.__exit__ = Mock(return_value=None)
+        
         mock_cursor = Mock()
         # Setup context manager for mock cursor
         mock_cursor_cm = Mock()
-        mock_cursor_cm.__enter__.return_value = mock_cursor
-        mock_cursor_cm.__exit__.return_value = None
+        mock_cursor_cm.__enter__ = Mock(return_value=mock_cursor)
+        mock_cursor_cm.__exit__ = Mock(return_value=None)
         mock_conn.cursor.return_value = mock_cursor_cm
 
         # Create pool
