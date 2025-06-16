@@ -76,7 +76,12 @@
       "mcp__playwright-mcp__playwright_click",
       "mcp__playwright-mcp__playwright_fill",
       "mcp__playwright-mcp__playwright_close",
-      "Bash(./test_ubuntu_compatibility.sh:*)"
+      "Bash(./test_ubuntu_compatibility.sh:*)",
+      "Bash(doctl auth:*)",
+      "mcp__digitalocean-mcp-local__validate_app_spec",
+      "mcp__digitalocean-mcp-local__create_app",
+      "mcp__digitalocean-mcp-local__get_deployment_logs_url",
+      "Bash(doctl compute domain:*)"
     ],
     "deny": []
   },

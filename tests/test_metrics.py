@@ -92,8 +92,8 @@ class TestMetricsCollector:
         collector = get_metrics_collector()
 
         # Get initial values
-        initial_hits = get_metric_value(cache_hits, {"cache_name": "demographics"})
-        initial_misses = get_metric_value(cache_misses, {"cache_name": "demographics"})
+        initial_hits = get_metric_value(cache_hits, {"cache_type": "demographics"})
+        initial_misses = get_metric_value(cache_misses, {"cache_type": "demographics"})
 
         # Record cache operations
         collector.record_cache_hit("demographics")
@@ -101,8 +101,8 @@ class TestMetricsCollector:
         collector.record_cache_eviction("demographics", "size_limit")
 
         # Verify metrics were recorded
-        assert get_metric_value(cache_hits, {"cache_name": "demographics"}) > initial_hits
-        assert get_metric_value(cache_misses, {"cache_name": "demographics"}) > initial_misses
+        assert get_metric_value(cache_hits, {"cache_type": "demographics"}) > initial_hits
+        assert get_metric_value(cache_misses, {"cache_type": "demographics"}) > initial_misses
 
     def test_job_metrics(self):
         """Test job-related metrics."""

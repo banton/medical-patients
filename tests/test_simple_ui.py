@@ -17,10 +17,10 @@ class TestSimpleUI:
         assert response.status_code == 200
 
         # Check title (updated for temporal capabilities)
-        assert "<title>Temporal Military Patient Generator</title>" in response.text
+        assert "<title>Military Medical Exercise Patient Generator</title>" in response.text
 
         # Check header (new modern format with temporal capabilities)
-        assert "Temporal Military Patient Generator" in response.text
+        assert "Military Medical Exercise Patient Generator" in response.text
         assert 'class="text-2xl font-bold' in response.text
 
     def test_ui_elements_present(self):
