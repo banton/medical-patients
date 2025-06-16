@@ -176,10 +176,23 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
     ```bash
     task init       # Guided setup that checks prerequisites and configures environment
     ```
+    
+    **For Ubuntu 24.04 LTS users**: Due to PEP 668 (externally-managed-environment), use the dedicated setup script:
+    ```bash
+    chmod +x scripts/setup-ubuntu-24.sh
+    ./scripts/setup-ubuntu-24.sh
+    ```
 
 4.  **Start development environment**:
     ```bash
     task dev        # Starts database, runs migrations, and starts app with live reload
+    ```
+    
+    **Ubuntu 24.04 users**: Always activate the virtual environment first:
+    ```bash
+    source .venv/bin/activate
+    # or use the helper script: ./activate.sh
+    task dev
     ```
     
     Note: The `task init` command will check all prerequisites, create necessary files, pull Docker images, and set up your development environment. After initial setup, just use `task dev` to start working.
@@ -246,6 +259,40 @@ alembic upgrade head
 # 4. Start the application
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+### Ubuntu 24.04 LTS Specific Instructions
+
+Ubuntu 24.04 LTS enforces PEP 668 (externally-managed-environment) which requires using virtual environments for Python packages. Here's how to handle common issues:
+
+#### Missing Alembic or Other Python Packages
+
+If you encounter "command not found" errors for Alembic or other Python tools:
+
+1. **Always use a virtual environment**:
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **For missing system dependencies**:
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y python3-dev libpq-dev build-essential
+   ```
+
+3. **Use the dedicated Ubuntu setup script**:
+   ```bash
+   chmod +x scripts/setup-ubuntu-24.sh
+   ./scripts/setup-ubuntu-24.sh
+   ```
+
+#### Common Troubleshooting
+
+- **"error: externally-managed-environment"**: Always use a virtual environment on Ubuntu 24.04
+- **psycopg2 installation fails**: Install `libpq-dev` with `sudo apt-get install libpq-dev`
+- **Permission denied errors**: Ensure your user is in the docker group: `sudo usermod -aG docker $USER`
+- **Port already in use**: Check with `sudo lsof -i :8000` and stop conflicting services
 
 ## Production Deployment
 

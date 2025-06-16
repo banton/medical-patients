@@ -47,7 +47,19 @@ tasks:
   init:
     desc: First-time setup wizard for new users
     cmds:
-      - ./scripts/init-setup.sh
+      - |
+        # Check if running on Ubuntu 24.04
+        if [ -f /etc/os-release ]; then
+          . /etc/os-release
+          if [[ "$VERSION_ID" == "24.04" ]]; then
+            echo "🐧 Ubuntu 24.04 detected - using dedicated setup script"
+            ./scripts/setup-ubuntu-24.sh
+          else
+            ./scripts/init-setup.sh
+          fi
+        else
+          ./scripts/init-setup.sh
+        fi
 
   dev:
     desc: Start development environment with logs (database + app)
