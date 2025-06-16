@@ -3,10 +3,10 @@ name = "military-medical-patient-generator"
 version = "1.0.0"
 description = "Military Medical Exercise Patient Generator"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8,<3.13"
 
 [tool.ruff]
-# Python version target
+# Python version target - using 3.8 as minimum for maximum compatibility
 target-version = "py38"
 
 # Line length (matching Black)

@@ -10,12 +10,19 @@ The Medical Patients Generator uses Task runner for cross-platform development e
   - ✅ All 154 Task commands validated
   - ✅ Docker integration working
   - ✅ Timeline viewer fully functional
+  - ✅ Python 3.8-3.12 compatibility verified
 
 ### 🧪 Cross-Platform Ready
-- **Linux** (Ubuntu 20.04+, Debian, CentOS, RHEL)
+- **Linux** (Ubuntu 20.04+, Ubuntu 24.04 LTS, Debian, CentOS, RHEL)
   - 🎯 All commands designed for Linux compatibility
   - 🎯 Shell scripts use POSIX-compatible syntax
   - 🎯 Package detection works with apt/yum/dnf
+  - ✅ **Ubuntu 24.04 LTS specific support:**
+    - Python 3.11 in Docker for consistency across platforms
+    - Virtual environment handling for PEP 668 compliance
+    - PostgreSQL 16.2 compatibility verified
+    - OpenSSL 3.x support included
+    - Cargo/Rust toolchain for cryptography builds
 
 - **Windows** (Windows 10/11 with WSL2)
   - 🎯 Task runner natively supports Windows
@@ -39,6 +46,30 @@ task setup
 ```
 
 ### Linux Installation
+
+#### Ubuntu 24.04 LTS Specific
+```bash
+# Install system dependencies first
+sudo apt-get update
+sudo apt-get install -y \
+  python3.11 python3.11-venv python3.11-dev \
+  build-essential libpq-dev libssl-dev libffi-dev \
+  cargo pkg-config curl git
+
+# Install Task runner
+curl -sL https://taskfile.dev/install.sh | sh
+
+# Create virtual environment (required by PEP 668)
+python3.11 -m venv .venv
+source .venv/bin/activate
+
+# Setup project
+git clone <repository>
+cd medical-patients
+task setup
+```
+
+#### Other Linux Distributions
 ```bash
 # Method 1: Download binary (recommended)
 curl -sL https://taskfile.dev/install.sh | sh
@@ -302,6 +333,37 @@ PYTHON_CMD:
 - 📋 Automated platform compatibility verification
 - 📋 Platform-specific regression testing
 
+## 🐳 Docker Compatibility
+
+### Multi-Platform Docker Support
+The project includes multiple Dockerfiles for different deployment scenarios:
+
+- **Dockerfile** - Standard production build (Python 3.11)
+- **Dockerfile.unified** - Cross-platform unified build
+- **Dockerfile.ubuntu2404** - Ubuntu 24.04 LTS specific with PEP 668 compliance
+
+### Building for Different Platforms
+```bash
+# Standard build (works on all platforms)
+docker build -t medical-patients:latest .
+
+# Ubuntu 24.04 specific build
+docker build -f Dockerfile.ubuntu2404 -t medical-patients:ubuntu2404 .
+
+# Unified cross-platform build
+docker build -f Dockerfile.unified -t medical-patients:unified .
+```
+
+### Python Version Compatibility Matrix
+
+| Platform | System Python | Docker Python | Virtual Env |
+|----------|--------------|---------------|-------------|
+| Ubuntu 20.04 | 3.8.x | 3.11 | Optional |
+| Ubuntu 22.04 | 3.10.x | 3.11 | Optional |
+| Ubuntu 24.04 | 3.12.x | 3.11 | Required |
+| macOS | Varies | 3.11 | Recommended |
+| Windows/WSL2 | Varies | 3.11 | Recommended |
+
 ## 🔗 Additional Resources
 
 ### Task Runner Documentation
@@ -313,6 +375,11 @@ PYTHON_CMD:
 - [Docker Desktop for Mac](https://docs.docker.com/desktop/mac/)
 - [Docker Desktop for Windows](https://docs.docker.com/desktop/windows/)
 - [WSL2 Installation Guide](https://docs.microsoft.com/en-us/windows/wsl/install)
+
+### Ubuntu 24.04 Specific Resources
+- [PEP 668 - Externally Managed Environments](https://peps.python.org/pep-0668/)
+- [PostgreSQL 16 Documentation](https://www.postgresql.org/docs/16/)
+- [Ubuntu 24.04 Release Notes](https://discourse.ubuntu.com/t/noble-numbat-release-notes/39890)
 
 ### Troubleshooting
 For platform-specific issues, see:

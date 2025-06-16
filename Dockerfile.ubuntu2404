@@ -1,0 +1,133 @@
+# Ubuntu 24.04 LTS Compatible Dockerfile
+# Handles PEP 668 virtual environment requirements
+
+# Build stage
+FROM ubuntu:24.04 AS builder
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python and build dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3-pip \
+    build-essential \
+    libpq-dev \
+    libssl-dev \
+    libffi-dev \
+    cargo \
+    pkg-config \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment (required by PEP 668 in Ubuntu 24.04)
+RUN python3.11 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip in virtual environment
+RUN pip install --upgrade pip setuptools wheel
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install dependencies into the virtual environment
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Test stage
+FROM ubuntu:24.04 AS test
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH="/app"
+
+# Install Python and test dependencies
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    python3.11-dev \
+    python3-pip \
+    build-essential \
+    libpq-dev \
+    postgresql-client \
+    libssl-dev \
+    libffi-dev \
+    cargo \
+    pkg-config \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+RUN python3.11 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /app
+
+# Copy requirements and install all dependencies including dev
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir pytest pytest-cov pytest-asyncio testcontainers[postgres,redis]
+
+# Copy all application code
+COPY . /app/
+
+# Run tests by default in test stage
+CMD ["pytest", "tests/", "-v", "--cov=src", "--cov=patient_generator"]
+
+# Final production stage
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8000 \
+    HOST="0.0.0.0" \
+    PYTHONPATH="/app"
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    python3.11 \
+    python3.11-venv \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user to run the application
+RUN groupadd -r patientgen && useradd -r -g patientgen patientgen
+
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application code
+COPY patient_generator/ /app/patient_generator/
+COPY src/ /app/src/
+COPY static/ /app/static/
+COPY config.py /app/
+COPY setup.py /app/
+COPY run_generator.py /app/
+
+# Create directory for output files with proper permissions
+RUN mkdir -p /app/output /app/temp \
+    && chown -R patientgen:patientgen /app /opt/venv
+
+# Switch to non-root user
+USER patientgen
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+
+# Expose the port
+EXPOSE 8000
+
+# Default command to run the FastAPI application
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
