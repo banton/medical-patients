@@ -21,7 +21,7 @@ from src.domain.repositories.api_key_repository import APIKeyRepository
 LEGACY_API_KEY = os.getenv("API_KEY", "your-api-key-here")
 
 # Public demo key - hardcoded for easy access
-DEMO_API_KEY = DEMO_API_KEY_CONFIG["key"]
+DEMO_API_KEY: str = str(DEMO_API_KEY_CONFIG["key"])
 
 
 @dataclass

@@ -67,7 +67,16 @@
       "mcp__digitalocean-mcp-local__get_database_cluster",
       "mcp__digitalocean-mcp-local__list_database_cluster_databases",
       "mcp__digitalocean-mcp-local__list_database_cluster_users",
-      "Bash(./memory/update.sh:*)"
+      "Bash(./memory/update.sh:*)",
+      "Bash(task status)",
+      "mcp__playwright-mcp__playwright_navigate",
+      "mcp__playwright-mcp__playwright_screenshot",
+      "mcp__playwright-mcp__playwright_evaluate",
+      "mcp__playwright-mcp__playwright_get_visible_html",
+      "mcp__playwright-mcp__playwright_click",
+      "mcp__playwright-mcp__playwright_fill",
+      "mcp__playwright-mcp__playwright_close",
+      "Bash(./test_ubuntu_compatibility.sh:*)"
     ],
     "deny": []
   },

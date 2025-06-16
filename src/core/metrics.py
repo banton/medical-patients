@@ -198,7 +198,7 @@ class MetricsCollector:
 
     def track_job_started(self, job_id: str):
         """Track job start."""
-        self.active_jobs = getattr(self, "active_jobs", set())
+        self.active_jobs: set = getattr(self, "active_jobs", set())
         self.active_jobs.add(job_id)
         job_queue_size.labels(status="running").inc()
 

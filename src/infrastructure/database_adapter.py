@@ -35,7 +35,7 @@ class EnhancedDatabase(LegacyDatabase):
     def __init__(self):
         """Initialize with enhanced connection pool."""
         # Skip parent __init__ to avoid creating the old pool
-        self._pool = get_pool()
+        self._pool: Any = get_pool()
 
     def get_connection(self) -> Optional[psycopg2.extensions.connection]:
         """

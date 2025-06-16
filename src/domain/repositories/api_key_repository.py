@@ -391,7 +391,7 @@ class APIKeyRepository:
         Returns:
             The demo APIKey instance (existing or newly created)
         """
-        demo_key = self.get_by_key(DEMO_API_KEY_CONFIG["key"])
+        demo_key = self.get_by_key(str(DEMO_API_KEY_CONFIG["key"]))
         if demo_key:
             return demo_key
 

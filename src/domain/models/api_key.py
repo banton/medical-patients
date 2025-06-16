@@ -9,14 +9,14 @@ This module defines the SQLAlchemy model for API keys that support:
 """
 
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Type
 import uuid
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+Base: Type[Any] = declarative_base()
 
 
 class APIKey(Base):

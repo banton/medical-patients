@@ -6,7 +6,7 @@ Part of EPIC-003: Production Scalability Improvements - Phase 4
 import asyncio
 from contextlib import suppress
 import gc
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from src.core.exceptions import ResourceLimitExceeded
 from src.core.job_resource_manager import get_resource_manager
@@ -78,7 +78,7 @@ class JobWorker:
                 self.metrics.track_generation_error(str(e))
                 await asyncio.sleep(5)
 
-    async def _get_next_job(self) -> Optional[Dict[str, Any]]:
+    async def _get_next_job(self) -> Optional[Any]:
         """
         Get the next job to process.
 
@@ -171,15 +171,12 @@ class JobWorker:
         batch_size = self.resource_manager.batch_size
 
         # Update job with batching info
-        await self.job_service.update_job_progress(
-            job_id,
-            0,
-            {
-                "batching": True,
-                "batch_size": batch_size,
-                "total_batches": (total_patients + batch_size - 1) // batch_size,
-            },
+        progress_details = JobProgressDetails(
+            batching=True,
+            batch_size=batch_size,
+            total_batches=(total_patients + batch_size - 1) // batch_size,
         )
+        await self.job_service.update_job_progress(job_id, 0, progress_details)
 
         # Process in batches
         patients_generated = 0
@@ -214,15 +211,12 @@ class JobWorker:
             batch_num += 1
             progress = min(patients_generated / total_patients, 1.0)
 
-            await self.job_service.update_job_progress(
-                job_id,
-                int(progress * 100),
-                {
-                    "patients_generated": patients_generated,
-                    "current_batch": batch_num,
-                    "total_batches": (total_patients + batch_size - 1) // batch_size,
-                },
+            progress_details = JobProgressDetails(
+                patients_generated=patients_generated,
+                current_batch=batch_num,
+                total_batches=(total_patients + batch_size - 1) // batch_size,
             )
+            await self.job_service.update_job_progress(job_id, int(progress * 100), progress_details)
 
             # Garbage collection between batches
             gc.collect()
@@ -266,7 +260,7 @@ class JobWorkerPool:
         """
         self.job_service = job_service
         self.pool_size = pool_size
-        self.workers: list[JobWorker] = []
+        self.workers: List[JobWorker] = []
         self._running = False
 
     async def start(self):

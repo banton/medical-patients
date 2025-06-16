@@ -82,7 +82,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         """
         # Split path into segments
         segments = path.split("/")
-        normalized_segments = []
+        normalized_segments: list[str] = []
 
         for i, segment in enumerate(segments):
             # Skip empty segments

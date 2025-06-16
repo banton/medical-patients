@@ -91,6 +91,10 @@ async def generate_patients_stream(
 
     try:
         # Generate patients in batches
+        if not hasattr(generation_service, 'pipeline') or generation_service.pipeline is None:
+            yield b']\n, "error": "Generation service not initialized"\n}'
+            return
+            
         async for _patient, patient_data in generation_service.pipeline.generate(context):
             # Add comma separator if not first patient
             if not first_patient:
