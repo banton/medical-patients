@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 from src.core.exceptions import ResourceLimitExceeded
 from src.core.job_resource_manager import get_resource_manager
 from src.core.metrics import get_metrics_collector
-from src.domain.models.job import JobStatus
+from src.domain.models.job import JobProgressDetails, JobStatus
 from src.domain.services.job_service import JobService
 
 
