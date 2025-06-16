@@ -39,5 +39,5 @@ static_sites:
         - Authorization
       expose_headers:
         - Content-Length
-      max_age: "300"
+      max_age: "300s"
       allow_credentials: true
