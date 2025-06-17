@@ -230,8 +230,10 @@ task timeline-start # Start timeline viewer in background
 task timeline-stop  # Stop background timeline viewer
 task timeline-status# Check timeline viewer status
 
-# Staging Commands (for deployment testing)
-task staging:up     # Start staging environment on port 8001
+# Staging Commands (Optional - for production deployment testing)
+# Note: Staging is only needed if you plan to deploy to a production server
+# Most users can skip these commands and use 'task dev' for local development
+task staging:up     # Start staging environment on port 8001 (requires .env.staging)
 task staging:down   # Stop staging environment
 task staging:logs   # View staging logs
 task staging:status # Check staging environment status
@@ -680,6 +682,45 @@ This generator creates data compliant with:
 - Advanced analytics and reporting
 
 For detailed progress tracking, see the memory system documentation in the `memory/` directory.
+
+## Deployment Options
+
+### Local Development (Recommended for Most Users)
+
+The primary deployment method is local development using Docker:
+
+```bash
+task dev  # Starts the application on http://localhost:8000
+```
+
+This is sufficient for:
+- Testing the patient generator
+- Developing new features
+- Running medical exercises
+- Integration testing
+
+### Production Deployment
+
+For hosting the application on a server:
+
+1. **Traditional VPS**: Deploy using Docker Compose on any Linux server
+2. **DigitalOcean App Platform**: Use the provided `staging-app-spec.yaml`
+3. **Kubernetes**: Deploy containers using the Docker images
+
+### Staging Environment (Optional)
+
+Staging deployment is **only needed** if you're planning to:
+- Test production deployment configurations
+- Validate server-specific settings
+- Run load testing before production
+
+To use staging:
+1. Create `.env.staging` with production-like settings
+2. Run `task staging:up` to start on port 8001
+3. Test your deployment configuration
+4. Use `task staging:down` when finished
+
+**Note**: Most users don't need staging. The `task dev` command provides a complete development environment.
 
 ## Contributing
 

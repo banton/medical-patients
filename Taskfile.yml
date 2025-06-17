@@ -37,7 +37,9 @@ tasks:
         echo "  task timeline-status - Check timeline viewer status"
         echo ""
         echo "Staging commands:"
-        echo "  task staging:up     - Start staging environment"
+        echo ""
+        echo "Optional Staging Commands (for production deployment testing):"
+        echo "  task staging:up     - Start staging environment (requires .env.staging)"
         echo "  task staging:down   - Stop staging environment"
         echo "  task staging:logs   - View staging logs"
         echo "  task staging:status - Check staging status"
@@ -218,15 +220,19 @@ tasks:
 
   # Staging environment tasks
   staging:up:
-    desc: Start staging environment on port 8001
+    desc: Start staging environment on port 8001 (optional - for production deployment testing)
     cmds:
       - |
         if [ ! -f .env.staging ]; then
-          echo "Error: .env.staging file not found!"
-          echo "Create it with:"
+          echo "================================================================"
+          echo "Staging environment is for production deployment testing only."
+          echo "Most users should use 'task dev' for local development."
+          echo ""
+          echo "If you need staging, create .env.staging with:"
           echo "  STAGING_DB_PASSWORD=your-password"
           echo "  STAGING_API_KEY=$(openssl rand -hex 32)"
           echo "  STAGING_SECRET_KEY=$(openssl rand -hex 16)"
+          echo "================================================================"
           exit 1
         fi
       - docker compose -f docker-compose.staging.yml up -d
