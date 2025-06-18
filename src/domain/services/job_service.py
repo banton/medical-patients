@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import zipfile
 
 from config import get_settings
-from src.core.cache_utils import cache_job_status, get_cached_job_status, invalidate_job_cache
+from src.core.cache_utils import cache_job_status
 from src.core.exceptions import InvalidOperationError, StorageError
 from src.domain.models.job import Job, JobProgressDetails, JobStatus
 from src.domain.repositories.job_repository import JobRepositoryInterface
@@ -31,10 +31,10 @@ class JobService:
     async def get_job(self, job_id: str) -> Job:
         """Get a job by ID, checking cache first."""
         job = await self.repository.get(job_id)
-        
+
         # Cache the job status for future requests
         await cache_job_status(job)
-        
+
         return job
 
     async def list_jobs(self) -> List[Job]:
@@ -53,7 +53,7 @@ class JobService:
             job.completed_at = datetime.utcnow()
 
         await self.repository.update(job)
-        
+
         # Update cache with new status
         await cache_job_status(job)
 
@@ -68,7 +68,7 @@ class JobService:
             job.progress_details = progress_details
 
         await self.repository.update(job)
-        
+
         # Update cache with new progress
         await cache_job_status(job)
 

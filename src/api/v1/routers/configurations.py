@@ -53,7 +53,7 @@ async def get_configuration(
     if cached_config:
         # Return cached configuration (already validated)
         return ConfigurationTemplateDB(**cached_config)
-    
+
     repo = ConfigurationRepository(db)
     config = repo.get_configuration(config_id)
 
@@ -62,7 +62,7 @@ async def get_configuration(
 
     # Cache the configuration for future requests
     await cache_configuration_template(config_id, config.dict())
-    
+
     return config
 
 
@@ -86,10 +86,10 @@ async def update_configuration(
 
     # Invalidate cache for this configuration
     await invalidate_configuration_cache(config_id)
-    
+
     # Cache the updated configuration
     await cache_configuration_template(config_id, updated.dict())
-    
+
     return updated
 
 
@@ -103,10 +103,10 @@ async def delete_configuration(request: Request, config_id: str, db: Database = 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {config_id} not found")
 
     repo.delete_configuration(config_id)
-    
+
     # Invalidate cache for this configuration
     await invalidate_configuration_cache(config_id)
-    
+
     # Return 204 No Content with no response body
 
 

@@ -145,7 +145,7 @@ def get_api_key_hash(api_key: str) -> str:
 async def cache_api_key_limits(api_key: str, limits_data: Dict[str, Any]) -> None:
     """
     Cache API key limits and usage data.
-    
+
     Args:
         api_key: The API key (will be hashed)
         limits_data: Dictionary containing limit information
@@ -153,10 +153,10 @@ async def cache_api_key_limits(api_key: str, limits_data: Dict[str, Any]) -> Non
     cache = get_cache_service()
     if not cache:
         return
-    
+
     key_hash = get_api_key_hash(api_key)
     cache_key = f"apikey:{key_hash}:limits"
-    
+
     try:
         await cache.set(cache_key, limits_data, ttl=API_KEY_LIMITS_TTL)
         logger.debug(f"Cached API key limits for hash {key_hash}")
@@ -167,20 +167,20 @@ async def cache_api_key_limits(api_key: str, limits_data: Dict[str, Any]) -> Non
 async def get_cached_api_key_limits(api_key: str) -> Optional[Dict[str, Any]]:
     """
     Get cached API key limits.
-    
+
     Args:
         api_key: The API key (will be hashed)
-        
+
     Returns:
         Cached limits data or None if not found
     """
     cache = get_cache_service()
     if not cache:
         return None
-    
+
     key_hash = get_api_key_hash(api_key)
     cache_key = f"apikey:{key_hash}:limits"
-    
+
     try:
         data = await cache.get(cache_key)
         if data:
@@ -194,16 +194,16 @@ async def get_cached_api_key_limits(api_key: str) -> Optional[Dict[str, Any]]:
 async def cache_job_status(job: Job) -> None:
     """
     Cache job status information.
-    
+
     Args:
         job: The job object to cache
     """
     cache = get_cache_service()
     if not cache:
         return
-    
+
     cache_key = f"job:{job.job_id}:status"
-    
+
     # Determine TTL based on job status
     if job.status in [JobStatus.PENDING, JobStatus.RUNNING]:
         ttl = JOB_STATUS_TTL
@@ -211,7 +211,7 @@ async def cache_job_status(job: Job) -> None:
         ttl = 3600  # 1 hour for completed jobs
     else:
         ttl = 1800  # 30 minutes for failed/cancelled jobs
-    
+
     job_data = {
         "id": job.job_id,
         "status": job.status.value,
@@ -229,7 +229,7 @@ async def cache_job_status(job: Job) -> None:
             "time_estimates": job.progress_details.time_estimates
         } if job.progress_details else None
     }
-    
+
     try:
         await cache.set(cache_key, job_data, ttl=ttl)
         logger.debug(f"Cached job status for {job.job_id} with TTL {ttl}s")
@@ -240,19 +240,19 @@ async def cache_job_status(job: Job) -> None:
 async def get_cached_job_status(job_id: str) -> Optional[Dict[str, Any]]:
     """
     Get cached job status.
-    
+
     Args:
         job_id: The job ID
-        
+
     Returns:
         Cached job data or None if not found
     """
     cache = get_cache_service()
     if not cache:
         return None
-    
+
     cache_key = f"job:{job_id}:status"
-    
+
     try:
         data = await cache.get(cache_key)
         if data:
@@ -266,16 +266,16 @@ async def get_cached_job_status(job_id: str) -> Optional[Dict[str, Any]]:
 async def invalidate_job_cache(job_id: str) -> None:
     """
     Invalidate cached job status.
-    
+
     Args:
         job_id: The job ID to invalidate
     """
     cache = get_cache_service()
     if not cache:
         return
-    
+
     cache_key = f"job:{job_id}:status"
-    
+
     try:
         await cache.delete(cache_key)
         logger.debug(f"Invalidated job cache for {job_id}")
@@ -286,7 +286,7 @@ async def invalidate_job_cache(job_id: str) -> None:
 async def cache_configuration_template(config_id: str, config_data: Dict[str, Any]) -> None:
     """
     Cache configuration template data.
-    
+
     Args:
         config_id: The configuration ID
         config_data: The configuration data to cache
@@ -294,9 +294,9 @@ async def cache_configuration_template(config_id: str, config_data: Dict[str, An
     cache = get_cache_service()
     if not cache:
         return
-    
+
     cache_key = f"config:{config_id}"
-    
+
     try:
         await cache.set(cache_key, config_data, ttl=CONFIGURATION_TTL)
         logger.debug(f"Cached configuration template {config_id}")
@@ -307,19 +307,19 @@ async def cache_configuration_template(config_id: str, config_data: Dict[str, An
 async def get_cached_configuration(config_id: str) -> Optional[Dict[str, Any]]:
     """
     Get cached configuration template.
-    
+
     Args:
         config_id: The configuration ID
-        
+
     Returns:
         Cached configuration data or None if not found
     """
     cache = get_cache_service()
     if not cache:
         return None
-    
+
     cache_key = f"config:{config_id}"
-    
+
     try:
         data = await cache.get(cache_key)
         if data:
@@ -333,16 +333,16 @@ async def get_cached_configuration(config_id: str) -> Optional[Dict[str, Any]]:
 async def invalidate_configuration_cache(config_id: str) -> None:
     """
     Invalidate cached configuration template.
-    
+
     Args:
         config_id: The configuration ID to invalidate
     """
     cache = get_cache_service()
     if not cache:
         return
-    
+
     cache_key = f"config:{config_id}"
-    
+
     try:
         await cache.delete(cache_key)
         logger.debug(f"Invalidated configuration cache for {config_id}")
@@ -353,18 +353,18 @@ async def invalidate_configuration_cache(config_id: str) -> None:
 async def get_cache_stats() -> Dict[str, Any]:
     """
     Get cache statistics for monitoring.
-    
+
     Returns:
         Dictionary with cache stats or empty dict if cache unavailable
     """
     cache = get_cache_service()
     if not cache:
         return {"available": False}
-    
+
     try:
         # Check Redis health
         healthy = await cache.health_check()
-        
+
         return {
             "available": True,
             "healthy": healthy,
