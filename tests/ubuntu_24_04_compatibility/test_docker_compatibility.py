@@ -286,22 +286,10 @@ RUN python3 -m venv /opt/venv && \
     /opt/venv/bin/pip install cryptography
 
 # Test cryptography with OpenSSL 3
-RUN /opt/venv/bin/python -c "
-from cryptography.fernet import Fernet
-key = Fernet.generate_key()
-f = Fernet(key)
-encrypted = f.encrypt(b'test')
-assert f.decrypt(encrypted) == b'test'
-print('✓ Cryptography working with OpenSSL 3.x')
-"
+RUN /opt/venv/bin/python -c "from cryptography.fernet import Fernet; key = Fernet.generate_key(); f = Fernet(key); encrypted = f.encrypt(b'test'); assert f.decrypt(encrypted) == b'test'; print('✓ Cryptography working with OpenSSL 3.x')"
 
 # Test TLS 1.0/1.1 are disabled
-RUN /opt/venv/bin/python -c "
-import ssl
-context = ssl.create_default_context()
-# This would fail if TLS 1.0/1.1 were enabled
-print(f'✓ Minimum TLS version: {context.minimum_version}')
-"
+RUN /opt/venv/bin/python -c "import ssl; context = ssl.create_default_context(); print(f'✓ Minimum TLS version: {context.minimum_version}')"
 """)
 
         result = subprocess.run(
