@@ -151,11 +151,31 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
 -   [Python 3.8+](https://www.python.org/downloads/) - For local development (optional)
 -   [Node.js 18+](https://nodejs.org/) - For timeline viewer (optional)
 
-### Quick Start
+### Quick Start (Without Docker)
+
+For a quick test without Docker or Task:
+
+```bash
+# Clone and setup
+git clone https://github.com/banton/medical-patients.git
+cd medical-patients
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# Run the application
+python -m src.main
+
+# Access at http://localhost:8000
+```
+
+Note: This runs without database persistence. For full functionality, follow the complete setup below.
+
+### Quick Start (With Docker)
 
 1.  **Clone the repository**:
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/banton/medical-patients.git
     cd medical-patients
     ```
 
@@ -264,7 +284,18 @@ uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
 ### Ubuntu 24.04 LTS Specific Instructions
 
-Ubuntu 24.04 LTS enforces PEP 668 (externally-managed-environment) which requires using virtual environments for Python packages. Here's how to handle common issues:
+Ubuntu 24.04 LTS enforces PEP 668 (externally-managed-environment) which requires using virtual environments for Python packages. 
+
+#### System Dependencies
+
+Before running the application on Ubuntu 24.04, install required system packages:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y python3-full python3-venv python3-dev libpq-dev build-essential
+```
+
+#### Common Issues and Solutions
 
 #### Missing Alembic or Other Python Packages
 

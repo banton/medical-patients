@@ -14,6 +14,7 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from src.api.v1.dependencies.database import get_database
+from src.core.cache_utils import cache_api_key_limits, get_cached_api_key_limits
 from src.domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
 from src.domain.repositories.api_key_repository import APIKeyRepository
 
@@ -191,6 +192,9 @@ async def verify_api_key(
     Raises:
         HTTPException: If key is invalid, expired, or inactive
     """
+    # Try to get cached limits first
+    cached_limits = await get_cached_api_key_limits(api_key)
+    
     repo = APIKeyRepository(db)
 
     # Check for demo key first (most common case)
@@ -206,12 +210,21 @@ async def verify_api_key(
 
         # Check if demo key is usable
         context.check_usability()
+        
+        # Cache the limits for future requests
+        await cache_api_key_limits(api_key, context.get_limits_info())
+        
         return context
 
     # Check for legacy API key (backward compatibility)
     if api_key == LEGACY_API_KEY:
         legacy_key = create_legacy_api_key()
-        return APIKeyContext(api_key=legacy_key, is_demo=False, is_legacy=True)
+        context = APIKeyContext(api_key=legacy_key, is_demo=False, is_legacy=True)
+        
+        # Cache the limits for future requests
+        await cache_api_key_limits(api_key, context.get_limits_info())
+        
+        return context
 
     # Look up key in database
     key_record = repo.get_active_key(api_key)
@@ -223,6 +236,9 @@ async def verify_api_key(
 
     # Verify key is usable
     context.check_usability()
+    
+    # Cache the limits for future requests
+    await cache_api_key_limits(api_key, context.get_limits_info())
 
     return context
 
