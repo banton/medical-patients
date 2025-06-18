@@ -6,6 +6,19 @@ This guide provides detailed instructions for installing and running the Medical
 
 Ubuntu 24.04 LTS introduces PEP 668 (externally-managed-environment) which prevents installing Python packages system-wide using pip. This is a security feature to prevent conflicts between system packages and pip-installed packages. All Python packages must be installed in a virtual environment.
 
+## ⚠️ Known Issues (As of June 17, 2025)
+
+### Task Runner Installation
+- **Problem**: The `install-task.sh` script may hang when attempting to install via snap
+- **Solution**: Install Task directly using the official installer:
+  ```bash
+  curl -sL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
+  ```
+
+### Docker Not Installed by Default
+- **Problem**: Fresh Ubuntu 24.04 installations don't include Docker
+- **Solution**: Install Docker before running `task init` (see installation steps below)
+
 ## Prerequisites
 
 ### System Requirements
@@ -22,26 +35,41 @@ Ubuntu 24.04 LTS introduces PEP 668 (externally-managed-environment) which preve
 
 ## Quick Installation
 
-We provide an automated setup script specifically for Ubuntu 24.04:
+For the fastest setup on Ubuntu 24.04:
 
 ```bash
 # Clone the repository
-git clone <repository_url>
+git clone https://github.com/banton/medical-patients.git
 cd medical-patients
 
-# Run the Ubuntu 24.04 setup script
+# Install Task Runner first (avoiding snap issues)
+curl -sL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
+
+# Install Docker if not present
+if ! command -v docker &> /dev/null; then
+    curl -fsSL https://get.docker.com | sudo sh
+    sudo usermod -aG docker $USER
+    newgrp docker  # Or logout/login
+fi
+
+# Run the init setup
+task init
+```
+
+The `task init` command will:
+1. Check for required dependencies
+2. Install system packages (with your permission)
+3. Create a Python virtual environment (required for Ubuntu 24.04)
+4. Install all Python packages including Alembic
+5. Configure the database and environment
+6. Run initial migrations
+7. Create helper scripts for easy activation
+
+**Alternative**: Use the Ubuntu 24.04 specific setup script:
+```bash
 chmod +x scripts/setup-ubuntu-24.sh
 ./scripts/setup-ubuntu-24.sh
 ```
-
-This script will:
-1. Install all system dependencies
-2. Set up Docker and Docker Compose (if needed)
-3. Create a Python virtual environment
-4. Install all Python packages including Alembic
-5. Configure the database
-6. Run initial migrations
-7. Create helper scripts for easy activation
 
 ## Manual Installation Steps
 

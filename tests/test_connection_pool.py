@@ -143,7 +143,7 @@ class TestEnhancedConnectionPool:
         def getconn_side_effect():
             nonlocal call_count
             call_count += 1
-            # First 2 calls (init + first get) return old_conn, 
+            # First 2 calls (init + first get) return old_conn,
             # subsequent calls return new_conn
             if call_count <= 2:
                 return old_conn
@@ -176,7 +176,7 @@ class TestEnhancedConnectionPool:
 
         # Verify that putconn was called with close=True at least once (recycling happened)
         # This indicates that connection recycling occurred
-        putconn_calls = [call for call in mock_pool.putconn.call_args_list if call[1].get('close') == True]
+        putconn_calls = [call for call in mock_pool.putconn.call_args_list if call[1].get("close") == True]
         assert len(putconn_calls) >= 1, "No connections were recycled"
 
     @pytest.mark.skip(reason="Complex mock setup causing issues")
@@ -192,7 +192,7 @@ class TestEnhancedConnectionPool:
         good_conn = Mock()
         # Create a side_effect function that returns bad connections first, then good
         def getconn_health_side_effect():
-            if not hasattr(getconn_health_side_effect, 'call_count'):
+            if not hasattr(getconn_health_side_effect, "call_count"):
                 getconn_health_side_effect.call_count = 0
             getconn_health_side_effect.call_count += 1
             if getconn_health_side_effect.call_count <= 2:
@@ -226,8 +226,8 @@ class TestEnhancedConnectionPool:
         # Verify putconn was called with bad connection
         # Check all calls to see what was actually called
         putconn_calls_with_close = [
-            call for call in mock_pool.putconn.call_args_list 
-            if len(call) > 1 and call[1].get('close') == True
+            call for call in mock_pool.putconn.call_args_list
+            if len(call) > 1 and call[1].get("close") == True
         ]
         assert len(putconn_calls_with_close) > 0, f"Expected putconn with close=True, but got: {mock_pool.putconn.call_args_list}"
 
@@ -300,11 +300,11 @@ class TestEnhancedConnectionPool:
         mock_pool_class.return_value = mock_pool
         mock_conn = Mock()
         mock_pool.getconn.return_value = mock_conn
-        
+
         # Setup connection context manager
         mock_conn.__enter__ = Mock(return_value=mock_conn)
         mock_conn.__exit__ = Mock(return_value=None)
-        
+
         mock_cursor = Mock()
         # Setup context manager for mock cursor
         mock_cursor_cm = Mock()
@@ -321,7 +321,7 @@ class TestEnhancedConnectionPool:
 
         # Verify query was executed (the execute method gets wrapped)
         # We can't assert on the wrapped function, but we can check metrics
-        
+
         # Verify metrics were recorded
         metrics = pool.metrics.get_metrics()
         assert metrics["queries"]["total"] >= 1  # At least one query was tracked

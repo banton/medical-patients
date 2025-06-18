@@ -148,3 +148,9 @@ See `memory/active/future-work.md` for:
 5. Configure nginx reverse proxy
 6. Setup DNS A records for subdomains
 7. Get SSL certificates with certbot
+
+### Update: 2025-06-17 14:54
+- Made staging deployment clearly optional - updated docs and task commands to clarify staging is only for production testing
+
+### Update: 2025-06-17 17:25
+- Ubuntu 24.04 compatibility testing completed - identified and fixed Task installation hanging issue, documented Docker requirements, enhanced setup scripts for PEP 668 compliance

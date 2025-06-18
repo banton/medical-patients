@@ -1,162 +1,103 @@
-# Ubuntu 24.04 LTS Compatibility Guide
+# Ubuntu 24.04 LTS Compatibility
 
-## Overview
-This document outlines the changes and configurations needed to ensure the Medical Patients Generator works seamlessly on Ubuntu 24.04 LTS (Noble Numbat).
+This document outlines the compatibility improvements made to support Ubuntu 24.04 LTS (Noble Numbat).
 
-## Key Changes in Ubuntu 24.04
+## Key Changes Made
 
-### 1. Python Environment (PEP 668)
-Ubuntu 24.04 enforces PEP 668, which prevents system-wide pip installations to protect the system Python environment.
+### 1. Task Runner Installation
+- **Issue**: The default `install-task.sh` script attempted to install via snap, which could hang indefinitely
+- **Solution**: Updated to use the official Task installer directly, bypassing snap
+- **Files Updated**: 
+  - `scripts/install-task.sh` - Added detection to avoid snap on Ubuntu
+  - `scripts/init-setup.sh` - Added Task check before other prerequisites
+  - `scripts/setup-ubuntu-24.sh` - Installs Task using official method
 
-**Solution**: Always use virtual environments
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+### 2. Python Virtual Environment (PEP 668)
+- **Issue**: Ubuntu 24.04 enforces PEP 668, preventing system-wide pip installations
+- **Solution**: All scripts now create and use virtual environments automatically
+- **Files Updated**:
+  - `scripts/init-setup.sh` - Auto-detects Ubuntu 24.04 and creates venv
+  - `scripts/setup-ubuntu-24.sh` - Dedicated Ubuntu 24.04 setup script
+  - Created `activate.sh` helper script for easy venv activation
 
-### 2. Default Python Version
-- Ubuntu 24.04 ships with Python 3.12.3
-- Our application targets Python 3.8-3.12 for maximum compatibility
-- Docker images use Python 3.11 for consistency across platforms
-
-### 3. PostgreSQL 16.2
-Ubuntu 24.04 includes PostgreSQL 16.2 by default, which is fully compatible with our application.
+### 3. Docker Installation
+- **Issue**: Docker not installed by default on fresh Ubuntu 24.04
+- **Solution**: Scripts now check for Docker and provide installation instructions
+- **Improvements**:
+  - Clear instructions for Docker installation
+  - Automatic user addition to docker group
+  - Guidance on group changes (logout/login or newgrp)
 
 ### 4. System Dependencies
-Required packages for Ubuntu 24.04:
+- **Issue**: Missing system packages required for Python packages
+- **Solution**: Scripts now install all required system dependencies:
+  - `python3-venv` - Required for virtual environments
+  - `python3-dev` - Python development headers
+  - `libpq-dev` - PostgreSQL development headers
+  - `build-essential` - Compilation tools
+  - `lsof`, `net-tools` - Network utilities
+
+## Quick Start for Ubuntu 24.04
+
 ```bash
-sudo apt-get update
-sudo apt-get install -y \
-  python3.11 python3.11-venv python3.11-dev \
-  build-essential libpq-dev libssl-dev libffi-dev \
-  cargo pkg-config curl git
-```
-
-## Docker Support
-
-### Available Dockerfiles
-
-1. **Dockerfile** - Standard build (Python 3.11-slim)
-   ```bash
-   docker build -t medical-patients:latest .
-   ```
-
-2. **Dockerfile.unified** - Cross-platform unified build
-   ```bash
-   docker build -f Dockerfile.unified -t medical-patients:unified .
-   ```
-
-3. **Dockerfile.ubuntu2404** - Ubuntu 24.04 specific
-   ```bash
-   docker build -f Dockerfile.ubuntu2404 -t medical-patients:ubuntu2404 .
-   ```
-
-## Installation Steps for Ubuntu 24.04
-
-### 1. System Setup
-```bash
-# Update system
-sudo apt-get update && sudo apt-get upgrade -y
-
-# Install dependencies
-sudo apt-get install -y \
-  python3.11 python3.11-venv python3.11-dev \
-  build-essential libpq-dev libssl-dev libffi-dev \
-  cargo pkg-config curl git \
-  docker.io docker-compose
-
-# Add user to docker group
-sudo usermod -aG docker $USER
-newgrp docker
-```
-
-### 2. Project Setup
-```bash
-# Clone repository
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/banton/medical-patients.git
 cd medical-patients
 
-# Create virtual environment (REQUIRED)
-python3.11 -m venv .venv
+# Option 1: Use the Ubuntu-specific setup script
+chmod +x scripts/setup-ubuntu-24.sh
+./scripts/setup-ubuntu-24.sh
+
+# Option 2: Use Task (after installing it)
+curl -sL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
+task init
+```
+
+## Testing Results
+
+Successfully tested on Ubuntu 24.04 LTS (June 17, 2025):
+- ✅ Task runner installation without hanging
+- ✅ Python virtual environment creation and activation
+- ✅ All Python dependencies installed
+- ✅ Docker services started successfully
+- ✅ Database migrations completed
+- ✅ Application running and accessible
+- ✅ Health endpoint responding correctly
+
+## Known Issues & Workarounds
+
+### 1. Docker Group Permissions
+After adding user to docker group, you must either:
+- Logout and login again
+- Run `newgrp docker` in current session
+- Use `sudo docker` commands until logout/login
+
+### 2. Port Conflicts
+If ports are in use, check with:
+```bash
+lsof -i :8000
+lsof -i :5432
+lsof -i :6379
+```
+
+### 3. Virtual Environment
+Always activate the virtual environment:
+```bash
 source .venv/bin/activate
-
-# Install dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
-
-# Install Task runner
-curl -sL https://taskfile.dev/install.sh | sh
-
-# Run setup
-task setup
+# or
+./activate.sh
 ```
 
-### 3. Database Setup
-```bash
-# Using Docker (recommended)
-task db:start
-task db:migrate
+## Recommendations for CI/CD
 
-# Using system PostgreSQL 16
-sudo -u postgres createdb medical_patients
-sudo -u postgres createuser medical_patients_user
-```
+1. Add Ubuntu 24.04 to GitHub Actions matrix
+2. Use container images with pre-installed dependencies
+3. Always use virtual environments in CI
+4. Cache pip dependencies for faster builds
 
-## Compatibility Testing
+## Future Improvements
 
-Run the Ubuntu 24.04 compatibility tests:
-```bash
-pytest tests/ubuntu_24_04_compatibility/ -v
-```
-
-## Known Issues and Solutions
-
-### Issue 1: pip install fails globally
-**Error**: `error: externally-managed-environment`
-**Solution**: Always use virtual environments
-
-### Issue 2: Cryptography build fails
-**Error**: `error: Microsoft Visual C++ 14.0 or greater is required`
-**Solution**: Install cargo and build tools
-```bash
-sudo apt-get install cargo build-essential
-```
-
-### Issue 3: psycopg2 installation fails
-**Error**: `pg_config executable not found`
-**Solution**: Install PostgreSQL development files
-```bash
-sudo apt-get install libpq-dev
-```
-
-## Performance Considerations
-
-1. **PostgreSQL 16 Benefits**:
-   - ~15% query performance improvement
-   - Better parallel query execution
-   - Enhanced JSON operations
-
-2. **Python 3.11 in Docker**:
-   - 10-60% faster than Python 3.10
-   - Better error messages
-   - Consistent across all deployments
-
-## Migration Checklist
-
-- [ ] Backup existing data
-- [ ] Update system packages
-- [ ] Install Python 3.11 and create virtual environment
-- [ ] Install system dependencies (cargo, libpq-dev, etc.)
-- [ ] Run compatibility tests
-- [ ] Deploy using Ubuntu 24.04 compatible Docker image
-- [ ] Verify PostgreSQL 16 connectivity
-- [ ] Test application functionality
-
-## Support
-
-For Ubuntu 24.04 specific issues:
-1. Check this guide first
-2. Run compatibility tests
-3. Check `/tests/ubuntu_24_04_compatibility/README.md`
-4. Report issues with Ubuntu 24.04 tag
+1. Create automated test for Ubuntu 24.04 compatibility
+2. Add Ubuntu 24.04 specific Docker image
+3. Create systemd service files for production deployment
+4. Add automatic venv activation to shell profile

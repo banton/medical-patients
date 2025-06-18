@@ -3,6 +3,7 @@ Shared pytest configuration and fixtures
 """
 
 import os
+
 from fastapi.testclient import TestClient
 import pytest
 

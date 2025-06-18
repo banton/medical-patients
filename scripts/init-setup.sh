@@ -44,8 +44,19 @@ if [ -f /etc/os-release ]; then
     fi
 fi
 
+# Check Task runner first
+print_step "Checking Task runner installation..."
+if ! command -v task &> /dev/null; then
+    print_error "Task runner is not installed!"
+    echo "   Install Task with:"
+    echo "   curl -sL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin"
+    echo "   Or run: ./scripts/install-task.sh"
+    exit 1
+fi
+print_info "Task runner found: $(task --version)"
+
 # Check Docker
-print_step "Checking prerequisites..."
+print_step "Checking Docker installation..."
 if ! command -v docker &> /dev/null; then
     print_error "Docker is not installed!"
     
@@ -53,6 +64,7 @@ if ! command -v docker &> /dev/null; then
         echo "   Install Docker with:"
         echo "   curl -fsSL https://get.docker.com | sudo sh"
         echo "   sudo usermod -aG docker $USER"
+        echo "   newgrp docker  # Or logout/login"
     else
         echo "   Please install Docker Desktop from: https://www.docker.com/products/docker-desktop"
     fi
@@ -128,14 +140,21 @@ if [[ "$OS_NAME" == "ubuntu" ]]; then
         print_warning "Missing system dependencies: ${MISSING_DEPS[*]}"
         echo "   Install with: sudo apt-get install -y ${MISSING_DEPS[*]}"
         
-        read -p "Install missing dependencies now? (y/N) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            sudo apt-get update
-            sudo apt-get install -y "${MISSING_DEPS[@]}"
+        # Non-interactive mode: automatically install dependencies
+        if [ "${NONINTERACTIVE:-false}" = "true" ] || [ "${CI:-false}" = "true" ]; then
+            print_info "Installing missing dependencies automatically (non-interactive mode)..."
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq "${MISSING_DEPS[@]}"
         else
-            print_error "System dependencies are required. Please install them manually."
-            exit 1
+            read -p "Install missing dependencies now? (y/N) " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                sudo apt-get update
+                sudo apt-get install -y "${MISSING_DEPS[@]}"
+            else
+                print_error "System dependencies are required. Please install them manually."
+                exit 1
+            fi
         fi
     else
         print_info "All system dependencies are installed"
@@ -178,10 +197,14 @@ for port in 8000 5432 6379; do
 done
 
 if [[ "$PORTS_IN_USE" == true ]]; then
-    read -p "Continue anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
+    if [ "${NONINTERACTIVE:-false}" = "true" ] || [ "${CI:-false}" = "true" ]; then
+        print_warning "Continuing despite ports in use (non-interactive mode)"
+    else
+        read -p "Continue anyway? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
     fi
 fi
 
@@ -316,11 +339,15 @@ fi
 if command -v node &> /dev/null && [ -d "patient-timeline-viewer" ]; then
     echo ""
     print_step "Setting up Timeline Viewer..."
-    read -p "Install Timeline Viewer dependencies? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        cd patient-timeline-viewer && npm install && cd ..
-        print_info "Timeline Viewer ready!"
+    if [ "${NONINTERACTIVE:-false}" = "true" ] || [ "${CI:-false}" = "true" ]; then
+        print_info "Skipping Timeline Viewer setup in non-interactive mode"
+    else
+        read -p "Install Timeline Viewer dependencies? (y/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            cd patient-timeline-viewer && npm install && cd ..
+            print_info "Timeline Viewer ready!"
+        fi
     fi
 fi
 

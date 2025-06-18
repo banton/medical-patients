@@ -5,10 +5,9 @@ Tests the command-line interface focusing on testable components.
 """
 
 from datetime import datetime
-import json
 from pathlib import Path
 import sys
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 from click.testing import CliRunner
 import pytest
@@ -93,7 +92,7 @@ class TestAPIKeyCLI:
 class TestCLIHelp:
     """Test CLI help and command structure."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def runner(self):
         """Create a CLI test runner."""
         return CliRunner()

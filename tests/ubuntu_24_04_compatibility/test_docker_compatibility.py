@@ -4,39 +4,37 @@ Docker and Container Compatibility Tests for Ubuntu 24.04
 Tests Docker builds, AppArmor restrictions, and container runtime compatibility.
 """
 
-import pytest
-import subprocess
-import os
-import tempfile
 import json
+import os
+import subprocess
 import time
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+
+import pytest
 
 
 class TestDockerUbuntu2404:
     """Test Docker compatibility with Ubuntu 24.04 base images."""
-    
-    @pytest.fixture
+
+    @pytest.fixture()
     def docker_available(self):
         """Check if Docker is available."""
         try:
             result = subprocess.run(
                 ["docker", "version"],
                 capture_output=True,
-                text=True
+                text=True, check=False
             )
             if result.returncode != 0:
                 pytest.skip("Docker not available")
             return True
         except FileNotFoundError:
             pytest.skip("Docker not installed")
-    
-    @pytest.fixture
+
+    @pytest.fixture()
     def test_image_tag(self):
         """Generate unique test image tag."""
         return f"medical-patients-test-ubuntu2404:{int(time.time())}"
-    
+
     def test_ubuntu_2404_base_image(self, docker_available, tmp_path):
         """Test building with Ubuntu 24.04 base image."""
         # Create test Dockerfile
@@ -57,20 +55,20 @@ RUN python3 --version | grep "3.12"
 # Test PEP 668 - should fail without venv
 RUN python3 -m pip --version || echo "PEP 668 restriction working as expected"
 """)
-        
+
         # Build test image
         result = subprocess.run(
             ["docker", "build", "-t", "ubuntu2404-test", "."],
             cwd=tmp_path,
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         assert result.returncode == 0, f"Build failed: {result.stderr}"
-        
+
         # Clean up
-        subprocess.run(["docker", "rmi", "ubuntu2404-test"], capture_output=True)
-    
+        subprocess.run(["docker", "rmi", "ubuntu2404-test"], capture_output=True, check=False)
+
     def test_pep_668_compliance(self, docker_available, tmp_path):
         """Test PEP 668 compliance in containers."""
         dockerfile = tmp_path / "Dockerfile"
@@ -101,19 +99,19 @@ RUN python3 -c "import requests" 2>&1 | grep -q "No module" && \
 
 RUN /opt/venv/bin/python -c "import requests; print('✓ Venv Python has requests')"
 """)
-        
+
         result = subprocess.run(
             ["docker", "build", "-t", "pep668-test", "."],
             cwd=tmp_path,
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         assert result.returncode == 0, f"PEP 668 test failed: {result.stderr}"
-        
+
         # Clean up
-        subprocess.run(["docker", "rmi", "pep668-test"], capture_output=True)
-    
+        subprocess.run(["docker", "rmi", "pep668-test"], capture_output=True, check=False)
+
     def test_medical_app_dockerfile(self, docker_available, tmp_path, test_image_tag):
         """Test full medical application Dockerfile with Ubuntu 24.04."""
         # Create requirements.txt
@@ -125,7 +123,7 @@ psycopg2-binary>=2.9.5
 cryptography==41.0.1
 pydantic>=2.0.0
 """)
-        
+
         # Create test app
         app_file = tmp_path / "app.py"
         app_file.write_text("""
@@ -136,7 +134,7 @@ app = FastAPI()
 def health():
     return {"status": "healthy", "ubuntu": "24.04"}
 """)
-        
+
         # Create Ubuntu 24.04 compliant Dockerfile
         dockerfile = tmp_path / "Dockerfile"
         dockerfile.write_text("""
@@ -189,74 +187,74 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 # Run application
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 """)
-        
+
         # Build image
         result = subprocess.run(
             ["docker", "build", "-t", test_image_tag, "."],
             cwd=tmp_path,
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         assert result.returncode == 0, f"Build failed: {result.stderr}"
-        
+
         # Test running the container
         container_name = f"test-medical-{int(time.time())}"
         run_result = subprocess.run(
-            ["docker", "run", "-d", "--name", container_name, 
+            ["docker", "run", "-d", "--name", container_name,
              "-p", "8001:8000", test_image_tag],
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         if run_result.returncode == 0:
             container_id = run_result.stdout.strip()
-            
+
             # Wait for container to start
             time.sleep(5)
-            
+
             # Check if container is running
             ps_result = subprocess.run(
                 ["docker", "ps", "--filter", f"id={container_id}", "--format", "{{.Status}}"],
                 capture_output=True,
-                text=True
+                text=True, check=False
             )
-            
+
             assert "Up" in ps_result.stdout, "Container failed to start"
-            
+
             # Check logs for errors
             logs_result = subprocess.run(
                 ["docker", "logs", container_id],
                 capture_output=True,
-                text=True
+                text=True, check=False
             )
-            
+
             assert "error" not in logs_result.stderr.lower(), \
                 f"Errors in container logs: {logs_result.stderr}"
-            
+
             # Clean up
-            subprocess.run(["docker", "stop", container_id], capture_output=True)
-            subprocess.run(["docker", "rm", container_id], capture_output=True)
-        
+            subprocess.run(["docker", "stop", container_id], capture_output=True, check=False)
+            subprocess.run(["docker", "rm", container_id], capture_output=True, check=False)
+
         # Clean up image
-        subprocess.run(["docker", "rmi", test_image_tag], capture_output=True)
-    
+        subprocess.run(["docker", "rmi", test_image_tag], capture_output=True, check=False)
+
     def test_apparmor_compatibility(self, docker_available):
         """Test AppArmor compatibility with Ubuntu 24.04 containers."""
         # Check if AppArmor is active on host
         if not os.path.exists("/sys/kernel/security/apparmor"):
             pytest.skip("AppArmor not available on host")
-        
+
         # Run container with security options
         result = subprocess.run(
-            ["docker", "run", "--rm", 
+            ["docker", "run", "--rm",
              "--security-opt", "apparmor=unconfined",
-             "ubuntu:24.04", 
+             "ubuntu:24.04",
              "echo", "AppArmor test successful"],
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         # Ubuntu 24.04 has stricter AppArmor policies
         if result.returncode != 0 and "apparmor" in result.stderr.lower():
             pytest.warns(
@@ -265,7 +263,7 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
             )
         else:
             assert result.returncode == 0, f"AppArmor test failed: {result.stderr}"
-    
+
     def test_openssl3_compatibility(self, docker_available, tmp_path):
         """Test OpenSSL 3.x compatibility in containers."""
         dockerfile = tmp_path / "Dockerfile"
@@ -305,23 +303,23 @@ context = ssl.create_default_context()
 print(f'✓ Minimum TLS version: {context.minimum_version}')
 "
 """)
-        
+
         result = subprocess.run(
             ["docker", "build", "-t", "openssl3-test", "."],
             cwd=tmp_path,
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         assert result.returncode == 0, f"OpenSSL 3 test failed: {result.stderr}"
-        
+
         # Clean up
-        subprocess.run(["docker", "rmi", "openssl3-test"], capture_output=True)
+        subprocess.run(["docker", "rmi", "openssl3-test"], capture_output=True, check=False)
 
 
 class TestDockerCompose:
     """Test Docker Compose compatibility with Ubuntu 24.04."""
-    
+
     def test_compose_file_generation(self, tmp_path):
         """Generate Ubuntu 24.04 compatible docker-compose.yml."""
         compose_file = tmp_path / "docker-compose.yml"
@@ -393,22 +391,22 @@ networks:
   medical-net:
     driver: bridge
 """)
-        
+
         # Verify compose file is valid
         result = subprocess.run(
             ["docker", "compose", "-f", str(compose_file), "config"],
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         if result.returncode != 0:
             # Try older docker-compose command
             result = subprocess.run(
                 ["docker-compose", "-f", str(compose_file), "config"],
                 capture_output=True,
-                text=True
+                text=True, check=False
             )
-        
+
         if result.returncode == 0:
             config = result.stdout
             assert "medical-patients-app" in config
@@ -418,7 +416,7 @@ networks:
 
 class TestContainerSecurity:
     """Test container security with Ubuntu 24.04 enhancements."""
-    
+
     def test_non_root_user(self, tmp_path):
         """Test running containers as non-root user."""
         dockerfile = tmp_path / "Dockerfile"
@@ -436,19 +434,19 @@ RUN id -u | grep 1000
 # Verify no sudo access
 RUN ! which sudo
 """)
-        
+
         result = subprocess.run(
             ["docker", "build", "-t", "nonroot-test", "."],
             cwd=tmp_path,
             capture_output=True,
-            text=True
+            text=True, check=False
         )
-        
+
         if result.returncode == 0:
-            subprocess.run(["docker", "rmi", "nonroot-test"], capture_output=True)
+            subprocess.run(["docker", "rmi", "nonroot-test"], capture_output=True, check=False)
         else:
             pytest.skip(f"Non-root user test skipped: {result.stderr}")
-    
+
     def test_readonly_filesystem(self, tmp_path):
         """Test read-only root filesystem compatibility."""
         dockerfile = tmp_path / "Dockerfile"
@@ -473,7 +471,7 @@ EOF
 # This should work even with read-only root
 CMD ["python3", "test.py"]
 """)
-        
+
         # Note: Actual read-only test would require running container
         # This just tests the Dockerfile builds correctly
 
@@ -511,14 +509,14 @@ def generate_docker_report():
             "Enable BuildKit for faster builds"
         ]
     }
-    
+
     return report
 
 
 if __name__ == "__main__":
     # Run Docker tests
     pytest.main([__file__, "-v", "-k", "docker"])
-    
+
     # Generate report
     report = generate_docker_report()
     print("\nDocker Compatibility Report:")

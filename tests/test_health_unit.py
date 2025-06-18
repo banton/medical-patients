@@ -183,7 +183,7 @@ class TestHealthEndpointRoutes:
 
         # JSONResponse object has a body attribute with the content
         result = json.loads(response.body)
-        
+
         assert result["status"] == "healthy"
         assert "timestamp" in result
         assert result["checks"]["api"]["status"] == "healthy"

@@ -41,6 +41,23 @@ if [ -f /etc/os-release ]; then
     fi
 fi
 
+# Install Task runner first (avoiding snap issues)
+print_step "Installing Task runner..."
+if ! command -v task &> /dev/null; then
+    print_info "Installing Task using official installer (avoiding snap)..."
+    curl -sL https://taskfile.dev/install.sh | sudo sh -s -- -b /usr/local/bin
+    
+    if command -v task &> /dev/null; then
+        print_info "Task installed successfully: $(task --version)"
+    else
+        print_error "Task installation failed"
+        print_info "Please install manually from: https://taskfile.dev/installation/"
+        exit 1
+    fi
+else
+    print_info "Task is already installed: $(task --version)"
+fi
+
 # Check Python version
 PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
 print_info "Python version: $PYTHON_VERSION"
@@ -223,7 +240,8 @@ echo ""
 echo "📋 Quick Start Commands:"
 echo "   1. Activate virtual environment: source .venv/bin/activate"
 echo "      (or use the helper: ./activate.sh)"
-echo "   2. Start development server: python3 -m uvicorn src.main:app --reload"
+echo "   2. Start development server: task dev"
+echo "      (or manually: python3 -m uvicorn src.main:app --reload)"
 echo "   3. View API docs: http://localhost:8000/docs"
 echo ""
 echo "🐳 Docker Services:"
@@ -231,15 +249,22 @@ echo "   - PostgreSQL: localhost:5432"
 echo "   - Redis: localhost:6379"
 echo ""
 echo "📊 Timeline Viewer (optional):"
-echo "   cd patient-timeline-viewer && npm run dev"
+echo "   task timeline"
+echo "   (or manually: cd patient-timeline-viewer && npm run dev)"
 echo ""
-echo "⚠️  Ubuntu 24.04 Notes:"
+echo "⚠️  Ubuntu 24.04 Important Notes:"
 echo "   - Always use virtual environment (PEP 668 requirement)"
 echo "   - System Python packages are externally managed"
-echo "   - Use 'pip install --user' only as last resort"
+echo "   - Docker group changes require logout/login (or use 'newgrp docker')"
 echo ""
-echo "🔧 Troubleshooting:"
-echo "   - If Alembic is missing: pip install alembic"
-echo "   - If psycopg2 fails: sudo apt-get install libpq-dev"
-echo "   - Database issues: docker compose logs db"
+echo "🔧 Common Issues & Solutions:"
+echo "   - Task not found: Restart terminal or run 'source ~/.bashrc'"
+echo "   - Docker permission denied: Use 'sudo docker' or logout/login"
+echo "   - Alembic missing: Activate venv, then 'pip install alembic'"
+echo "   - Port already in use: 'task stop' or check with 'lsof -i :8000'"
+echo ""
+echo "📚 Next Steps:"
+echo "   - Run 'task --list' to see all available commands"
+echo "   - Check health: curl http://localhost:8000/health"
+echo "   - Generate test data: task generate-sample"
 echo ""
