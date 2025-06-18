@@ -3,17 +3,26 @@ Patient generation API endpoints with proper versioning and standardized models.
 Replaces the old /api/generate endpoint with /api/v1/generation/.
 """
 
+import json
+import os
+from pathlib import Path
+import shutil
+import tempfile
+import traceback
 from typing import Any, Dict
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
+from patient_generator.database import ConfigurationRepository, Database
+from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service, get_patient_generation_service
 from src.api.v1.models import ErrorResponse, GenerationRequest, GenerationResponse
 from src.core.security import verify_api_key
+from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
-from src.domain.services.patient_generation_service import AsyncPatientGenerationService
+from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext
 
 router = APIRouter(
     prefix="/generation",
@@ -150,11 +159,8 @@ async def _run_generation_task(
         generation_service: Patient generation service
         job_service: Job management service
     """
-    from pathlib import Path
-    import tempfile
-
-    from src.domain.models.job import JobStatus
-    from src.domain.services.patient_generation_service import GenerationContext
+    # Initialize flag for temporal configuration tracking
+    temporal_config_present = False
 
     try:
         # Update job status to running
@@ -181,8 +187,6 @@ async def _run_generation_task(
 
         if temporal_config_present:
             # Write temporal configuration to injuries.json for flow simulator
-            import os
-
             # Use the path relative to current working directory (works in both dev and Docker)
             injuries_path = os.path.abspath("patient_generator/injuries.json")
 
@@ -220,14 +224,10 @@ async def _run_generation_task(
             # Backup existing injuries.json
             backup_path = injuries_path + ".backup"
             if os.path.exists(injuries_path):
-                import shutil
-
                 shutil.copy2(injuries_path, backup_path)
 
             # Write temporal config to injuries.json
             with open(injuries_path, "w") as f:
-                import json
-
                 json.dump(temporal_injuries_config, f, indent=2)
 
             print("✅ Temporal configuration written to injuries.json")
@@ -235,9 +235,6 @@ async def _run_generation_task(
             print(f"   Base date: {temporal_injuries_config['base_date']}")
 
         # Handle configuration source
-        from patient_generator.database import ConfigurationRepository, Database
-        from patient_generator.schemas_config import ConfigurationTemplateCreate
-
         db_instance = Database.get_instance()
         config_repo = ConfigurationRepository(db_instance)
 
@@ -296,16 +293,12 @@ async def _run_generation_task(
 
         # Restore original injuries.json if we modified it
         if temporal_config_present:
-            import os
-
             # Get the project root directory and construct correct path
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
             injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
             backup_path = injuries_path + ".backup"
 
             if os.path.exists(backup_path):
-                import shutil
-
                 shutil.move(backup_path, injuries_path)
                 print("✅ Restored original injuries.json")
             else:
@@ -326,8 +319,6 @@ async def _run_generation_task(
         # Restore original injuries.json if we modified it (even on failure)
         if temporal_config_present:
             try:
-                import os
-
                 # Get the project root directory and construct correct path
                 project_root = os.path.dirname(
                     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -336,8 +327,6 @@ async def _run_generation_task(
                 backup_path = injuries_path + ".backup"
 
                 if os.path.exists(backup_path):
-                    import shutil
-
                     shutil.move(backup_path, injuries_path)
                     print("✅ Restored original injuries.json after failure")
             except Exception as cleanup_error:
@@ -346,8 +335,6 @@ async def _run_generation_task(
         # Mark job as failed
         await job_service.update_job_status(job_id, JobStatus.FAILED, error=str(e))
         print(f"Generation task failed for job {job_id}: {e}")
-        import traceback
-
         traceback.print_exc()
 
 
@@ -364,9 +351,6 @@ async def debug_temporal_configuration(
     """
     Debug endpoint to check how temporal configuration is being received and processed.
     """
-    import json
-    from pathlib import Path
-
     # Get the raw configuration
     config_dict = {}
     if request.configuration:
@@ -452,9 +436,6 @@ async def check_injuries_config(
     """
     Check the current injuries.json configuration file.
     """
-    import json
-    from pathlib import Path
-
     project_root = Path(__file__).parent.parent.parent.parent.parent
     injuries_path = project_root / "patient_generator" / "injuries.json"
     backup_path = injuries_path.with_suffix(".json.backup")

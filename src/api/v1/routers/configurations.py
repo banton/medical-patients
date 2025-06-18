@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from config import get_settings
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.nationality_data import NationalityDataProvider
@@ -122,8 +123,6 @@ public_router = APIRouter(prefix="/config", tags=["public"])
 @public_router.get("/frontend")
 async def get_frontend_config() -> Dict[str, Any]:
     """Get frontend configuration including API key."""
-    from config import get_settings
-
     settings = get_settings()
 
     return {

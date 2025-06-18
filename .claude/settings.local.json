@@ -81,7 +81,11 @@
       "mcp__digitalocean-mcp-local__validate_app_spec",
       "mcp__digitalocean-mcp-local__create_app",
       "mcp__digitalocean-mcp-local__get_deployment_logs_url",
-      "Bash(doctl compute domain:*)"
+      "Bash(doctl compute domain:*)",
+      "Bash(multipass list:*)",
+      "Bash(multipass:*)",
+      "Bash(task lint)",
+      "Bash(task test-unit)"
     ],
     "deny": []
   },

@@ -4,7 +4,10 @@ Part of EPIC-003: Production Scalability Improvements - Phase 3
 """
 
 import asyncio
+import gc
 import json
+from pathlib import Path
+import tempfile
 from typing import AsyncIterator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -69,9 +72,6 @@ async def generate_patients_stream(
         config_template.total_patients = patient_count
 
     # Create generation context
-    from pathlib import Path
-    import tempfile
-
     output_dir = Path(tempfile.gettempdir()) / "medical_patients" / f"stream_{config_id}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -113,8 +113,6 @@ async def generate_patients_stream(
 
             # Force garbage collection every batch_size patients
             if patients_generated % batch_size == 0:
-                import gc
-
                 gc.collect()
 
                 # Small delay to prevent overwhelming the system

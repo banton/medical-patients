@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.api.v1.dependencies.services import get_job_service
 from src.api.v1.models import DeleteResponse, ErrorResponse, JobResponse
+from src.api.v1.models.responses import JobProgressDetails
 from src.core.exceptions import JobNotFoundError
 from src.core.security import verify_api_key
 from src.domain.services.job_service import JobService
@@ -141,8 +142,6 @@ async def cancel_job(job_id: str, job_service: JobService = Depends(get_job_serv
 
 def _job_to_response(job) -> JobResponse:
     """Convert domain job object to JobResponse model."""
-    from src.api.v1.models.responses import JobProgressDetails
-
     # Create progress details if available
     progress_details = None
     if hasattr(job, "progress_details") and job.progress_details:

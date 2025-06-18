@@ -6,6 +6,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 import gzip
+import json
 import os
 import sys
 import tempfile
@@ -302,9 +303,6 @@ class AsyncPatientGenerationService:
                             stream.write(",\n")
 
                         # Use patient_data from generator (already converted to dict)
-
-                        import json
-
                         json.dump(patient_data, stream, indent=2)
                     elif format == "xml":
                         # Use formatter for XML

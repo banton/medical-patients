@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import zipfile
 
 from config import get_settings
-from src.core.exceptions import StorageError
+from src.core.exceptions import InvalidOperationError, StorageError
 from src.domain.models.job import Job, JobProgressDetails, JobStatus
 from src.domain.repositories.job_repository import JobRepositoryInterface
 
@@ -105,8 +105,6 @@ class JobService:
 
         # Only allow cancellation of pending or running jobs
         if job.status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]:
-            from src.core.exceptions import InvalidOperationError
-
             error_msg = f"Cannot cancel job {job_id} with status {job.status.value}"
             raise InvalidOperationError(error_msg)
 
