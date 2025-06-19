@@ -15,7 +15,7 @@ from patient_generator.nationality_data import NationalityDataProvider
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition
 from src.api.v1.dependencies.database import get_database
 from src.core.cache_utils import cache_configuration_template, get_cached_configuration, invalidate_configuration_cache
-from src.core.security import verify_api_key
+from src.core.security_enhanced import verify_api_key
 
 # Initialize router (prefix will be added by main app)
 router = APIRouter(prefix="/configurations", tags=["configurations"], dependencies=[Depends(verify_api_key)])

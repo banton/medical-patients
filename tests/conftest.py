@@ -22,7 +22,7 @@ def base_url(request):
 @pytest.fixture()
 def api_headers():
     """Common API headers for tests"""
-    return {"X-API-Key": "your_secret_api_key_here", "Content-Type": "application/json"}
+    return {"X-API-Key": "DEMO_MILMED_2025_50_PATIENTS", "Content-Type": "application/json"}
 
 
 @pytest.fixture()

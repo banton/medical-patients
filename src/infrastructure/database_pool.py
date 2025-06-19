@@ -355,7 +355,13 @@ def get_pool() -> EnhancedConnectionPool:
         with _pool_lock:
             if _pool_instance is None:
                 # Get configuration from environment
-                dsn = os.getenv("DATABASE_URL", "postgresql://medgen_user:medgen_password@localhost:5432/medgen_db")
+                dsn = os.getenv("DATABASE_URL")
+                if not dsn:
+                    error_msg = (
+                        "DATABASE_URL environment variable is required. "
+                        "For local development, set it in your .env file or docker-compose.yml"
+                    )
+                    raise ValueError(error_msg)
 
                 # Pool configuration from environment with defaults
                 minconn = int(os.getenv("DB_POOL_MIN", "5"))

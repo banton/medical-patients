@@ -18,7 +18,7 @@ from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.services import get_patient_generation_service
 from src.api.v1.models.responses import StreamingPatientResponse
-from src.core.security import verify_api_key
+from src.core.security_enhanced import verify_api_key
 from src.domain.services.patient_generation_service import (
     AsyncPatientGenerationService,
     GenerationContext,

@@ -125,7 +125,7 @@ class TestTimelineIntegration:
             response = requests.post(
                 "http://localhost:8000/api/v1/generation/",
                 json=test_config,
-                headers={"X-API-Key": "your_secret_api_key_here"},
+                headers={"X-API-Key": "DEMO_MILMED_2025_50_PATIENTS"},
                 timeout=30,
             )
             assert response.status_code == 201
@@ -140,7 +140,7 @@ class TestTimelineIntegration:
             while wait_time < max_wait:
                 response = requests.get(
                     f"http://localhost:8000/api/v1/jobs/{job_id}",
-                    headers={"X-API-Key": "your_secret_api_key_here"},
+                    headers={"X-API-Key": "DEMO_MILMED_2025_50_PATIENTS"},
                     timeout=10,
                 )
                 assert response.status_code == 200
@@ -158,7 +158,7 @@ class TestTimelineIntegration:
             # Download results
             response = requests.get(
                 f"http://localhost:8000/api/v1/downloads/{job_id}",
-                headers={"X-API-Key": "your_secret_api_key_here"},
+                headers={"X-API-Key": "DEMO_MILMED_2025_50_PATIENTS"},
                 timeout=30,
             )
             assert response.status_code == 200

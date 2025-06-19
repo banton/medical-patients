@@ -11,7 +11,7 @@ from src.api.v1.dependencies.services import get_job_service
 from src.api.v1.models import DeleteResponse, ErrorResponse, JobResponse
 from src.api.v1.models.responses import JobProgressDetails
 from src.core.exceptions import JobNotFoundError
-from src.core.security import verify_api_key
+from src.core.security_enhanced import verify_api_key
 from src.domain.services.job_service import JobService
 
 # Router configuration with v1 prefix and standardized responses

@@ -7,12 +7,14 @@ import time
 from typing import Any, Dict
 
 import pytest
-import requests
-from requests.exceptions import RequestException
+from fastapi.testclient import TestClient
 
-# Base URL for tests
-BASE_URL = "http://localhost:8000"
-API_KEY = "your_secret_api_key_here"
+from src.main import app
+
+# Create test client
+client = TestClient(app)
+# Use the demo API key which is always available
+API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 HEADERS = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
 
 pytestmark = [pytest.mark.integration]
@@ -24,16 +26,13 @@ class TestUIAPIIntegration:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test environment."""
-        # Ensure the server is running
-        try:
-            response = requests.get(f"{BASE_URL}/health", timeout=5)
-            assert response.status_code == 200
-        except RequestException:
-            pytest.skip("Server not running. Start with 'make dev'")
+        # With TestClient, the app is automatically available
+        response = client.get("/health")
+        assert response.status_code == 200
 
     def test_root_endpoint_redirects_to_ui(self):
         """Test that the root endpoint redirects to UI."""
-        response = requests.get(f"{BASE_URL}/", allow_redirects=False)
+        response = client.get("/", allow_redirects=False)
         assert response.status_code == 307  # Redirect
         assert "/static/index.html" in response.headers.get("location", "")
 
@@ -48,7 +47,7 @@ class TestUIAPIIntegration:
         ]
 
         for file in files:
-            response = requests.get(f"{BASE_URL}{file}")
+            response = client.get(file)
             assert response.status_code == 200, f"Failed to access {file}"
 
     def test_reference_endpoints_no_auth(self):
@@ -60,13 +59,13 @@ class TestUIAPIIntegration:
         ]
 
         for endpoint in endpoints:
-            response = requests.get(f"{BASE_URL}{endpoint}")
+            response = client.get(endpoint)
             assert response.status_code == 200, f"Failed to access {endpoint}"
             assert response.json() is not None
 
     def test_nationalities_format(self):
         """Test that nationalities endpoint returns expected format."""
-        response = requests.get(f"{BASE_URL}/api/v1/configurations/reference/nationalities/")
+        response = client.get("/api/v1/configurations/reference/nationalities/")
         assert response.status_code == 200
 
         nationalities = response.json()
@@ -89,11 +88,11 @@ class TestUIAPIIntegration:
 
         for endpoint in endpoints:
             # Without API key
-            response = requests.get(f"{BASE_URL}{endpoint}")
+            response = client.get(endpoint)
             assert response.status_code in [401, 403]  # Either unauthorized or forbidden is acceptable
 
             # With API key
-            response = requests.get(f"{BASE_URL}{endpoint}", headers=HEADERS)
+            response = client.get(endpoint, headers=HEADERS)
             assert response.status_code == 200
 
     def test_generation_endpoint_format(self):
@@ -161,7 +160,7 @@ class TestUIAPIIntegration:
             "use_encryption": False,
         }
 
-        response = requests.post(f"{BASE_URL}/api/v1/generation/", headers=HEADERS, json=ui_config)
+        response = client.post("/api/v1/generation/", headers=HEADERS, json=ui_config)
 
         assert response.status_code == 201
         result = response.json()
@@ -170,26 +169,26 @@ class TestUIAPIIntegration:
 
         # Clean up - cancel the job
         job_id = result["job_id"]
-        requests.post(f"{BASE_URL}/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
+        client.post(f"/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
 
     def test_job_lifecycle(self):
         """Test complete job lifecycle from UI perspective."""
         # 1. Create a job
         config = self._get_test_config()
-        response = requests.post(f"{BASE_URL}/api/v1/generation/", headers=HEADERS, json=config)
+        response = client.post("/api/v1/generation/", headers=HEADERS, json=config)
         assert response.status_code == 201
         job_id = response.json()["job_id"]
 
         try:
             # 2. Check job status
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=HEADERS)
+            response = client.get(f"/api/v1/jobs/{job_id}", headers=HEADERS)
             assert response.status_code == 200
             job_data = response.json()
             assert job_data["job_id"] == job_id
             assert job_data["status"] in ["pending", "running", "completed", "failed"]
 
             # 3. List jobs
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/", headers=HEADERS)
+            response = client.get("/api/v1/jobs/", headers=HEADERS)
             assert response.status_code == 200
             jobs = response.json()
             assert any(job["job_id"] == job_id for job in jobs)
@@ -198,7 +197,7 @@ class TestUIAPIIntegration:
             time.sleep(2)
 
             # 5. Check progress update
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=HEADERS)
+            response = client.get(f"/api/v1/jobs/{job_id}", headers=HEADERS)
             assert response.status_code == 200
             job_data = response.json()
             assert "progress" in job_data
@@ -206,7 +205,7 @@ class TestUIAPIIntegration:
 
         finally:
             # 6. Cancel job (cleanup)
-            response = requests.post(f"{BASE_URL}/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
+            response = client.post(f"/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
             # Cancel might fail if job already completed/cancelled, that's ok
             assert response.status_code in [200, 400, 404]
 
@@ -232,40 +231,40 @@ class TestUIAPIIntegration:
             "injury_distribution": {"Disease": 40.0, "Battle Injury": 20.0, "Non-Battle Injury": 40.0},
         }
 
-        response = requests.post(f"{BASE_URL}/api/v1/configurations/", headers=HEADERS, json=config)
+        response = client.post("/api/v1/configurations/", headers=HEADERS, json=config)
         assert response.status_code == 201
         created = response.json()
         config_id = created["id"]
 
         try:
             # 2. Read configuration
-            response = requests.get(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS)
+            response = client.get(f"/api/v1/configurations/{config_id}", headers=HEADERS)
             assert response.status_code == 200
             fetched = response.json()
             assert fetched["name"] == config["name"]
 
             # 3. List configurations - verify the created config can be retrieved
             # Instead of checking all configs (there might be hundreds), just fetch the specific one
-            response = requests.get(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS)
+            response = client.get(f"/api/v1/configurations/{config_id}", headers=HEADERS)
             assert response.status_code == 200, f"Could not retrieve created configuration {config_id}"
             retrieved_config = response.json()
             assert retrieved_config["id"] == config_id
 
             # 4. Update configuration
             config["name"] = "E2E Test Template Updated"
-            response = requests.put(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS, json=config)
+            response = client.put(f"/api/v1/configurations/{config_id}", headers=HEADERS, json=config)
             assert response.status_code == 200
 
         finally:
             # 5. Delete configuration (cleanup)
-            response = requests.delete(f"{BASE_URL}/api/v1/configurations/{config_id}", headers=HEADERS)
+            response = client.delete(f"/api/v1/configurations/{config_id}", headers=HEADERS)
             assert response.status_code == 204
 
     def test_validation_endpoint(self):
         """Test configuration validation endpoint."""
         # Valid configuration
         valid_config = self._get_test_config()["configuration"]
-        response = requests.post(f"{BASE_URL}/api/v1/configurations/validate/", headers=HEADERS, json=valid_config)
+        response = client.post("/api/v1/configurations/validate/", headers=HEADERS, json=valid_config)
         assert response.status_code == 200
         result = response.json()
         assert result["valid"] is True
@@ -283,7 +282,7 @@ class TestUIAPIIntegration:
                 "Non-Battle Injury": 40.0,
             },
         }
-        response = requests.post(f"{BASE_URL}/api/v1/configurations/validate/", headers=HEADERS, json=invalid_config)
+        response = client.post("/api/v1/configurations/validate/", headers=HEADERS, json=invalid_config)
         # FastAPI returns 422 for validation errors
         assert response.status_code == 422
         error_detail = response.json()
@@ -295,7 +294,7 @@ class TestUIAPIIntegration:
     def test_ui_nationality_mapping(self):
         """Test that UI nationality names map correctly to codes."""
         # Get nationalities from API
-        response = requests.get(f"{BASE_URL}/api/v1/configurations/reference/nationalities/")
+        response = client.get("/api/v1/configurations/reference/nationalities/")
         assert response.status_code == 200
         nationalities = response.json()
 
@@ -318,12 +317,12 @@ class TestUIAPIIntegration:
                 config = self._get_test_config()
                 config["configuration"]["name"] = f"Concurrent Test {i + 1}"
 
-                response = requests.post(f"{BASE_URL}/api/v1/generation/", headers=HEADERS, json=config)
+                response = client.post("/api/v1/generation/", headers=HEADERS, json=config)
                 assert response.status_code == 201
                 job_ids.append(response.json()["job_id"])
 
             # Check all jobs are listed
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/", headers=HEADERS)
+            response = client.get("/api/v1/jobs/", headers=HEADERS)
             assert response.status_code == 200
             jobs = response.json()
 
@@ -333,7 +332,7 @@ class TestUIAPIIntegration:
         finally:
             # Clean up all jobs
             for job_id in job_ids:
-                requests.post(f"{BASE_URL}/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
+                client.post(f"/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
 
     # Helper methods
     def _get_test_config(self) -> Dict[str, Any]:

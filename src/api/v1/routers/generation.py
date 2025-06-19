@@ -19,7 +19,7 @@ from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service, get_patient_generation_service
 from src.api.v1.models import ErrorResponse, GenerationRequest, GenerationResponse
-from src.core.security import verify_api_key
+from src.core.security_enhanced import verify_api_key
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
 from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext

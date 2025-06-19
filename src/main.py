@@ -15,6 +15,8 @@ from pydantic import ValidationError
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 from config import get_settings
 from src.api.v1.middleware.metrics import MetricsMiddleware
@@ -25,6 +27,7 @@ from src.core.error_handlers import (
     request_validation_exception_handler,
     validation_exception_handler,
 )
+from src.domain.repositories.api_key_repository import APIKeyRepository
 
 # Get settings
 settings = get_settings()
@@ -48,6 +51,22 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error("Failed to initialize Redis cache: %s", e)
             logger.warning("Application will continue without caching")
+
+    # Ensure demo API key exists
+    try:
+        # We need to create a sync context for the database operation
+        engine = create_engine(settings.DATABASE_URL.replace("+asyncpg", ""))
+        session_local = sessionmaker(bind=engine)
+
+        with session_local() as db:
+            repo = APIKeyRepository(db)
+            demo_key = repo.create_demo_key_if_not_exists()
+            logger.info(f"Demo API key ensured: {demo_key.name}")
+
+        engine.dispose()
+    except Exception as e:
+        logger.error(f"Failed to ensure demo API key: {e}")
+        # Non-critical error - application can continue
 
     yield
 

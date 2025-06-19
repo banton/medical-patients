@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from patient_generator.visualization_data import transform_job_data_for_visualization
 from src.api.v1.dependencies.services import get_job_service
 from src.api.v1.models import ErrorResponse, VisualizationDataResponse
-from src.core.security import verify_api_key
+from src.core.security_enhanced import verify_api_key
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
 
