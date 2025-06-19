@@ -152,7 +152,7 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
       run: |
         source .venv/bin/activate
-        python -m pytest tests/ubuntu_24_04_compatibility/test_database_compatibility.py -v
+        python -m pytest tests/test_db_integration.py -v
 
   docker-compatibility:
     name: Docker Build Tests
@@ -203,7 +203,7 @@ jobs:
         USER appuser
         
         # Run tests
-        CMD ["python", "-m", "pytest", "tests/ubuntu_24_04_compatibility/", "-v"]
+        CMD ["python", "-m", "pytest", "tests/test_smoke.py", "-v"]
         EOF
     
     - name: Build Docker Image
@@ -261,13 +261,17 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y \
           build-essential libpq-dev libssl-dev libffi-dev \
-          python3-venv cargo pkg-config
+          python3-venv cargo pkg-config nodejs npm
         
         python3 -m venv .venv
         source .venv/bin/activate
         pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-cov
+        
+        # Install Node dependencies for React build
+        npm ci
+        cd patient-timeline-viewer && npm ci && cd ..
     
     - name: Run Migrations
       env:
@@ -276,11 +280,25 @@ jobs:
         source .venv/bin/activate
         alembic upgrade head
     
+    - name: Build React App
+      run: |
+        cd patient-timeline-viewer && npm run build && cd ..
+    
+    - name: Start Application
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/medical_db
+        REDIS_URL: redis://localhost:6379
+      run: |
+        source .venv/bin/activate
+        python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+        sleep 10  # Wait for app to start
+    
     - name: Run Application Tests
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/medical_db
         REDIS_URL: redis://localhost:6379
         PYTHONPATH: ${{ github.workspace }}
+        API_BASE_URL: http://localhost:8000
       run: |
         source .venv/bin/activate
         pytest tests/ -v --cov=src --cov=patient_generator \
