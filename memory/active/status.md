@@ -148,3 +148,17 @@ See `memory/active/future-work.md` for:
    - Task commands added (staging:up/down/logs/status)
    - Deployment scripts and guides created
    - Status monitoring enhanced
+
+### Update: 2025-06-19 14:34
+- v1.1.0 successfully released and merged to main. Created follow-up task for Ubuntu 24.04 Full Integration Tests failure investigation.
+
+### Update: 2025-06-19 14:52
+- v1.1.0 successfully deployed to DigitalOcean production. App unpinned from old deployment, new build deployed with latest code. All health checks passing, database connected, API endpoints working. Frontend accessible at https://milmed.tech
+
+### Update: 2025-06-19 15:30
+- Fixed demo API key issue in production. Created `scripts/ensure_demo_key.py` to create demo key if missing. Integrated into:
+  - Application startup (src/main.py lifespan)
+  - Docker Compose command (migrations + demo key)
+  - DigitalOcean app specs (staging and production)
+  - Created test script to verify demo key functionality
+- Demo key: `DEMO_MILMED_2025_50_PATIENTS` with limits: 50 patients/request, 100 requests/day

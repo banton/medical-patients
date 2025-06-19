@@ -19,12 +19,14 @@ from slowapi.util import get_remote_address
 from config import get_settings
 from src.api.v1.middleware.metrics import MetricsMiddleware
 from src.api.v1.routers import configurations, downloads, generation, health, jobs, metrics, streaming, visualizations
+from src.api.v1.dependencies.database import get_database
 from src.core.cache import close_cache, get_cache_service, initialize_cache
 from src.core.error_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
     validation_exception_handler,
 )
+from src.domain.repositories.api_key_repository import APIKeyRepository
 
 # Get settings
 settings = get_settings()
@@ -48,6 +50,25 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error("Failed to initialize Redis cache: %s", e)
             logger.warning("Application will continue without caching")
+    
+    # Ensure demo API key exists
+    try:
+        # We need to create a sync context for the database operation
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        
+        engine = create_engine(settings.DATABASE_URL.replace("+asyncpg", ""))
+        SessionLocal = sessionmaker(bind=engine)
+        
+        with SessionLocal() as db:
+            repo = APIKeyRepository(db)
+            demo_key = repo.create_demo_key_if_not_exists()
+            logger.info(f"Demo API key ensured: {demo_key.name}")
+        
+        engine.dispose()
+    except Exception as e:
+        logger.error(f"Failed to ensure demo API key: {e}")
+        # Non-critical error - application can continue
 
     yield
 

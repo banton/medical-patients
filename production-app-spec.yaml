@@ -1,11 +1,11 @@
-name: medical-patients-staging
+name: medical-patients
 region: nyc
 
 services:
-  - name: api-staging
+  - name: api
     github:
       repo: banton/medical-patients
-      branch: feature/v1.1-consolidated
+      branch: main
       deploy_on_push: true
     build_command: pip install -r requirements.txt
     run_command: |
@@ -28,13 +28,13 @@ services:
       http_path: /api/v1/health
     envs:
       - key: ENVIRONMENT
-        value: staging
+        value: production
         scope: RUN_AND_BUILD_TIME
       - key: DATABASE_URL
-        value: ${staging_db.DATABASE_URL}
+        value: ${db.DATABASE_URL}
         scope: RUN_AND_BUILD_TIME
       - key: REDIS_URL
-        value: redis://redis-staging:6379
+        value: redis://redis:6379
         scope: RUN_AND_BUILD_TIME
       - key: CACHE_ENABLED
         value: "true"
@@ -43,14 +43,14 @@ services:
         value: "false"
         scope: RUN_AND_BUILD_TIME
       - key: CORS_ORIGINS
-        value: "https://staging.milmed.tech,https://timeline.milmed.tech"
+        value: "https://milmed.tech,https://www.milmed.tech"
         scope: RUN_AND_BUILD_TIME
       - key: API_KEY
-        value: ${STAGING_API_KEY}
+        value: ${API_KEY}
         scope: RUN_AND_BUILD_TIME
         type: SECRET
 
-  - name: redis-staging
+  - name: redis
     image:
       registry_type: DOCKER_HUB
       registry: library
@@ -63,61 +63,60 @@ services:
       - 6379
 
 static_sites:
-  - name: frontend-staging
+  - name: frontend
     github:
       repo: banton/medical-patients
-      branch: feature/v1.1-consolidated
+      branch: main
       deploy_on_push: true
     source_dir: /static
     
   - name: timeline-viewer
     github:
       repo: banton/medical-patients
-      branch: feature/v1.1-consolidated
+      branch: main
       deploy_on_push: true
     build_command: cd patient-timeline-viewer && npm install && npm run build
     source_dir: /patient-timeline-viewer
     output_dir: /patient-timeline-viewer/dist
 
 databases:
-  - name: staging-db
+  - name: db
     engine: PG
     version: "17"
-    production: false
+    production: true
     size: db-s-1vcpu-1gb
     num_nodes: 1
 
 domains:
-  - domain: staging.milmed.tech
+  - domain: milmed.tech
     type: PRIMARY
-  - domain: timeline.milmed.tech
+  - domain: www.milmed.tech
     type: ALIAS
 
 ingress:
   rules:
-    # Timeline viewer on timeline.milmed.tech  
+    # Timeline viewer on milmed.tech/timeline 
     - match:
         path:
-          prefix: /
+          prefix: /timeline
       component:
         name: timeline-viewer
-      redirect:
-        authority: timeline.milmed.tech
+        rewrite: /
     
-    # API routes on staging.milmed.tech
+    # API routes on milmed.tech
     - match:
         path:
           prefix: /api
       component:
-        name: api-staging
+        name: api
         preserve_path_prefix: true
     
-    # Docs on staging.milmed.tech
+    # Docs on milmed.tech
     - match:
         path:
           prefix: /docs
       component:
-        name: api-staging
+        name: api
         preserve_path_prefix: true
     
     # OpenAPI spec
@@ -125,12 +124,12 @@ ingress:
         path:
           prefix: /openapi.json
       component:
-        name: api-staging
+        name: api
         preserve_path_prefix: true
     
-    # Frontend on staging.milmed.tech
+    # Frontend on milmed.tech root
     - match:
         path:
           prefix: /
       component:
-        name: frontend-staging
+        name: frontend
