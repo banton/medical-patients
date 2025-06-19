@@ -29,8 +29,12 @@ DEMO_API_KEY: str = str(DEMO_API_KEY_CONFIG["key"])
 # we need to handle cases where the module is imported before environment is fully set up
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
-    engine = create_engine(DATABASE_URL.replace("+asyncpg", ""))
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    try:
+        engine = create_engine(DATABASE_URL.replace("+asyncpg", ""))
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    except Exception:
+        # Handle cases where database URL is invalid or engine creation fails
+        SessionLocal = None
 else:
     # This will only be used if DATABASE_URL is not set at module import time
     # The actual database operations will fail with a proper error message

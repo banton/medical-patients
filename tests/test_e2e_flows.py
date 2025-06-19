@@ -10,10 +10,13 @@ import time
 from uuid import uuid4
 
 import pytest
-import requests
+from fastapi.testclient import TestClient
 
-# Base URL for API
-BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+from src.main import app
+
+# Create test client
+client = TestClient(app)
+
 API_KEY = os.getenv("API_KEY", "your_secret_api_key_here")
 
 # Headers for API requests
@@ -65,7 +68,7 @@ class TestE2EPatientGeneration:
     def test_complete_generation_flow(self, test_config):
         """Test the complete flow from config creation to patient download"""
         # Step 1: Create configuration
-        create_response = requests.post(f"{BASE_URL}/api/v1/configurations/", json=test_config, headers=HEADERS)
+        create_response = client.post("/api/v1/configurations/", json=test_config, headers=HEADERS)
         assert create_response.status_code == 201
         config_data = create_response.json()
         config_id = config_data["id"]
@@ -78,7 +81,7 @@ class TestE2EPatientGeneration:
             "use_encryption": False,
         }
 
-        generate_response = requests.post(f"{BASE_URL}/api/v1/generation/", json=generation_payload, headers=HEADERS)
+        generate_response = client.post("/api/v1/generation/", json=generation_payload, headers=HEADERS)
         assert generate_response.status_code == 201
         job_data = generate_response.json()
         job_id = job_data["job_id"]
@@ -89,7 +92,7 @@ class TestE2EPatientGeneration:
         job_status = None
 
         while attempts < max_attempts:
-            status_response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=HEADERS)
+            status_response = client.get(f"/api/v1/jobs/{job_id}", headers=HEADERS)
             assert status_response.status_code == 200
             job_status = status_response.json()
 
@@ -106,7 +109,7 @@ class TestE2EPatientGeneration:
         assert job_status["summary"]["total_patients"] > 0  # Verify some patients were generated
 
         # Step 4: Download results
-        download_response = requests.get(f"{BASE_URL}/api/v1/downloads/{job_id}", headers=HEADERS, stream=True)
+        download_response = client.get(f"/api/v1/downloads/{job_id}", headers=HEADERS, stream=True)
         assert download_response.status_code == 200
         assert download_response.headers.get("content-type") == "application/zip"
 
@@ -164,7 +167,7 @@ class TestE2EPatientGeneration:
     def test_generation_with_encryption(self, test_config):
         """Test patient generation with encryption enabled"""
         # Create configuration
-        create_response = requests.post(f"{BASE_URL}/api/v1/configurations/", json=test_config, headers=HEADERS)
+        create_response = client.post("/api/v1/configurations/", json=test_config, headers=HEADERS)
         assert create_response.status_code == 201
         config_id = create_response.json()["id"]
 
@@ -177,7 +180,7 @@ class TestE2EPatientGeneration:
             "encryption_password": "test_password_123",
         }
 
-        generate_response = requests.post(f"{BASE_URL}/api/v1/generation/", json=generation_payload, headers=HEADERS)
+        generate_response = client.post("/api/v1/generation/", json=generation_payload, headers=HEADERS)
         assert generate_response.status_code == 201
         job_id = generate_response.json()["job_id"]
 
@@ -186,7 +189,7 @@ class TestE2EPatientGeneration:
         assert job_status["status"] == "completed"
 
         # Download should work
-        download_response = requests.get(f"{BASE_URL}/api/v1/downloads/{job_id}", headers=HEADERS)
+        download_response = client.get("/api/v1/downloads/{job_id}", headers=HEADERS)
         assert download_response.status_code == 200
 
     def test_invalid_configuration_handling(self):
@@ -197,7 +200,7 @@ class TestE2EPatientGeneration:
             "front_configs": [],  # Empty fronts
         }
 
-        create_response = requests.post(f"{BASE_URL}/api/v1/configurations/", json=invalid_config, headers=HEADERS)
+        create_response = client.post("/api/v1/configurations/", json=invalid_config, headers=HEADERS)
         assert create_response.status_code == 422
 
         # Invalid percentages
@@ -218,14 +221,14 @@ class TestE2EPatientGeneration:
             ],
         }
 
-        create_response = requests.post(f"{BASE_URL}/api/v1/configurations/", json=invalid_config_2, headers=HEADERS)
+        create_response = client.post("/api/v1/configurations/", json=invalid_config_2, headers=HEADERS)
         # API might accept this and validate later, or reject immediately
         # Adjust assertion based on actual API behavior
 
     def test_concurrent_generation_jobs(self, test_config):
         """Test running multiple generation jobs concurrently"""
         # Create configuration
-        create_response = requests.post(f"{BASE_URL}/api/v1/configurations/", json=test_config, headers=HEADERS)
+        create_response = client.post("/api/v1/configurations/", json=test_config, headers=HEADERS)
         config_id = create_response.json()["id"]
 
         # Start multiple jobs
@@ -238,7 +241,7 @@ class TestE2EPatientGeneration:
                 "use_encryption": False,
             }
 
-            response = requests.post(f"{BASE_URL}/api/v1/generation/", json=generation_payload, headers=HEADERS)
+            response = client.post("/api/v1/generation/", json=generation_payload, headers=HEADERS)
             assert response.status_code == 201
             job_ids.append(response.json()["job_id"])
 
@@ -257,7 +260,7 @@ class TestE2EPatientGeneration:
         start_time = time.time()
 
         while time.time() - start_time < timeout:
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=HEADERS)
+            response = client.get(f"/api/v1/jobs/{job_id}", headers=HEADERS)
             status = response.json()
 
             if status["status"] in ["completed", "failed"]:
@@ -299,12 +302,12 @@ class TestE2EVisualization:
         }
 
         # Create and generate
-        create_resp = requests.post(f"{BASE_URL}/api/v1/configurations/", json=test_config, headers=HEADERS)
+        create_resp = client.post("/api/v1/configurations/", json=test_config, headers=HEADERS)
         assert create_resp.status_code == 201, f"Configuration creation failed: {create_resp.text}"
         config_id = create_resp.json()["id"]
 
-        generate_resp = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        generate_resp = client.post(
+            "/api/v1/generation/",
             json={"configuration_id": config_id, "output_formats": ["json"]},
             headers=HEADERS,
         )
@@ -316,7 +319,7 @@ class TestE2EVisualization:
         e2e_test._wait_for_job_completion(job_id)
 
         # Get visualization data
-        viz_response = requests.get(f"{BASE_URL}/api/v1/visualizations/dashboard-data?job_id={job_id}", headers=HEADERS)
+        viz_response = client.get(f"/api/v1/visualizations/dashboard-data?job_id={job_id}", headers=HEADERS)
         assert viz_response.status_code == 200
 
         viz_data = viz_response.json()
@@ -337,19 +340,19 @@ class TestE2EErrorScenarios:
     def test_api_key_authentication(self):
         """Test API key authentication requirements"""
         # Request without API key
-        response = requests.get(f"{BASE_URL}/api/v1/configurations/")
+        response = client.get("/api/v1/configurations/")
         assert response.status_code == 401
 
         # Request with invalid API key
         invalid_headers = {"X-API-Key": "invalid_key"}
-        response = requests.get(f"{BASE_URL}/api/v1/configurations/", headers=invalid_headers)
+        response = client.get("/api/v1/configurations/", headers=invalid_headers)
         assert response.status_code == 401
 
     def test_job_not_found(self):
         """Test accessing non-existent job"""
         fake_job_id = str(uuid4())
 
-        response = requests.get(f"{BASE_URL}/api/v1/jobs/{fake_job_id}", headers=HEADERS)
+        response = client.get(f"/api/v1/jobs/{fake_job_id}", headers=HEADERS)
         assert response.status_code == 404
 
     def test_download_incomplete_job(self):
@@ -373,12 +376,12 @@ class TestE2EErrorScenarios:
             ],
         }
 
-        create_resp = requests.post(f"{BASE_URL}/api/v1/configurations/", json=test_config, headers=HEADERS)
+        create_resp = client.post("/api/v1/configurations/", json=test_config, headers=HEADERS)
         assert create_resp.status_code == 201, f"Configuration creation failed: {create_resp.text}"
         config_id = create_resp.json()["id"]
 
-        generate_resp = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        generate_resp = client.post(
+            "/api/v1/generation/",
             json={"configuration_id": config_id, "output_formats": ["json"]},
             headers=HEADERS,
         )
@@ -386,7 +389,7 @@ class TestE2EErrorScenarios:
         job_id = generate_resp.json()["job_id"]
 
         # Try to download immediately
-        download_resp = requests.get(f"{BASE_URL}/api/v1/downloads/{job_id}", headers=HEADERS)
+        download_resp = client.get(f"/api/v1/downloads/{job_id}", headers=HEADERS)
         # Should either return 404 or indicate job not complete
         assert download_resp.status_code in [404, 400]
 
@@ -428,14 +431,14 @@ class TestE2EPerformance:
             front["casualty_rate"] = front["casualty_rate"] / total_rate
 
         # Create configuration
-        create_resp = requests.post(f"{BASE_URL}/api/v1/configurations/", json=large_config, headers=HEADERS)
+        create_resp = client.post("/api/v1/configurations/", json=large_config, headers=HEADERS)
         assert create_resp.status_code == 201, f"Configuration creation failed: {create_resp.text}"
         config_id = create_resp.json()["id"]
 
         # Generate patients
         start_time = time.time()
-        generate_resp = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        generate_resp = client.post(
+            "/api/v1/generation/",
             json={"configuration_id": config_id, "output_formats": ["json"], "use_compression": True},
             headers=HEADERS,
         )

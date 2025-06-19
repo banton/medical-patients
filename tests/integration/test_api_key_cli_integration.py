@@ -36,7 +36,7 @@ from src.domain.repositories.api_key_repository import APIKeyRepository
 class TestAPIKeyCLIIntegration:
     """Integration tests with real database operations."""
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture()
     async def db_engine(self, test_database_url):
         """Create async database engine for CLI testing."""
         engine = create_async_engine(test_database_url, echo=False)

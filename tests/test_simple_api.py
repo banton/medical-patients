@@ -5,9 +5,11 @@ from pathlib import Path
 import time
 
 import pytest
-import requests
+from fastapi.testclient import TestClient
 
-BASE_URL = "http://localhost:8000"
+from src.main import app
+
+client = TestClient(app)
 API_KEY = "your_secret_api_key_here"
 
 pytestmark = [pytest.mark.integration]
@@ -82,7 +84,7 @@ class TestSimpleAPI:
         config = load_json_config()
 
         # Start generation
-        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"configuration": config}, headers=headers)
+        response = client.post("/api/v1/generation/", json={"configuration": config}, headers=headers)
         assert response.status_code in [200, 201]
 
         job_data = response.json()
@@ -92,7 +94,7 @@ class TestSimpleAPI:
         # Poll for completion
         max_attempts = 60
         for _attempt in range(max_attempts):
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=headers)
+            response = client.get(f"/api/v1/jobs/{job_id}", headers=headers)
             assert response.status_code == 200
 
             status_data = response.json()
@@ -108,7 +110,7 @@ class TestSimpleAPI:
             pytest.fail("Job timed out")
 
         # Test download
-        response = requests.get(f"{BASE_URL}/api/v1/downloads/{job_id}", headers=headers)
+        response = client.get(f"/api/v1/downloads/{job_id}", headers=headers)
         assert response.status_code == 200
         assert len(response.content) > 0
         assert response.headers.get("content-type") == "application/zip"
@@ -142,7 +144,7 @@ class TestSimpleAPI:
             ],
         }
 
-        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"configuration": config}, headers=headers)
+        response = client.post("/api/v1/generation/", json={"configuration": config}, headers=headers)
         assert response.status_code in [200, 201]
 
     def test_invalid_injury_keys(self, headers):
@@ -155,7 +157,7 @@ class TestSimpleAPI:
             "battle_injuries": 0.2,  # underscore - wrong!
         }
 
-        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"configuration": config}, headers=headers)
+        response = client.post("/api/v1/generation/", json={"configuration": config}, headers=headers)
 
         # Should complete (our system gracefully handles invalid keys with defaults)
         if response.status_code in [200, 201]:
@@ -165,7 +167,7 @@ class TestSimpleAPI:
             # Wait for job to process
             time.sleep(3)
 
-            response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers=headers)
+            response = client.get(f"/api/v1/jobs/{job_id}", headers=headers)
             assert response.status_code == 200
             status_data = response.json()
             # Our system gracefully handles invalid keys by using defaults
