@@ -14,6 +14,9 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from src.api.v1.dependencies.database import get_database
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session as SQLAlchemySession
+import os
 from src.core.cache_utils import cache_api_key_limits
 from src.domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
 from src.domain.repositories.api_key_repository import APIKeyRepository
@@ -23,6 +26,20 @@ LEGACY_API_KEY = os.getenv("API_KEY", "your-api-key-here")
 
 # Public demo key - hardcoded for easy access
 DEMO_API_KEY: str = str(DEMO_API_KEY_CONFIG["key"])
+
+# Create SQLAlchemy session factory
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://medgen_user:medgen_password@localhost:5432/medgen_db")
+engine = create_engine(DATABASE_URL.replace("+asyncpg", ""))
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_sqlalchemy_session():
+    """Get SQLAlchemy session for API key operations."""
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 @dataclass
@@ -176,8 +193,8 @@ def create_demo_api_key() -> APIKey:
     )
 
 
-async def verify_api_key(
-    api_key: str = Header(..., alias="X-API-Key"), db: Session = Depends(get_database)
+async def verify_api_key_context(
+    api_key: str = Header(..., alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
 ) -> APIKeyContext:
     """
     Enhanced API key verification with context and legacy support.
@@ -314,3 +331,24 @@ def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
         "limits": context.get_limits_info(),
         "last_used": context.api_key.last_used_at.isoformat() if context.api_key.last_used_at else None,
     }
+
+
+# Backward compatibility: Provide the old verify_api_key signature
+# that returns a string instead of APIKeyContext
+async def verify_api_key(
+    api_key: str = Header(..., alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
+) -> str:
+    """
+    Backward-compatible API key verification that returns a string.
+    
+    This wrapper maintains compatibility with existing code that expects
+    verify_api_key to return a string instead of APIKeyContext.
+    """
+    # Call the enhanced function that returns context
+    context = await verify_api_key_context(api_key, db)
+    # Return the API key string for backward compatibility
+    return context.api_key.key
+
+
+# Export the enhanced version for new code that needs the full context
+verify_api_key_enhanced = verify_api_key_context
