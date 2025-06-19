@@ -11,12 +11,9 @@ import os
 from typing import Any, Dict, Optional
 
 from fastapi import Depends, Header, HTTPException
-from sqlalchemy.orm import Session
-
-from src.api.v1.dependencies.database import get_database
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session as SQLAlchemySession
-import os
+from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker
+
 from src.core.cache_utils import cache_api_key_limits
 from src.domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
 from src.domain.repositories.api_key_repository import APIKeyRepository
@@ -225,18 +222,18 @@ async def verify_api_key_context(
     # Check if API key is provided
     if not api_key:
         raise HTTPException(
-            status_code=401, 
-            detail="Missing API Key", 
+            status_code=401,
+            detail="Missing API Key",
             headers={"X-Key-Status": "missing", "WWW-Authenticate": "ApiKey"}
         )
-    
+
     # Try to get cached limits first
     # TODO: Implement cached limits usage in future optimization
     # cached_limits = await get_cached_api_key_limits(api_key)
 
     try:
         repo = APIKeyRepository(db)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=503,
             detail="Database service temporarily unavailable",
@@ -265,7 +262,7 @@ async def verify_api_key_context(
         except HTTPException:
             # Re-raise HTTP exceptions as-is
             raise
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=500,
                 detail="Error processing demo API key",
@@ -301,7 +298,7 @@ async def verify_api_key_context(
     except HTTPException:
         # Re-raise HTTP exceptions as-is
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=503,
             detail="Database lookup failed. Service temporarily unavailable.",
@@ -359,7 +356,7 @@ async def verify_api_key_legacy(api_key: str = Header(..., alias="X-API-Key")) -
         return api_key
 
     raise HTTPException(
-        status_code=401, 
+        status_code=401,
         detail="Invalid API key",
         headers={"X-Key-Status": "invalid"}
     )
@@ -392,7 +389,7 @@ async def verify_api_key(
 ) -> str:
     """
     Backward-compatible API key verification that returns a string.
-    
+
     This wrapper maintains compatibility with existing code that expects
     verify_api_key to return a string instead of APIKeyContext.
     """
