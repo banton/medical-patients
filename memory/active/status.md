@@ -1,8 +1,17 @@
 # Project Status Dashboard
-Updated: 2025-06-15
+Updated: 2025-06-19
 
 ## Current Focus
-**Staging Deployment**: Ready to deploy v1.1 to DigitalOcean staging environment
+**Task Simplification**: Clarified mandatory vs optional commands for better user experience
+
+### Latest Update: Task Command Simplification
+- ✅ Simplified Taskfile.yml to clarify mandatory vs optional commands
+- ✅ Created streamlined `task init` with just essentials (Docker + .env + DB)
+- ✅ Moved staging commands to separate `task help:staging`
+- ✅ Reduced timeline viewer from 4 commands to 2
+- ✅ Updated README with simpler Quick Start (2 commands to running app)
+- ✅ Created `scripts/init-simple.sh` for basic setup
+- ✅ Clear separation: Essential workflow is just `task init` → `task dev`
 
 ## V1.1 Integration Status
 - ✅ **EPIC-001**: Cross-Platform Development Environment (Merged)
@@ -149,14 +158,5 @@ See `memory/active/future-work.md` for:
 6. Setup DNS A records for subdomains
 7. Get SSL certificates with certbot
 
-### Update: 2025-06-17 14:54
-- Made staging deployment clearly optional - updated docs and task commands to clarify staging is only for production testing
-
-### Update: 2025-06-17 17:25
-- Ubuntu 24.04 compatibility testing completed - identified and fixed Task installation hanging issue, documented Docker requirements, enhanced setup scripts for PEP 668 compliance
-
-### Update: 2025-06-18 09:07
-- Completed Ubuntu 24.04 compatibility testing and enhancement - created automated installation scripts, fixed Task runner hanging issue, added non-interactive mode, all tests passing, pushed to GitHub
-
-### Update: 2025-06-18 10:09
-- Successfully resolved all CI errors - all GitHub Actions tests now passing after fixing ruff 0.12.0 linting issues and unit test failures
+### Update: 2025-06-19 13:10
+- Completed installation simplification - created streamlined task init with 30-second setup, separated mandatory vs optional features, reduced README to 5-step quick start, and all CI tests passing

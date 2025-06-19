@@ -328,13 +328,13 @@ class TestSecurityCompliance:
 
             # Ubuntu 24.04 disables TLS 1.0/1.1
             # Check that minimum version is at least TLS 1.2
-            if hasattr(ssl, 'TLSVersion'):
+            if hasattr(ssl, "TLSVersion"):
                 # Python 3.10+ has TLSVersion enum
                 min_version = context.minimum_version
                 assert min_version >= ssl.TLSVersion.TLSv1_2, f"Minimum TLS version {min_version} is less than TLS 1.2"
             else:
                 # For older Python versions, check the context properties
-                assert hasattr(context, 'minimum_version'), "SSL context should have minimum_version attribute"
+                assert hasattr(context, "minimum_version"), "SSL context should have minimum_version attribute"
         except Exception as e:
             pytest.fail(f"SSL configuration test failed: {e}")
 

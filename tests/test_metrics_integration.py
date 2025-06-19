@@ -307,12 +307,12 @@ class TestMetricsIntegration:
         # Convert labels tuple to dict
         label_names = metric._labelnames
         label_dict = dict(zip(label_names, labels))
-        
+
         # Collect metric samples
         for family in metric.collect():
             for sample in family.samples:
                 # Check if this is the main metric (not _created suffix)
-                if sample.name.endswith('_total') or sample.name.endswith('_sum'):
+                if sample.name.endswith("_total") or sample.name.endswith("_sum"):
                     if sample.labels == label_dict:
                         return sample.value
         return 0
