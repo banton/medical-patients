@@ -1,33 +1,32 @@
-# Cross-Platform Development Support
+# Platform Support Guide
 
 ## 🎯 Overview
-The Medical Patients Generator uses Task runner for cross-platform development environment management, replacing the previous Makefile-based system that only worked on Unix-like systems.
+The Medical Patients Generator is designed for Linux and macOS environments, using Task runner for consistent development workflows across these platforms.
 
 ## 📋 Supported Platforms
 
 ### ✅ Fully Tested
-- **macOS** (Intel & Apple Silicon)
-  - ✅ All 154 Task commands validated
+- **macOS** (11.0+ Big Sur and later)
+  - ✅ Intel & Apple Silicon support
+  - ✅ All Task commands validated
   - ✅ Docker integration working
   - ✅ Timeline viewer fully functional
   - ✅ Python 3.8-3.12 compatibility verified
 
-### 🧪 Cross-Platform Ready
-- **Linux** (Ubuntu 20.04+, Ubuntu 24.04 LTS, Debian, CentOS, RHEL)
-  - 🎯 All commands designed for Linux compatibility
-  - 🎯 Shell scripts use POSIX-compatible syntax
-  - 🎯 Package detection works with apt/yum/dnf
+- **Linux** (Ubuntu 22.04+, Debian 11+, RHEL 8+, CentOS 8+)
+  - ✅ All commands work natively
+  - ✅ Shell scripts use POSIX-compatible syntax
+  - ✅ Package detection works with apt/yum/dnf
+  - ✅ **Ubuntu 22.04 LTS**: Full compatibility, no PEP 668 restrictions
   - ✅ **Ubuntu 24.04 LTS specific support:**
-    - Python 3.11 in Docker for consistency across platforms
-    - Virtual environment handling for PEP 668 compliance
+    - Python 3.11 in Docker for consistency
+    - Virtual environment required (PEP 668 compliance)
     - PostgreSQL 16.2 compatibility verified
     - OpenSSL 3.x support included
     - Cargo/Rust toolchain for cryptography builds
 
-- **Windows** (Windows 10/11 with WSL2)
-  - 🎯 Task runner natively supports Windows
-  - 🎯 PowerShell and Command Prompt compatible
-  - 🎯 WSL2 for full Docker integration
+### ❌ Not Supported
+- **Windows** - While the application may work in WSL2 (Windows Subsystem for Linux), we do not officially test or support Windows environments. Users are encouraged to use a Linux VM or dual-boot setup instead.
 
 ## 🔧 Installation by Platform
 
@@ -86,43 +85,17 @@ task --version
 task setup
 ```
 
-### Windows Installation
+### Alternative: WSL2 on Windows (Not Officially Supported)
+While we don't officially support Windows, users may try running the application in WSL2:
 
-#### Option 1: Windows Package Manager (winget)
-```powershell
-# Install Task runner
-winget install Task.Task
-
-# Verify installation
-task --version
-
-# Setup project
-git clone <repository>
-cd medical-patients
-task setup
-```
-
-#### Option 2: Chocolatey
-```powershell
-# Install Chocolatey first if not installed
-Set-ExecutionPolicy Bypass -Scope Process -Force
-[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-
-# Install Task
-choco install go-task
-
-# Setup project
-task setup
-```
-
-#### Option 3: WSL2 (Linux Subsystem)
 ```bash
-# Use Linux installation method within WSL2
+# Inside WSL2 Ubuntu environment
 curl -sL https://taskfile.dev/install.sh | sh
 task --version
 task setup
 ```
+
+**Note**: This is not tested or supported. For the best experience, use a native Linux or macOS environment.
 
 ## 🛠️ Platform-Specific Configurations
 
@@ -146,7 +119,6 @@ vars:
 
 **Platform Behavior:**
 - **macOS/Linux**: Prefers `python3`, falls back to `python`
-- **Windows**: Uses `python` (standard Python installation)
 
 ### Docker Integration
 Docker commands work identically across platforms:
@@ -165,7 +137,6 @@ check-docker:
 **Platform Requirements:**
 - **macOS**: Docker Desktop for Mac
 - **Linux**: Docker Engine or Docker Desktop
-- **Windows**: Docker Desktop for Windows with WSL2
 
 ### Node.js/NPM Detection
 Timeline viewer commands detect Node.js across platforms:
@@ -228,12 +199,14 @@ task db:status         # Should show connection status
 - **Shell Compatibility**: Verify scripts work with `bash` and `sh`
 - **Docker**: Test both Docker Engine and Docker Desktop
 - **Permissions**: Check file permissions for scripts
+- **Ubuntu 22.04**: Verify no virtual environment issues
+- **Ubuntu 24.04**: Verify PEP 668 compliance and venv handling
 
-#### Windows Testing
-- **PowerShell vs CMD**: Test commands in both environments
-- **Path Handling**: Verify file path resolution works correctly
-- **WSL2 Integration**: Test Docker functionality with WSL2
-- **Line Endings**: Verify `.gitattributes` handles CRLF correctly
+#### macOS Testing
+- **Architecture**: Test on both Intel and Apple Silicon
+- **Homebrew**: Verify package installation via brew
+- **Docker Desktop**: Ensure proper resource allocation
+- **Python**: Test with system Python and pyenv versions
 
 ## 🔧 Cross-Platform Compatibility Features
 
@@ -288,16 +261,11 @@ PYTHON_CMD:
 - **Timeline**: Full functionality confirmed
 - **Docker**: Full integration working
 
-### Linux Results 🧪
-- **Status**: Ready for testing
-- **Expected Issues**: None (POSIX-compatible)
+### Linux Results ✅
+- **Ubuntu 22.04**: Fully tested and working
+- **Ubuntu 24.04**: Fully tested with venv support
+- **Debian/RHEL**: Expected to work (POSIX-compatible)
 - **Test Scripts**: Available in `/scripts/test-platform.sh`
-
-### Windows Results 🧪
-- **Status**: Ready for testing
-- **Expected Issues**: Minor path/shell differences
-- **Recommended**: WSL2 for full compatibility
-- **Test Scripts**: Available in `/scripts/test-platform.ps1`
 
 ## 🚨 Known Platform Issues
 
@@ -311,9 +279,9 @@ PYTHON_CMD:
 - **Status**: Should work out of the box
 
 ### Windows
-- **Potential Issue**: Docker Desktop requires WSL2
-- **Mitigation**: Clear installation instructions provided
-- **Status**: Expected to work with proper setup
+- **Status**: Not supported
+- **Alternative**: Use WSL2 with Ubuntu 22.04/24.04
+- **Recommendation**: Use a Linux VM or dual-boot for production use
 
 ## 📋 Platform Support Roadmap
 
@@ -323,10 +291,10 @@ PYTHON_CMD:
 - ✅ Command detection and fallbacks
 - ✅ Path handling abstraction
 
-### Phase 2: Enhanced Windows Support
-- 📋 PowerShell-native scripts for better Windows experience
-- 📋 Windows-specific optimization scripts
-- 📋 Automated Windows environment setup
+### Phase 2: Enhanced Linux Distribution Support
+- 📋 Additional testing on Fedora, openSUSE, Arch Linux
+- 📋 Distribution-specific installation guides
+- 📋 Automated dependency detection for more package managers
 
 ### Phase 3: CI/CD Platform Testing
 - 📋 GitHub Actions matrix testing (Linux/Windows/macOS)
@@ -362,7 +330,7 @@ docker build -f Dockerfile.unified -t medical-patients:unified .
 | Ubuntu 22.04 | 3.10.x | 3.11 | Optional |
 | Ubuntu 24.04 | 3.12.x | 3.11 | Required |
 | macOS | Varies | 3.11 | Recommended |
-| Windows/WSL2 | Varies | 3.11 | Recommended |
+| WSL2 (Unsupported) | Varies | 3.11 | Required |
 
 ## 🔗 Additional Resources
 
@@ -373,8 +341,8 @@ docker build -f Dockerfile.unified -t medical-patients:unified .
 
 ### Platform-Specific Guides
 - [Docker Desktop for Mac](https://docs.docker.com/desktop/mac/)
-- [Docker Desktop for Windows](https://docs.docker.com/desktop/windows/)
-- [WSL2 Installation Guide](https://docs.microsoft.com/en-us/windows/wsl/install)
+- [Docker Engine for Linux](https://docs.docker.com/engine/install/)
+- [Ubuntu 22.04 Setup Guide](https://ubuntu.com/tutorials/install-ubuntu-desktop)
 
 ### Ubuntu 24.04 Specific Resources
 - [PEP 668 - Externally Managed Environments](https://peps.python.org/pep-0668/)
@@ -383,9 +351,9 @@ docker build -f Dockerfile.unified -t medical-patients:unified .
 
 ### Troubleshooting
 For platform-specific issues, see:
-- **macOS**: `/docs/troubleshooting-macos.md`
-- **Linux**: `/docs/troubleshooting-linux.md`
-- **Windows**: `/docs/troubleshooting-windows.md`
+- **macOS**: See common Docker Desktop issues
+- **Linux**: Check distribution-specific package managers
+- **Ubuntu 24.04**: Ensure virtual environment is activated
 
 ---
 

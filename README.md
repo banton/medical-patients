@@ -141,9 +141,11 @@ For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Getting Started
 
-The application uses [Task](https://taskfile.dev/) for cross-platform development workflows, providing a consistent experience across Windows, macOS, and Linux.
+The application uses [Task](https://taskfile.dev/) for cross-platform development workflows, providing a consistent experience across macOS and Linux.
 
 ### Prerequisites
+
+**Supported Operating Systems**: Linux (Ubuntu 22.04+, Debian 11+, RHEL 8+) and macOS (11.0+)
 
 -   [Git](https://git-scm.com/downloads) - Version control
 -   [Docker Desktop](https://www.docker.com/products/docker-desktop/) - Container runtime (or Docker Engine + Docker Compose)
@@ -160,7 +162,7 @@ For a quick test without Docker or Task:
 git clone https://github.com/banton/medical-patients.git
 cd medical-patients
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 
 # Run the application
@@ -186,10 +188,6 @@ Note: This runs without database persistence. For full functionality, follow the
     
     # Linux
     sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-    
-    # Windows (PowerShell)
-    irm https://get.scoop.sh | iex
-    scoop install task
     ```
 
 3.  **Run the setup wizard** (first time only):
@@ -272,7 +270,7 @@ docker compose up -d db redis
 
 # 2. Install Python dependencies
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 
 # 3. Run database migrations

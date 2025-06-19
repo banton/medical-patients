@@ -26,22 +26,38 @@ print_step() {
 
 echo "🎉 Welcome to Medical Patients Generator Setup!"
 echo "=============================================="
+echo "Supported platforms: Linux (Ubuntu 22.04+) and macOS"
 echo ""
 
 # Detect OS and version
 OS_NAME=""
 OS_VERSION=""
 IS_UBUNTU_24_04=false
+IS_UBUNTU_22_04=false
+IS_MACOS=false
 
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS_NAME="$ID"
     OS_VERSION="$VERSION_ID"
     
-    if [[ "$ID" == "ubuntu" ]] && [[ "$VERSION_ID" == "24.04" ]]; then
-        IS_UBUNTU_24_04=true
-        print_warning "Ubuntu 24.04 LTS detected - will use virtual environment for Python packages"
+    if [[ "$ID" == "ubuntu" ]]; then
+        if [[ "$VERSION_ID" == "24.04" ]]; then
+            IS_UBUNTU_24_04=true
+            print_warning "Ubuntu 24.04 LTS detected - will use virtual environment for Python packages"
+        elif [[ "$VERSION_ID" == "22.04" ]]; then
+            IS_UBUNTU_22_04=true
+            print_info "Ubuntu 22.04 LTS detected - fully compatible"
+        fi
     fi
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    OS_NAME="macos"
+    OS_VERSION=$(sw_vers -productVersion)
+    IS_MACOS=true
+    print_info "macOS $OS_VERSION detected"
+else
+    print_warning "Unknown operating system detected"
+    print_warning "This script is tested on Linux (Ubuntu 22.04+) and macOS"
 fi
 
 # Check Task runner first
@@ -237,8 +253,13 @@ if [ -n "$PYTHON" ]; then
     echo ""
     print_step "Setting up Python environment..."
     
-    # For Ubuntu 24.04 or if .venv doesn't exist, we need to create it
-    if [[ "$IS_UBUNTU_24_04" == true ]] || [ ! -d ".venv" ]; then
+    # Create virtual environment (required for Ubuntu 24.04, recommended for all)
+    if [[ "$IS_UBUNTU_22_04" == true ]] && [ ! -d ".venv" ]; then
+        print_info "Ubuntu 22.04 supports both virtual environments and system packages"
+        print_info "Creating virtual environment (recommended for isolation)..."
+        $PYTHON -m venv .venv
+        print_info "Created .venv"
+    elif [[ "$IS_UBUNTU_24_04" == true ]] || [ ! -d ".venv" ]; then
         if [ -d ".venv" ]; then
             print_warning "Virtual environment exists but may need updates"
         else
