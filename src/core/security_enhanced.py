@@ -207,7 +207,7 @@ def create_demo_api_key() -> APIKey:
 
 
 async def verify_api_key_context(
-    api_key: str = Header(..., alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
+    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
 ) -> APIKeyContext:
     """
     Enhanced API key verification with context and legacy support.
@@ -222,6 +222,14 @@ async def verify_api_key_context(
     Raises:
         HTTPException: If key is invalid, expired, or inactive
     """
+    # Check if API key is provided
+    if not api_key:
+        raise HTTPException(
+            status_code=401, 
+            detail="Missing API Key", 
+            headers={"X-Key-Status": "missing", "WWW-Authenticate": "ApiKey"}
+        )
+    
     # Try to get cached limits first
     # TODO: Implement cached limits usage in future optimization
     # cached_limits = await get_cached_api_key_limits(api_key)
@@ -380,7 +388,7 @@ def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
 # Backward compatibility: Provide the old verify_api_key signature
 # that returns a string instead of APIKeyContext
 async def verify_api_key(
-    api_key: str = Header(..., alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
+    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
 ) -> str:
     """
     Backward-compatible API key verification that returns a string.
