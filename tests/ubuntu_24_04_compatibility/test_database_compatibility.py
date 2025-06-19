@@ -50,7 +50,11 @@ class TestPostgreSQL16Compatibility:
                 # Check for specific 16.2 or newer
                 cur.execute("SHOW server_version;")
                 server_version = cur.fetchone()[0]
-                major, minor = map(int, server_version.split(".")[:2])
+                
+                # Handle different version formats (e.g., "16.2" or "16.2 (Debian 16.2-1)")
+                version_parts = server_version.split()[0].split(".")
+                major = int(version_parts[0])
+                minor = int(version_parts[1]) if len(version_parts) > 1 else 0
 
                 assert major == 16, f"Expected major version 16, got {major}"
                 assert minor >= 2, f"Expected minor version >= 2, got {minor}"
