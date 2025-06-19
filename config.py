@@ -46,7 +46,7 @@ class Settings:
     @classmethod
     def validate(cls) -> None:
         """Validate critical settings."""
-        if cls.API_KEY == "your_secret_api_key_here":
+        if cls.API_KEY == "CHANGE_ME_IN_PRODUCTION_DO_NOT_USE_DEFAULT":
             import warnings
 
             warnings.warn(
