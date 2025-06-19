@@ -2,7 +2,7 @@
 import json  # Added for loading JSON
 from typing import Any, Dict, List, Optional
 
-from .database import ConfigurationRepository, Database
+from .repository import ConfigurationRepository
 from .schemas_config import (  # Added FrontsConfiguration, FrontDefinition
     ConfigurationTemplateDB,
     FrontDefinition,
@@ -23,16 +23,19 @@ class ConfigurationManager:
 
     def __init__(
         self,
-        database_instance: Optional[Database] = None,
+        database_instance=None,
         static_fronts_config_path: str = "patient_generator/fronts_config.json",
     ):
         """
         Initializes the ConfigurationManager.
-        If database_instance is not provided, it gets a default instance.
+        If database_instance is not provided, it gets an enhanced instance.
         Loads the static fronts configuration.
         """
-        db = database_instance or Database.get_instance()
-        self._repository = ConfigurationRepository(db)
+        # Import here to avoid circular imports
+        if database_instance is None:
+            from src.infrastructure.database_adapter import get_enhanced_database
+            database_instance = get_enhanced_database()
+        self._repository = ConfigurationRepository(database_instance)
         self._load_static_fronts_config(static_fronts_config_path)
         # Note: Consider if loading a default DB config immediately is desired,
         # or if it should wait for an explicit load_configuration call.

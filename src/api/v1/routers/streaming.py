@@ -14,7 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer
 
-from patient_generator.database import ConfigurationRepository, Database
+from patient_generator.repository import ConfigurationRepository
+from src.infrastructure.database_adapter import get_enhanced_database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.services import get_patient_generation_service
 from src.api.v1.models.responses import StreamingPatientResponse
@@ -58,7 +59,7 @@ async def generate_patients_stream(
     yield b'{\n  "patients": [\n'
 
     # Get configuration from database
-    db_instance = Database.get_instance()
+    db_instance = get_enhanced_database()
     config_repo = ConfigurationRepository(db_instance)
 
     config_template = config_repo.get_configuration(config_id)
@@ -186,7 +187,7 @@ async def stream_patients(
             )
 
         # Get configuration to determine patient count
-        db_instance = Database.get_instance()
+        db_instance = get_enhanced_database()
         config_repo = ConfigurationRepository(db_instance)
 
         config_template = config_repo.get_configuration(configuration_id)
@@ -281,7 +282,7 @@ async def stream_patients_with_config(
             )
 
         # Create temporary configuration
-        db_instance = Database.get_instance()
+        db_instance = get_enhanced_database()
         config_repo = ConfigurationRepository(db_instance)
 
         # Extract configuration data

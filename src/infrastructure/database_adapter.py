@@ -9,11 +9,10 @@ from typing import Any, Dict, List, Literal, Optional, Union, overload
 import psycopg2
 import psycopg2.extras
 
-from patient_generator.database import Database as LegacyDatabase
 from src.infrastructure.database_pool import get_pool
 
 
-class EnhancedDatabase(LegacyDatabase):
+class EnhancedDatabase:
     """
     Enhanced database class that uses the new connection pool.
 

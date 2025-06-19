@@ -2,14 +2,14 @@
 Database dependencies for API endpoints.
 """
 
-from patient_generator.database import Database
+from src.infrastructure.database_adapter import get_enhanced_database
 
 
-def get_database() -> Database:
+def get_database():
     """
-    Get database instance.
+    Get enhanced database instance.
 
     Returns:
-        Database instance
+        Enhanced database instance
     """
-    return Database()
+    return get_enhanced_database()

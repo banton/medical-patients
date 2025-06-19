@@ -10,7 +10,8 @@ from slowapi.util import get_remote_address
 
 from config import get_settings
 from patient_generator.config_manager import ConfigurationManager
-from patient_generator.database import ConfigurationRepository, Database
+from patient_generator.repository import ConfigurationRepository
+from src.infrastructure.database_adapter import EnhancedDatabase
 from patient_generator.nationality_data import NationalityDataProvider
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition
 from src.api.v1.dependencies.database import get_database
@@ -27,7 +28,7 @@ limiter = Limiter(key_func=get_remote_address)
 @router.post("/", response_model=ConfigurationTemplateDB, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 async def create_configuration(
-    request: Request, config: ConfigurationTemplateCreate, db: Database = Depends(get_database)
+    request: Request, config: ConfigurationTemplateCreate, db: EnhancedDatabase = Depends(get_database)
 ) -> ConfigurationTemplateDB:
     """Create a new configuration template."""
     repo = ConfigurationRepository(db)
@@ -36,7 +37,7 @@ async def create_configuration(
 
 @router.get("/", response_model=List[ConfigurationTemplateDB])
 @limiter.limit("30/minute")
-async def list_configurations(request: Request, db: Database = Depends(get_database)) -> List[ConfigurationTemplateDB]:
+async def list_configurations(request: Request, db: EnhancedDatabase = Depends(get_database)) -> List[ConfigurationTemplateDB]:
     """List all configuration templates."""
     repo = ConfigurationRepository(db)
     return repo.list_configurations()
@@ -45,7 +46,7 @@ async def list_configurations(request: Request, db: Database = Depends(get_datab
 @router.get("/{config_id}", response_model=ConfigurationTemplateDB)
 @limiter.limit("30/minute")
 async def get_configuration(
-    request: Request, config_id: str, db: Database = Depends(get_database)
+    request: Request, config_id: str, db: EnhancedDatabase = Depends(get_database)
 ) -> ConfigurationTemplateDB:
     """Get a specific configuration template, checking cache first."""
     # Try to get from cache first
@@ -69,7 +70,7 @@ async def get_configuration(
 @router.put("/{config_id}", response_model=ConfigurationTemplateDB)
 @limiter.limit("10/minute")
 async def update_configuration(
-    request: Request, config_id: str, config_update: ConfigurationTemplateCreate, db: Database = Depends(get_database)
+    request: Request, config_id: str, config_update: ConfigurationTemplateCreate, db: EnhancedDatabase = Depends(get_database)
 ) -> ConfigurationTemplateDB:
     """Update a configuration template and invalidate cache."""
     repo = ConfigurationRepository(db)
@@ -95,7 +96,7 @@ async def update_configuration(
 
 @router.delete("/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("10/minute")
-async def delete_configuration(request: Request, config_id: str, db: Database = Depends(get_database)) -> None:
+async def delete_configuration(request: Request, config_id: str, db: EnhancedDatabase = Depends(get_database)) -> None:
     """Delete a configuration template and invalidate cache."""
     repo = ConfigurationRepository(db)
 
@@ -183,7 +184,7 @@ async def get_facility_types() -> List[Dict[str, str]]:
 
 
 @reference_router.get("/static-fronts/")
-async def get_static_front_definitions(db: Database = Depends(get_database)) -> Optional[List[FrontDefinition]]:
+async def get_static_front_definitions(db: EnhancedDatabase = Depends(get_database)) -> Optional[List[FrontDefinition]]:
     """
     Get static front definitions from fronts_config.json.
     Returns None if file not found or invalid.
