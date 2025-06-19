@@ -137,7 +137,7 @@ The application features a clean, domain-driven architecture with clear separati
 7. **Python SDK** (`patient_generator_sdk.py`):
    - Client library for programmatic API interaction
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
 ## Getting Started
 
@@ -291,7 +291,7 @@ docker run -d \
 - `REDIS_URL`: Redis connection (optional, for caching)
 - `ENVIRONMENT`: Set to "production" for production deployments
 
-For advanced deployment configurations including Traefik integration and multi-container setups, see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
+For advanced deployment configurations, refer to the docker-compose files in the repository.
 
 ### Testing
 
@@ -556,7 +556,7 @@ military-patient-generator/
 └── package.json                        # Frontend dependencies
 ```
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
 ## React Timeline Viewer
 
