@@ -13,7 +13,8 @@ from src.main import app
 
 # Create test client
 client = TestClient(app)
-API_KEY = "your_secret_api_key_here"
+# Use the demo API key which is always available
+API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 HEADERS = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
 
 pytestmark = [pytest.mark.integration]

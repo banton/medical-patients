@@ -10,7 +10,8 @@ from fastapi.testclient import TestClient
 from src.main import app
 
 client = TestClient(app)
-API_KEY = "your_secret_api_key_here"
+# Use the demo API key which is always available
+API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 
 pytestmark = [pytest.mark.integration]
 
