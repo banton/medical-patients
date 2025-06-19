@@ -408,7 +408,7 @@ class TestSecurityConstants:
     def test_legacy_api_key_environment(self):
         """Test legacy API key from environment."""
         # Note: This tests the default value when env var is not set
-        assert LEGACY_API_KEY == "your-api-key-here"
+        assert LEGACY_API_KEY == "CHANGE_ME_IN_PRODUCTION_DO_NOT_USE_DEFAULT"
 
     def test_demo_key_security_properties(self):
         """Test that demo key has secure properties."""

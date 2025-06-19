@@ -12,7 +12,7 @@ class Settings:
     """Application settings loaded from environment variables."""
 
     # API Security
-    API_KEY: str = os.getenv("API_KEY", "your_secret_api_key_here")
+    API_KEY: str = os.getenv("API_KEY", "CHANGE_ME_IN_PRODUCTION_DO_NOT_USE_DEFAULT")
 
     # Database
     DATABASE_URL: str = os.getenv(
