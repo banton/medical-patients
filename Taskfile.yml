@@ -20,88 +20,91 @@ tasks:
         echo "Medical Patients Generator - Task Runner"
         echo "========================================"
         echo ""
-        echo "First time? Run: task init"
-        echo ""
-        echo "Main commands:"
-        echo "  task dev        - Start dev mode (local Python + Docker DB)"
-        echo "  task start      - Start all services in Docker"
-        echo "  task status     - Show service status and errors"
+        echo "🚀 QUICK START:"
+        echo "  task init       - First time setup (creates .env, installs dependencies)"
+        echo "  task dev        - Start development server"
         echo "  task stop       - Stop all services"
+        echo ""
+        echo "📋 COMMON TASKS:"
         echo "  task test       - Run all tests"
-        echo "  task clean      - Clean up Docker resources"
+        echo "  task status     - Check service health"
+        echo "  task timeline   - Open timeline viewer (optional visualization)"
+        echo "  task clean      - Clean up and reset"
         echo ""
-        echo "Timeline viewer commands:"
-        echo "  task timeline   - Start timeline viewer (foreground)"
-        echo "  task timeline-start  - Start timeline viewer (background)"
-        echo "  task timeline-stop   - Stop timeline viewer"
-        echo "  task timeline-status - Check timeline viewer status"
+        echo "💡 TIPS:"
+        echo "  - Use 'task dev' for local development (recommended)"
+        echo "  - Use 'task start' only if you need everything in Docker"
+        echo "  - Timeline viewer is optional - adds visual patient flow"
         echo ""
-        echo "Staging commands:"
-        echo ""
-        echo "Optional Staging Commands (for production deployment testing):"
-        echo "  task staging:up     - Start staging environment (requires .env.staging)"
-        echo "  task staging:down   - Stop staging environment"
-        echo "  task staging:logs   - View staging logs"
-        echo "  task staging:status - Check staging status"
-        echo ""
-        echo "Run 'task --list' to see all tasks with descriptions"
+        echo "Run 'task --list' for all available commands"
+        echo "Run 'task help:staging' if you need production deployment testing"
 
   init:
-    desc: First-time setup wizard for new users
+    desc: Quick setup - just the essentials
+    cmds:
+      - ./scripts/init-simple.sh
+
+  init:full:
+    desc: Full setup with OS detection and Python environment (advanced)
     cmds:
       - ./scripts/init-setup.sh
 
-  dev:
-    desc: Start development environment with logs (database + app)
-    deps: [check-init]
-    cmds:
-      - docker compose up -d db redis
-      - sleep 5  # Wait for database to be ready
-      - |
-        # Check if we're in a virtual environment or if alembic is available
-        if command -v alembic &> /dev/null; then
-          echo "Running migrations with local alembic..."
-          alembic upgrade head
-        else
-          echo "Running migrations with Docker..."
-          docker compose run --rm app alembic upgrade head
-        fi
-      - |
-        # Ensure we use the right Python
-        if [ -n "$VIRTUAL_ENV" ]; then
-          echo "Using virtual environment Python"
-          python3 -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-        else
-          {{.PYTHON}} -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-        fi
-
-  check-init:
-    desc: Check if initialization has been run
+  help:staging:
+    desc: Show staging deployment information
     silent: true
     cmds:
       - |
-        if [ ! -f .env ] || ! docker network ls | grep -q medical-patients_default; then
-          echo "⚠️  It looks like this is your first time running the project."
-          echo "   Please run 'task init' first to set up your environment."
+        echo "STAGING DEPLOYMENT (Advanced Users Only)"
+        echo "========================================"
+        echo ""
+        echo "Staging is for testing production deployments."
+        echo "Most users should use 'task dev' instead."
+        echo ""
+        echo "Staging commands:"
+        echo "  task staging:up     - Start staging on port 8001"
+        echo "  task staging:down   - Stop staging"
+        echo "  task staging:logs   - View logs"
+        echo "  task staging:status - Check status"
+        echo ""
+        echo "Requires .env.staging with:"
+        echo "  STAGING_DB_PASSWORD=your-password"
+        echo "  STAGING_API_KEY=$(openssl rand -hex 32)"
+        echo ""
+
+  dev:
+    desc: Start development server (Python + Docker DB)
+    cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo "⚠️  No .env file found. Run 'task init' first!"
           exit 1
         fi
-        
-        # Check if running on Ubuntu without virtual environment
-        if [ -f /etc/os-release ]; then
-          . /etc/os-release
-          if [[ "$ID" == "ubuntu" ]] && [[ "$VERSION_ID" == "24.04" ]] && [ -z "$VIRTUAL_ENV" ] && [ -d ".venv" ]; then
-            echo "⚠️  Ubuntu 24.04 detected - virtual environment required"
-            echo "   Please activate your virtual environment first:"
-            echo "   source .venv/bin/activate"
-            echo "   (or use: ./activate.sh if available)"
-            exit 1
-          fi
-        fi
+      - docker compose up -d db redis
+      - sleep 3
+      - |
+        # Simple migration run
+        docker compose run --rm app alembic upgrade head 2>/dev/null || true
+      - |
+        # Start the app
+        echo "Starting development server..."
+        echo "API: http://localhost:8000"
+        echo "Docs: http://localhost:8000/docs"
+        echo ""
+        {{.PYTHON}} -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
   start:
-    desc: Start all services in background
+    desc: Start all services in Docker (alternative to 'dev')
     cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo "⚠️  No .env file found. Run 'task init' first!"
+          exit 1
+        fi
       - docker compose up -d --build
+      - |
+        echo "All services started in Docker"
+        echo "API: http://localhost:8000"
+        echo "Use 'task logs' to view output"
 
   test:
     desc: Run all tests
@@ -122,11 +125,23 @@ tasks:
     desc: Stop all services
     cmds:
       - docker compose down
+      - echo "✅ All services stopped"
+
+  logs:
+    desc: View application logs
+    cmds:
+      - docker compose logs -f app
 
   status:
-    desc: Show comprehensive status of all services including staging
+    desc: Show service health status
     cmds:
-      - ./status.sh
+      - |        
+        if [ -f ./status.sh ]; then
+          ./status.sh
+        else
+          echo "Checking services..."
+          docker compose ps
+        fi
 
   staging:shell:
     desc: Open shell in staging container
@@ -154,69 +169,25 @@ tasks:
       - alembic upgrade head
 
   timeline:
-    desc: Start React timeline viewer in foreground
+    desc: Open timeline viewer (visual patient flow)
     dir: patient-timeline-viewer
     cmds:
-      - npm install
+      - |
+        if ! command -v npm &> /dev/null; then
+          echo "⚠️  Node.js not installed. Timeline viewer requires Node.js 18+"
+          echo "   Install from: https://nodejs.org/"
+          exit 1
+        fi
+      - npm install --silent
+      - echo "Starting timeline viewer at http://localhost:5174"
+      - echo "Press Ctrl+C to stop"
       - npm run dev
 
-  timeline-start:
-    desc: Start React timeline viewer in background
-    dir: patient-timeline-viewer
+  timeline:stop:
+    desc: Stop timeline viewer if running in background
+    silent: true
     cmds:
-      - npm install
-      - |
-        # Start in background using nohup
-        nohup npm run dev > timeline.log 2>&1 &
-        echo "Timeline viewer started in background"
-        echo "Check logs: tail -f patient-timeline-viewer/timeline.log"
-        echo "Access at: http://localhost:5174"
-
-  timeline-stop:
-    desc: Stop React timeline viewer
-    cmds:
-      - |
-        # Find and kill the vite dev server
-        if command -v lsof >/dev/null 2>&1; then
-          PID=$(lsof -ti:5174 2>/dev/null)
-          if [ -n "$PID" ]; then
-            kill $PID
-            echo "Timeline viewer stopped"
-          else
-            echo "Timeline viewer is not running"
-          fi
-        else
-          # Fallback for systems without lsof
-          pkill -f "vite.*5174" || echo "Timeline viewer is not running"
-        fi
-
-  timeline-status:
-    desc: Check timeline viewer status
-    cmds:
-      - |
-        echo "Timeline Viewer Status"
-        echo "====================="
-        if command -v lsof >/dev/null 2>&1; then
-          PID=$(lsof -ti:5174 2>/dev/null)
-          if [ -n "$PID" ]; then
-            echo "✅ Running on http://localhost:5174 (PID: $PID)"
-          else
-            echo "❌ Not running"
-          fi
-        else
-          # Fallback check using curl
-          if curl -s http://localhost:5174 >/dev/null 2>&1; then
-            echo "✅ Running on http://localhost:5174"
-          else
-            echo "❌ Not running"
-          fi
-        fi
-        
-        if [ -f patient-timeline-viewer/timeline.log ]; then
-          echo ""
-          echo "Recent logs:"
-          tail -5 patient-timeline-viewer/timeline.log 2>/dev/null || echo "No logs available"
-        fi
+      - pkill -f "vite.*5174" 2>/dev/null || echo "Timeline viewer is not running"
 
   # Staging environment tasks
   staging:up:

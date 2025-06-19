@@ -153,112 +153,76 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
 -   [Python 3.8+](https://www.python.org/downloads/) - For local development (optional)
 -   [Node.js 18+](https://nodejs.org/) - For timeline viewer (optional)
 
-### Quick Start (Without Docker)
+### Quick Start
 
-For a quick test without Docker or Task:
+The easiest way to get started:
 
 ```bash
-# Clone and setup
+# 1. Clone the repository
 git clone https://github.com/banton/medical-patients.git
 cd medical-patients
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
 
-# Run the application
-python -m src.main
+# 2. Install Task (if needed)
+# macOS: brew install go-task
+# Linux: curl -sL https://taskfile.dev/install.sh | sh -s -- -b /usr/local/bin
 
-# Access at http://localhost:8000
+# 3. Run setup (creates .env, starts database)
+task init
+
+# 4. Start development server
+task dev
+
+# 5. Open http://localhost:8000
 ```
 
-Note: This runs without database persistence. For full functionality, follow the complete setup below.
+That's it! The application is now running.
 
-### Quick Start (With Docker)
+### Alternative: Docker-Only Setup
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/banton/medical-patients.git
-    cd medical-patients
-    ```
-
-2.  **Install Task** (if not already installed):
-    ```bash
-    # macOS
-    brew install go-task
-    
-    # Linux
-    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-    ```
-
-3.  **Run the setup wizard** (first time only):
-    ```bash
-    task init       # Guided setup that checks prerequisites and configures environment
-    ```
-    
-    **For Ubuntu 24.04 LTS users**: Due to PEP 668 (externally-managed-environment), use the dedicated setup script:
-    ```bash
-    chmod +x scripts/setup-ubuntu-24.sh
-    ./scripts/setup-ubuntu-24.sh
-    ```
-
-4.  **Start development environment**:
-    ```bash
-    task dev        # Starts database, runs migrations, and starts app with live reload
-    ```
-    
-    **Ubuntu 24.04 users**: Always activate the virtual environment first:
-    ```bash
-    source .venv/bin/activate
-    # or use the helper script: ./activate.sh
-    task dev
-    ```
-    
-    Note: The `task init` command will check all prerequisites, create necessary files, pull Docker images, and set up your development environment. After initial setup, just use `task dev` to start working.
-
-5.  **Access the application**:
-    *   Main Application: `http://localhost:8000`
-    *   API Documentation: `http://localhost:8000/docs`
-    *   Alternative API Docs: `http://localhost:8000/redoc`
-
-6.  **Start the timeline viewer** (optional):
-    ```bash
-    task timeline    # Starts React timeline viewer in development mode
-    ```
-    *   Timeline Viewer: `http://localhost:5174`
-
-### Development Commands
+If you prefer everything in Docker:
 
 ```bash
-# Setup & Core Commands
-task init           # First-time setup wizard (checks prerequisites, configures environment)
-task dev            # Start development environment (runs migrations + hot reload)
-task start          # Start all services in Docker (runs migrations automatically)
-task stop           # Stop all background services
-task status         # Show service status and logs
-task test           # Run all tests
-task clean          # Clean up Docker resources
-
-# Database Commands
-task db-migrate     # Run database migrations
-task db-reset       # Reset database (WARNING: destroys all data)
-
-# Timeline Viewer Commands
-task timeline       # Start timeline viewer (foreground)
-task timeline-start # Start timeline viewer in background
-task timeline-stop  # Stop background timeline viewer
-task timeline-status# Check timeline viewer status
-
-# Staging Commands (Optional - for production deployment testing)
-# Note: Staging is only needed if you plan to deploy to a production server
-# Most users can skip these commands and use 'task dev' for local development
-task staging:up     # Start staging environment on port 8001 (requires .env.staging)
-task staging:down   # Stop staging environment
-task staging:logs   # View staging logs
-task staging:status # Check staging environment status
-
-# Utility Commands
-task --list         # Show all available commands
+task init       # Setup environment
+task start      # Run everything in Docker
+task logs       # View logs
 ```
+
+### Advanced Setup Options
+
+For Ubuntu 24.04 or if you need Python virtual environments:
+```bash
+task init:full  # Full setup with OS detection and Python environment
+```
+
+**Note**: Ubuntu 24.04 users may need to activate the virtual environment first:
+```bash
+source .venv/bin/activate
+task dev
+```
+
+### Common Commands
+
+```bash
+# Essential Commands
+task            # Show available commands
+task init       # First-time setup
+task dev        # Start development server
+task stop       # Stop all services
+task test       # Run tests
+
+# Additional Commands  
+task status     # Check service health
+task logs       # View application logs
+task timeline   # Open timeline viewer (optional)
+task clean      # Reset everything
+
+# Advanced Commands
+task db-reset   # Reset database (destroys data!)
+task init:full  # Full setup with Python environment
+task help:staging # Learn about staging deployment
+```
+
+💡 **Tip**: Most developers only need `task init` and `task dev`. Everything else is optional.
 
 ### Manual Setup (Advanced)
 
@@ -280,49 +244,24 @@ alembic upgrade head
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Ubuntu 24.04 LTS Specific Instructions
+### Platform-Specific Notes
 
-Ubuntu 24.04 LTS enforces PEP 668 (externally-managed-environment) which requires using virtual environments for Python packages. 
-
-#### System Dependencies
-
-Before running the application on Ubuntu 24.04, install required system packages:
+#### Ubuntu 24.04 LTS
+Ubuntu 24.04 enforces PEP 668 which requires virtual environments. The `task init:full` command handles this automatically. If you need manual setup:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y python3-full python3-venv python3-dev libpq-dev build-essential
+sudo apt-get install -y python3-venv python3-dev libpq-dev build-essential
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-#### Common Issues and Solutions
+#### Common Issues
 
-#### Missing Alembic or Other Python Packages
-
-If you encounter "command not found" errors for Alembic or other Python tools:
-
-1. **Always use a virtual environment**:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. **For missing system dependencies**:
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y python3-dev libpq-dev build-essential
-   ```
-
-3. **Use the dedicated Ubuntu setup script**:
-   ```bash
-   chmod +x scripts/setup-ubuntu-24.sh
-   ./scripts/setup-ubuntu-24.sh
-   ```
-
-#### Common Troubleshooting
-
-- **"error: externally-managed-environment"**: Always use a virtual environment on Ubuntu 24.04
+- **"externally-managed-environment" error**: Use `task init:full` or create a virtual environment manually
 - **psycopg2 installation fails**: Install `libpq-dev` with `sudo apt-get install libpq-dev`
-- **Permission denied errors**: Ensure your user is in the docker group: `sudo usermod -aG docker $USER`
+- **Permission denied errors**: Add user to docker group: `sudo usermod -aG docker $USER` (then logout/login)
 - **Port already in use**: Check with `sudo lsof -i :8000` and stop conflicting services
 
 ## Production Deployment

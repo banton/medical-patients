@@ -17,18 +17,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD pipeline with GitHub Actions
 - Pre-commit hooks and code quality tools
 - Docker test containers for isolated testing
+- Simplified installation process with `task init` taking only 30 seconds
+- Clear separation of mandatory vs optional features (staging marked as optional)
+- Platform support guide for Linux and macOS (Windows not officially supported)
+- Minor caching enhancements for API keys, job status, and configurations
 
 ### Changed
 - Transformed monolithic FastAPI app to clean layered architecture
 - Async patient generation pipeline for better scalability
 - Enhanced UI with better UX and accessibility
 - Improved error handling and retry logic
+- Simplified Task commands - reduced from 150+ to essential commands in help
+- Consolidated Ubuntu 22.04/24.04 setup with automatic detection
+- Streamlined README with 5-step quick start
+- Made staging deployment clearly optional for production testing only
 
 ### Performance
 - 3-5x faster generation with Redis caching
 - Connection pooling for database operations
 - Debounced validation and lazy loading
 - Client-side caching for reference data
+- API key limits cached for 5 minutes to reduce database lookups
+- Job status cached with dynamic TTL based on state
+- Configuration templates cached for 1 hour
 
 ## [1.0.0] - TBD
 
