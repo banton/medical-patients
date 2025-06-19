@@ -323,7 +323,7 @@ async def verify_api_key_optional(
         return None
 
     try:
-        return await verify_api_key(api_key, db)
+        return await verify_api_key_context(api_key, db)
     except HTTPException:
         # For optional verification, invalid keys are treated as no key
         return None
