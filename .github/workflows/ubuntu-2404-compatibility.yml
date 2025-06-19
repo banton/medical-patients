@@ -208,7 +208,7 @@ jobs:
     
     - name: Build Docker Image
       run: |
-        docker build -f Dockerfile.ubuntu24 -t medical-patients:ubuntu24-test .
+        docker build -f Dockerfile.ubuntu2404 -t medical-patients:ubuntu24-test .
     
     - name: Run Container Tests
       run: |

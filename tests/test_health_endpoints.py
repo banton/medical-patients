@@ -121,11 +121,17 @@ class TestHealthEndpoints:
         # Mock high disk usage (warning threshold)
         mock_disk = Mock()
         mock_disk.percent = 92.0  # Over 90% triggers warning
+        mock_disk.total = 100 * 1024**3
+        mock_disk.used = 92 * 1024**3
+        mock_disk.free = 8 * 1024**3
         mock_psutil.disk_usage.return_value = mock_disk
 
         # Mock high memory usage (warning threshold)
         mock_memory = Mock()
         mock_memory.percent = 88.0  # Over 85% triggers warning
+        mock_memory.total = 16 * 1024**3
+        mock_memory.available = 2 * 1024**3
+        mock_memory.used = 14 * 1024**3
         mock_psutil.virtual_memory.return_value = mock_memory
 
         # Mock database is healthy
@@ -140,6 +146,7 @@ class TestHealthEndpoints:
 
         response = client.get("/api/v1/health")
 
+        # With warnings, status should still be 200 (but with warning status in response)
         assert response.status_code == 200
         data = response.json()
 
