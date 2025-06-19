@@ -197,3 +197,39 @@ class DeleteResponse(BaseModel):
                 "timestamp": "2024-01-15T10:30:00Z",
             }
         }
+
+
+class StreamingPatientResponse(BaseModel):
+    """Response model for streaming patient generation endpoints.
+
+    Note: This is used for OpenAPI documentation only. The actual response
+    is a streaming JSON response.
+    """
+
+    patients: List[Dict[str, Any]] = Field(
+        ...,
+        description="Array of patient data objects streamed incrementally"
+    )
+    total_patients: int = Field(..., description="Total number of patients generated")
+    error: Optional[str] = Field(None, description="Error message if generation failed")
+    patients_generated: Optional[int] = Field(
+        None,
+        description="Number of patients generated before error (only present on error)"
+    )
+
+    class Config:
+        """Pydantic configuration."""
+
+        schema_extra = {
+            "example": {
+                "patients": [
+                    {
+                        "patient_id": "NATO-BEL-12345",
+                        "name": "John Doe",
+                        "injury_type": "Battle Injury",
+                        "timeline": []
+                    }
+                ],
+                "total_patients": 100
+            }
+        }

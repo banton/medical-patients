@@ -43,3 +43,7 @@ class StorageError(PatientGeneratorException):
 
 class InvalidOperationError(PatientGeneratorException):
     """Raised when an invalid operation is attempted."""
+
+
+class ResourceLimitExceeded(PatientGeneratorException):
+    """Raised when a job exceeds resource limits."""

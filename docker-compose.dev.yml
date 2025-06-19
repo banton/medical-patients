@@ -33,9 +33,12 @@ services:
       retries: 3
       start_period: 15s
     restart: "on-failure"
-    # For a general docker-compose.yml, --reload might be removed for production-like behavior
-    # Keeping it for now to match the provided content, assuming it's a dev default.
-    command: uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+    # Run migrations before starting the app
+    command: >
+      sh -c "
+      alembic upgrade head &&
+      uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+      "
 
   db:
     image: postgres:15-alpine

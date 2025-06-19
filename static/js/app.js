@@ -443,6 +443,7 @@ class PatientGeneratorApp {
             this.startProgressSimulation();
 
             // Start generation
+            // The API expects configuration at the root level
             const response = await this.apiClient.generatePatients({
                 configuration,
                 output_formats: ['json', 'csv']

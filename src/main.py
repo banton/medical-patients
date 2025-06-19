@@ -17,7 +17,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from config import get_settings
-from src.api.v1.routers import configurations, downloads, generation, jobs, visualizations
+from src.api.v1.middleware.metrics import MetricsMiddleware
+from src.api.v1.routers import configurations, downloads, generation, health, jobs, metrics, streaming, visualizations
 from src.core.cache import close_cache, get_cache_service, initialize_cache
 from src.core.error_handlers import (
     http_exception_handler,
@@ -86,6 +87,9 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Add metrics middleware (EPIC-003)
+    app.add_middleware(MetricsMiddleware)
+
     # Include v1 API routers with consistent prefix
     v1_prefix = "/api/v1"
 
@@ -101,6 +105,15 @@ def create_app() -> FastAPI:
     app.include_router(visualizations.router, prefix=v1_prefix)
     # Timeline router temporarily disabled - requires additional JobService methods
     # app.include_router(timeline.router, prefix=v1_prefix)
+
+    # Health monitoring routers (EPIC-003)
+    app.include_router(health.router)
+
+    # Metrics endpoint (EPIC-003)
+    app.include_router(metrics.router)
+
+    # Streaming endpoint (EPIC-003 Phase 3)
+    app.include_router(streaming.router, prefix=v1_prefix)
 
     # Mount static files
     app.mount("/static", StaticFiles(directory="static"), name="static")

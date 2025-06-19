@@ -1,0 +1,403 @@
+name: Ubuntu 24.04 Compatibility Tests
+
+on:
+  push:
+    branches: [ main, develop, 'feature/ubuntu-24-compatibility' ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run weekly to catch any Ubuntu 24.04 updates
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+  POSTGRES_VERSION: '16'
+  
+jobs:
+  system-compatibility:
+    name: System Compatibility Tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: System Information
+      run: |
+        echo "=== System Information ==="
+        cat /etc/os-release
+        echo ""
+        echo "=== Python Version ==="
+        python3 --version
+        echo ""
+        echo "=== Available Python Packages ==="
+        dpkg -l | grep python3 | head -20
+    
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libpq-dev \
+          libssl-dev \
+          libffi-dev \
+          python3-dev \
+          python3-venv \
+          cargo \
+          pkg-config \
+          postgresql-client-16
+    
+    - name: Verify System Packages
+      run: |
+        echo "=== Checking critical packages ==="
+        dpkg -l build-essential libpq-dev libssl-dev libffi-dev cargo
+        echo ""
+        echo "=== OpenSSL Version ==="
+        openssl version
+        echo ""
+        echo "=== PostgreSQL Client Version ==="
+        psql --version
+
+  python-compatibility:
+    name: Python Environment Tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test PEP 668 Restrictions
+      run: |
+        echo "=== Testing PEP 668 (Externally Managed Environment) ==="
+        # Test if PEP 668 protection is active
+        if python3 -m pip install requests 2>&1 | grep -q "externally-managed-environment"; then
+          echo "✓ PEP 668 protection is active"
+          echo "  Users will need to use virtual environments"
+        else
+          echo "⚠️  PEP 668 protection not active in this environment"
+          echo "  This is common in CI environments"
+          echo "  Real Ubuntu 24.04 systems may have this protection enabled"
+        fi
+        # Don't fail - just report the status
+    
+    - name: Create Virtual Environment
+      run: |
+        echo "=== Creating Virtual Environment ==="
+        python3 -m venv .venv
+        echo "✓ Virtual environment created"
+        
+        echo "=== Activating and Testing ==="
+        source .venv/bin/activate
+        python --version
+        pip --version
+        
+        echo "=== Upgrading pip ==="
+        pip install --upgrade pip
+        pip --version
+    
+    - name: Install Dependencies
+      run: |
+        source .venv/bin/activate
+        pip install -r requirements.txt
+        
+        echo "=== Verify key packages ==="
+        python -c "import fastapi; print(f'FastAPI: {fastapi.__version__}')"
+        python -c "import psycopg2; print(f'psycopg2: {psycopg2.__version__}')"
+        python -c "import cryptography; print(f'cryptography: {cryptography.__version__}')"
+
+  database-compatibility:
+    name: PostgreSQL 16 Tests
+    runs-on: ubuntu-24.04
+    
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client-16 python3-venv
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+    
+    - name: Test PostgreSQL Connection
+      env:
+        PGPASSWORD: postgres
+      run: |
+        echo "=== PostgreSQL Version ==="
+        psql -h localhost -U postgres -d test_db -c "SELECT version();"
+        
+        echo "=== Test SSL Support ==="
+        psql -h localhost -U postgres -d test_db -c "SHOW ssl;"
+        
+        echo "=== Test JSON Functions ==="
+        psql -h localhost -U postgres -d test_db -c "SELECT '{\"test\": 123}'::jsonb;"
+    
+    - name: Run Database Tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+      run: |
+        source .venv/bin/activate
+        python -m pytest tests/ubuntu_24_04_compatibility/test_database_compatibility.py -v
+
+  docker-compatibility:
+    name: Docker Build Tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Create Ubuntu 24.04 Dockerfile
+      run: |
+        cat > Dockerfile.ubuntu24 << 'EOF'
+        FROM ubuntu:24.04
+        
+        # Install system dependencies
+        RUN apt-get update && \
+            DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            python3-full \
+            python3-venv \
+            build-essential \
+            libpq-dev \
+            libssl-dev \
+            libffi-dev \
+            cargo \
+            pkg-config \
+            && rm -rf /var/lib/apt/lists/*
+        
+        # Create app user
+        RUN useradd -m -s /bin/bash appuser
+        WORKDIR /app
+        
+        # Create and activate virtual environment
+        RUN python3 -m venv /opt/venv
+        ENV PATH="/opt/venv/bin:$PATH"
+        ENV VIRTUAL_ENV="/opt/venv"
+        
+        # Copy and install requirements
+        COPY requirements.txt .
+        RUN pip install --upgrade pip && \
+            pip install -r requirements.txt
+        
+        # Copy application
+        COPY --chown=appuser:appuser . .
+        
+        # Switch to non-root user
+        USER appuser
+        
+        # Run tests
+        CMD ["python", "-m", "pytest", "tests/ubuntu_24_04_compatibility/", "-v"]
+        EOF
+    
+    - name: Build Docker Image
+      run: |
+        docker build -f Dockerfile.ubuntu24 -t medical-patients:ubuntu24-test .
+    
+    - name: Run Container Tests
+      run: |
+        # Test container starts successfully
+        docker run --rm medical-patients:ubuntu24-test python --version
+        
+        # Test imports work
+        docker run --rm medical-patients:ubuntu24-test python -c "
+        import fastapi
+        import psycopg2
+        import cryptography
+        print('✓ All imports successful')
+        "
+
+  integration-tests:
+    name: Full Integration Tests
+    runs-on: ubuntu-24.04
+    needs: [system-compatibility, python-compatibility]
+    
+    services:
+      postgres:
+        image: postgres:16.2
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: medical_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential libpq-dev libssl-dev libffi-dev \
+          python3-venv cargo pkg-config
+        
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio pytest-cov
+    
+    - name: Run Migrations
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/medical_db
+      run: |
+        source .venv/bin/activate
+        alembic upgrade head
+    
+    - name: Run Application Tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/medical_db
+        REDIS_URL: redis://localhost:6379
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        source .venv/bin/activate
+        pytest tests/ -v --cov=src --cov=patient_generator \
+          --cov-report=term-missing --cov-report=xml
+    
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  security-scan:
+    name: Security Compatibility Scan
+    runs-on: ubuntu-24.04
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Check Python Security
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install safety bandit
+        
+        # Check for known vulnerabilities
+        pip install -r requirements.txt
+        safety check || true
+        
+        # Static security analysis
+        bandit -r src/ patient_generator/ -f json -o bandit-results.json || true
+
+  compatibility-report:
+    name: Generate Compatibility Report
+    runs-on: ubuntu-24.04
+    needs: [system-compatibility, python-compatibility, database-compatibility, docker-compatibility]
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Generate Report
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        pip install --upgrade pip
+        
+        cat > generate_report.py << 'EOF'
+        import json
+        import datetime
+        import os
+        
+        report = {
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "ubuntu_version": "24.04 LTS",
+            "python_version": "3.12.3",
+            "postgresql_version": "16.2",
+            "test_results": {
+                "system_compatibility": "${{ needs.system-compatibility.result }}",
+                "python_compatibility": "${{ needs.python-compatibility.result }}",
+                "database_compatibility": "${{ needs.database-compatibility.result }}",
+                "docker_compatibility": "${{ needs.docker-compatibility.result }}"
+            },
+            "recommendations": []
+        }
+        
+        # Add recommendations based on results
+        if any(result != "success" for result in report["test_results"].values()):
+            report["recommendations"].append("Address failing tests before migration")
+        else:
+            report["recommendations"].append("System is ready for Ubuntu 24.04 migration")
+        
+        print(json.dumps(report, indent=2))
+        
+        # Save report
+        with open("ubuntu-2404-compatibility-report.json", "w") as f:
+            json.dump(report, f, indent=2)
+        EOF
+        
+        python generate_report.py
+    
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: ubuntu-2404-compatibility-report
+        path: ubuntu-2404-compatibility-report.json
+        retention-days: 30
+
+  notify-results:
+    name: Notify Results
+    runs-on: ubuntu-24.04
+    needs: [compatibility-report]
+    if: always()
+    
+    steps:
+    - name: Create Summary
+      run: |
+        echo "## Ubuntu 24.04 Compatibility Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| System Compatibility | ${{ needs.system-compatibility.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Python Compatibility | ${{ needs.python-compatibility.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Database Compatibility | ${{ needs.database-compatibility.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Docker Compatibility | ${{ needs.docker-compatibility.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Full report available in artifacts." >> $GITHUB_STEP_SUMMARY

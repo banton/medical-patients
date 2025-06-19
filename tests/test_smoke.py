@@ -62,7 +62,7 @@ class TestSmoke:
         """Test that static files are being served"""
         response = requests.get(f"{base_url}/static/index.html", timeout=10)
         assert response.status_code == 200
-        assert "Military Patient Generator" in response.text
+        assert "Military Medical Exercise Patient Generator" in response.text
 
     def test_create_minimal_job(self, base_url, api_headers):
         """Test creating a minimal patient generation job"""

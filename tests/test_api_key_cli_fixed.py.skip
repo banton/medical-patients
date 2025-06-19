@@ -1,0 +1,171 @@
+"""
+Test suite for the API Key CLI tool.
+
+Tests the command-line interface for API key management including:
+- Command parsing and validation
+- Database operations
+- Output formatting
+- Error handling
+- Interactive confirmation prompts
+"""
+
+from datetime import datetime
+import json
+from pathlib import Path
+import asyncio
+
+# Import the CLI module
+import sys
+from unittest.mock import MagicMock, patch, AsyncMock, Mock
+
+from click.testing import CliRunner
+import pytest
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from scripts.api_key_cli import APIKeyCLI, main
+
+
+class TestAPIKeyCLI:
+    """Test suite for API Key CLI application class."""
+
+    def test_format_key_display(self):
+        """Test formatting API key for display."""
+        cli = APIKeyCLI()
+
+        # Test full key display
+        key = "sk-1234567890abcdef1234567890abcdef"
+        assert cli.format_key_display(key, show_full=True) == key
+
+        # Test masked key display
+        masked = cli.format_key_display(key, show_full=False)
+        assert masked.startswith("sk-123456...")
+        assert masked.endswith("...abcdef")
+        assert len(masked) < len(key)
+
+    def test_format_datetime(self):
+        """Test datetime formatting."""
+        cli = APIKeyCLI()
+
+        # Test with datetime
+        dt = datetime(2024, 1, 15, 10, 30, 45)
+        formatted = cli.format_datetime(dt)
+        assert "2024-01-15" in formatted
+        assert "10:30:45" in formatted
+
+        # Test with None
+        assert cli.format_datetime(None) == "Never"
+
+    def test_format_usage_stats(self):
+        """Test usage statistics formatting."""
+        cli = APIKeyCLI()
+
+        # Create mock usage data
+        usage = {
+            "total_requests": 100,
+            "total_patients": 5000,
+            "daily_requests": 50,
+            "daily_patients": 2500,
+            "last_used_at": datetime(2024, 1, 15, 10, 30, 45),
+        }
+
+        stats = cli.format_usage_stats(usage)
+        assert stats["total_requests"] == 100
+        assert stats["total_patients"] == 5000
+        assert stats["daily_requests"] == 50
+        assert stats["daily_patients"] == 2500
+        assert "2024-01-15" in stats["last_used"]
+
+    def test_format_limits(self):
+        """Test rate limit formatting."""
+        cli = APIKeyCLI()
+
+        # Create mock API key with limits
+        api_key = MagicMock()
+        api_key.max_patients_per_request = 1000
+        api_key.max_requests_per_day = 100
+        api_key.max_requests_per_hour = 50
+        api_key.max_requests_per_minute = 10
+
+        limits = cli.format_limits(api_key)
+        assert limits["max_patients_per_request"] == 1000
+        assert limits["max_requests_per_day"] == 100
+        assert limits["max_requests_per_hour"] == 50
+        assert limits["max_requests_per_minute"] == 10
+
+
+class TestCLICommands:
+    """Test suite for CLI commands with proper async handling."""
+
+    @pytest.fixture
+    def runner(self):
+        """Create a CLI test runner."""
+        return CliRunner()
+
+    @pytest.fixture
+    def mock_api_key(self):
+        """Create a mock API key for testing."""
+        api_key = MagicMock()
+        api_key.id = "12345678-1234-1234-1234-123456789012"
+        api_key.key = "sk-test1234567890abcdef1234567890ab"
+        api_key.name = "Test Key"
+        api_key.email = "test@example.com"
+        api_key.is_active = True
+        api_key.is_demo = False
+        api_key.created_at = datetime(2024, 1, 1)
+        api_key.expires_at = None
+        api_key.last_used_at = datetime(2024, 1, 15)
+        api_key.total_requests = 100
+        api_key.total_patients_generated = 5000
+        api_key.daily_requests = 10
+        api_key.daily_patients = 500
+        api_key.max_patients_per_request = 1000
+        api_key.max_requests_per_day = 100
+        api_key.max_requests_per_hour = 50
+        api_key.max_requests_per_minute = 10
+        api_key.daily_reset_at = datetime(2024, 1, 16)
+        api_key.get_usage_summary = MagicMock(
+            return_value={
+                "total_requests": 100,
+                "total_patients": 5000,
+                "daily_requests": 10,
+                "daily_patients": 500,
+                "last_used_at": datetime(2024, 1, 15),
+            }
+        )
+        return api_key
+
+    def test_create_command_success(self, runner, mock_api_key):
+        """Test successful API key creation."""
+        # Create a proper async context manager mock
+        mock_session = MagicMock()
+        mock_session_factory = MagicMock()
+        mock_session_factory.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_factory.return_value.__aexit__ = AsyncMock(return_value=None)
+        
+        # Mock the repository
+        mock_repository = MagicMock()
+        mock_repository.create_api_key = AsyncMock(return_value=mock_api_key)
+        
+        # Patch all necessary components
+        with patch("scripts.api_key_cli.cli_app.initialize", new_callable=AsyncMock), \
+             patch("scripts.api_key_cli.cli_app.cleanup", new_callable=AsyncMock), \
+             patch("scripts.api_key_cli.cli_app.session_factory", mock_session_factory), \
+             patch("scripts.api_key_cli.APIKeyRepository", return_value=mock_repository):
+            
+            # Run command
+            result = runner.invoke(
+                main,
+                ["create", "Test Key", "--email", "test@example.com", "--format", "json"],
+            )
+
+            # Assert result
+            assert result.exit_code == 0, f"Command failed with output: {result.output}"
+            
+            # The output should contain JSON data
+            assert result.output.strip() != "", "Output is empty"
+            output_data = json.loads(result.output)
+            assert output_data["name"] == "Test Key"
+            assert output_data["email"] == "test@example.com"
+            assert output_data["key"] == "sk-test1234567890abcdef1234567890ab"
+            assert "limits" in output_data

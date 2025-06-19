@@ -1,0 +1,250 @@
+version: '3'
+
+# Medical Patients Generator - Simple Task Runner
+# Only includes commands that actually work
+
+env:
+  COMPOSE_PROJECT_NAME: medical-patients
+  PYTHONPATH: "{{.ROOT_DIR}}"
+
+vars:
+  PYTHON:
+    sh: which python3 || which python
+
+tasks:
+  default:
+    desc: Show available tasks
+    silent: true
+    cmds:
+      - |
+        echo "Medical Patients Generator - Task Runner"
+        echo "========================================"
+        echo ""
+        echo "🚀 QUICK START:"
+        echo "  task init       - First time setup (creates .env, installs dependencies)"
+        echo "  task dev        - Start development server"
+        echo "  task stop       - Stop all services"
+        echo ""
+        echo "📋 COMMON TASKS:"
+        echo "  task test       - Run all tests"
+        echo "  task status     - Check service health"
+        echo "  task timeline   - Open timeline viewer (optional visualization)"
+        echo "  task clean      - Clean up and reset"
+        echo ""
+        echo "💡 TIPS:"
+        echo "  - Use 'task dev' for local development (recommended)"
+        echo "  - Use 'task start' only if you need everything in Docker"
+        echo "  - Timeline viewer is optional - adds visual patient flow"
+        echo ""
+        echo "Run 'task --list' for all available commands"
+        echo "Run 'task help:staging' if you need production deployment testing"
+
+  init:
+    desc: Quick setup - just the essentials
+    cmds:
+      - ./scripts/init-simple.sh
+
+  init:full:
+    desc: Full setup with OS detection and Python environment (advanced)
+    cmds:
+      - ./scripts/init-setup.sh
+
+  help:staging:
+    desc: Show staging deployment information
+    silent: true
+    cmds:
+      - |
+        echo "STAGING DEPLOYMENT (Advanced Users Only)"
+        echo "========================================"
+        echo ""
+        echo "Staging is for testing production deployments."
+        echo "Most users should use 'task dev' instead."
+        echo ""
+        echo "Staging commands:"
+        echo "  task staging:up     - Start staging on port 8001"
+        echo "  task staging:down   - Stop staging"
+        echo "  task staging:logs   - View logs"
+        echo "  task staging:status - Check status"
+        echo ""
+        echo "Requires .env.staging with:"
+        echo "  STAGING_DB_PASSWORD=your-password"
+        echo "  STAGING_API_KEY=$(openssl rand -hex 32)"
+        echo ""
+
+  dev:
+    desc: Start development server (Python + Docker DB)
+    cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo "⚠️  No .env file found. Run 'task init' first!"
+          exit 1
+        fi
+      - docker compose up -d db redis
+      - sleep 3
+      - |
+        # Simple migration run
+        docker compose run --rm app alembic upgrade head 2>/dev/null || true
+      - |
+        # Start the app
+        echo "Starting development server..."
+        echo "API: http://localhost:8000"
+        echo "Docs: http://localhost:8000/docs"
+        echo ""
+        {{.PYTHON}} -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+
+  start:
+    desc: Start all services in Docker (alternative to 'dev')
+    cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo "⚠️  No .env file found. Run 'task init' first!"
+          exit 1
+        fi
+      - docker compose up -d --build
+      - |
+        echo "All services started in Docker"
+        echo "API: http://localhost:8000"
+        echo "Use 'task logs' to view output"
+
+  test:
+    desc: Run all tests
+    cmds:
+      - "{{.PYTHON}} -m pytest"
+
+  test-unit:
+    desc: Run unit tests only
+    cmds:
+      - "{{.PYTHON}} -m pytest tests/unit -v"
+
+  test-integration:
+    desc: Run integration tests
+    cmds:
+      - "{{.PYTHON}} -m pytest tests/test_*.py -v --ignore=tests/unit"
+
+  stop:
+    desc: Stop all services
+    cmds:
+      - docker compose down
+      - echo "✅ All services stopped"
+
+  logs:
+    desc: View application logs
+    cmds:
+      - docker compose logs -f app
+
+  status:
+    desc: Show service health status
+    cmds:
+      - |        
+        if [ -f ./status.sh ]; then
+          ./status.sh
+        else
+          echo "Checking services..."
+          docker compose ps
+        fi
+
+  staging:shell:
+    desc: Open shell in staging container
+    cmds:
+      - docker exec -it medical-patients-staging /bin/bash
+
+  clean:
+    desc: Clean up Docker resources and Python cache
+    cmds:
+      - docker compose down -v
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type f -name "*.pyc" -delete 2>/dev/null || true
+
+  db-migrate:
+    desc: Run database migrations
+    cmds:
+      - alembic upgrade head
+
+  db-reset:
+    desc: Reset database (WARNING - destroys all data)
+    cmds:
+      - docker compose down -v
+      - docker compose up -d db
+      - sleep 5
+      - alembic upgrade head
+
+  timeline:
+    desc: Open timeline viewer (visual patient flow)
+    dir: patient-timeline-viewer
+    cmds:
+      - |
+        if ! command -v npm &> /dev/null; then
+          echo "⚠️  Node.js not installed. Timeline viewer requires Node.js 18+"
+          echo "   Install from: https://nodejs.org/"
+          exit 1
+        fi
+      - npm install --silent
+      - echo "Starting timeline viewer at http://localhost:5174"
+      - echo "Press Ctrl+C to stop"
+      - npm run dev
+
+  timeline:stop:
+    desc: Stop timeline viewer if running in background
+    silent: true
+    cmds:
+      - pkill -f "vite.*5174" 2>/dev/null || echo "Timeline viewer is not running"
+
+  # Staging environment tasks
+  staging:up:
+    desc: Start staging environment on port 8001 (optional - for production deployment testing)
+    cmds:
+      - |
+        if [ ! -f .env.staging ]; then
+          echo "================================================================"
+          echo "Staging environment is for production deployment testing only."
+          echo "Most users should use 'task dev' for local development."
+          echo ""
+          echo "If you need staging, create .env.staging with:"
+          echo "  STAGING_DB_PASSWORD=your-password"
+          echo "  STAGING_API_KEY=$(openssl rand -hex 32)"
+          echo "  STAGING_SECRET_KEY=$(openssl rand -hex 16)"
+          echo "================================================================"
+          exit 1
+        fi
+      - docker compose -f docker-compose.staging.yml up -d
+      - echo "Staging API starting at http://localhost:8001"
+      - echo "Timeline viewer at http://localhost:3001"
+      - echo 'Check status with task staging:status'
+
+  staging:down:
+    desc: Stop staging environment
+    cmds:
+      - docker compose -f docker-compose.staging.yml down
+      - echo "Staging environment stopped"
+
+  staging:logs:
+    desc: View staging logs (follow mode)
+    cmds:
+      - docker compose -f docker-compose.staging.yml logs -f
+
+  staging:status:
+    desc: Check staging environment status
+    cmds:
+      - |
+        echo "=== Staging Environment Status ==="
+        echo ""
+        echo "Containers:"
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "(staging|timeline)" || echo "No staging containers running"
+        echo ""
+        echo "API Health:"
+        if curl -s http://localhost:8001/api/v1/health >/dev/null 2>&1; then
+          curl -s http://localhost:8001/api/v1/health | jq -C '.' || echo "Staging API responding but JSON parse failed"
+        else
+          echo "[ERROR] Staging API not responding on port 8001"
+        fi
+        echo ""
+        echo "Recent Logs:"
+        docker logs medical-patients-staging --tail 10 2>&1 || echo "No logs available"
+
+  staging:rebuild:
+    desc: Rebuild and restart staging environment
+    cmds:
+      - docker compose -f docker-compose.staging.yml down
+      - docker compose -f docker-compose.staging.yml build --no-cache
+      - docker compose -f docker-compose.staging.yml up -d
+      - echo "Staging environment rebuilt and restarted"

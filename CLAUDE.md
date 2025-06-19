@@ -16,23 +16,21 @@ This document serves as Claude Code's persistent memory across sessions. Read th
 
 ### Start of Session
 1. Read this CLAUDE.md file completely
-2. Check `memory/current-session.md` for handoff notes
-3. Review relevant memory files based on current task
+2. Load optimized memory: `cat memory/active/status.md memory/active/context.md`
+3. Reference specific files from `memory/reference/` as needed
 4. Ask: "What are we working on today?"
 
 ### During Session
-1. Document all significant decisions in appropriate memory files
-2. Update progress in `memory/current-session.md`
-3. When stuck, write questions in `memory/questions/`
-4. Apply "Fix Don't Skip" policy - solve and document all issues
+1. Use `./memory/update.sh "summary"` after significant changes
+2. Apply "Fix Don't Skip" policy - solve and document all issues
+3. Reference `memory/reference/` for patterns and architecture
+4. Keep active tasks updated in memory/active/status.md
 
 ### End of Session
-1. Update `memory/current-session.md` with:
-   - What was accomplished
-   - Current state
-   - Next steps
-   - Any blockers or questions
-2. Commit all memory updates
+1. Run `./memory/update.sh "Session summary"`
+2. Update current focus in memory/active/status.md
+3. Archive old information if needed
+4. Commit all memory updates
 
 ## 🏗️ Project Structure
 
@@ -114,13 +112,13 @@ patient_generator/
 - ✅ **NEW**: Comprehensive test coverage for API contracts
 
 ### Frontend (Priority 2)
-- ❌ API promotion banner
-- ❌ Vertical accordion JSON editors
-- ❌ Load previous configurations
-- ❌ Nationality code validation  
-- ❌ Fun progress messages (2+ seconds)
-- ❌ Error retry with reporting
-- ❌ Download functionality
+- ✅ API promotion banner
+- ✅ Vertical accordion JSON editors
+- ✅ Load previous configurations
+- ✅ Nationality code validation  
+- ✅ Fun progress messages (2+ seconds)
+- ✅ Error retry with reporting
+- ✅ Download functionality
 - ✅ Basic static HTML interface
 
 ## 🔧 Key Technical Decisions
@@ -289,3 +287,100 @@ memory/fixes/
 - **Production Deployment**: Ready for immediate use with comprehensive documentation
 
 ```
+## 🧠 Intelligent Memory Management System
+
+### Overview
+This project uses an intelligent memory management system designed to maximize information density while staying within a 10,000 token context budget. The system automatically extracts, consolidates, and compresses project knowledge.
+
+### Memory Architecture
+
+```
+memory/
+├── active/                 # Current work (3,000 tokens max)
+│   ├── status.md          # Task dashboard and recent updates
+│   └── context.md         # Working file references
+├── reference/             # Stable knowledge (5,000 tokens max)
+│   ├── architecture.md    # System design decisions
+│   ├── patterns.md        # Reusable code patterns
+│   ├── features.md        # Feature specifications
+│   └── decisions.md       # Architectural decisions log
+└── archive/               # Historical data (compressed)
+    └── YYYY-MM-DD.tar.gz # Dated archives
+```
+
+### Token Budget Management
+
+| Category | Budget | Purpose | Update Frequency |
+|----------|--------|---------|------------------|
+| Active | 3,000 | Current tasks, immediate context | Every session |
+| Reference | 5,000 | Stable patterns, architecture | Weekly |
+| Buffer | 2,000 | Session updates, new information | As needed |
+| **Total** | **10,000** | **Complete working context** | - |
+
+### Usage Protocol
+
+#### Starting a Session
+```bash
+# Always start here
+cat memory/active/status.md
+cat memory/active/context.md
+```
+
+#### During Development
+```bash
+# Update after significant changes
+./memory/update.sh "Brief description of changes"
+```
+
+#### Weekly Maintenance
+```bash
+./memory/weekly-maintenance.sh
+```
+
+### Information Priority
+
+1. **Always Preserve**: Current tasks, active bugs, recent fixes
+2. **Compress**: Completed work, old investigations, verbose docs
+3. **Archive**: Anything older than 7 days
+
+### Best Practices
+
+✅ **DO**:
+- Use tables and lists (3:1 compression vs prose)
+- Reference file paths instead of copying code
+- Keep summaries to one line
+- Run compression checks regularly
+- Update status after each session
+
+❌ **DON'T**:
+- Store full code implementations
+- Keep investigation narratives
+- Use decorative formatting or emojis
+- Duplicate information
+- Let files grow beyond token budgets
+
+### Maintenance Commands
+
+```bash
+# Check token usage
+find memory/active -name "*.md" -exec wc -w {} + | awk '{print "Tokens: " int($1 * 1.3)}'
+
+# Update memory
+./memory/update.sh "What changed"
+
+# Weekly cleanup
+./memory/weekly-maintenance.sh
+
+# Force compression
+./memory/compress.sh
+```
+
+### Integration with AI Assistants
+
+1. Load only `memory/active/` at session start
+2. Request specific `memory/reference/` files as needed
+3. Never load archives unless investigating history
+4. Update memory before ending session
+
+This system maintains high information density while respecting token limits, ensuring efficient AI collaboration.
+EOF < /dev/null

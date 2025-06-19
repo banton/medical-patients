@@ -1,0 +1,92 @@
+# Cross-Platform Development Environment
+# Line ending normalization for consistent development across Windows, macOS, Linux
+
+# Default behavior: normalize line endings on checkin, convert to native on checkout
+* text=auto
+
+# Force LF line endings for shell scripts (critical for cross-platform)
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Python files
+*.py text eol=lf
+
+# Docker files (must use LF)
+Dockerfile text eol=lf
+Dockerfile.* text eol=lf
+docker-compose*.yml text eol=lf
+docker-compose*.yaml text eol=lf
+
+# Configuration files
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+.env* text eol=lf
+*.cfg text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# Web and frontend files
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+*.vue text eol=lf
+
+# Task and build files
+Taskfile.yml text eol=lf
+Taskfile.yaml text eol=lf
+Makefile text eol=lf
+*.mk text eol=lf
+
+# CI/CD files
+.github/**/* text eol=lf
+.gitlab-ci.yml text eol=lf
+.travis.yml text eol=lf
+
+# Binary files (do not normalize)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.zip binary
+*.tar binary
+*.tar.gz binary
+*.tgz binary
+*.gz binary
+*.7z binary
+*.rar binary
+*.pdf binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# SQLite databases
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# Log files (if committed, should be text)
+*.log text eol=lf
+
+# Generated files (typically shouldn't be committed, but if they are)
+*.map text eol=lf
+*.css.map text eol=lf
+*.js.map text eol=lf

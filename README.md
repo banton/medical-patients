@@ -137,117 +137,200 @@ The application features a clean, domain-driven architecture with clear separati
 7. **Python SDK** (`patient_generator_sdk.py`):
    - Client library for programmatic API interaction
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
-## Getting Started (Development Environment)
+## Getting Started
 
-The application now includes a comprehensive Makefile for streamlined development workflows. This is the recommended approach for all development tasks.
+The application uses [Task](https://taskfile.dev/) for cross-platform development workflows, providing a consistent experience across macOS and Linux.
 
 ### Prerequisites
 
--   Git
--   Docker Desktop (or Docker Engine + Docker Compose)
--   Node.js and npm (for frontend development)
--   Python 3.8+ (for local development)
+**Supported Operating Systems**: Linux (Ubuntu 22.04+, Debian 11+, RHEL 8+) and macOS (11.0+)
+
+-   [Git](https://git-scm.com/downloads) - Version control
+-   [Docker Desktop](https://www.docker.com/products/docker-desktop/) - Container runtime (or Docker Engine + Docker Compose)
+-   [Task](https://taskfile.dev/installation/) - Cross-platform task runner
+-   [Python 3.8+](https://www.python.org/downloads/) - For local development (optional)
+-   [Node.js 18+](https://nodejs.org/) - For timeline viewer (optional)
 
 ### Quick Start
 
-1.  **Clone the repository**:
-    ```bash
-    git clone <repository_url>
-    cd medical-patients
-    ```
-
-2.  **Install dependencies and start development environment**:
-    ```bash
-    make deps && make dev
-    ```
-
-3.  **Access the application**:
-    *   Main Application: `http://localhost:8000/static/index.html`
-    *   API Documentation: `http://localhost:8000/docs`
-    *   Alternative API Docs: `http://localhost:8000/redoc`
-
-4.  **Start the timeline viewer** (optional):
-    ```bash
-    make timeline-viewer
-    ```
-    *   Timeline Viewer: `http://localhost:5174`
-
-### Development Commands
-
-Use `make help` to see all available commands:
+The easiest way to get started:
 
 ```bash
-make help                 # Show all available commands
-make dev                  # Start development environment (DB + App)
-make test                 # Run all tests
-make api-test             # Run API integration tests
-make lint                 # Run linting checks
-make format               # Format code automatically
-make clean                # Clean up generated files and cache
-make build-frontend       # Build all frontend components
-make deps                 # Install all dependencies
-make migrate              # Run database migrations
-make check-env            # Check environment setup
+# 1. Clone the repository
+git clone https://github.com/banton/medical-patients.git
+cd medical-patients
+
+# 2. Install Task (if needed)
+# macOS: brew install go-task
+# Linux: curl -sL https://taskfile.dev/install.sh | sh -s -- -b /usr/local/bin
+
+# 3. Run setup (creates .env, starts database)
+task init
+
+# 4. Start development server
+task dev
+
+# 5. Open http://localhost:8000
 ```
 
-### Alternative Setup Methods
+That's it! The application is now running.
 
-**Using the legacy script**:
+### Alternative: Docker-Only Setup
+
+If you prefer everything in Docker:
+
 ```bash
-chmod +x start-dev.sh
-./start-dev.sh
+task init       # Setup environment
+task start      # Run everything in Docker
+task logs       # View logs
 ```
 
-**Manual Setup**:
-```bash
-# Start PostgreSQL
-docker compose up -d db
+### Advanced Setup Options
 
-# Install Python dependencies
+For Ubuntu 24.04 or if you need Python virtual environments:
+```bash
+task init:full  # Full setup with OS detection and Python environment
+```
+
+**Note**: Ubuntu 24.04 users may need to activate the virtual environment first:
+```bash
+source .venv/bin/activate
+task dev
+```
+
+### Common Commands
+
+```bash
+# Essential Commands
+task            # Show available commands
+task init       # First-time setup
+task dev        # Start development server
+task stop       # Stop all services
+task test       # Run tests
+
+# Additional Commands  
+task status     # Check service health
+task logs       # View application logs
+task timeline   # Open timeline viewer (optional)
+task clean      # Reset everything
+
+# Advanced Commands
+task db-reset   # Reset database (destroys data!)
+task init:full  # Full setup with Python environment
+task help:staging # Learn about staging deployment
+```
+
+💡 **Tip**: Most developers only need `task init` and `task dev`. Everything else is optional.
+
+### Manual Setup (Advanced)
+
+For development without Task:
+
+```bash
+# 1. Start PostgreSQL and Redis
+docker compose up -d db redis
+
+# 2. Install Python dependencies
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
-# Run database migrations
+# 3. Run database migrations
 alembic upgrade head
 
-# Start the application
-PYTHONPATH=. python src/main.py
+# 4. Start the application
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-For more details on Docker configurations for different environments (production, Traefik), see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
+### Platform-Specific Notes
 
-### Testing and Quality Assurance
+#### Ubuntu 24.04 LTS
+Ubuntu 24.04 enforces PEP 668 which requires virtual environments. The `task init:full` command handles this automatically. If you need manual setup:
 
-The application includes comprehensive testing infrastructure:
+```bash
+sudo apt-get update
+sudo apt-get install -y python3-venv python3-dev libpq-dev build-essential
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### Common Issues
+
+- **"externally-managed-environment" error**: Use `task init:full` or create a virtual environment manually
+- **psycopg2 installation fails**: Install `libpq-dev` with `sudo apt-get install libpq-dev`
+- **Permission denied errors**: Add user to docker group: `sudo usermod -aG docker $USER` (then logout/login)
+- **Port already in use**: Check with `sudo lsof -i :8000` and stop conflicting services
+
+## Production Deployment
+
+The application is designed for deployment on traditional VPS infrastructure or containerized environments.
+
+### Docker Deployment
+
+```bash
+# Build production image
+docker build -t medical-patients:latest .
+
+# Run with external database
+docker run -d \
+  -p 8000:8000 \
+  -e DATABASE_URL="postgresql://user:pass@db-host:5432/medgen_db" \
+  -e API_KEY="your-secure-api-key" \
+  -e SECRET_KEY="your-secret-key" \
+  medical-patients:latest
+```
+
+### Environment Variables
+
+- `DATABASE_URL`: PostgreSQL connection string
+- `API_KEY`: Primary API authentication key
+- `SECRET_KEY`: Application secret for session management
+- `REDIS_URL`: Redis connection (optional, for caching)
+- `ENVIRONMENT`: Set to "production" for production deployments
+
+For advanced deployment configurations, refer to the docker-compose files in the repository.
+
+### Testing
+
+The application includes comprehensive test coverage:
 
 ```bash
 # Run all tests
-make test
+task test
 
-# Run only unit tests
-make test-unit
-
-# Run API integration tests (requires running server)
-make api-test
-
-# Check code quality (linting + type checking)
-make lint
-
-# Format code automatically
-make format
+# Check service health
+task status
 ```
+
+Test categories include:
+- **Unit Tests**: Core business logic and utilities
+- **Integration Tests**: API endpoints and database operations
+- **E2E Tests**: Complete user workflows
+- **Frontend Tests**: UI component behavior
+- **Timeline Tests**: React viewer functionality
 
 ### Development Workflow
 
-1. **Start Development Environment**: `make dev`
-2. **Make Code Changes**: Edit files as needed
-3. **Test Changes**: `make test` or `make api-test`
-4. **Check Code Quality**: `make lint`
-5. **Format Code**: `make format`
-6. **Generate Test Data**: `make generate-test`
+1. **Start Development**: `task dev`
+2. **Check Status**: `task status` (shows all services and recent errors)
+3. **Make Changes**: Application auto-reloads on save
+4. **Run Tests**: `task test`
+5. **Background Mode**: `task start` (for long-running development)
+6. **Stop Services**: `task stop`
 
-For complete development guidelines, see the [Git Workflow documentation](memory-bank/git-workflow.md).
+### Code Quality
+
+```bash
+# Linting and formatting
+ruff check .       # Check for linting errors
+ruff format .      # Auto-format code
+
+# Type checking
+mypy src/         # Static type analysis
+```
 
 ## Usage
 
@@ -323,16 +406,55 @@ curl -H "X-API-Key: your_secret_api_key_here" \
   --output patients.zip
 ```
 
-### 4. API Documentation
+### 4. API Key Management CLI
 
-Complete API documentation is available at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+Comprehensive command-line interface for managing API keys:
 
-Generated data can be used for:
--   Importing into exercise management systems.
--   Deploying to NFC smarttags.
--   Medical treatment facility simulations.
+```bash
+# Create a new API key
+python scripts/api_key_cli.py create --name "Development Team"
+
+# List all API keys
+python scripts/api_key_cli.py list --active
+
+# Show detailed key information
+python scripts/api_key_cli.py show <key-id>
+
+# Update rate limits
+python scripts/api_key_cli.py limits <key-id> --daily 1000 --patients 2000
+
+# Rotate a key for security
+python scripts/api_key_cli.py rotate <key-id>
+
+# Monitor usage statistics
+python scripts/api_key_cli.py usage <key-id>
+python scripts/api_key_cli.py stats --days 7
+```
+
+For complete CLI documentation, see [docs/api-key-cli.md](docs/api-key-cli.md).
+
+### 5. API Documentation
+
+Interactive API documentation is automatically generated and available at:
+- **Swagger UI**: `http://localhost:8000/docs` - Interactive API explorer
+- **ReDoc**: `http://localhost:8000/redoc` - Clean, readable API documentation
+- **OpenAPI Schema**: `http://localhost:8000/openapi.json` - Machine-readable API specification
+
+All API endpoints follow RESTful conventions with:
+- Consistent request/response models
+- Comprehensive input validation
+- Detailed error messages
+- Proper HTTP status codes
+- API key authentication
+
+### Common Use Cases
+
+Generated patient data supports various military medical training scenarios:
+- **Exercise Management Systems**: Import realistic patient loads for training exercises
+- **NFC Smart Tags**: Deploy patient data to smart medical tags for field exercises  
+- **Medical Facility Simulations**: Test treatment protocols with realistic patient flow
+- **Training Analytics**: Analyze evacuation patterns and treatment timelines
+- **Interoperability Testing**: Validate NATO medical data exchange standards
 
 ## Data Structure and Configuration
 
@@ -434,7 +556,7 @@ military-patient-generator/
 └── package.json                        # Frontend dependencies
 ```
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
 ## React Timeline Viewer
 
@@ -457,14 +579,20 @@ The React Timeline Viewer is a standalone visualization tool that provides inter
 
 1. **Start the timeline viewer**:
    ```bash
-   make timeline-viewer
+   task timeline       # Development mode
+   # or
+   task timeline-start # Background mode
    ```
 
 2. **Generate patient data** from the main application and download the results
 
-3. **Upload the patients.json file** to the timeline viewer via drag-and-drop
+3. **Upload the patients.json file** to the timeline viewer via drag-and-drop or file selection
 
 4. **Use playback controls** to visualize patient flow:
+   - Play/Pause button for timeline control
+   - Speed selector (0.25x to 10x)
+   - Progress bar showing current time
+   - Reset button to restart visualization
    - Play/Pause timeline progression
    - Adjust speed (0.5x to 60x)
    - Seek to specific time points
@@ -473,13 +601,10 @@ The React Timeline Viewer is a standalone visualization tool that provides inter
 ### Timeline Viewer Commands
 
 ```bash
-make timeline-viewer    # Start development server (port 5174)
-make timeline-build     # Build for production
-make timeline-test      # Test build process
-make timeline-deps      # Install dependencies
-make timeline-clean     # Clean build files
-make dev-full          # Start both backend and timeline viewer
+task timeline-viewer    # Start development server (port 5174)
 ```
+
+To build for production, run `npm run build` in the patient-timeline-viewer directory.
 
 ### Integration Workflow
 
@@ -525,6 +650,45 @@ This generator creates data compliant with:
 - Advanced analytics and reporting
 
 For detailed progress tracking, see the memory system documentation in the `memory/` directory.
+
+## Deployment Options
+
+### Local Development (Recommended for Most Users)
+
+The primary deployment method is local development using Docker:
+
+```bash
+task dev  # Starts the application on http://localhost:8000
+```
+
+This is sufficient for:
+- Testing the patient generator
+- Developing new features
+- Running medical exercises
+- Integration testing
+
+### Production Deployment
+
+For hosting the application on a server:
+
+1. **Traditional VPS**: Deploy using Docker Compose on any Linux server
+2. **DigitalOcean App Platform**: Use the provided `staging-app-spec.yaml`
+3. **Kubernetes**: Deploy containers using the Docker images
+
+### Staging Environment (Optional)
+
+Staging deployment is **only needed** if you're planning to:
+- Test production deployment configurations
+- Validate server-specific settings
+- Run load testing before production
+
+To use staging:
+1. Create `.env.staging` with production-like settings
+2. Run `task staging:up` to start on port 8001
+3. Test your deployment configuration
+4. Use `task staging:down` when finished
+
+**Note**: Most users don't need staging. The `task dev` command provides a complete development environment.
 
 ## Contributing
 

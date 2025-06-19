@@ -6,6 +6,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 import gzip
+import json
 import os
 import sys
 import tempfile
@@ -31,6 +32,7 @@ from patient_generator.formatter import OutputFormatter
 from patient_generator.medical import MedicalConditionGenerator
 from patient_generator.patient import Patient
 from patient_generator.schemas_config import ConfigurationTemplateDB
+from src.core.metrics import get_metrics_collector
 from src.domain.services.cached_demographics_service import CachedDemographicsService
 from src.domain.services.cached_medical_service import CachedMedicalService
 
@@ -239,13 +241,17 @@ class AsyncPatientGenerationService:
         self, context: GenerationContext, progress_callback: Optional[Callable] = None
     ) -> Dict[str, Any]:
         """Generate patients and save to files."""
+        metrics = get_metrics_collector()
 
-        # Warm up caches before generation
-        await self.cached_demographics.warm_cache()
-        await self.cached_medical.warm_cache()
+        # Track generation with metrics
+        format_type = context.output_formats[0] if context.output_formats else "json"
+        with metrics.track_generation(format_type, context.config.total_patients):
+            # Warm up caches before generation
+            await self.cached_demographics.warm_cache()
+            await self.cached_medical.warm_cache()
 
-        # Initialize pipeline with configuration
-        self._initialize_pipeline(context.config.id)
+            # Initialize pipeline with configuration
+            self._initialize_pipeline(context.config.id)
 
         # Ensure output directory exists
         os.makedirs(context.output_directory, exist_ok=True)
@@ -297,9 +303,6 @@ class AsyncPatientGenerationService:
                             stream.write(",\n")
 
                         # Use patient_data from generator (already converted to dict)
-
-                        import json
-
                         json.dump(patient_data, stream, indent=2)
                     elif format == "xml":
                         # Use formatter for XML

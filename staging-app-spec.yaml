@@ -1,0 +1,135 @@
+name: medical-patients-staging
+region: nyc
+
+services:
+  - name: api-staging
+    github:
+      repo: banton/medical-patients
+      branch: feature/v1.1-consolidated
+      deploy_on_push: true
+    build_command: pip install -r requirements.txt
+    run_command: |
+      if [ ! -z "$DATABASE_URL" ]; then
+        alembic upgrade head
+      fi
+      python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    source_dir: /
+    environment_slug: python
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    http_port: 8080
+    health_check:
+      initial_delay_seconds: 30
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+      http_path: /api/v1/health
+    envs:
+      - key: ENVIRONMENT
+        value: staging
+        scope: RUN_AND_BUILD_TIME
+      - key: DATABASE_URL
+        value: ${staging_db.DATABASE_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: REDIS_URL
+        value: redis://redis-staging:6379
+        scope: RUN_AND_BUILD_TIME
+      - key: CACHE_ENABLED
+        value: "true"
+        scope: RUN_AND_BUILD_TIME
+      - key: DEBUG
+        value: "false"
+        scope: RUN_AND_BUILD_TIME
+      - key: CORS_ORIGINS
+        value: "https://staging.milmed.tech,https://timeline.milmed.tech"
+        scope: RUN_AND_BUILD_TIME
+      - key: API_KEY
+        value: ${STAGING_API_KEY}
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+
+  - name: redis-staging
+    image:
+      registry_type: DOCKER_HUB
+      registry: library
+      repository: redis
+      tag: 7-alpine
+    run_command: redis-server --appendonly yes --dir /data
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    internal_ports:
+      - 6379
+
+static_sites:
+  - name: frontend-staging
+    github:
+      repo: banton/medical-patients
+      branch: feature/v1.1-consolidated
+      deploy_on_push: true
+    source_dir: /static
+    
+  - name: timeline-viewer
+    github:
+      repo: banton/medical-patients
+      branch: feature/v1.1-consolidated
+      deploy_on_push: true
+    build_command: cd patient-timeline-viewer && npm install && npm run build
+    source_dir: /patient-timeline-viewer
+    output_dir: /patient-timeline-viewer/dist
+
+databases:
+  - name: staging-db
+    engine: PG
+    version: "17"
+    production: false
+    size: db-s-1vcpu-1gb
+    num_nodes: 1
+
+domains:
+  - domain: staging.milmed.tech
+    type: PRIMARY
+  - domain: timeline.milmed.tech
+    type: ALIAS
+
+ingress:
+  rules:
+    # Timeline viewer on timeline.milmed.tech  
+    - match:
+        path:
+          prefix: /
+      component:
+        name: timeline-viewer
+      redirect:
+        authority: timeline.milmed.tech
+    
+    # API routes on staging.milmed.tech
+    - match:
+        path:
+          prefix: /api
+      component:
+        name: api-staging
+        preserve_path_prefix: true
+    
+    # Docs on staging.milmed.tech
+    - match:
+        path:
+          prefix: /docs
+      component:
+        name: api-staging
+        preserve_path_prefix: true
+    
+    # OpenAPI spec
+    - match:
+        path:
+          prefix: /openapi.json
+      component:
+        name: api-staging
+        preserve_path_prefix: true
+    
+    # Frontend on staging.milmed.tech
+    - match:
+        path:
+          prefix: /
+      component:
+        name: frontend-staging

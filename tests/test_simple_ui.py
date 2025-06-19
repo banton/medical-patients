@@ -17,10 +17,10 @@ class TestSimpleUI:
         assert response.status_code == 200
 
         # Check title (updated for temporal capabilities)
-        assert "<title>Temporal Military Patient Generator</title>" in response.text
+        assert "<title>Military Medical Exercise Patient Generator</title>" in response.text
 
         # Check header (new modern format with temporal capabilities)
-        assert "Temporal Military Patient Generator" in response.text
+        assert "Military Medical Exercise Patient Generator" in response.text
         assert 'class="text-2xl font-bold' in response.text
 
     def test_ui_elements_present(self):
@@ -45,7 +45,7 @@ class TestSimpleUI:
         response = requests.get(f"{BASE_URL}/")
 
         # Find script tag (new app structure)
-        assert 'src="/static/js/app.js"' in response.text
+        assert 'src="js/app.js"' in response.text
 
         # Verify the JS file exists
         js_response = requests.get(f"{BASE_URL}/static/js/app.js")
@@ -70,6 +70,6 @@ class TestSimpleUI:
         response = requests.get(f"{BASE_URL}/")
 
         # Check for external CSS files
-        assert "/static/css/main.css" in response.text
-        assert "/static/css/components/banner.css" in response.text
-        assert "/static/css/components/accordion.css" in response.text
+        assert "css/main.css" in response.text
+        assert "css/components/banner.css" in response.text
+        assert "css/components/accordion.css" in response.text

@@ -1,6 +1,8 @@
 import concurrent.futures
 import datetime
 import json
+import multiprocessing
+import os
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
@@ -93,8 +95,6 @@ class PatientFlowSimulator:
         # Parallelization settings
         self.batch_size = 100
         try:
-            import multiprocessing
-
             self.num_workers = max(2, min(multiprocessing.cpu_count(), 8))
             if self.total_patients_to_generate > 5000:
                 self.batch_size = 250
@@ -195,8 +195,6 @@ class PatientFlowSimulator:
         """Generate casualties - check for temporal configuration"""
 
         # Check if temporal configuration exists
-        import os
-
         injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
 
         try:
@@ -652,8 +650,6 @@ class PatientFlowSimulator:
         injuries_config = self._load_injuries_config()
 
         # Initialize temporal generator
-        import os
-
         warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
         temporal_gen = TemporalPatternGenerator(warfare_patterns_path)
 
@@ -689,8 +685,6 @@ class PatientFlowSimulator:
 
     def _load_injuries_config(self) -> Dict[str, Any]:
         """Load injuries.json configuration"""
-        import os
-
         injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
 
         with open(injuries_path) as f:
@@ -705,8 +699,6 @@ class PatientFlowSimulator:
         patient_id_counter = 0
 
         # Load warfare patterns for injury distributions
-        import os
-
         warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
         with open(warfare_patterns_path) as f:
             warfare_patterns = json.load(f)
