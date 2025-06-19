@@ -151,3 +151,6 @@ See `memory/active/future-work.md` for:
 
 ### Update: 2025-06-19 22:41
 - Started v1.2.0 EPIC-001: Performance Refactoring - comprehensive plan for database consolidation, streaming generation, and smart caching
+
+### Update: 2025-06-19 22:53
+- Completed Task 1 of v1.2.0 EPIC-001: Database consolidation - all modules now use enhanced connection pool

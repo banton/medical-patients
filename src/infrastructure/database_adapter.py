@@ -14,10 +14,10 @@ from src.infrastructure.database_pool import get_pool
 
 class EnhancedDatabase:
     """
-    Enhanced database class that uses the new connection pool.
-
-    This adapter maintains backward compatibility with existing code
-    while using the enhanced connection pool for better scalability.
+    Enhanced database class that uses the connection pool for better scalability.
+    
+    This is the primary database interface for the application, providing
+    connection pooling, monitoring, and resource management.
     """
 
     _instance = None
@@ -33,7 +33,6 @@ class EnhancedDatabase:
 
     def __init__(self):
         """Initialize with enhanced connection pool."""
-        # Skip parent __init__ to avoid creating the old pool
         self._pool: Any = get_pool()
 
     def get_connection(self) -> Optional[psycopg2.extensions.connection]:

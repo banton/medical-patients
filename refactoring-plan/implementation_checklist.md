@@ -30,7 +30,7 @@
   - [ ] domain/services/cached_medical_service.py (no Database usage)
 - [x] Update database instantiation patterns
 - [x] Extract ConfigurationRepository to separate file
-- [x] Rename patient_generator/database.py to database_legacy.py
+- [x] Remove patient_generator/database.py (legacy implementation)
 - [ ] Update any SQL query patterns to use async
 
 ### Phase 3: Testing (2 hours)

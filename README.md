@@ -89,7 +89,7 @@ The application features a clean, domain-driven architecture with clear separati
 ├── patient_generator/         # Core generation logic
 │   ├── app.py                # Patient generator application
 │   ├── config_manager.py     # Configuration management
-│   ├── database.py           # Database connection and repositories
+│   ├── repository.py         # Configuration repository
 │   ├── demographics.py       # Demographics generation
 │   ├── medical.py            # Medical condition generation
 │   ├── flow_simulator.py     # Patient flow simulation
@@ -118,7 +118,7 @@ The application features a clean, domain-driven architecture with clear separati
 
 4. **Patient Generator** (`patient_generator/`):
    - **ConfigurationManager**: Manages active scenario configurations with temporal pattern support
-   - **Database**: PostgreSQL connection pool and data access with job tracking
+   - **Repository**: Configuration repository for database operations
    - **Flow Simulator**: Models patient progression through facilities with temporal distribution
    - **Temporal Generator**: Advanced warfare scenario engine with 8 warfare types and environmental modeling
    - **Demographics Generator**: NATO nation-specific name and ID generation
@@ -130,9 +130,11 @@ The application features a clean, domain-driven architecture with clear separati
    - **JavaScript** (`static/js/simple-app.js`): Handles API communication and user interactions
 
 6. **Database Layer**:
-   - **PostgreSQL**: Configuration storage with versioning
-   - **Alembic**: Schema migrations
-   - **SQLAlchemy**: ORM for database operations
+   - **PostgreSQL**: Primary data store with connection pooling
+   - **Enhanced Connection Pool**: 20 concurrent connections with automatic recycling
+   - **Repository Pattern**: Clean data access through ConfigurationRepository
+   - **Alembic**: Schema migrations with version tracking
+   - **Monitoring**: Built-in metrics for connection usage and query performance
 
 7. **Python SDK** (`patient_generator_sdk.py`):
    - Client library for programmatic API interaction
@@ -533,7 +535,7 @@ military-patient-generator/
 ├── patient_generator/                  # Core generation module
 │   ├── app.py                          # PatientGeneratorApp
 │   ├── config_manager.py               # Configuration management
-│   ├── database.py                     # Database operations
+│   ├── repository.py                   # Configuration repository
 │   └── ... (generators)
 │
 ├── static/                             # Frontend files
