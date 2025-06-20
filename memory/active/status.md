@@ -154,3 +154,6 @@ See `memory/active/future-work.md` for:
 
 ### Update: 2025-06-19 22:53
 - Completed Task 1 of v1.2.0 EPIC-001: Database consolidation - all modules now use enhanced connection pool
+
+### Update: 2025-06-19 23:07
+- Completed database consolidation cleanup: removed legacy database file, updated all documentation
