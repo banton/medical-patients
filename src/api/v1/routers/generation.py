@@ -4,9 +4,7 @@ Replaces the old /api/generate endpoint with /api/v1/generation/.
 """
 
 import json
-import os
 from pathlib import Path
-import shutil
 import tempfile
 import traceback
 from typing import Any, Dict
