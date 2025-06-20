@@ -10,13 +10,13 @@ from slowapi.util import get_remote_address
 
 from config import get_settings
 from patient_generator.config_manager import ConfigurationManager
-from patient_generator.repository import ConfigurationRepository
-from src.infrastructure.database_adapter import EnhancedDatabase
 from patient_generator.nationality_data import NationalityDataProvider
+from patient_generator.repository import ConfigurationRepository
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition
 from src.api.v1.dependencies.database import get_database
 from src.core.cache_utils import cache_configuration_template, get_cached_configuration, invalidate_configuration_cache
 from src.core.security_enhanced import verify_api_key
+from src.infrastructure.database_adapter import EnhancedDatabase
 
 # Initialize router (prefix will be added by main app)
 router = APIRouter(prefix="/configurations", tags=["configurations"], dependencies=[Depends(verify_api_key)])
@@ -37,7 +37,9 @@ async def create_configuration(
 
 @router.get("/", response_model=List[ConfigurationTemplateDB])
 @limiter.limit("30/minute")
-async def list_configurations(request: Request, db: EnhancedDatabase = Depends(get_database)) -> List[ConfigurationTemplateDB]:
+async def list_configurations(
+    request: Request, db: EnhancedDatabase = Depends(get_database)
+) -> List[ConfigurationTemplateDB]:
     """List all configuration templates."""
     repo = ConfigurationRepository(db)
     return repo.list_configurations()
@@ -70,7 +72,10 @@ async def get_configuration(
 @router.put("/{config_id}", response_model=ConfigurationTemplateDB)
 @limiter.limit("10/minute")
 async def update_configuration(
-    request: Request, config_id: str, config_update: ConfigurationTemplateCreate, db: EnhancedDatabase = Depends(get_database)
+    request: Request,
+    config_id: str,
+    config_update: ConfigurationTemplateCreate,
+    db: EnhancedDatabase = Depends(get_database),
 ) -> ConfigurationTemplateDB:
     """Update a configuration template and invalidate cache."""
     repo = ConfigurationRepository(db)

@@ -15,7 +15,7 @@ from src.infrastructure.database_pool import get_pool
 class EnhancedDatabase:
     """
     Enhanced database class that uses the connection pool for better scalability.
-    
+
     This is the primary database interface for the application, providing
     connection pooling, monitoring, and resource management.
     """

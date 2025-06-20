@@ -33,7 +33,8 @@ class ConfigurationManager:
         """
         # Import here to avoid circular imports
         if database_instance is None:
-            from src.infrastructure.database_adapter import get_enhanced_database
+            from src.infrastructure.database_adapter import get_enhanced_database  # noqa: PLC0415
+
             database_instance = get_enhanced_database()
         self._repository = ConfigurationRepository(database_instance)
         self._load_static_fronts_config(static_fronts_config_path)

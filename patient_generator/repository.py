@@ -45,11 +45,15 @@ class ConfigurationRepository:
         ) VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING *
         """
-        
+
         # Convert pydantic models to dicts
-        front_configs_dict = [fc.model_dump() if hasattr(fc, 'model_dump') else fc.dict() for fc in config.front_configs]
-        facility_configs_dict = [fc.model_dump() if hasattr(fc, 'model_dump') else fc.dict() for fc in config.facility_configs]
-        
+        front_configs_dict = [
+            fc.model_dump() if hasattr(fc, "model_dump") else fc.dict() for fc in config.front_configs
+        ]
+        facility_configs_dict = [
+            fc.model_dump() if hasattr(fc, "model_dump") else fc.dict() for fc in config.facility_configs
+        ]
+
         params = (
             config_id,
             config.name,
@@ -74,12 +78,18 @@ class ConfigurationRepository:
         rows = self.db._execute_query(query, (), fetch_all=True)
         return [self._row_to_pydantic(row) for row in rows]
 
-    def update_configuration(self, config_id: str, config: ConfigurationTemplateCreate) -> Optional[ConfigurationTemplateDB]:
+    def update_configuration(
+        self, config_id: str, config: ConfigurationTemplateCreate
+    ) -> Optional[ConfigurationTemplateDB]:
         """Update a configuration template"""
         # Convert pydantic models to dicts
-        front_configs_dict = [fc.model_dump() if hasattr(fc, 'model_dump') else fc.dict() for fc in config.front_configs]
-        facility_configs_dict = [fc.model_dump() if hasattr(fc, 'model_dump') else fc.dict() for fc in config.facility_configs]
-        
+        front_configs_dict = [
+            fc.model_dump() if hasattr(fc, "model_dump") else fc.dict() for fc in config.front_configs
+        ]
+        facility_configs_dict = [
+            fc.model_dump() if hasattr(fc, "model_dump") else fc.dict() for fc in config.facility_configs
+        ]
+
         update_query = """
         UPDATE configuration_templates
         SET name = %s, description = %s, front_configs = %s, facility_configs = %s,

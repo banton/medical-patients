@@ -15,7 +15,6 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
 from patient_generator.repository import ConfigurationRepository
-from src.infrastructure.database_adapter import get_enhanced_database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service, get_patient_generation_service
@@ -24,6 +23,7 @@ from src.core.security_enhanced import verify_api_key
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
 from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext
+from src.infrastructure.database_adapter import get_enhanced_database
 
 router = APIRouter(
     prefix="/generation",
