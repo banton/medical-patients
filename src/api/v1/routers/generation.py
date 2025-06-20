@@ -14,7 +14,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 
-from patient_generator.database import ConfigurationRepository, Database
+from patient_generator.repository import ConfigurationRepository
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service, get_patient_generation_service
@@ -23,6 +23,7 @@ from src.core.security_enhanced import verify_api_key
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
 from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext
+from src.infrastructure.database_adapter import get_enhanced_database
 
 router = APIRouter(
     prefix="/generation",
@@ -235,7 +236,7 @@ async def _run_generation_task(
             print(f"   Base date: {temporal_injuries_config['base_date']}")
 
         # Handle configuration source
-        db_instance = Database.get_instance()
+        db_instance = get_enhanced_database()
         config_repo = ConfigurationRepository(db_instance)
 
         if "configuration_id" in config:

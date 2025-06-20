@@ -25,7 +25,8 @@ else:
 
 
 from patient_generator.config_manager import ConfigurationManager
-from patient_generator.database import Database
+
+# Database import removed - will use enhanced database from adapter
 from patient_generator.demographics import DemographicsGenerator
 from patient_generator.flow_simulator import PatientFlowSimulator
 from patient_generator.formatter import OutputFormatter
@@ -218,7 +219,10 @@ class AsyncPatientGenerationService:
     def __init__(self):
         self.pipeline = None
         self.config_manager = None
-        self.db = Database()
+        # Use enhanced database from adapter
+        from src.infrastructure.database_adapter import get_enhanced_database  # noqa: PLC0415
+
+        self.db = get_enhanced_database()
         self.cached_demographics = CachedDemographicsService()
         self.cached_medical = CachedMedicalService()
 

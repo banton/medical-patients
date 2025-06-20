@@ -18,7 +18,8 @@ import psutil
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from patient_generator.database import ConfigurationRepository, Database
+from patient_generator.repository import ConfigurationRepository
+from src.infrastructure.database_adapter import get_enhanced_database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.domain.services.patient_generation_service import (
     AsyncPatientGenerationService,
@@ -45,7 +46,7 @@ async def profile_regular_generation(patient_count: int):
     start_time = time.time()
 
     # Create configuration
-    db_instance = Database.get_instance()
+    db_instance = get_enhanced_database()
     config_repo = ConfigurationRepository(db_instance)
 
     config_create = ConfigurationTemplateCreate(
@@ -137,7 +138,7 @@ async def profile_streaming_generation(patient_count: int):
     start_time = time.time()
 
     # Create configuration
-    db_instance = Database.get_instance()
+    db_instance = get_enhanced_database()
     config_repo = ConfigurationRepository(db_instance)
 
     config_create = ConfigurationTemplateCreate(

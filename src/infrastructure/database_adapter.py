@@ -9,16 +9,15 @@ from typing import Any, Dict, List, Literal, Optional, Union, overload
 import psycopg2
 import psycopg2.extras
 
-from patient_generator.database import Database as LegacyDatabase
 from src.infrastructure.database_pool import get_pool
 
 
-class EnhancedDatabase(LegacyDatabase):
+class EnhancedDatabase:
     """
-    Enhanced database class that uses the new connection pool.
+    Enhanced database class that uses the connection pool for better scalability.
 
-    This adapter maintains backward compatibility with existing code
-    while using the enhanced connection pool for better scalability.
+    This is the primary database interface for the application, providing
+    connection pooling, monitoring, and resource management.
     """
 
     _instance = None
@@ -34,7 +33,6 @@ class EnhancedDatabase(LegacyDatabase):
 
     def __init__(self):
         """Initialize with enhanced connection pool."""
-        # Skip parent __init__ to avoid creating the old pool
         self._pool: Any = get_pool()
 
     def get_connection(self) -> Optional[psycopg2.extensions.connection]:

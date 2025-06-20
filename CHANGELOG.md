@@ -5,6 +5,18 @@ All notable changes to the Military Medical Exercise Patient Generator will be d
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Database Architecture**: Consolidated all database operations to use enhanced connection pool
+  - Removed legacy database implementation 
+  - Extracted ConfigurationRepository to separate file for cleaner separation
+  - All modules now use centralized database adapter with connection pooling
+  - Updated documentation to reflect new architecture
+
+### Removed
+- Legacy `database.py` file - all functionality moved to enhanced database adapter and repository pattern
+
 ## [1.1.0] - 2025-06-19
 
 ### Added

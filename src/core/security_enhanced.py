@@ -47,7 +47,7 @@ def get_sqlalchemy_session():
         raise HTTPException(
             status_code=503,
             detail="Database not configured. Service temporarily unavailable.",
-            headers={"X-Error-Type": "database_configuration"}
+            headers={"X-Error-Type": "database_configuration"},
         )
     session = SessionLocal()
     try:
@@ -226,9 +226,7 @@ async def verify_api_key_context(
     # Check if API key is provided
     if not api_key:
         raise HTTPException(
-            status_code=401,
-            detail="Missing API Key",
-            headers={"X-Key-Status": "missing", "WWW-Authenticate": "ApiKey"}
+            status_code=401, detail="Missing API Key", headers={"X-Key-Status": "missing", "WWW-Authenticate": "ApiKey"}
         )
 
     # Try to get cached limits first
@@ -241,7 +239,7 @@ async def verify_api_key_context(
         raise HTTPException(
             status_code=503,
             detail="Database service temporarily unavailable",
-            headers={"X-Error-Type": "database_error"}
+            headers={"X-Error-Type": "database_error"},
         )
 
     # Check for demo key first (most common case)
@@ -268,9 +266,7 @@ async def verify_api_key_context(
             raise
         except Exception:
             raise HTTPException(
-                status_code=500,
-                detail="Error processing demo API key",
-                headers={"X-Error-Type": "demo_key_error"}
+                status_code=500, detail="Error processing demo API key", headers={"X-Error-Type": "demo_key_error"}
             )
 
     # Check for legacy API key (backward compatibility)
@@ -287,7 +283,9 @@ async def verify_api_key_context(
     try:
         key_record = repo.get_active_key(api_key)
         if not key_record:
-            raise HTTPException(status_code=401, detail="Invalid or inactive API key", headers={"X-Key-Status": "invalid"})
+            raise HTTPException(
+                status_code=401, detail="Invalid or inactive API key", headers={"X-Key-Status": "invalid"}
+            )
 
         # Create context with database key
         context = APIKeyContext(api_key=key_record, is_demo=key_record.is_demo, is_legacy=False)
@@ -306,7 +304,7 @@ async def verify_api_key_context(
         raise HTTPException(
             status_code=503,
             detail="Database lookup failed. Service temporarily unavailable.",
-            headers={"X-Error-Type": "database_lookup_error"}
+            headers={"X-Error-Type": "database_lookup_error"},
         )
 
 
@@ -359,11 +357,7 @@ async def verify_api_key_legacy(api_key: str = Header(..., alias="X-API-Key")) -
     if api_key and len(api_key) > 10:
         return api_key
 
-    raise HTTPException(
-        status_code=401,
-        detail="Invalid API key",
-        headers={"X-Key-Status": "invalid"}
-    )
+    raise HTTPException(status_code=401, detail="Invalid API key", headers={"X-Key-Status": "invalid"})
 
 
 def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
