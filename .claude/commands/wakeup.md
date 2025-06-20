@@ -5,3 +5,4 @@ Always remember the rules of engagement:
 2. Always follow proper git workflow
 3. Never push to main branch, as it is live and hot
 4. Always run full tests before pushing changes
+5. Suggest new tasks after you have completed the current task or need assistance
