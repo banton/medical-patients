@@ -48,6 +48,7 @@ class GenerationContext:
     encryption_password: Optional[str] = None
     output_formats: Optional[List[str]] = None
     use_compression: bool = False
+    temporal_config: Optional[Dict[str, Any]] = None  # Add temporal config
 
     def __post_init__(self):
         if self.output_formats is None:
@@ -226,7 +227,7 @@ class AsyncPatientGenerationService:
         self.cached_demographics = CachedDemographicsService()
         self.cached_medical = CachedMedicalService()
 
-    def _initialize_pipeline(self, config_id: str):
+    def _initialize_pipeline(self, config_id: str, temporal_config: Optional[Dict[str, Any]] = None):
         """Initialize the generation pipeline with required components."""
         # Initialize configuration manager
         self.config_manager = ConfigurationManager(database_instance=self.db)
@@ -235,7 +236,7 @@ class AsyncPatientGenerationService:
         # Initialize components with config manager
         # Use cached services' generators
         self.pipeline = PatientGenerationPipeline(
-            flow_simulator=PatientFlowSimulator(self.config_manager),
+            flow_simulator=PatientFlowSimulator(self.config_manager, temporal_config=temporal_config),
             demographics_generator=self.cached_demographics.get_demographics_generator(),
             medical_generator=self.cached_medical._get_condition_generator(),
             output_formatter=OutputFormatter(),
@@ -254,8 +255,8 @@ class AsyncPatientGenerationService:
             await self.cached_demographics.warm_cache()
             await self.cached_medical.warm_cache()
 
-            # Initialize pipeline with configuration
-            self._initialize_pipeline(context.config.id)
+            # Initialize pipeline with configuration and temporal config
+            self._initialize_pipeline(context.config.id, temporal_config=context.temporal_config)
 
         # Ensure output directory exists
         os.makedirs(context.output_directory, exist_ok=True)

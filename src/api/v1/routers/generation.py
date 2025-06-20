@@ -186,12 +186,10 @@ async def _run_generation_task(
                 f"🔍 TEMPORAL DEBUG: Found temporal keys: {[k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in inner_config]}"
             )
 
+        temporal_config = None
         if temporal_config_present:
-            # Write temporal configuration to injuries.json for flow simulator
-            # Use the path relative to current working directory (works in both dev and Docker)
-            injuries_path = os.path.abspath("patient_generator/injuries.json")
-
-            temporal_injuries_config = {
+            # Create temporal configuration in-memory (no file I/O)
+            temporal_config = {
                 "total_patients": inner_config.get("total_patients", 1440),
                 "days_of_fighting": inner_config.get("days_of_fighting", 8),
                 "base_date": inner_config.get("base_date", "2025-06-01"),
@@ -222,18 +220,9 @@ async def _run_generation_task(
                 ),
             }
 
-            # Backup existing injuries.json
-            backup_path = injuries_path + ".backup"
-            if os.path.exists(injuries_path):
-                shutil.copy2(injuries_path, backup_path)
-
-            # Write temporal config to injuries.json
-            with open(injuries_path, "w") as f:
-                json.dump(temporal_injuries_config, f, indent=2)
-
-            print("✅ Temporal configuration written to injuries.json")
-            print(f"   Warfare types: {[k for k, v in temporal_injuries_config['warfare_types'].items() if v]}")
-            print(f"   Base date: {temporal_injuries_config['base_date']}")
+            print("✅ Temporal configuration prepared in-memory")
+            print(f"   Warfare types: {[k for k, v in temporal_config['warfare_types'].items() if v]}")
+            print(f"   Base date: {temporal_config['base_date']}")
 
         # Handle configuration source
         db_instance = get_enhanced_database()
@@ -272,6 +261,7 @@ async def _run_generation_task(
             encryption_password=config.get("encryption_password"),
             output_formats=config.get("output_formats", ["json"]),
             use_compression=config.get("use_compression", False),
+            temporal_config=temporal_config,  # Pass temporal config if present
         )
 
         # Progress callback
@@ -292,18 +282,7 @@ async def _run_generation_task(
             except Exception as e:
                 print(f"Warning: Could not clean up temporary configuration {config_template.id}: {e}")
 
-        # Restore original injuries.json if we modified it
-        if temporal_config_present:
-            # Get the project root directory and construct correct path
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
-            injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
-            backup_path = injuries_path + ".backup"
-
-            if os.path.exists(backup_path):
-                shutil.move(backup_path, injuries_path)
-                print("✅ Restored original injuries.json")
-            else:
-                print("⚠️  No backup found to restore injuries.json")
+        # No need to restore injuries.json - we're using in-memory config now
 
         # Update job with results
         await job_service.set_job_results(
@@ -317,21 +296,7 @@ async def _run_generation_task(
         await job_service.update_job_status(job_id, JobStatus.COMPLETED)
 
     except Exception as e:
-        # Restore original injuries.json if we modified it (even on failure)
-        if temporal_config_present:
-            try:
-                # Get the project root directory and construct correct path
-                project_root = os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-                )
-                injuries_path = os.path.join(project_root, "patient_generator", "injuries.json")
-                backup_path = injuries_path + ".backup"
-
-                if os.path.exists(backup_path):
-                    shutil.move(backup_path, injuries_path)
-                    print("✅ Restored original injuries.json after failure")
-            except Exception as cleanup_error:
-                print(f"⚠️  Failed to restore injuries.json: {cleanup_error}")
+        # No need to restore injuries.json - we're using in-memory config now
 
         # Mark job as failed
         await job_service.update_job_status(job_id, JobStatus.FAILED, error=str(e))

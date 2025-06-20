@@ -24,9 +24,10 @@ except ImportError:
 class PatientFlowSimulator:
     """Optimized simulator for patient flow through medical treatment facilities, using dynamic configurations."""
 
-    def __init__(self, config_manager: ConfigurationManager):
+    def __init__(self, config_manager: ConfigurationManager, temporal_config: Optional[Dict[str, Any]] = None):
         self.config_manager = config_manager
         self.patients: List[Patient] = []
+        self.temporal_config = temporal_config  # Store temporal config if provided
         active_config = self.config_manager.get_active_configuration()
 
         if not active_config:
@@ -194,20 +195,10 @@ class PatientFlowSimulator:
     def generate_casualty_flow(self):  # total_casualties now comes from config
         """Generate casualties - check for temporal configuration"""
 
-        # Check if temporal configuration exists
-        injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
-
-        try:
-            with open(injuries_path) as f:
-                injuries_config = json.load(f)
-
-            # Check if new format (has warfare_types)
-            if "warfare_types" in injuries_config:
-                print(f"Using temporal generation with base_date: {injuries_config.get('base_date', 'NOT_FOUND')}")
-                return self.generate_temporal_casualties()
-            print("No warfare_types found, using legacy generation")
-        except Exception as e:
-            print(f"Error loading injuries config: {e}")
+        # Use in-memory temporal config if provided
+        if self.temporal_config and "warfare_types" in self.temporal_config:
+            print(f"Using temporal generation with base_date: {self.temporal_config.get('base_date', 'NOT_FOUND')}")
+            return self.generate_temporal_casualties()
 
         # Fall back to original method
         total_casualties = self.total_patients_to_generate
@@ -646,8 +637,8 @@ class PatientFlowSimulator:
     def generate_temporal_casualties(self):
         """Generate casualties with temporal distribution based on warfare scenarios"""
 
-        # Load injuries.json configuration
-        injuries_config = self._load_injuries_config()
+        # Use in-memory temporal config
+        injuries_config = self.temporal_config
 
         # Initialize temporal generator
         warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
@@ -682,13 +673,6 @@ class PatientFlowSimulator:
                 self._simulate_patient_flow_single(patient)
 
         return patients
-
-    def _load_injuries_config(self) -> Dict[str, Any]:
-        """Load injuries.json configuration"""
-        injuries_path = os.path.join(os.path.dirname(__file__), "injuries.json")
-
-        with open(injuries_path) as f:
-            return json.load(f)
 
     def _generate_patients_from_timeline(
         self, timeline: List[CasualtyEvent], base_injury_mix: Dict[str, float]
