@@ -19,7 +19,7 @@ class TestUIAPIIntegration:
     """Test suite for UI and API integration."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, client):
         """Setup test environment."""
         # With TestClient, the app is automatically available
         response = client.get("/health")

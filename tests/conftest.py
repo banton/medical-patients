@@ -74,14 +74,13 @@ def client(request) -> Union[TestClient, HTTPClient]:
         from src.main import app
         from src.infrastructure.database_pool import close_pool
         
-        # Reset the pool before creating test client
-        close_pool()
+        # In CI environment, don't close the pool as it affects the running server
+        if not os.getenv("CI"):
+            # Reset the pool before creating test client
+            close_pool()
         
         with TestClient(app) as test_client:
             yield test_client
-        
-        # Clean up after test
-        close_pool()
 
 
 @pytest.fixture()
