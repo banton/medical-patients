@@ -3,7 +3,6 @@ Tests for optimized patient generation pipeline (EPIC-001 Task 2).
 """
 
 import json
-from contextlib import asynccontextmanager
 from pathlib import Path
 import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -292,7 +291,7 @@ class TestMemoryOptimization:
 
             # Mock file operations
             mock_file = MockFileHandle()
-            
+
             # Mock aiofiles.open to return the file handle directly
             async def mock_open(*args, **kwargs):
                 return mock_file

@@ -94,7 +94,9 @@
       "mcp__playwright-mcp__playwright_console_logs",
       "mcp__playwright-mcp__playwright_get_visible_text",
       "Bash(git reset:*)",
-      "Bash(gh run watch:*)"
+      "Bash(gh run watch:*)",
+      "Bash(gh workflow view:*)",
+      "mcp__playwright-mcp__playwright_go_back"
     ],
     "deny": []
   },

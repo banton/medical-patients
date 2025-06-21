@@ -179,8 +179,8 @@ class TestTimelineIntegration:
 
     def test_taskfile_commands_work(self):
         """Test that Taskfile commands for timeline viewer work correctly."""
-        import subprocess
         import shutil
+        import subprocess
 
         # Skip if task command is not available
         if not shutil.which("task"):
@@ -191,11 +191,11 @@ class TestTimelineIntegration:
         result = subprocess.run(
             ["task", "--list"], cwd=Path.cwd(), capture_output=True, text=True, timeout=30, check=False
         )
-        
+
         # Check that timeline task is available
         assert result.returncode == 0, f"task --list failed: {result.stderr}"
         assert "timeline" in result.stdout, "Timeline task not found in task list"
-        
+
         # Check if npm is available for timeline viewer
         if not shutil.which("npm"):
             pytest.skip("npm not available for timeline viewer test")

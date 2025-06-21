@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+import uuid
 
 
 class JobStatus(str, Enum):
@@ -35,10 +36,10 @@ class JobProgressDetails:
 class Job:
     """Domain model for a generation job."""
 
-    job_id: str
     status: JobStatus
     created_at: datetime
     config: Dict[str, Any]
+    job_id: Optional[str] = None
     progress: int = 0
     completed_at: Optional[datetime] = None
     error: Optional[str] = None
@@ -46,6 +47,12 @@ class Job:
     output_directory: Optional[str] = None
     progress_details: Optional[JobProgressDetails] = None
     summary: Optional[Dict[str, Any]] = None
+    output_files: Optional[List[str]] = None
+
+    def __post_init__(self):
+        """Generate job_id if not provided."""
+        if self.job_id is None:
+            self.job_id = str(uuid.uuid4())
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert job to dictionary representation."""
@@ -81,5 +88,8 @@ class Job:
 
         if self.summary:
             data["summary"] = self.summary
+
+        if self.output_files:
+            data["output_files"] = self.output_files
 
         return data

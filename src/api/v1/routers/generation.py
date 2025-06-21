@@ -268,7 +268,21 @@ async def _run_generation_task(
             # Cap progress at 1.0 (100%) to prevent validation errors
             progress = min(progress, 1.0)
             progress_percent = int(progress * 100)
-            await job_service.update_job_progress(job_id, progress_percent)
+
+            # Extract progress details
+            progress_details = None
+            if "phase_description" in progress_data or "current_phase" in progress_data:
+                from src.domain.models.job import JobProgressDetails
+
+                progress_details = JobProgressDetails(
+                    current_phase=progress_data.get("current_phase", "unknown"),
+                    phase_description=progress_data.get("phase_description", ""),
+                    phase_progress=progress_data.get("phase_progress", 0),
+                    processed_patients=progress_data.get("processed_patients"),
+                    total_patients=progress_data.get("total_patients"),
+                )
+
+            await job_service.update_job_progress(job_id, progress_percent, progress_details)
 
         # Run generation
         result = await generation_service.generate_patients(generation_context, progress_callback)

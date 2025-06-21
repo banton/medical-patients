@@ -19,6 +19,7 @@ class JobProgressDetails(BaseModel):
     completed_steps: int = Field(..., description="Number of completed steps")
     patients_generated: int = Field(default=0, description="Number of patients generated so far")
     estimated_remaining_time: Optional[int] = Field(None, description="Estimated remaining time in seconds")
+    phase_description: Optional[str] = Field(None, description="Human-readable description of current phase")
 
 
 class JobResponse(BaseModel):

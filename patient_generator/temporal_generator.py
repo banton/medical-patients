@@ -58,8 +58,9 @@ class TemporalPatternGenerator:
         intensity_mod = self.warfare_patterns["intensity_levels"][intensity]
         tempo_pattern = self.warfare_patterns["tempo_patterns"][tempo]
 
-        # Adjust total patients based on intensity
-        adjusted_total = int(total_patients * intensity_mod["patient_multiplier"])
+        # FIXED: Intensity should NOT change total patient count - it affects clustering/timing only
+        # Total patients represents actual combatants who can be injured
+        adjusted_total = total_patients  # Use exact requested amount
 
         # Distribute patients across days based on tempo
         daily_distribution = self._distribute_patients_by_day(adjusted_total, days, tempo_pattern["daily_intensity"])

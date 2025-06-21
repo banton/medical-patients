@@ -145,13 +145,25 @@ def _job_to_response(job) -> JobResponse:
     # Create progress details if available
     progress_details = None
     if hasattr(job, "progress_details") and job.progress_details:
-        progress_details = JobProgressDetails(
-            current_step=job.progress_details.get("current_step", "Unknown"),
-            total_steps=job.progress_details.get("total_steps", 1),
-            completed_steps=job.progress_details.get("completed_steps", 0),
-            patients_generated=job.progress_details.get("patients_generated", 0),
-            estimated_remaining_time=job.progress_details.get("estimated_remaining_time"),
-        )
+        # If it's already a JobProgressDetails object, use it directly
+        if hasattr(job.progress_details, "current_phase"):
+            progress_details = JobProgressDetails(
+                current_step=job.progress_details.current_phase,
+                total_steps=1,
+                completed_steps=0,
+                patients_generated=job.progress_details.processed_patients or 0,
+                estimated_remaining_time=None,
+                phase_description=job.progress_details.phase_description if hasattr(job.progress_details, "phase_description") else None
+            )
+        # Handle legacy dictionary format
+        elif isinstance(job.progress_details, dict):
+            progress_details = JobProgressDetails(
+                current_step=job.progress_details.get("current_step", "Unknown"),
+                total_steps=job.progress_details.get("total_steps", 1),
+                completed_steps=job.progress_details.get("completed_steps", 0),
+                patients_generated=job.progress_details.get("patients_generated", 0),
+                estimated_remaining_time=job.progress_details.get("estimated_remaining_time"),
+            )
 
     return JobResponse(
         job_id=job.job_id,

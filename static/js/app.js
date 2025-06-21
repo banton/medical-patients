@@ -590,11 +590,26 @@ class PatientGeneratorApp {
     }
 
     updateProgress(job) {
-        const percentage = job.progress || this.simulatedProgress;
+        // Prefer real backend progress over simulated
+        const percentage = job.progress !== null && job.progress !== undefined ? job.progress : this.simulatedProgress;
 
         // Update progress bar
         if (this.progressBar) {
             this.progressBar.style.width = `${percentage}%`;
+        }
+        
+        // Update progress text if available
+        const progressText = document.getElementById('progressText');
+        if (progressText) {
+            progressText.textContent = `${Math.round(percentage)}%`;
+        }
+        
+        // Update phase description if available
+        if (job.progress_details && job.progress_details.phase_description) {
+            const phaseElement = document.getElementById('phaseDescription');
+            if (phaseElement) {
+                phaseElement.textContent = job.progress_details.phase_description;
+            }
         }
 
         if (this.progressContainer) {

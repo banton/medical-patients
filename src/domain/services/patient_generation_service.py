@@ -97,19 +97,65 @@ class PatientGenerationPipeline:
 
             patient_count += 1
             if progress_callback:
-                # Calculate progress percentage, capped at 100%
-                progress = min(patient_count / context.config.total_patients, 1.0)
-                phase_description = f"Generated {patient_count} of {context.config.total_patients} patients"
-
-                await progress_callback(
-                    {
-                        "progress": progress,
-                        "processed_patients": patient_count,
-                        "total_patients": context.config.total_patients,
-                        "phase_description": phase_description,
-                        "current_phase": "generating_patients",
-                    }
+                # Determine update frequency based on total count
+                update_interval = (
+                    1
+                    if context.config.total_patients <= 10
+                    else 5
+                    if context.config.total_patients <= 100
+                    else 10
+                    if context.config.total_patients <= 1000
+                    else 50
                 )
+
+                # Only update progress at intervals or on first/last patient
+                should_update = (
+                    patient_count == 1
+                    or patient_count == context.config.total_patients
+                    or patient_count % update_interval == 0
+                )
+
+                if should_update:
+                    # Calculate progress percentage, capped at 100%
+                    # Reserve 5% for init, 90% for generation, 5% for finalization
+                    generation_progress = (patient_count / context.config.total_patients) * 0.90
+                    total_progress = min(0.05 + generation_progress, 0.95)  # Cap at 95% until finalization
+
+                    # Create more descriptive phase messages
+                    if patient_count == 1:
+                        phase_description = "Starting patient generation..."
+                        self._generation_start_time = asyncio.get_event_loop().time()
+                    elif patient_count % 100 == 0:
+                        phase_description = (
+                            f"Processing batch {patient_count // 100} - Generated {patient_count:,} patients"
+                        )
+                    elif patient_count % update_interval == 0:
+                        # Calculate ETA
+                        elapsed = asyncio.get_event_loop().time() - getattr(
+                            self, "_generation_start_time", asyncio.get_event_loop().time()
+                        )
+                        if elapsed > 0 and patient_count > 0:
+                            rate = patient_count / elapsed  # patients per second
+                            remaining = context.config.total_patients - patient_count
+                            eta_seconds = int(remaining / rate) if rate > 0 else 0
+                            eta_str = f" (ETA: {eta_seconds}s)" if eta_seconds > 0 else ""
+                        else:
+                            eta_str = ""
+                        phase_description = (
+                            f"Generating patients... {patient_count:,} of {context.config.total_patients:,}{eta_str}"
+                        )
+                    else:
+                        phase_description = f"Patient {patient_count:,} of {context.config.total_patients:,}"
+
+                    await progress_callback(
+                        {
+                            "progress": total_progress,
+                            "processed_patients": patient_count,
+                            "total_patients": context.config.total_patients,
+                            "phase_description": phase_description,
+                            "current_phase": "generating_patients",
+                        }
+                    )
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
@@ -123,8 +169,9 @@ class PatientGenerationPipeline:
         chunk_size = 1000
         total_patients = context.config.total_patients
 
-        # For large patient counts, use chunked generation
-        if total_patients > chunk_size:
+        # For large patient counts, use chunked generation (but not for temporal)
+        # Temporal generation creates all patients based on timeline events, so chunking breaks it
+        if total_patients > chunk_size and not context.temporal_config:
             print(f"Using chunked generation for {total_patients} patients (chunks of {chunk_size})")
 
             # Process patients in chunks
@@ -132,7 +179,7 @@ class PatientGenerationPipeline:
                 chunk_end = min(chunk_start + chunk_size, total_patients)
                 current_chunk_size = chunk_end - chunk_start
 
-                print(f"Generating chunk: patients {chunk_start} to {chunk_end-1}")
+                print(f"Generating chunk: patients {chunk_start} to {chunk_end - 1}")
 
                 # Generate chunk of patients
                 async for patient in self._generate_patient_chunk(chunk_start, current_chunk_size, context):
@@ -142,7 +189,9 @@ class PatientGenerationPipeline:
                 gc.collect()
 
         else:
-            # For smaller patient counts, use the original method
+            # For smaller patient counts OR temporal generation, use the original method
+            if context.temporal_config:
+                print(f"Using temporal generation for {total_patients} patients (no chunking)")
             try:
                 # Use the flow simulator's generate_casualty_flow method which handles temporal vs legacy decision
                 patients = await to_thread(self.flow_simulator.generate_casualty_flow)
@@ -168,7 +217,9 @@ class PatientGenerationPipeline:
                     for patient in patients:
                         yield patient
 
-    async def _generate_patient_chunk(self, start_id: int, chunk_size: int, context: GenerationContext) -> AsyncIterator[Patient]:
+    async def _generate_patient_chunk(
+        self, start_id: int, chunk_size: int, context: GenerationContext
+    ) -> AsyncIterator[Patient]:
         """Generate a chunk of patients efficiently."""
 
         # Save original total patients
@@ -342,6 +393,16 @@ class AsyncPatientGenerationService:
             first_patient = True
             patient_count = 0
 
+            # Report initialization progress
+            if progress_callback:
+                await progress_callback(
+                    {
+                        "progress": 0.05,  # 5% for initialization
+                        "phase_description": "Initializing generation pipeline...",
+                        "current_phase": "initialization",
+                    }
+                )
+
             # Stream patients and write to files
             flush_interval = 100  # Flush every 100 patients
 
@@ -402,16 +463,36 @@ class AsyncPatientGenerationService:
                     await temp_file.write("\n]")  # Close JSON array
                 await temp_file.close()
 
+            # Report file closing progress
+            if progress_callback:
+                await progress_callback(
+                    {"progress": 0.96, "phase_description": "Finalizing output files...", "current_phase": "finalizing"}
+                )
+
             # Finalize files
             final_files = await self._finalize_files(output_files, context, patient_count)
 
             # Apply compression if needed
             if context.use_compression:
+                if progress_callback:
+                    await progress_callback(
+                        {"progress": 0.97, "phase_description": "Compressing files...", "current_phase": "compression"}
+                    )
                 final_files = await self._compress_files(final_files)
 
             # Apply encryption if needed
             if context.encryption_password:
+                if progress_callback:
+                    await progress_callback(
+                        {"progress": 0.98, "phase_description": "Encrypting files...", "current_phase": "encryption"}
+                    )
                 final_files = await self._encrypt_files(final_files, context.encryption_password)
+
+            # Final progress update
+            if progress_callback:
+                await progress_callback(
+                    {"progress": 1.0, "phase_description": "Generation complete!", "current_phase": "completed"}
+                )
 
             return {
                 "status": "completed",

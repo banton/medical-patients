@@ -93,8 +93,13 @@ class JobService:
             msg = f"Job {job_id} is not completed"
             raise StorageError(msg)
 
-        if not job.output_directory or not os.path.exists(job.output_directory):
-            msg = f"Output directory not found for job {job_id}"
+        # Reconstruct output directory path if not stored
+        if not job.output_directory:
+            import tempfile
+            job.output_directory = os.path.join(tempfile.gettempdir(), "medical_patients", f"job_{job_id}")
+
+        if not os.path.exists(job.output_directory):
+            msg = f"Output directory not found for job {job_id}: {job.output_directory}"
             raise StorageError(msg)
 
         # Create in-memory ZIP
