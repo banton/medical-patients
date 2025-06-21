@@ -349,17 +349,17 @@ async def invalidate_configuration_cache(config_id: str) -> None:
         # Delete the configuration cache
         await cache.delete(cache_key)
         logger.debug(f"Invalidated configuration cache for {config_id}")
-        
+
         # Also invalidate any computation caches that might depend on this config
         # Using v2 suffix to match the cache warmup service pattern
         cache_key_v2 = f"config:{config_id}:v2"
         await cache.delete(cache_key_v2)
-        
+
         # Invalidate related computation caches
         deleted = await cache.invalidate_pattern(f"computation:*:{config_id}:*")
         if deleted > 0:
             logger.debug(f"Invalidated {deleted} computation cache entries for config {config_id}")
-            
+
     except Exception as e:
         logger.error(f"Failed to invalidate configuration cache: {e}")
 
