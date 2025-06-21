@@ -200,7 +200,7 @@ class TestCacheWarmupService:
                 "updated_at": datetime.now(),
             }
         ]
-        
+
         # Mock enhanced database with synchronous _execute_query method
         mock_db = MagicMock()
         mock_db._execute_query.return_value = mock_configs
@@ -260,18 +260,18 @@ class TestCacheWarmupService:
 
             # Verify configs were cached
             assert mock_cache.set.call_count == 3
-            for i, config in enumerate(configs):
+            for _i, config in enumerate(configs):
                 cache_key = f"config:{config['id']}:v2"
                 expected_dict = {
-                    "id": config['id'],
-                    "name": config['name'],
-                    "description": config['description'],
-                    "config": config['config'],
-                    "template_id": config['template_id'],
-                    "is_public": config['is_public'],
-                    "api_key_id": config['api_key_id'],
-                    "created_at": config['created_at'].isoformat() if config['created_at'] else None,
-                    "updated_at": config['updated_at'].isoformat() if config['updated_at'] else None,
+                    "id": config["id"],
+                    "name": config["name"],
+                    "description": config["description"],
+                    "config": config["config"],
+                    "template_id": config["template_id"],
+                    "is_public": config["is_public"],
+                    "api_key_id": config["api_key_id"],
+                    "created_at": config["created_at"].isoformat() if config["created_at"] else None,
+                    "updated_at": config["updated_at"].isoformat() if config["updated_at"] else None,
                 }
                 mock_cache.set.assert_any_call(cache_key, expected_dict, ttl=86400)
 

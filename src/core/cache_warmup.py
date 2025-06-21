@@ -71,7 +71,7 @@ class CacheWarmupService:
             if db is None:
                 logger.warning("Database not available for configuration cache warming")
                 return
-            
+
             # Get top 10 most used configs from last 30 days
             query = text("""
                     SELECT DISTINCT c.*
@@ -102,15 +102,15 @@ class CacheWarmupService:
                 for config in configs:
                     cache_key = f"config:{config['id']}:v2"
                     config_dict = {
-                        "id": str(config['id']),
-                        "name": config['name'],
-                        "description": config['description'],
-                        "config": config['config'],
-                        "template_id": str(config['template_id']) if config['template_id'] else None,
-                        "is_public": config['is_public'],
-                        "api_key_id": str(config['api_key_id']) if config['api_key_id'] else None,
-                        "created_at": config['created_at'].isoformat() if config['created_at'] else None,
-                        "updated_at": config['updated_at'].isoformat() if config['updated_at'] else None,
+                        "id": str(config["id"]),
+                        "name": config["name"],
+                        "description": config["description"],
+                        "config": config["config"],
+                        "template_id": str(config["template_id"]) if config["template_id"] else None,
+                        "is_public": config["is_public"],
+                        "api_key_id": str(config["api_key_id"]) if config["api_key_id"] else None,
+                        "created_at": config["created_at"].isoformat() if config["created_at"] else None,
+                        "updated_at": config["updated_at"].isoformat() if config["updated_at"] else None,
                     }
                     if self.cache:
                         await self.cache.set(cache_key, config_dict, ttl=86400)  # 24 hours
