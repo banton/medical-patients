@@ -180,6 +180,11 @@ class TestTimelineIntegration:
     def test_taskfile_commands_work(self):
         """Test that Taskfile commands for timeline viewer work correctly."""
         import subprocess
+        import shutil
+
+        # Skip if task command is not available
+        if not shutil.which("task"):
+            pytest.skip("task command not available")
 
         # Test timeline command
         result = subprocess.run(
