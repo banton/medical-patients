@@ -164,6 +164,9 @@ class ComputationCache:
         Args:
             cache_key: The key that was hit
         """
+        if not self.cache:
+            return
+
         try:
             # Increment hit counter
             metrics_key = "metrics:cache:computation:hits"
@@ -183,6 +186,9 @@ class ComputationCache:
         Args:
             cache_key: The key that was missed
         """
+        if not self.cache:
+            return
+
         try:
             # Increment miss counter
             metrics_key = "metrics:cache:computation:misses"
