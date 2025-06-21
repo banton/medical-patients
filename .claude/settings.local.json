@@ -93,7 +93,8 @@
       "Bash(source .env)",
       "mcp__playwright-mcp__playwright_console_logs",
       "mcp__playwright-mcp__playwright_get_visible_text",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(gh run watch:*)"
     ],
     "deny": []
   },

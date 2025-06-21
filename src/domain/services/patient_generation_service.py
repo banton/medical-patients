@@ -14,7 +14,7 @@ import sys
 import tempfile
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
-import aiofiles
+import aiofiles  # type: ignore
 
 # Compatibility for Python < 3.9
 if sys.version_info >= (3, 9):
