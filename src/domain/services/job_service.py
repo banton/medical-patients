@@ -7,6 +7,7 @@ from io import BytesIO
 import os
 from pathlib import Path
 import shutil
+import tempfile
 from typing import Any, Dict, List, Optional
 import zipfile
 
@@ -95,7 +96,6 @@ class JobService:
 
         # Reconstruct output directory path if not stored
         if not job.output_directory:
-            import tempfile
             job.output_directory = os.path.join(tempfile.gettempdir(), "medical_patients", f"job_{job_id}")
 
         if not os.path.exists(job.output_directory):

@@ -18,6 +18,7 @@ from src.api.v1.dependencies.database import get_database
 from src.api.v1.dependencies.services import get_job_service, get_patient_generation_service
 from src.api.v1.models import ErrorResponse, GenerationRequest, GenerationResponse
 from src.core.security_enhanced import verify_api_key
+from src.domain.models.job import JobProgressDetails
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
 from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext
@@ -272,8 +273,6 @@ async def _run_generation_task(
             # Extract progress details
             progress_details = None
             if "phase_description" in progress_data or "current_phase" in progress_data:
-                from src.domain.models.job import JobProgressDetails
-
                 progress_details = JobProgressDetails(
                     current_phase=progress_data.get("current_phase", "unknown"),
                     phase_description=progress_data.get("phase_description", ""),

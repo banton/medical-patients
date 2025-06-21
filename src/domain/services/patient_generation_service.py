@@ -110,9 +110,7 @@ class PatientGenerationPipeline:
 
                 # Only update progress at intervals or on first/last patient
                 should_update = (
-                    patient_count == 1
-                    or patient_count == context.config.total_patients
-                    or patient_count % update_interval == 0
+                    patient_count in {1, context.config.total_patients} or patient_count % update_interval == 0
                 )
 
                 if should_update:

@@ -153,7 +153,9 @@ def _job_to_response(job) -> JobResponse:
                 completed_steps=0,
                 patients_generated=job.progress_details.processed_patients or 0,
                 estimated_remaining_time=None,
-                phase_description=job.progress_details.phase_description if hasattr(job.progress_details, "phase_description") else None
+                phase_description=job.progress_details.phase_description
+                if hasattr(job.progress_details, "phase_description")
+                else None,
             )
         # Handle legacy dictionary format
         elif isinstance(job.progress_details, dict):
