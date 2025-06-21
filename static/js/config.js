@@ -67,7 +67,7 @@ class Config {
     getEnvironmentConfig() {
         const configs = {
             local: {
-                apiKey: 'your_secret_api_key_here',
+                apiKey: 'dev_secret_key_27e9010dd17a442a1cda3a0490a95611',
                 apiBaseUrl: '',
                 debug: true,
                 environment: 'local'
