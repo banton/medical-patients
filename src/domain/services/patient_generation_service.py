@@ -4,7 +4,9 @@ Async patient generation service for stream-based processing.
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from dataclasses import dataclass
+import gc
 import gzip
 import json
 import os
@@ -118,26 +120,25 @@ class PatientGenerationPipeline:
         """Generate base patients with chunked processing for memory efficiency."""
 
         # Define chunk size for memory-efficient processing
-        CHUNK_SIZE = 1000
+        chunk_size = 1000
         total_patients = context.config.total_patients
 
         # For large patient counts, use chunked generation
-        if total_patients > CHUNK_SIZE:
-            print(f"Using chunked generation for {total_patients} patients (chunks of {CHUNK_SIZE})")
+        if total_patients > chunk_size:
+            print(f"Using chunked generation for {total_patients} patients (chunks of {chunk_size})")
 
             # Process patients in chunks
-            for chunk_start in range(0, total_patients, CHUNK_SIZE):
-                chunk_end = min(chunk_start + CHUNK_SIZE, total_patients)
-                chunk_size = chunk_end - chunk_start
+            for chunk_start in range(0, total_patients, chunk_size):
+                chunk_end = min(chunk_start + chunk_size, total_patients)
+                current_chunk_size = chunk_end - chunk_start
 
                 print(f"Generating chunk: patients {chunk_start} to {chunk_end-1}")
 
                 # Generate chunk of patients
-                async for patient in self._generate_patient_chunk(chunk_start, chunk_size, context):
+                async for patient in self._generate_patient_chunk(chunk_start, current_chunk_size, context):
                     yield patient
 
                 # Force garbage collection after each chunk to free memory
-                import gc
                 gc.collect()
 
         else:
@@ -420,19 +421,15 @@ class AsyncPatientGenerationService:
 
         except Exception as e:
             # Clean up temp files on error
-            for format, temp_file in temp_files.items():
-                try:
+            for _format, temp_file in temp_files.items():
+                with suppress(Exception):
                     await temp_file.close()
-                except Exception:
-                    pass
 
             # Clean up temp files
             for temp_path in output_files.values():
-                try:
+                with suppress(Exception):
                     if await to_thread(os.path.exists, temp_path):
                         await to_thread(os.remove, temp_path)
-                except Exception:
-                    pass
             raise e
 
     async def _finalize_files(

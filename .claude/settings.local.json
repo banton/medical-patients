@@ -92,7 +92,8 @@
       "Bash(docker-compose up:*)",
       "Bash(source .env)",
       "mcp__playwright-mcp__playwright_console_logs",
-      "mcp__playwright-mcp__playwright_get_visible_text"
+      "mcp__playwright-mcp__playwright_get_visible_text",
+      "Bash(git reset:*)"
     ],
     "deny": []
   },
