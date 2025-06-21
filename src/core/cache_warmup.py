@@ -67,9 +67,13 @@ class CacheWarmupService:
     async def _warm_configuration_cache(self) -> None:
         """Cache frequently used configurations."""
         try:
-            async with get_enhanced_database() as db:
-                # Get top 10 most used configs from last 30 days
-                query = text("""
+            db = get_enhanced_database()
+            if db is None:
+                logger.warning("Database not available for configuration cache warming")
+                return
+            
+            # Get top 10 most used configs from last 30 days
+            query = text("""
                     SELECT DISTINCT c.*
                     FROM configurations c
                     JOIN jobs j ON j.config_id = c.id
@@ -80,29 +84,39 @@ class CacheWarmupService:
                     LIMIT 10
                 """)
 
-                result = await db.execute(query)
-                configs = result.fetchall()
+            # Execute query using sync method (wrapped in error handling)
+            configs = None
+            try:
+                configs = db._execute_query(
+                    str(query),
+                    fetch_all=True
+                )
+            except Exception:
+                # If connection pool is closed, skip cache warmup
+                logger.warning("Database connection not available for cache warmup")
+                return
 
-                # Cache each configuration
-                cached_count = 0
+            # Cache each configuration
+            cached_count = 0
+            if configs:
                 for config in configs:
-                    cache_key = f"config:{config.id}:v2"
+                    cache_key = f"config:{config['id']}:v2"
                     config_dict = {
-                        "id": str(config.id),
-                        "name": config.name,
-                        "description": config.description,
-                        "config": config.config,
-                        "template_id": str(config.template_id) if config.template_id else None,
-                        "is_public": config.is_public,
-                        "api_key_id": str(config.api_key_id) if config.api_key_id else None,
-                        "created_at": config.created_at.isoformat() if config.created_at else None,
-                        "updated_at": config.updated_at.isoformat() if config.updated_at else None,
+                        "id": str(config['id']),
+                        "name": config['name'],
+                        "description": config['description'],
+                        "config": config['config'],
+                        "template_id": str(config['template_id']) if config['template_id'] else None,
+                        "is_public": config['is_public'],
+                        "api_key_id": str(config['api_key_id']) if config['api_key_id'] else None,
+                        "created_at": config['created_at'].isoformat() if config['created_at'] else None,
+                        "updated_at": config['updated_at'].isoformat() if config['updated_at'] else None,
                     }
                     if self.cache:
                         await self.cache.set(cache_key, config_dict, ttl=86400)  # 24 hours
                     cached_count += 1
 
-                logger.info(f"Configuration cache warmed with {cached_count} configs")
+            logger.info(f"Configuration cache warmed with {cached_count} configs")
 
         except Exception as e:
             logger.error(f"Failed to warm configuration cache: {e}")

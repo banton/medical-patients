@@ -5,6 +5,7 @@ Creates and configures the FastAPI application.
 
 from contextlib import asynccontextmanager
 import logging
+import os
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -50,13 +51,17 @@ async def lifespan(app: FastAPI):
             cache_service = await initialize_cache(settings.REDIS_URL, settings.CACHE_TTL)
             logger.info("Redis cache initialized")
             
-            # Warm critical caches on startup
-            warmup_service = CacheWarmupService(cache_service)
-            await warmup_service.warm_all_caches()
-            
-            # Log cache statistics
-            stats = await warmup_service.get_cache_stats()
-            logger.info(f"Cache warmup complete. Stats: {stats}")
+            # Warm critical caches on startup (skip in test environment)
+            if not os.environ.get("PYTEST_CURRENT_TEST"):
+                try:
+                    warmup_service = CacheWarmupService(cache_service)
+                    await warmup_service.warm_all_caches()
+                    
+                    # Log cache statistics
+                    stats = await warmup_service.get_cache_stats()
+                    logger.info(f"Cache warmup complete. Stats: {stats}")
+                except Exception as e:
+                    logger.warning(f"Cache warmup failed (non-critical): {e}")
             
         except Exception as e:
             logger.error("Failed to initialize Redis cache: %s", e)

@@ -187,29 +187,25 @@ class TestCacheWarmupService:
         mock_cache.set.return_value = True
 
         # Mock database results
-        mock_db = AsyncMock()
-        mock_result = MagicMock()
-        mock_result.fetchall.return_value = [
-            MagicMock(
-                id="config1",
-                name="Test Config",
-                description="Test",
-                config={"test": "data"},
-                template_id=None,
-                is_public=True,
-                api_key_id=None,
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
-            )
+        mock_configs = [
+            {
+                "id": "config1",
+                "name": "Test Config",
+                "description": "Test",
+                "config": {"test": "data"},
+                "template_id": None,
+                "is_public": True,
+                "api_key_id": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+            }
         ]
-        mock_db.execute.return_value = mock_result
+        
+        # Mock enhanced database with synchronous _execute_query method
+        mock_db = MagicMock()
+        mock_db._execute_query.return_value = mock_configs
 
-        # Mock the async context manager
-        mock_db_cm = AsyncMock()
-        mock_db_cm.__aenter__.return_value = mock_db
-        mock_db_cm.__aexit__.return_value = None
-
-        with patch("src.core.cache_warmup.get_enhanced_database", return_value=mock_db_cm):
+        with patch("src.core.cache_warmup.get_enhanced_database", return_value=mock_db):
             warmup_service = CacheWarmupService(mock_cache)
 
             # Mock the individual service warm_cache methods
@@ -222,7 +218,7 @@ class TestCacheWarmupService:
                     mock_med.assert_called_once()
 
                     # Verify configuration cache was warmed
-                    assert mock_db.execute.called
+                    assert mock_db._execute_query.called
                     assert mock_cache.set.called
 
     @pytest.mark.asyncio()
@@ -234,35 +230,30 @@ class TestCacheWarmupService:
         # Mock database with multiple configs
         configs = []
         for i in range(3):
-            config = MagicMock()
-            config.id = f"config{i}"
-            config.name = f"Config {i}"
-            config.description = f"Description {i}"
-            config.config = {"patients": 100 + i}
-            config.template_id = None
-            config.is_public = True
-            config.api_key_id = None
-            config.created_at = datetime.now() - timedelta(days=i)
-            config.updated_at = datetime.now()
+            config = {
+                "id": f"config{i}",
+                "name": f"Config {i}",
+                "description": f"Description {i}",
+                "config": {"patients": 100 + i},
+                "template_id": None,
+                "is_public": True,
+                "api_key_id": None,
+                "created_at": datetime.now() - timedelta(days=i),
+                "updated_at": datetime.now(),
+            }
             configs.append(config)
 
-        mock_db = AsyncMock()
-        mock_result = MagicMock()
-        mock_result.fetchall.return_value = configs
-        mock_db.execute.return_value = mock_result
+        # Mock enhanced database with synchronous _execute_query method
+        mock_db = MagicMock()
+        mock_db._execute_query.return_value = configs
 
-        # Mock the async context manager
-        mock_db_cm = AsyncMock()
-        mock_db_cm.__aenter__.return_value = mock_db
-        mock_db_cm.__aexit__.return_value = None
-
-        with patch("src.core.cache_warmup.get_enhanced_database", return_value=mock_db_cm):
+        with patch("src.core.cache_warmup.get_enhanced_database", return_value=mock_db):
             warmup_service = CacheWarmupService(mock_cache)
             await warmup_service._warm_configuration_cache()
 
             # Verify SQL query was executed
-            mock_db.execute.assert_called_once()
-            query = mock_db.execute.call_args[0][0]
+            mock_db._execute_query.assert_called_once()
+            query = mock_db._execute_query.call_args[0][0]
             assert "SELECT DISTINCT c.*" in str(query)
             assert "ORDER BY COUNT(j.id) DESC" in str(query)
             assert "LIMIT 10" in str(query)
@@ -270,8 +261,19 @@ class TestCacheWarmupService:
             # Verify configs were cached
             assert mock_cache.set.call_count == 3
             for i, config in enumerate(configs):
-                cache_key = f"config:{config.id}:v2"
-                mock_cache.set.assert_any_call(cache_key, {"id": f"config{i}", "name": f"Config {i}", "description": f"Description {i}", "config": {"patients": 100 + i}, "template_id": None, "is_public": True, "api_key_id": None, "created_at": config.created_at.isoformat(), "updated_at": config.updated_at.isoformat()}, ttl=86400)
+                cache_key = f"config:{config['id']}:v2"
+                expected_dict = {
+                    "id": config['id'],
+                    "name": config['name'],
+                    "description": config['description'],
+                    "config": config['config'],
+                    "template_id": config['template_id'],
+                    "is_public": config['is_public'],
+                    "api_key_id": config['api_key_id'],
+                    "created_at": config['created_at'].isoformat() if config['created_at'] else None,
+                    "updated_at": config['updated_at'].isoformat() if config['updated_at'] else None,
+                }
+                mock_cache.set.assert_any_call(cache_key, expected_dict, ttl=86400)
 
     @pytest.mark.asyncio()
     async def test_warm_computation_cache(self):
