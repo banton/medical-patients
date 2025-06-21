@@ -269,6 +269,10 @@ class EnhancedConnectionPool:
             raise TimeoutError(error_message)
 
         except Exception as e:
+            # Re-raise domain exceptions without wrapping
+            if e.__class__.__name__ in ['JobNotFoundError', 'InvalidOperationError', 'StorageError']:
+                raise
+            
             self.metrics.record_connection_error()
             logger.error(f"Connection error: {e}")
             error_message = f"Database connection failed: {e}"
