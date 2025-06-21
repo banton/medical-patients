@@ -6,8 +6,8 @@ These tests ensure that UI changes don't break the API contract.
 import time
 from typing import Any, Dict
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from src.main import app
 

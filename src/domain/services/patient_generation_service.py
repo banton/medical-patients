@@ -116,30 +116,30 @@ class PatientGenerationPipeline:
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate base patients with chunked processing for memory efficiency."""
-        
+
         # Define chunk size for memory-efficient processing
         CHUNK_SIZE = 1000
         total_patients = context.config.total_patients
-        
+
         # For large patient counts, use chunked generation
         if total_patients > CHUNK_SIZE:
             print(f"Using chunked generation for {total_patients} patients (chunks of {CHUNK_SIZE})")
-            
+
             # Process patients in chunks
             for chunk_start in range(0, total_patients, CHUNK_SIZE):
                 chunk_end = min(chunk_start + CHUNK_SIZE, total_patients)
                 chunk_size = chunk_end - chunk_start
-                
+
                 print(f"Generating chunk: patients {chunk_start} to {chunk_end-1}")
-                
+
                 # Generate chunk of patients
                 async for patient in self._generate_patient_chunk(chunk_start, chunk_size, context):
                     yield patient
-                    
+
                 # Force garbage collection after each chunk to free memory
                 import gc
                 gc.collect()
-                
+
         else:
             # For smaller patient counts, use the original method
             try:
@@ -166,25 +166,25 @@ class PatientGenerationPipeline:
 
                     for patient in patients:
                         yield patient
-                        
+
     async def _generate_patient_chunk(self, start_id: int, chunk_size: int, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate a chunk of patients efficiently."""
-        
+
         # Save original total patients
         original_total = self.flow_simulator.total_patients_to_generate
-        
+
         try:
             # Temporarily set the flow simulator to generate only this chunk
             self.flow_simulator.total_patients_to_generate = chunk_size
-            
+
             # Generate the chunk
             patients = await to_thread(self.flow_simulator.generate_casualty_flow)
-            
+
             # Adjust patient IDs to match the chunk position
             for i, patient in enumerate(patients):
                 patient.id = start_id + i
                 yield patient
-                
+
         finally:
             # Restore original total
             self.flow_simulator.total_patients_to_generate = original_total
@@ -319,9 +319,9 @@ class AsyncPatientGenerationService:
             # Create temp file path
             fd, temp_path = tempfile.mkstemp(suffix=f".{format}", dir=context.output_directory)
             os.close(fd)  # Close the file descriptor as we'll use aiofiles
-            
+
             output_files[format] = temp_path
-            
+
             if format == "json":
                 # JSON needs special handling for streaming
                 file_handle = await aiofiles.open(temp_path, mode="w")
@@ -343,7 +343,7 @@ class AsyncPatientGenerationService:
 
             # Stream patients and write to files
             flush_interval = 100  # Flush every 100 patients
-            
+
             async for patient, patient_data in self.pipeline.generate(context, progress_callback):
                 patient_count += 1
 
@@ -363,7 +363,7 @@ class AsyncPatientGenerationService:
                         # Use formatter for XML with async write
                         xml_data = await to_thread(formatter.format_xml, [patient_data])
                         if isinstance(xml_data, bytes):
-                            await stream.write(xml_data.decode('utf-8'))
+                            await stream.write(xml_data.decode("utf-8"))
                         else:
                             await stream.write(xml_data)
                     elif format == "csv":
@@ -389,7 +389,7 @@ class AsyncPatientGenerationService:
                         )
 
                 first_patient = False
-                
+
                 # Flush to disk periodically for better memory management
                 if patient_count % flush_interval == 0:
                     for stream in output_streams.values():
@@ -425,7 +425,7 @@ class AsyncPatientGenerationService:
                     await temp_file.close()
                 except Exception:
                     pass
-            
+
             # Clean up temp files
             for temp_path in output_files.values():
                 try:
@@ -478,10 +478,10 @@ class AsyncPatientGenerationService:
         """Asynchronously gzip a file using aiofiles."""
         # Read source file in chunks
         chunk_size = 1024 * 1024  # 1MB chunks
-        
-        async with aiofiles.open(source, 'rb') as f_in:
+
+        async with aiofiles.open(source, "rb") as f_in:
             # We need to use regular gzip for compression, but read/write async
-            with gzip.open(dest, 'wb') as f_out:
+            with gzip.open(dest, "wb") as f_out:
                 while True:
                     chunk = await f_in.read(chunk_size)
                     if not chunk:
