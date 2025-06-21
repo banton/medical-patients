@@ -30,16 +30,16 @@ def client():
     """Test client for FastAPI app"""
     from src.main import app
     
-    # Close any existing database pool to avoid conflicts
-    from src.infrastructure.database_pool import close_pool
-    close_pool()
+    # In CI environment, the server is already running, so we should not close the pool
+    # as it will affect the running server
+    if not os.getenv("CI"):
+        # Only close pool in local testing to avoid conflicts
+        from src.infrastructure.database_pool import close_pool
+        close_pool()
     
     # Create a new test client
     with TestClient(app) as test_client:
         yield test_client
-    
-    # Clean up after test
-    close_pool()
 
 
 @pytest.fixture()
