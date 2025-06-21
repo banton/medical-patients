@@ -28,18 +28,26 @@
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "esbuild": "^0.25.4",
-    "jest-environment-jsdom": "^29.7.0",
-    "ts-jest": "^29.3.2",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
-    "prettier": "^3.0.0",
     "husky": "^8.0.0",
-    "lint-staged": "^14.0.0"
+    "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^14.0.0",
+    "prettier": "^3.0.0",
+    "ts-jest": "^29.3.2"
   },
   "lint-staged": {
-    "*.js": ["eslint --fix", "prettier --write"],
-    "*.{json,css,html}": ["prettier --write"],
-    "*.py": ["ruff check --fix", "ruff format"]
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,html}": [
+      "prettier --write"
+    ],
+    "*.py": [
+      "ruff check --fix",
+      "ruff format"
+    ]
   }
 }

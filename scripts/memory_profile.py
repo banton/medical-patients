@@ -19,12 +19,12 @@ import psutil
 sys.path.append(str(Path(__file__).parent.parent))
 
 from patient_generator.repository import ConfigurationRepository
-from src.infrastructure.database_adapter import get_enhanced_database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.domain.services.patient_generation_service import (
     AsyncPatientGenerationService,
     GenerationContext,
 )
+from src.infrastructure.database_adapter import get_enhanced_database
 
 
 def get_memory_usage():

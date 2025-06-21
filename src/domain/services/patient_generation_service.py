@@ -4,13 +4,17 @@ Async patient generation service for stream-based processing.
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from dataclasses import dataclass
+import gc
 import gzip
 import json
 import os
 import sys
 import tempfile
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
+
+import aiofiles  # type: ignore
 
 # Compatibility for Python < 3.9
 if sys.version_info >= (3, 9):
@@ -48,6 +52,7 @@ class GenerationContext:
     encryption_password: Optional[str] = None
     output_formats: Optional[List[str]] = None
     use_compression: bool = False
+    temporal_config: Optional[Dict[str, Any]] = None  # Add temporal config
 
     def __post_init__(self):
         if self.output_formats is None:
@@ -112,34 +117,78 @@ class PatientGenerationPipeline:
         # For now, we'll use the existing synchronous initialization
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
-        """Generate base patients - check for temporal vs legacy generation."""
+        """Generate base patients with chunked processing for memory efficiency."""
 
-        # Check if temporal configuration exists by calling the flow simulator's decision logic
-        try:
-            # Use the flow simulator's generate_casualty_flow method which handles temporal vs legacy decision
-            patients = await to_thread(self.flow_simulator.generate_casualty_flow)
+        # Define chunk size for memory-efficient processing
+        chunk_size = 1000
+        total_patients = context.config.total_patients
 
-            # Yield patients one by one for streaming
-            for patient in patients:
-                yield patient
+        # For large patient counts, use chunked generation
+        if total_patients > chunk_size:
+            print(f"Using chunked generation for {total_patients} patients (chunks of {chunk_size})")
 
-        except Exception as e:
-            print(f"Error in bulk generation, falling back to individual patient creation: {e}")
+            # Process patients in chunks
+            for chunk_start in range(0, total_patients, chunk_size):
+                chunk_end = min(chunk_start + chunk_size, total_patients)
+                current_chunk_size = chunk_end - chunk_start
 
-            # Fallback to individual patient creation if bulk generation fails
-            batch_size = min(100, context.config.total_patients)
-            total = context.config.total_patients
+                print(f"Generating chunk: patients {chunk_start} to {chunk_end-1}")
 
-            for start in range(0, total, batch_size):
-                end = min(start + batch_size, total)
+                # Generate chunk of patients
+                async for patient in self._generate_patient_chunk(chunk_start, current_chunk_size, context):
+                    yield patient
 
-                # Generate batch asynchronously
-                tasks = [self._create_patient_async(i, context) for i in range(start, end)]
+                # Force garbage collection after each chunk to free memory
+                gc.collect()
 
-                patients = await asyncio.gather(*tasks)
+        else:
+            # For smaller patient counts, use the original method
+            try:
+                # Use the flow simulator's generate_casualty_flow method which handles temporal vs legacy decision
+                patients = await to_thread(self.flow_simulator.generate_casualty_flow)
 
+                # Yield patients one by one for streaming
                 for patient in patients:
                     yield patient
+
+            except Exception as e:
+                print(f"Error in bulk generation, falling back to individual patient creation: {e}")
+
+                # Fallback to individual patient creation if bulk generation fails
+                batch_size = min(100, total_patients)
+
+                for start in range(0, total_patients, batch_size):
+                    end = min(start + batch_size, total_patients)
+
+                    # Generate batch asynchronously
+                    tasks = [self._create_patient_async(i, context) for i in range(start, end)]
+
+                    patients = await asyncio.gather(*tasks)
+
+                    for patient in patients:
+                        yield patient
+
+    async def _generate_patient_chunk(self, start_id: int, chunk_size: int, context: GenerationContext) -> AsyncIterator[Patient]:
+        """Generate a chunk of patients efficiently."""
+
+        # Save original total patients
+        original_total = self.flow_simulator.total_patients_to_generate
+
+        try:
+            # Temporarily set the flow simulator to generate only this chunk
+            self.flow_simulator.total_patients_to_generate = chunk_size
+
+            # Generate the chunk
+            patients = await to_thread(self.flow_simulator.generate_casualty_flow)
+
+            # Adjust patient IDs to match the chunk position
+            for i, patient in enumerate(patients):
+                patient.id = start_id + i
+                yield patient
+
+        finally:
+            # Restore original total
+            self.flow_simulator.total_patients_to_generate = original_total
 
     async def _create_patient_async(self, patient_id: int, context: GenerationContext) -> Patient:
         """Create a single patient asynchronously with complete flow simulation."""
@@ -226,7 +275,7 @@ class AsyncPatientGenerationService:
         self.cached_demographics = CachedDemographicsService()
         self.cached_medical = CachedMedicalService()
 
-    def _initialize_pipeline(self, config_id: str):
+    def _initialize_pipeline(self, config_id: str, temporal_config: Optional[Dict[str, Any]] = None):
         """Initialize the generation pipeline with required components."""
         # Initialize configuration manager
         self.config_manager = ConfigurationManager(database_instance=self.db)
@@ -235,7 +284,7 @@ class AsyncPatientGenerationService:
         # Initialize components with config manager
         # Use cached services' generators
         self.pipeline = PatientGenerationPipeline(
-            flow_simulator=PatientFlowSimulator(self.config_manager),
+            flow_simulator=PatientFlowSimulator(self.config_manager, temporal_config=temporal_config),
             demographics_generator=self.cached_demographics.get_demographics_generator(),
             medical_generator=self.cached_medical._get_condition_generator(),
             output_formatter=OutputFormatter(),
@@ -254,38 +303,38 @@ class AsyncPatientGenerationService:
             await self.cached_demographics.warm_cache()
             await self.cached_medical.warm_cache()
 
-            # Initialize pipeline with configuration
-            self._initialize_pipeline(context.config.id)
+            # Initialize pipeline with configuration and temporal config
+            self._initialize_pipeline(context.config.id, temporal_config=context.temporal_config)
 
         # Ensure output directory exists
-        os.makedirs(context.output_directory, exist_ok=True)
+        await to_thread(os.makedirs, context.output_directory, exist_ok=True)
 
         # Initialize output files
         output_files = {}
         temp_files = {}
 
-        # Create output streams for each format
+        # Create output streams for each format using aiofiles
         output_streams = {}
 
         for format in context.output_formats or ["json"]:
+            # Create temp file path
+            fd, temp_path = tempfile.mkstemp(suffix=f".{format}", dir=context.output_directory)
+            os.close(fd)  # Close the file descriptor as we'll use aiofiles
+
+            output_files[format] = temp_path
+
             if format == "json":
                 # JSON needs special handling for streaming
-                temp_file = tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".json", dir=context.output_directory, delete=False
-                )
-                temp_file.write("[\n")  # Start JSON array
-                temp_files[format] = temp_file
-                output_files[format] = temp_file.name
-                output_streams[format] = temp_file
+                file_handle = await aiofiles.open(temp_path, mode="w")
+                await file_handle.write("[\n")  # Start JSON array
+                temp_files[format] = file_handle
+                output_streams[format] = file_handle
             else:
                 # Other formats should use text mode for CSV, binary for others
                 mode = "w" if format == "csv" else "wb"
-                temp_file = tempfile.NamedTemporaryFile(
-                    mode=mode, suffix=f".{format}", dir=context.output_directory, delete=False
-                )
-                temp_files[format] = temp_file
-                output_files[format] = temp_file.name
-                output_streams[format] = temp_file
+                file_handle = await aiofiles.open(temp_path, mode=mode)
+                temp_files[format] = file_handle
+                output_streams[format] = file_handle
 
         try:
             # Initialize formatter
@@ -294,6 +343,8 @@ class AsyncPatientGenerationService:
             patient_count = 0
 
             # Stream patients and write to files
+            flush_interval = 100  # Flush every 100 patients
+
             async for patient, patient_data in self.pipeline.generate(context, progress_callback):
                 patient_count += 1
 
@@ -304,17 +355,22 @@ class AsyncPatientGenerationService:
                     if format == "json":
                         # Handle JSON array formatting
                         if not first_patient:
-                            stream.write(",\n")
+                            await stream.write(",\n")
 
                         # Use patient_data from generator (already converted to dict)
-                        json.dump(patient_data, stream, indent=2)
+                        json_str = json.dumps(patient_data, indent=2)
+                        await stream.write(json_str)
                     elif format == "xml":
-                        # Use formatter for XML
-                        await to_thread(formatter.format_xml, [patient_data], stream)
+                        # Use formatter for XML with async write
+                        xml_data = await to_thread(formatter.format_xml, [patient_data])
+                        if isinstance(xml_data, bytes):
+                            await stream.write(xml_data.decode("utf-8"))
+                        else:
+                            await stream.write(xml_data)
                     elif format == "csv":
                         # CSV format - write header on first patient
                         if first_patient:
-                            stream.write(
+                            await stream.write(
                                 "patient_id,name,age,gender,nationality,injury,triage,front,final_status,last_facility,total_timeline_events,injury_timestamp\n"
                             )
 
@@ -329,17 +385,22 @@ class AsyncPatientGenerationService:
                         timeline_count = len(patient.movement_timeline) if hasattr(patient, "movement_timeline") else 0
                         injury_time = patient.injury_timestamp.isoformat() if patient.injury_timestamp else "Unknown"
 
-                        stream.write(
+                        await stream.write(
                             f'{patient.id},"{first_name} {last_name}",{age},{patient.gender},{patient.nationality},{patient.injury_type},{patient.triage_category},{patient.front},{final_status},{last_facility},{timeline_count},{injury_time}\n'
                         )
 
                 first_patient = False
 
+                # Flush to disk periodically for better memory management
+                if patient_count % flush_interval == 0:
+                    for stream in output_streams.values():
+                        await stream.flush()
+
             # Close temporary files properly
             for format, temp_file in temp_files.items():
                 if format == "json":
-                    temp_file.write("\n]")  # Close JSON array
-                temp_file.close()
+                    await temp_file.write("\n]")  # Close JSON array
+                await temp_file.close()
 
             # Finalize files
             final_files = await self._finalize_files(output_files, context, patient_count)
@@ -360,11 +421,15 @@ class AsyncPatientGenerationService:
 
         except Exception as e:
             # Clean up temp files on error
-            for temp_file in temp_files.values():
-                if hasattr(temp_file, "close"):
-                    temp_file.close()
-                if os.path.exists(temp_file.name):
-                    os.unlink(temp_file.name)
+            for _format, temp_file in temp_files.items():
+                with suppress(Exception):
+                    await temp_file.close()
+
+            # Clean up temp files
+            for temp_path in output_files.values():
+                with suppress(Exception):
+                    if await to_thread(os.path.exists, temp_path):
+                        await to_thread(os.remove, temp_path)
             raise e
 
     async def _finalize_files(
@@ -385,30 +450,40 @@ class AsyncPatientGenerationService:
                 final_name = f"patients.{format}"
 
             final_path = os.path.join(context.output_directory, final_name)
-            os.rename(temp_path, final_path)
+            await to_thread(os.rename, temp_path, final_path)
             final_files[format] = final_path
 
         return final_files
 
     async def _compress_files(self, files: Dict[str, str]) -> Dict[str, str]:
-        """Compress files using gzip."""
+        """Compress files using gzip with async I/O."""
         compressed_files = {}
 
         for format, filepath in files.items():
             compressed_path = f"{filepath}.gz"
 
-            await to_thread(self._gzip_file, filepath, compressed_path)
+            # Use async file operations for compression
+            await self._async_gzip_file(filepath, compressed_path)
 
             # Remove uncompressed file
-            os.unlink(filepath)
+            await to_thread(os.remove, filepath)
             compressed_files[format] = compressed_path
 
         return compressed_files
 
-    def _gzip_file(self, source: str, dest: str) -> None:
-        """Gzip a file."""
-        with open(source, "rb") as f_in, gzip.open(dest, "wb") as f_out:
-            f_out.writelines(f_in)
+    async def _async_gzip_file(self, source: str, dest: str) -> None:
+        """Asynchronously gzip a file using aiofiles."""
+        # Read source file in chunks
+        chunk_size = 1024 * 1024  # 1MB chunks
+
+        async with aiofiles.open(source, "rb") as f_in:
+            # We need to use regular gzip for compression, but read/write async
+            with gzip.open(dest, "wb") as f_out:
+                while True:
+                    chunk = await f_in.read(chunk_size)
+                    if not chunk:
+                        break
+                    await to_thread(f_out.write, chunk)
 
     async def _encrypt_files(self, files: Dict[str, str], password: str) -> Dict[str, str]:
         """Encrypt files (placeholder for actual encryption)."""
@@ -418,7 +493,7 @@ class AsyncPatientGenerationService:
 
         for format, filepath in files.items():
             encrypted_path = f"{filepath}.enc"
-            os.rename(filepath, encrypted_path)
+            await to_thread(os.rename, filepath, encrypted_path)
             encrypted_files[format] = encrypted_path
 
         return encrypted_files

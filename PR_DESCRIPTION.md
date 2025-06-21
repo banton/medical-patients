@@ -1,10 +1,39 @@
 
 
-# v1.1.0 Release - Major Feature Consolidation
+# EPIC-001 Task 2: In-memory temporal configuration
 
-## Overview
+## Summary
+Implements Task 2 of the refactoring plan, replacing file-based temporal configuration with in-memory configuration to eliminate race conditions and improve performance.
 
-This release consolidates 4 major EPICs into a production-ready v1.1.0 release, bringing significant improvements to developer experience, scalability, security, and documentation.
+## Changes Made
+- Modified PatientFlowSimulator to accept optional temporal_config parameter
+- Updated generation router to create temporal config in-memory instead of writing to injuries.json
+- Removed all injuries.json backup/restore code  
+- Pass temporal configuration through the entire pipeline via GenerationContext
+- Added comprehensive tests to verify injuries.json is never modified
+- Removed deprecated files: Makefile, run.sh, start.sh, start-dev.sh, run_simplified_tests.py
+
+## Benefits
+1. **No Race Conditions**: Multiple temporal generations can run concurrently without file conflicts
+2. **Better Performance**: No file I/O overhead for temporal configuration
+3. **Cleaner Code**: Removed complex backup/restore logic
+4. **Thread Safe**: In-memory configuration is isolated per generation job
+
+## Testing
+- ✅ Added test_temporal_generation_no_injuries_modification - verifies injuries.json remains unchanged
+- ✅ Added test_concurrent_temporal_generations - tests multiple concurrent temporal generations
+- ✅ Tested via UI - temporal generation works correctly, JSON editor still functional
+- ✅ Tested via API - confirmed injuries.json not modified (MD5 checksum verification)
+- ✅ All CI checks passing
+
+## Cleanup
+- Removed deprecated Makefile (replaced by Task runner)
+- Removed deprecated shell scripts that were replaced by Task commands
+- All functionality preserved through Task runner
+
+## Next Steps
+- Task 3: Implement true streaming generation to handle large datasets efficiently
+- Task 4: Smart caching strategy implementation
 
 ## What's Changed
 

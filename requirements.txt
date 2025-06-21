@@ -7,6 +7,7 @@ cryptography==41.0.1
 faker==18.10.1
 dicttoxml==1.7.16
 aiofiles==23.1.0
+types-aiofiles==23.1.0.2
 psutil>=7.0.0
 tqdm>=4.65.0
 concurrent-log-handler>=0.9.20

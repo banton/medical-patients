@@ -177,17 +177,22 @@ class TestTimelineIntegration:
         except requests.RequestException as e:
             pytest.skip(f"API request failed: {e}")
 
-    def test_makefile_commands_work(self):
-        """Test that Makefile commands for timeline viewer work correctly."""
+    def test_taskfile_commands_work(self):
+        """Test that Taskfile commands for timeline viewer work correctly."""
         import subprocess
+        import shutil
 
-        # Test timeline-test command
+        # Skip if task command is not available
+        if not shutil.which("task"):
+            pytest.skip("task command not available")
+
+        # Test timeline command
         result = subprocess.run(
-            ["make", "timeline-test"], cwd=Path.cwd(), capture_output=True, text=True, timeout=120, check=False
+            ["task", "timeline"], cwd=Path.cwd(), capture_output=True, text=True, timeout=120, check=False
         )
 
-        assert result.returncode == 0, f"make timeline-test failed: {result.stderr}"
-        assert "Timeline viewer build successful!" in result.stdout
+        # Task timeline opens the viewer, so we just check it doesn't error
+        assert result.returncode == 0, f"task timeline failed: {result.stderr}"
 
     def test_timeline_viewer_build_artifacts(self):
         """Test that timeline viewer build creates necessary artifacts."""
