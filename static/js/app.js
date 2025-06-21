@@ -597,13 +597,13 @@ class PatientGeneratorApp {
         if (this.progressBar) {
             this.progressBar.style.width = `${percentage}%`;
         }
-        
+
         // Update progress text if available
         const progressText = document.getElementById('progressText');
         if (progressText) {
             progressText.textContent = `${Math.round(percentage)}%`;
         }
-        
+
         // Update phase description if available
         if (job.progress_details && job.progress_details.phase_description) {
             const phaseElement = document.getElementById('phaseDescription');
