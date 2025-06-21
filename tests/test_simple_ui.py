@@ -1,11 +1,6 @@
 """Tests for the simplified UI."""
 
-from fastapi.testclient import TestClient
 import pytest
-
-from src.main import app
-
-client = TestClient(app)
 
 pytestmark = [pytest.mark.integration]
 
@@ -13,7 +8,7 @@ pytestmark = [pytest.mark.integration]
 class TestSimpleUI:
     """Test the simplified UI elements and functionality."""
 
-    def test_ui_loads(self):
+    def test_ui_loads(self, client):
         """Test that the UI page loads successfully."""
         response = client.get("/")
         assert response.status_code == 200
@@ -25,7 +20,7 @@ class TestSimpleUI:
         assert "Military Medical Exercise Patient Generator" in response.text
         assert 'class="text-2xl font-bold' in response.text
 
-    def test_ui_elements_present(self):
+    def test_ui_elements_present(self, client):
         """Test that all required UI elements are present."""
         response = client.get("/")
 
@@ -42,7 +37,7 @@ class TestSimpleUI:
         # Check status box exists
         assert 'id="statusBox"' in response.text
 
-    def test_javascript_loaded(self):
+    def test_javascript_loaded(self, client):
         """Test that the JavaScript file is properly referenced."""
         response = client.get("/")
 
@@ -53,7 +48,7 @@ class TestSimpleUI:
         js_response = client.get("/static/js/app.js")
         assert js_response.status_code == 200
 
-    def test_modern_dependencies_loaded(self):
+    def test_modern_dependencies_loaded(self, client):
         """Test that the modern UI loads expected dependencies."""
         response = client.get("/")
 
@@ -62,12 +57,12 @@ class TestSimpleUI:
         assert "tailwindcss" in response.text  # CSS framework
         assert "font-awesome" in response.text  # Icons
 
-    def test_api_service_exists(self):
+    def test_api_service_exists(self, client):
         """Test that api service file exists."""
         response = client.get("/static/js/services/api.js")
         assert response.status_code == 200
 
-    def test_css_structure(self):
+    def test_css_structure(self, client):
         """Test that CSS structure is properly loaded."""
         response = client.get("/")
 

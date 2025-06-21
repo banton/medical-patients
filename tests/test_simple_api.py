@@ -4,12 +4,8 @@ import json
 from pathlib import Path
 import time
 
-from fastapi.testclient import TestClient
 import pytest
 
-from src.main import app
-
-client = TestClient(app)
 # Use the demo API key which is always available
 API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 
@@ -79,7 +75,7 @@ class TestSimpleAPI:
     def headers(self):
         return {"X-API-Key": API_KEY}
 
-    def test_json_config_generation(self, headers):
+    def test_json_config_generation(self, client, headers):
         """Test generation with configuration from JSON files."""
         # Load configuration
         config = load_json_config()
@@ -116,7 +112,7 @@ class TestSimpleAPI:
         assert len(response.content) > 0
         assert response.headers.get("content-type") == "application/zip"
 
-    def test_minimal_config(self, headers):
+    def test_minimal_config(self, client, headers):
         """Test with minimal valid configuration."""
         config = {
             "name": "Minimal Test",
@@ -148,7 +144,7 @@ class TestSimpleAPI:
         response = client.post("/api/v1/generation/", json={"configuration": config}, headers=headers)
         assert response.status_code in [200, 201]
 
-    def test_invalid_injury_keys(self, headers):
+    def test_invalid_injury_keys(self, client, headers):
         """Test that using wrong injury distribution keys completes but with default behavior."""
         config = load_json_config()
         # Use wrong keys

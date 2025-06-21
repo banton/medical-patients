@@ -9,22 +9,17 @@ import json
 from pathlib import Path
 import time
 
-from fastapi.testclient import TestClient
 import pytest
-
-from src.main import app
 
 
 class TestGenerationOptimization:
     """Test optimized generation pipeline"""
 
-    @pytest.fixture()
-    def client(self):
-        """Create test client with auth headers"""
+    def setup_method(self):
+        """Ensure demo key exists before tests"""
         # Ensure demo key exists
         from scripts.ensure_demo_key import ensure_demo_key
         ensure_demo_key()
-        return TestClient(app)
 
     @pytest.fixture()
     def auth_headers(self):

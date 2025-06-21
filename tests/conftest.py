@@ -3,14 +3,17 @@ Shared pytest configuration and fixtures
 """
 
 import os
+from typing import Union
 
 from fastapi.testclient import TestClient
+import httpx
 import pytest
 
 
 def pytest_addoption(parser):
     """Add custom command line options"""
     parser.addoption("--base-url", action="store", default="http://localhost:8000", help="Base URL for the API")
+    parser.addoption("--use-running-server", action="store_true", help="Use already running server instead of TestClient")
 
 
 @pytest.fixture()
@@ -25,12 +28,60 @@ def api_headers():
     return {"X-API-Key": "DEMO_MILMED_2025_50_PATIENTS", "Content-Type": "application/json"}
 
 
-@pytest.fixture()
-def client():
-    """Test client for FastAPI app"""
-    from src.main import app
+class HTTPClient:
+    """Wrapper to make httpx client compatible with TestClient interface"""
+    
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip("/")
+        self.client = httpx.Client(base_url=self.base_url)
+    
+    def get(self, url: str, **kwargs):
+        return self.client.get(url, **kwargs)
+    
+    def post(self, url: str, **kwargs):
+        return self.client.post(url, **kwargs)
+    
+    def put(self, url: str, **kwargs):
+        return self.client.put(url, **kwargs)
+    
+    def patch(self, url: str, **kwargs):
+        return self.client.patch(url, **kwargs)
+    
+    def delete(self, url: str, **kwargs):
+        return self.client.delete(url, **kwargs)
+    
+    def close(self):
+        self.client.close()
+    
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
 
-    return TestClient(app)
+
+@pytest.fixture()
+def client(request) -> Union[TestClient, HTTPClient]:
+    """Test client for FastAPI app - uses HTTP client if server is running"""
+    # In CI or when explicitly requested, use HTTP client to connect to running server
+    if os.getenv("CI") or request.config.getoption("--use-running-server"):
+        base_url = request.config.getoption("--base-url")
+        client = HTTPClient(base_url)
+        yield client
+        client.close()
+    else:
+        # Otherwise use TestClient which runs the app in-process
+        from src.main import app
+        from src.infrastructure.database_pool import close_pool
+        
+        # Reset the pool before creating test client
+        close_pool()
+        
+        with TestClient(app) as test_client:
+            yield test_client
+        
+        # Clean up after test
+        close_pool()
 
 
 @pytest.fixture()

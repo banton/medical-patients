@@ -6,19 +6,15 @@ Simple test that verifies the basic workflow works
 import time
 from uuid import uuid4
 
-from fastapi.testclient import TestClient
 import pytest
 
-from src.main import app
-
-client = TestClient(app)
 API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 HEADERS = {"X-API-Key": API_KEY}
 
 pytestmark = [pytest.mark.e2e, pytest.mark.integration]
 
 
-def test_basic_generation_flow():
+def test_basic_generation_flow(client):
     """Test basic flow: create config → generate patients → download results"""
     # Simple test configuration
     config = {
@@ -88,7 +84,7 @@ def test_basic_generation_flow():
     # In a real test, we'd extract and verify the ZIP contents
 
 
-def test_unauthorized_access():
+def test_unauthorized_access(client):
     """Test that API requires authentication"""
     response = client.get("/api/v1/configurations/")
     assert response.status_code == 401
