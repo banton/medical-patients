@@ -22,6 +22,7 @@ from config import get_settings
 from src.api.v1.middleware.metrics import MetricsMiddleware
 from src.api.v1.routers import configurations, downloads, generation, health, jobs, metrics, streaming, visualizations
 from src.core.cache import close_cache, get_cache_service, initialize_cache
+from src.core.cache_warmup import CacheWarmupService
 from src.core.error_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
@@ -46,8 +47,17 @@ async def lifespan(app: FastAPI):
     # Initialize cache if enabled
     if settings.CACHE_ENABLED:
         try:
-            await initialize_cache(settings.REDIS_URL, settings.CACHE_TTL)
+            cache_service = await initialize_cache(settings.REDIS_URL, settings.CACHE_TTL)
             logger.info("Redis cache initialized")
+            
+            # Warm critical caches on startup
+            warmup_service = CacheWarmupService(cache_service)
+            await warmup_service.warm_all_caches()
+            
+            # Log cache statistics
+            stats = await warmup_service.get_cache_stats()
+            logger.info(f"Cache warmup complete. Stats: {stats}")
+            
         except Exception as e:
             logger.error("Failed to initialize Redis cache: %s", e)
             logger.warning("Application will continue without caching")
