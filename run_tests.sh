@@ -77,7 +77,7 @@ case "$TEST_TYPE" in
         # Check if server is running for API tests
         if check_server; then
             print_info "Server is running. Running API integration tests..."
-            pytest tests/test_simple_api.py tests/test_api_standardization.py -v ${EXTRA_ARGS}
+            pytest tests/test_simple_api.py tests/test_api_standardization.py -v --use-running-server ${EXTRA_ARGS}
         else
             print_warning "Server not running. Starting server for API tests..."
             # Start server in background

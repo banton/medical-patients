@@ -63,8 +63,8 @@ class HTTPClient:
 @pytest.fixture()
 def client(request) -> Union[TestClient, HTTPClient]:
     """Test client for FastAPI app - uses HTTP client if server is running"""
-    # In CI or when explicitly requested, use HTTP client to connect to running server
-    if os.getenv("CI") or request.config.getoption("--use-running-server"):
+    # Only use HTTP client if explicitly requested (for integration tests with running server)
+    if request.config.getoption("--use-running-server"):
         base_url = request.config.getoption("--base-url")
         client = HTTPClient(base_url)
         yield client
