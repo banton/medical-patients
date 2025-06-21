@@ -56,8 +56,8 @@ class InMemoryJobRepository(JobRepositoryInterface):
 
     async def update(self, job: Job) -> None:
         """Update a job."""
-        if job.job_id not in self._jobs:
-            raise JobNotFoundError(job.job_id)
+        if not job.job_id or job.job_id not in self._jobs:
+            raise JobNotFoundError(job.job_id or "unknown")
         self._jobs[job.job_id] = job
 
     async def list_all(self) -> List[Job]:
