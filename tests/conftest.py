@@ -29,8 +29,17 @@ def api_headers():
 def client():
     """Test client for FastAPI app"""
     from src.main import app
-
-    return TestClient(app)
+    
+    # Close any existing database pool to avoid conflicts
+    from src.infrastructure.database_pool import close_pool
+    close_pool()
+    
+    # Create a new test client
+    with TestClient(app) as test_client:
+        yield test_client
+    
+    # Clean up after test
+    close_pool()
 
 
 @pytest.fixture()

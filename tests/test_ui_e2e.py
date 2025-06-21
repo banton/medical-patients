@@ -6,13 +6,8 @@ These tests ensure that UI changes don't break the API contract.
 import time
 from typing import Any, Dict
 
-from fastapi.testclient import TestClient
 import pytest
 
-from src.main import app
-
-# Create test client
-client = TestClient(app)
 # Use the demo API key which is always available
 API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 HEADERS = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
@@ -24,19 +19,19 @@ class TestUIAPIIntegration:
     """Test suite for UI and API integration."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self, client):
         """Setup test environment."""
         # With TestClient, the app is automatically available
         response = client.get("/health")
         assert response.status_code == 200
 
-    def test_root_endpoint_redirects_to_ui(self):
+    def test_root_endpoint_redirects_to_ui(self, client):
         """Test that the root endpoint redirects to UI."""
         response = client.get("/", allow_redirects=False)
         assert response.status_code == 307  # Redirect
         assert "/static/index.html" in response.headers.get("location", "")
 
-    def test_ui_static_files_accessible(self):
+    def test_ui_static_files_accessible(self, client):
         """Test that UI static files are accessible."""
         files = [
             "/static/index.html",
@@ -50,7 +45,7 @@ class TestUIAPIIntegration:
             response = client.get(file)
             assert response.status_code == 200, f"Failed to access {file}"
 
-    def test_reference_endpoints_no_auth(self):
+    def test_reference_endpoints_no_auth(self, client):
         """Test that reference endpoints work without authentication."""
         endpoints = [
             "/api/v1/configurations/reference/nationalities/",
@@ -63,7 +58,7 @@ class TestUIAPIIntegration:
             assert response.status_code == 200, f"Failed to access {endpoint}"
             assert response.json() is not None
 
-    def test_nationalities_format(self):
+    def test_nationalities_format(self, client):
         """Test that nationalities endpoint returns expected format."""
         response = client.get("/api/v1/configurations/reference/nationalities/")
         assert response.status_code == 200
@@ -79,7 +74,7 @@ class TestUIAPIIntegration:
             assert len(nationality["code"]) == 3
             assert isinstance(nationality["name"], str)
 
-    def test_authenticated_endpoints_require_key(self):
+    def test_authenticated_endpoints_require_key(self, client):
         """Test that authenticated endpoints require API key."""
         endpoints = [
             "/api/v1/jobs/",
@@ -95,7 +90,7 @@ class TestUIAPIIntegration:
             response = client.get(endpoint, headers=HEADERS)
             assert response.status_code == 200
 
-    def test_generation_endpoint_format(self):
+    def test_generation_endpoint_format(self, client):
         """Test the generation endpoint accepts UI format."""
         # Minimal valid configuration in UI format
         ui_config = {
@@ -171,7 +166,7 @@ class TestUIAPIIntegration:
         job_id = result["job_id"]
         client.post(f"/api/v1/jobs/{job_id}/cancel", headers=HEADERS)
 
-    def test_job_lifecycle(self):
+    def test_job_lifecycle(self, client):
         """Test complete job lifecycle from UI perspective."""
         # 1. Create a job
         config = self._get_test_config()
@@ -209,7 +204,7 @@ class TestUIAPIIntegration:
             # Cancel might fail if job already completed/cancelled, that's ok
             assert response.status_code in [200, 400, 404]
 
-    def test_configuration_crud(self):
+    def test_configuration_crud(self, client):
         """Test configuration CRUD operations from UI perspective."""
         # 1. Create configuration
         config = {
@@ -260,7 +255,7 @@ class TestUIAPIIntegration:
             response = client.delete(f"/api/v1/configurations/{config_id}", headers=HEADERS)
             assert response.status_code == 204
 
-    def test_validation_endpoint(self):
+    def test_validation_endpoint(self, client):
         """Test configuration validation endpoint."""
         # Valid configuration
         valid_config = self._get_test_config()["configuration"]
@@ -291,7 +286,7 @@ class TestUIAPIIntegration:
         # Our custom error handler returns detail as a string, not a list
         assert "total_patients" in str(error_detail["detail"])
 
-    def test_ui_nationality_mapping(self):
+    def test_ui_nationality_mapping(self, client):
         """Test that UI nationality names map correctly to codes."""
         # Get nationalities from API
         response = client.get("/api/v1/configurations/reference/nationalities/")
@@ -307,7 +302,7 @@ class TestUIAPIIntegration:
         assert name_to_code.get("Germany") == "DEU"
         assert name_to_code.get("France") == "FRA"
 
-    def test_concurrent_job_handling(self):
+    def test_concurrent_job_handling(self, client):
         """Test that UI can handle multiple concurrent jobs."""
         job_ids = []
 

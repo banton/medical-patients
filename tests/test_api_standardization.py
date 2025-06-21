@@ -5,12 +5,8 @@ Testing API-first principles with proper versioning and response validation.
 
 from datetime import datetime
 
-from fastapi.testclient import TestClient
 import pytest
 
-from src.main import app
-
-client = TestClient(app)
 # Use the demo API key which is always available
 API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 
@@ -20,7 +16,7 @@ pytestmark = [pytest.mark.integration]
 class TestAPIVersioningStandardization:
     """Test that all API endpoints follow consistent versioning standards."""
 
-    def test_all_endpoints_should_use_v1_prefix(self):
+    def test_all_endpoints_should_use_v1_prefix(self, client):
         """All API endpoints should use /api/v1/ prefix for consistency."""
         # This test should FAIL initially - we expect inconsistent versioning
         response = client.get("/openapi.json")
@@ -38,7 +34,7 @@ class TestAPIVersioningStandardization:
         # This assertion should FAIL - we expect to find non-v1 endpoints
         assert len(non_v1_endpoints) == 0, f"Found non-v1 endpoints: {non_v1_endpoints}"
 
-    def test_generation_endpoint_should_be_versioned(self):
+    def test_generation_endpoint_should_be_versioned(self, client):
         """Generation endpoint should use /api/v1/generation/ instead of /api/generate."""
         # Test old endpoint is deprecated (should return 404)
         response = client.post(
@@ -60,7 +56,7 @@ class TestAPIVersioningStandardization:
 class TestJobResponseModels:
     """Test that job endpoints return properly structured response models."""
 
-    def test_job_status_should_return_structured_response(self):
+    def test_job_status_should_return_structured_response(self, client):
         """Job status endpoint should return a proper JobResponse model."""
         # First create a job
         response = client.post(
@@ -102,7 +98,7 @@ class TestJobResponseModels:
         assert isinstance(job_data["config"], dict)
         assert isinstance(job_data["output_files"], list)
 
-    def test_generation_response_should_be_standardized(self):
+    def test_generation_response_should_be_standardized(self, client):
         """Generation endpoint should return standardized GenerationResponse."""
         response = client.post(
             "/api/v1/generation/",
@@ -127,7 +123,7 @@ class TestJobResponseModels:
 class TestInputValidationEnhancement:
     """Test enhanced input validation for API endpoints."""
 
-    def test_generation_request_should_validate_output_formats(self):
+    def test_generation_request_should_validate_output_formats(self, client):
         """Generation request should validate output_formats field."""
         # Test invalid format (should return validation error)
         response = client.post(
@@ -140,7 +136,7 @@ class TestInputValidationEnhancement:
         error_detail = response.json()["detail"]
         assert "Invalid output format" in str(error_detail)
 
-    def test_generation_request_should_validate_encryption_password(self):
+    def test_generation_request_should_validate_encryption_password(self, client):
         """Generation request should validate encryption password when encryption is enabled."""
         # Test encryption enabled without password
         response = client.post(
@@ -158,7 +154,7 @@ class TestInputValidationEnhancement:
         error_detail = response.json()["detail"]
         assert "encryption_password" in str(error_detail)
 
-    def test_generation_request_should_validate_min_password_length(self):
+    def test_generation_request_should_validate_min_password_length(self, client):
         """Generation request should validate minimum password length."""
         # Test password too short
         response = client.post(
@@ -180,7 +176,7 @@ class TestInputValidationEnhancement:
 class TestErrorResponseStandardization:
     """Test that all endpoints return standardized error responses."""
 
-    def test_not_found_errors_should_be_standardized(self):
+    def test_not_found_errors_should_be_standardized(self, client):
         """All 404 errors should return standardized ErrorResponse format."""
         # Test non-existent job
         response = client.get("/api/v1/jobs/nonexistent-job-id", headers={"X-API-Key": API_KEY})
@@ -200,7 +196,7 @@ class TestErrorResponseStandardization:
         # Validate timestamp format
         datetime.fromisoformat(error_data["timestamp"].replace("Z", "+00:00"))
 
-    def test_unauthorized_errors_should_be_standardized(self):
+    def test_unauthorized_errors_should_be_standardized(self, client):
         """Unauthorized errors should return standardized format."""
         # Test without API key
         response = client.post("/api/v1/generation/", json={"test": "data"})
@@ -219,7 +215,7 @@ class TestErrorResponseStandardization:
 class TestAPIDocumentationConsistency:
     """Test that API documentation is complete and consistent."""
 
-    def test_all_endpoints_should_have_response_models(self):
+    def test_all_endpoints_should_have_response_models(self, client):
         """All endpoints should have proper response models defined."""
         response = client.get("/openapi.json")
         openapi_spec = response.json()
