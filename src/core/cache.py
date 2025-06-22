@@ -199,6 +199,62 @@ class CacheService:
             logger.error(f"Redis health check failed: {e}")
             return False
 
+    async def increment(self, key: str, amount: int = 1) -> int:
+        """Increment a counter in the cache.
+
+        Args:
+            key: Cache key
+            amount: Amount to increment by (default: 1)
+
+        Returns:
+            New value after increment
+        """
+        try:
+            async with self._get_client() as client:
+                return await client.incrby(key, amount)
+        except RedisError as e:
+            logger.error(f"Cache increment error for key {key}: {e}")
+            return 0
+
+    async def info(self) -> dict:
+        """Get Redis server information.
+
+        Returns:
+            Server info dictionary
+        """
+        try:
+            async with self._get_client() as client:
+                return await client.info()
+        except RedisError as e:
+            logger.error(f"Cache info error: {e}")
+            return {}
+
+    async def count_keys(self, pattern: str = "*") -> int:
+        """Count keys matching a pattern.
+
+        Args:
+            pattern: Redis key pattern (default: "*" for all keys)
+
+        Returns:
+            Number of matching keys
+        """
+        try:
+            async with self._get_client() as client:
+                cursor = 0
+                count = 0
+
+                while True:
+                    cursor, keys = await client.scan(cursor, match=pattern, count=100)
+                    count += len(keys)
+
+                    if cursor == 0:
+                        break
+
+                return count
+        except RedisError as e:
+            logger.error(f"Cache count keys error for pattern {pattern}: {e}")
+            return 0
+
 
 # Singleton instance
 _cache_service: Optional[CacheService] = None
