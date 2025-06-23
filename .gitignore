@@ -126,3 +126,13 @@ debug_*.png
 refactoring-plan.md
 implementation-guide-*.md
 ci_summary.md
+
+# Sensitive deployment information
+*deployment*.md
+*staging*.md
+*production*.md
+memory/implementations/*deployment*.md
+memory/implementations/*digitalocean*.md
+STAGING-DEPLOYMENT-GUIDE.md
+staging-deployment-plan.md
+do-staging-implementation-plan.md
