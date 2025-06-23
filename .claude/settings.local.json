@@ -88,7 +88,9 @@
       "Bash(task test-unit)",
       "Bash(docker exec:*)",
       "Bash(docker cp:*)",
-      "Bash(task:*)"
+      "Bash(task:*)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter )",
+      "Bash('git rm --cached --ignore-unmatch STAGING-DEPLOYMENT-GUIDE.md staging-deployment-plan.md do-staging-implementation-plan.md memory/implementations/digitalocean-deployment-info.md' )"
     ],
     "deny": []
   },
