@@ -45,11 +45,17 @@ REDIS_URL=rediss://default:<password>@<cluster-name>.db.ondigitalocean.com:25061
 
 #### Configure Connection
 1. In the database overview, go to "Connection Details"
-2. Copy the connection string (use "Connection string" format)
-3. Add to your app's environment variables:
+2. Choose the appropriate connection method:
+   - **Private Network (Recommended)**: Use the VPC network connection string
+   - **Public Network**: Use the public connection string (if trusted sources configured)
+3. Connection format:
+   ```
+   rediss://default:<password>@<hostname>:25061/0
+   ```
+4. Add to your app's environment variables:
    ```bash
    doctl apps update <app-id> --spec production-app-spec.yaml
-   doctl apps config set <app-id> REDIS_URL=<connection-string>
+   doctl apps config set <app-id> REDIS_URL="rediss://default:<password>@<hostname>:25061/0"
    ```
 
 #### Security Settings
@@ -139,11 +145,18 @@ If you see SSL errors, ensure:
 - Redis client library supports SSL (redis-py >= 4.0)
 
 ### Connection Timeouts
-- Check trusted sources configuration
-- Verify VPC settings match between app and database
-- Test connectivity from app container
+- **Private Network**: Ensure app and Redis are in the same VPC
+- **Public Network**: Add your IP/app to trusted sources
+- The private hostname (e.g., `private-*.db.ondigitalocean.com`) is only accessible within the VPC
+- Test connectivity from within the app container, not from local machine
 
 ### Performance Issues
 - Monitor latency between app and Redis
 - Consider upgrading to a larger Redis plan if needed
 - Check eviction policy settings
+
+### Testing from Local Development
+To test the managed Redis from your local machine:
+1. Use the public hostname (not the private one)
+2. Add your IP address to the trusted sources in the Redis settings
+3. Or use an SSH tunnel through your DigitalOcean droplet
