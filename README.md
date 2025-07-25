@@ -50,7 +50,7 @@ This application generates simulated patient data for military medical exercises
     - Temporal metadata including casualty event IDs, mass casualty classification, and environmental conditions
 - **Multiple Output Formats**: JSON and CSV formats with compressed ZIP archives
 - **Data Security Options**: AES-256-GCM encryption with unique salts per encryption operation
-- **Dockerized Development Environment**: Complete Docker Compose setup with PostgreSQL and Redis support
+- **Dockerized Development Environment**: Complete Docker Compose setup with PostgreSQL and Redis support (optional managed Redis for production)
 - **Database Schema Management**: Alembic migrations for robust schema versioning
 - **Background Job Processing**: Async patient generation with real-time progress tracking and job management
 
@@ -289,9 +289,26 @@ docker run -d \
 - `API_KEY`: Primary API authentication key
 - `SECRET_KEY`: Application secret for session management
 - `REDIS_URL`: Redis connection (optional, for caching)
+  - Development: `redis://localhost:6379/0`
+  - Production (managed): `rediss://default:password@cluster.db.ondigitalocean.com:25061/0`
 - `ENVIRONMENT`: Set to "production" for production deployments
 
 For advanced deployment configurations, refer to the docker-compose files in the repository.
+
+### Redis Configuration
+
+The application supports both self-hosted and managed Redis services:
+
+**Development (Docker Compose)**:
+- Uses local Redis container
+- No additional configuration needed
+- Automatically started with `task dev`
+
+**Production (Managed Redis)**:
+- Supports DigitalOcean Managed Redis or similar services
+- Use `rediss://` protocol for SSL/TLS connections
+- Configure via `REDIS_URL` environment variable
+- See `docs/redis-migration.md` for migration guide
 
 ### Testing
 

@@ -16,8 +16,8 @@ services:
       - HOST=0.0.0.0
       # Staging database in managed PostgreSQL cluster
       - DATABASE_URL=postgresql://staging_user:${STAGING_DB_PASSWORD}@app-7a761f5d-a598-4efc-9f1a-cd756365d498-do-user-323970-0.m.db.ondigitalocean.com:25060/medgen_staging?sslmode=require
-      # Use Redis database 1 for staging (0 is for production)
-      - REDIS_URL=redis://medical-patients_redis_1:6379/1
+      # Use managed Redis for staging (different database number)
+      - REDIS_URL=${STAGING_REDIS_URL:-redis://medical-patients_redis_1:6379/1}
       - API_KEY=${STAGING_API_KEY:-staging_secret_key_here}
       - SECRET_KEY=${STAGING_SECRET_KEY:-staging_secret}
       - DEBUG=${DEBUG:-False}
