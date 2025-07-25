@@ -1,7 +1,7 @@
-name: medical-patients-generator-redis
+name: medical-patients-generator-managed
 region: nyc
 
-# OPTIMAL SETUP: $20/month total ($5 FastAPI + $5 Redis + $10 PostgreSQL)
+# OPTIMAL SETUP: Uses DigitalOcean Managed Redis (configured separately)
 # Auto-deploy from main branch
 services:
 # FastAPI Backend
@@ -51,7 +51,8 @@ services:
   - key: DATABASE_URL
     value: ${medical_patients_db.DATABASE_URL}
   - key: REDIS_URL
-    value: "redis://redis-service:6379"  # Internal service connection
+    value: ${REDIS_URL}  # Managed Redis connection
+    type: SECRET
   - key: CACHE_ENABLED
     value: "true"
   - key: DEBUG
@@ -59,33 +60,6 @@ services:
   - key: CORS_ORIGINS
     value: "https://milmed.tech"
 
-# Redis Service (in-app container)
-- name: redis-service
-  image:
-    registry_type: DOCKER_HUB
-    repository: redis
-    tag: "7-alpine"
-  
-  # Smallest instance for Redis
-  instance_size_slug: apps-s-1vcpu-0.5gb  # $5/month
-  instance_count: 1
-  
-  # Redis configuration
-  run_command: redis-server --appendonly yes --dir /data
-  
-  # Health check for Redis
-  health_check:
-    http_path: /
-    port: 6379
-    initial_delay_seconds: 10
-    period_seconds: 30
-    timeout_seconds: 5
-    failure_threshold: 3
-    success_threshold: 1
-  
-  # Internal ports (no external access needed)
-  internal_ports:
-  - 6379
 
 # Static frontend
 static_sites:

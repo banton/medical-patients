@@ -31,8 +31,9 @@ services:
         value: ${medical-patients-db.DATABASE_URL}
         scope: RUN_AND_BUILD_TIME
       - key: REDIS_URL
-        value: redis://redis-service:6379
+        value: ${REDIS_URL}
         scope: RUN_AND_BUILD_TIME
+        type: SECRET
       - key: CACHE_ENABLED
         value: "true"
         scope: RUN_AND_BUILD_TIME
@@ -47,17 +48,6 @@ services:
         scope: RUN_AND_BUILD_TIME
         type: SECRET
 
-  - name: redis-service
-    image:
-      registry_type: DOCKER_HUB
-      registry: library
-      repository: redis
-      tag: 7-alpine
-    run_command: redis-server --appendonly yes --dir /data
-    instance_size_slug: apps-s-1vcpu-0.5gb
-    instance_count: 1
-    internal_ports:
-      - 6379
 
 static_sites:
   - name: frontend
