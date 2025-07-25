@@ -92,7 +92,13 @@
       "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter )",
       "Bash('git rm --cached --ignore-unmatch STAGING-DEPLOYMENT-GUIDE.md staging-deployment-plan.md do-staging-implementation-plan.md memory/implementations/digitalocean-deployment-info.md' )",
       "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter )",
-      "Bash('git rm --cached --ignore-unmatch STAGING-DEPLOYMENT-GUIDE.md staging-deployment-plan.md do-staging-implementation-plan.md memory/implementations/digitalocean-deployment-info.md' )"
+      "Bash('git rm --cached --ignore-unmatch STAGING-DEPLOYMENT-GUIDE.md staging-deployment-plan.md do-staging-implementation-plan.md memory/implementations/digitalocean-deployment-info.md' )",
+      "Bash(doctl apps update:*)",
+      "Bash(doctl apps logs:*)",
+      "Bash(doctl apps spec get:*)",
+      "Bash(doctl apps list-deployments:*)",
+      "Bash(doctl apps get-deployment:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   },
