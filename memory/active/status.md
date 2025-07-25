@@ -152,3 +152,6 @@ See `memory/active/future-work.md` for:
 
 ### Update: 2025-06-19 19:17
 - Simplified testing approach - removed 3000+ lines of overly complex tests, kept core functionality tests
+
+### Update: 2025-07-25 20:58
+- Migrated Redis configuration to use DigitalOcean managed Redis service - removed custom Redis containers from production, updated all app specs to use environment variable for Redis URL, created migration documentation and test scripts
