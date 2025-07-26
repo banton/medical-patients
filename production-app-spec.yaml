@@ -30,7 +30,7 @@ services:
         value: production
         scope: RUN_AND_BUILD_TIME
       - key: DATABASE_URL
-        value: ${db.DATABASE_URL}
+        value: ${medical-patients-db.DATABASE_URL}
         scope: RUN_AND_BUILD_TIME
       - key: REDIS_URL
         value: ${REDIS_URL}
@@ -69,7 +69,7 @@ static_sites:
     output_dir: /patient-timeline-viewer/dist
 
 databases:
-  - name: db
+  - name: medical-patients-db
     engine: PG
     version: "17"
     production: true
