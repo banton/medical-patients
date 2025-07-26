@@ -51,6 +51,8 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error("Failed to initialize Redis cache: %s", e)
             logger.warning("Application will continue without caching")
+            # Disable caching for this session to prevent further errors
+            settings.CACHE_ENABLED = False
 
     # Ensure demo API key exists
     try:

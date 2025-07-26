@@ -98,7 +98,9 @@
       "Bash(doctl apps spec get:*)",
       "Bash(doctl apps list-deployments:*)",
       "Bash(doctl apps get-deployment:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(diff:*)",
+      "Bash(doctl apps get:*)"
     ],
     "deny": []
   },
