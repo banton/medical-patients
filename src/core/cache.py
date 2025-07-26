@@ -34,16 +34,13 @@ class CacheService:
         try:
             # Check if SSL is needed (rediss:// protocol)
             if self.redis_url.startswith("rediss://"):
-                # Create SSL context for managed Redis
-                ssl_context = ssl.create_default_context()
-                ssl_context.check_hostname = False
-
+                # For redis-py 5.0+, SSL is handled automatically with rediss://
+                # Just pass ssl_cert_reqs parameter
                 self._pool = redis.ConnectionPool.from_url(
                     self.redis_url,
                     decode_responses=True,
                     max_connections=50,
-                    ssl_cert_reqs="required",
-                    ssl_context=ssl_context
+                    ssl_cert_reqs="required"
                 )
             else:
                 self._pool = redis.ConnectionPool.from_url(

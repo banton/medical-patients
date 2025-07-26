@@ -101,7 +101,9 @@
       "Bash(git pull:*)",
       "Bash(diff:*)",
       "Bash(doctl apps get:*)",
-      "Bash(gh workflow run:*)"
+      "Bash(gh workflow run:*)",
+      "Bash(doctl apps list:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   },

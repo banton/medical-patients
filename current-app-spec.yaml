@@ -1,0 +1,95 @@
+databases:
+- cluster_name: app-7a761f5d-a598-4efc-9f1a-cd756365d498
+  db_name: medical-patients-db
+  db_user: medical-patients-db
+  engine: PG
+  name: medical-patients-db
+  production: true
+  version: "17"
+domains:
+- domain: milmed.tech
+  type: PRIMARY
+- domain: www.milmed.tech
+  type: ALIAS
+ingress:
+  rules:
+  - component:
+      name: api
+      preserve_path_prefix: true
+    match:
+      path:
+        prefix: /api
+  - component:
+      name: api
+      preserve_path_prefix: true
+    match:
+      path:
+        prefix: /docs
+  - component:
+      name: api
+      preserve_path_prefix: true
+    match:
+      path:
+        prefix: /openapi.json
+  - component:
+      name: frontend
+    match:
+      path:
+        prefix: /
+name: medical-patients
+region: nyc
+services:
+- build_command: pip install -r requirements.txt
+  environment_slug: python
+  envs:
+  - key: ENVIRONMENT
+    scope: RUN_AND_BUILD_TIME
+    value: production
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${db.DATABASE_URL}
+  - key: REDIS_URL
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:mEth50Zm8z9hteiFUZPIzfOvGf9Zf3fC:pPGeTMfgC5SGiEyvq6xRBq97XUN0qxqNiq/MdVa284aINZJNgqd3oUorI+bZ5xqp0dePyIraKMOECADjLTp/C5b4oVP0QIC6TLddoOSBDFyzhMzmZD2vwcld1wGgapQ6sUqkry8jAbQFv2kYhhfL9sR3dPskifjQt9N6eQ1fzM+dV6Y8KIit]
+  - key: CACHE_ENABLED
+    scope: RUN_AND_BUILD_TIME
+    value: "true"
+  - key: DEBUG
+    scope: RUN_AND_BUILD_TIME
+    value: "false"
+  - key: CORS_ORIGINS
+    scope: RUN_AND_BUILD_TIME
+    value: https://milmed.tech,https://www.milmed.tech
+  - key: API_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    value: EV[1:NDt/ac6OOogn6/wKSE3HQMvmwPsx54cN:vOsWV5PAzUzHaE34GaIVf5IDjS1c9QVBZFY=]
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: banton/medical-patients
+  health_check:
+    failure_threshold: 3
+    http_path: /api/v1/health
+    initial_delay_seconds: 60
+    period_seconds: 30
+    success_threshold: 1
+    timeout_seconds: 10
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: apps-s-1vcpu-0.5gb
+  name: api
+  run_command: |
+    if [ ! -z "$DATABASE_URL" ]; then
+      alembic upgrade head
+    fi
+    python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+  source_dir: /
+static_sites:
+- github:
+    branch: main
+    deploy_on_push: true
+    repo: banton/medical-patients
+  name: frontend
+  source_dir: /static
