@@ -70,6 +70,7 @@ static_sites:
 
 databases:
   - name: medical-patients-db
+    cluster_name: app-7a761f5d-a598-4efc-9f1a-cd756365d498
     engine: PG
     version: "17"
     production: true
