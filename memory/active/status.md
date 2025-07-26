@@ -148,10 +148,6 @@ See `memory/active/future-work.md` for:
    - docker-compose.staging.yml configured
    - Task commands added (staging:up/down/logs/status)
    - Deployment scripts and guides created
-   - Status monitoring enhanced
 
-### Update: 2025-06-19 19:17
-- Simplified testing approach - removed 3000+ lines of overly complex tests, kept core functionality tests
-
-### Update: 2025-07-25 20:58
-- Migrated Redis configuration to use DigitalOcean managed Redis service - removed custom Redis containers from production, updated all app specs to use environment variable for Redis URL, created migration documentation and test scripts
+### Update: 2025-07-26 14:36
+- Fixed Redis SSL support for managed Redis and improved graceful fallback when Redis is unavailable

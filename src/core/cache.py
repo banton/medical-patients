@@ -6,6 +6,7 @@ This module provides a centralized caching layer using Redis for improved perfor
 from contextlib import asynccontextmanager
 import json
 import logging
+import ssl
 from typing import Any, Optional
 
 import redis.asyncio as redis
@@ -31,7 +32,26 @@ class CacheService:
     async def initialize(self) -> None:
         """Initialize the Redis connection pool."""
         try:
-            self._pool = redis.ConnectionPool.from_url(self.redis_url, decode_responses=True, max_connections=50)
+            # Check if SSL is needed (rediss:// protocol)
+            if self.redis_url.startswith("rediss://"):
+                # Create SSL context for managed Redis
+                ssl_context = ssl.create_default_context()
+                ssl_context.check_hostname = False
+
+                self._pool = redis.ConnectionPool.from_url(
+                    self.redis_url,
+                    decode_responses=True,
+                    max_connections=50,
+                    ssl_cert_reqs="required",
+                    ssl_context=ssl_context
+                )
+            else:
+                self._pool = redis.ConnectionPool.from_url(
+                    self.redis_url,
+                    decode_responses=True,
+                    max_connections=50
+                )
+
             # Test connection
             async with self._get_client() as client:
                 await client.ping()
