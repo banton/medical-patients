@@ -37,21 +37,21 @@ class CacheService:
                 # Create SSL context for managed Redis
                 ssl_context = ssl.create_default_context()
                 ssl_context.check_hostname = False
-                
+
                 self._pool = redis.ConnectionPool.from_url(
-                    self.redis_url, 
-                    decode_responses=True, 
+                    self.redis_url,
+                    decode_responses=True,
                     max_connections=50,
                     ssl_cert_reqs="required",
                     ssl_context=ssl_context
                 )
             else:
                 self._pool = redis.ConnectionPool.from_url(
-                    self.redis_url, 
-                    decode_responses=True, 
+                    self.redis_url,
+                    decode_responses=True,
                     max_connections=50
                 )
-            
+
             # Test connection
             async with self._get_client() as client:
                 await client.ping()

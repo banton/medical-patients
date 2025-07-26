@@ -100,7 +100,8 @@
       "Bash(doctl apps get-deployment:*)",
       "Bash(git pull:*)",
       "Bash(diff:*)",
-      "Bash(doctl apps get:*)"
+      "Bash(doctl apps get:*)",
+      "Bash(gh workflow run:*)"
     ],
     "deny": []
   },
