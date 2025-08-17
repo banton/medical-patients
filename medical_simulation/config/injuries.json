@@ -1,0 +1,277 @@
+{
+  "version": "2.0",
+  "injury_categories": {
+    "battle_trauma": {
+      "display_name": "Battle Trauma",
+      "injuries": {
+        "gsw": {
+          "display_name": "Gunshot Wound",
+          "snomed_code": "262574004",
+          "body_regions": {
+            "head": 0.10,
+            "upper_torso": 0.40,
+            "lower_torso": 0.30,
+            "extremities": 0.20
+          },
+          "initial_triage_distribution": {
+            "T1": 0.20, "T2": 0.30, "T3": 0.40, "T4": 0.10
+          },
+          "complications": ["hemorrhage", "organ_damage", "infection"],
+          "polytrauma_probability": 0.15,
+          "surgery_base_probability": 0.65
+        },
+        "shrapnel": {
+          "display_name": "Shrapnel/Fragment Injury",
+          "snomed_code": "125689001",
+          "body_regions": {
+            "head": 0.20,
+            "upper_torso": 0.30,
+            "lower_torso": 0.25,
+            "extremities": 0.25
+          },
+          "initial_triage_distribution": {
+            "T1": 0.15, "T2": 0.30, "T3": 0.45, "T4": 0.10
+          },
+          "complications": ["hemorrhage", "infection"],
+          "polytrauma_probability": 0.30,
+          "surgery_base_probability": 0.50
+        },
+        "blast": {
+          "display_name": "Blast/Explosive Injury",
+          "snomed_code": "125596004",
+          "body_regions": {
+            "head": 0.15,
+            "upper_torso": 0.35,
+            "lower_torso": 0.25,
+            "extremities": 0.25
+          },
+          "initial_triage_distribution": {
+            "T1": 0.25, "T2": 0.35, "T3": 0.30, "T4": 0.10
+          },
+          "complications": ["hemorrhage", "airway_compromise", "tbi", "burns"],
+          "polytrauma_probability": 0.45,
+          "surgery_base_probability": 0.75
+        },
+        "penetrating": {
+          "display_name": "Penetrating Injury",
+          "snomed_code": "361220002",
+          "body_regions": {
+            "head": 0.10,
+            "upper_torso": 0.45,
+            "lower_torso": 0.35,
+            "extremities": 0.10
+          },
+          "initial_triage_distribution": {
+            "T1": 0.30, "T2": 0.35, "T3": 0.30, "T4": 0.05
+          },
+          "complications": ["hemorrhage", "organ_damage"],
+          "polytrauma_probability": 0.20,
+          "surgery_base_probability": 0.80
+        },
+        "burn": {
+          "display_name": "Burn Injury",
+          "snomed_code": "7200002",
+          "body_regions": {
+            "head": 0.15,
+            "upper_torso": 0.35,
+            "lower_torso": 0.20,
+            "extremities": 0.30
+          },
+          "initial_triage_distribution": {
+            "T1": 0.30, "T2": 0.30, "T3": 0.35, "T4": 0.05
+          },
+          "complications": ["airway_compromise", "infection", "hypothermia"],
+          "polytrauma_probability": 0.25,
+          "surgery_base_probability": 0.40
+        },
+        "tbi": {
+          "display_name": "Traumatic Brain Injury",
+          "snomed_code": "19130008",
+          "body_regions": {
+            "head": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.35, "T2": 0.25, "T3": 0.30, "T4": 0.10
+          },
+          "complications": ["increased_icp", "seizure", "respiratory_failure"],
+          "polytrauma_probability": 0.40,
+          "surgery_base_probability": 0.55
+        },
+        "amputation": {
+          "display_name": "Traumatic Amputation",
+          "snomed_code": "284551006",
+          "body_regions": {
+            "extremities": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.40, "T2": 0.35, "T3": 0.20, "T4": 0.05
+          },
+          "complications": ["hemorrhage", "shock", "infection"],
+          "polytrauma_probability": 0.60,
+          "surgery_base_probability": 0.90
+        },
+        "traumatic_shock": {
+          "display_name": "Traumatic Shock",
+          "snomed_code": "125605004",
+          "body_regions": {
+            "head": 0.10,
+            "upper_torso": 0.50,
+            "lower_torso": 0.30,
+            "extremities": 0.10
+          },
+          "initial_triage_distribution": {
+            "T1": 0.60, "T2": 0.30, "T3": 0.10, "T4": 0.00
+          },
+          "complications": ["organ_failure", "metabolic_acidosis"],
+          "polytrauma_probability": 0.70,
+          "surgery_base_probability": 0.85
+        }
+      }
+    },
+    "non_battle_injury": {
+      "display_name": "Non-Battle Injury",
+      "injuries": {
+        "fracture": {
+          "display_name": "Fracture",
+          "snomed_code": "37782003",
+          "body_regions": {
+            "head": 0.05,
+            "upper_torso": 0.15,
+            "lower_torso": 0.10,
+            "extremities": 0.70
+          },
+          "initial_triage_distribution": {
+            "T1": 0.05, "T2": 0.25, "T3": 0.60, "T4": 0.10
+          },
+          "complications": ["infection", "compartment_syndrome"],
+          "polytrauma_probability": 0.10,
+          "surgery_base_probability": 0.30
+        },
+        "heat_injury": {
+          "display_name": "Heat Exhaustion/Stroke",
+          "snomed_code": "372963008",
+          "body_regions": {
+            "head": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.10, "T2": 0.30, "T3": 0.50, "T4": 0.10
+          },
+          "complications": ["organ_failure", "seizure"],
+          "polytrauma_probability": 0.05,
+          "surgery_base_probability": 0.05
+        },
+        "sprain": {
+          "display_name": "Sprain/Strain",
+          "snomed_code": "302914006",
+          "body_regions": {
+            "extremities": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.00, "T2": 0.10, "T3": 0.80, "T4": 0.10
+          },
+          "complications": [],
+          "polytrauma_probability": 0.02,
+          "surgery_base_probability": 0.02
+        },
+        "vehicle_accident": {
+          "display_name": "Vehicle Accident Injury",
+          "snomed_code": "409711008",
+          "body_regions": {
+            "head": 0.20,
+            "upper_torso": 0.30,
+            "lower_torso": 0.20,
+            "extremities": 0.30
+          },
+          "initial_triage_distribution": {
+            "T1": 0.15, "T2": 0.35, "T3": 0.40, "T4": 0.10
+          },
+          "complications": ["hemorrhage", "tbi", "fracture"],
+          "polytrauma_probability": 0.40,
+          "surgery_base_probability": 0.45
+        },
+        "crush": {
+          "display_name": "Crush Injury",
+          "snomed_code": "275272006",
+          "body_regions": {
+            "head": 0.10,
+            "upper_torso": 0.30,
+            "lower_torso": 0.30,
+            "extremities": 0.30
+          },
+          "initial_triage_distribution": {
+            "T1": 0.25, "T2": 0.35, "T3": 0.35, "T4": 0.05
+          },
+          "complications": ["compartment_syndrome", "rhabdomyolysis", "renal_failure"],
+          "polytrauma_probability": 0.35,
+          "surgery_base_probability": 0.60
+        }
+      }
+    },
+    "disease": {
+      "display_name": "Disease/Illness",
+      "injuries": {
+        "respiratory": {
+          "display_name": "Acute Respiratory Illness",
+          "snomed_code": "195662009",
+          "body_regions": {
+            "upper_torso": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.05, "T2": 0.20, "T3": 0.65, "T4": 0.10
+          },
+          "complications": ["pneumonia", "respiratory_failure"],
+          "polytrauma_probability": 0.00,
+          "surgery_base_probability": 0.02
+        },
+        "gastroenteritis": {
+          "display_name": "Gastroenteritis",
+          "snomed_code": "25374005",
+          "body_regions": {
+            "lower_torso": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.02, "T2": 0.18, "T3": 0.70, "T4": 0.10
+          },
+          "complications": ["dehydration", "electrolyte_imbalance"],
+          "polytrauma_probability": 0.00,
+          "surgery_base_probability": 0.01
+        },
+        "infection": {
+          "display_name": "Infection (Various)",
+          "snomed_code": "68566005",
+          "body_regions": {
+            "head": 0.10,
+            "upper_torso": 0.40,
+            "lower_torso": 0.40,
+            "extremities": 0.10
+          },
+          "initial_triage_distribution": {
+            "T1": 0.05, "T2": 0.25, "T3": 0.60, "T4": 0.10
+          },
+          "complications": ["sepsis", "organ_failure"],
+          "polytrauma_probability": 0.00,
+          "surgery_base_probability": 0.10
+        },
+        "mental_health": {
+          "display_name": "Mental Health Crisis",
+          "snomed_code": "45170000",
+          "body_regions": {
+            "head": 1.0
+          },
+          "initial_triage_distribution": {
+            "T1": 0.02, "T2": 0.15, "T3": 0.73, "T4": 0.10
+          },
+          "complications": ["self_harm", "psychosis"],
+          "polytrauma_probability": 0.00,
+          "surgery_base_probability": 0.00
+        }
+      }
+    }
+  },
+  "surgery_probability_multipliers": {
+    "T1": 2.0,
+    "T2": 1.0,
+    "T3": 0.5,
+    "T4": 0.5
+  }
+}
