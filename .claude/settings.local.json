@@ -101,9 +101,28 @@
       "Bash(git pull:*)",
       "Bash(diff:*)",
       "Bash(doctl apps get:*)",
-      "Bash(gh workflow run:*)"
+      "Bash(gh workflow run:*)",
+      "Bash(doctl apps:*)",
+      "Bash(doctl databases list:*)",
+      "Bash(doctl databases connection:*)",
+      "mcp__dementia__wake_up",
+      "mcp__dementia__memory_update",
+      "mcp__dementia__lock_context",
+      "mcp__dementia__project_update",
+      "mcp__digitalocean__list_apps",
+      "mcp__digitalocean__get_app",
+      "mcp__digitalocean__get_deployment_logs_url",
+      "mcp__digitalocean__download_logs",
+      "mcp__dementia__project_status",
+      "mcp__dementia__search_by_tags",
+      "mcp__dementia__list_topics",
+      "mcp__dementia__recall_context",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__dementia__tag_path",
+      "mcp__dementia__memory_status"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   },
   "enableAllProjectMcpServers": false
 }

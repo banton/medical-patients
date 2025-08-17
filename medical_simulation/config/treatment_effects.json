@@ -1,0 +1,253 @@
+{
+  "version": "3.0",
+  "description": "Treatment effects on health deterioration and blood loss",
+  "treatments": {
+    "immediate_interventions": {
+      "tourniquet": {
+        "display_name": "Tourniquet Application",
+        "deterioration_modifier": 0.5,
+        "blood_loss_modifier": 0.1,
+        "application_time_minutes": 2,
+        "skill_required": "basic",
+        "equipment_required": ["tourniquet"],
+        "contraindications": [],
+        "complications_risk": 0.05,
+        "description": "Stops extremity bleeding"
+      },
+      "pressure_bandage": {
+        "display_name": "Pressure Dressing",
+        "deterioration_modifier": 0.7,
+        "blood_loss_modifier": 0.5,
+        "application_time_minutes": 5,
+        "skill_required": "basic",
+        "equipment_required": ["gauze", "bandage"],
+        "contraindications": ["skull_fracture"],
+        "complications_risk": 0.02,
+        "description": "Controls moderate bleeding"
+      },
+      "hemostatic_gauze": {
+        "display_name": "Hemostatic Agent Application",
+        "deterioration_modifier": 0.6,
+        "blood_loss_modifier": 0.3,
+        "application_time_minutes": 3,
+        "skill_required": "basic",
+        "equipment_required": ["hemostatic_gauze"],
+        "contraindications": [],
+        "complications_risk": 0.03,
+        "description": "Chemical bleeding control"
+      },
+      "airway_positioning": {
+        "display_name": "Airway Positioning",
+        "deterioration_modifier": 0.6,
+        "blood_loss_modifier": 1.0,
+        "application_time_minutes": 1,
+        "skill_required": "basic",
+        "equipment_required": [],
+        "contraindications": ["c_spine_injury"],
+        "complications_risk": 0.01,
+        "description": "Basic airway management"
+      },
+      "needle_decompression": {
+        "display_name": "Needle Chest Decompression",
+        "deterioration_modifier": 0.4,
+        "blood_loss_modifier": 1.0,
+        "application_time_minutes": 5,
+        "skill_required": "intermediate",
+        "equipment_required": ["decompression_needle"],
+        "contraindications": [],
+        "complications_risk": 0.10,
+        "description": "Treats tension pneumothorax"
+      }
+    },
+    "medical_treatments": {
+      "iv_access": {
+        "display_name": "IV Access Establishment",
+        "deterioration_modifier": 0.9,
+        "blood_loss_modifier": 1.0,
+        "application_time_minutes": 5,
+        "skill_required": "intermediate",
+        "equipment_required": ["iv_kit"],
+        "contraindications": [],
+        "complications_risk": 0.05,
+        "description": "Enables fluid/medication delivery"
+      },
+      "iv_fluids": {
+        "display_name": "IV Fluid Resuscitation",
+        "deterioration_modifier": 0.8,
+        "blood_volume_boost": 10,
+        "duration_minutes": 30,
+        "skill_required": "intermediate",
+        "equipment_required": ["iv_access", "fluid_bags"],
+        "contraindications": ["head_injury"],
+        "complications_risk": 0.03,
+        "description": "Replaces lost fluids"
+      },
+      "blood_transfusion": {
+        "display_name": "Blood Product Transfusion",
+        "deterioration_modifier": 0.6,
+        "blood_volume_boost": 20,
+        "duration_minutes": 60,
+        "skill_required": "intermediate",
+        "equipment_required": ["iv_access", "blood_products", "type_match"],
+        "contraindications": [],
+        "complications_risk": 0.08,
+        "description": "Replaces lost blood"
+      },
+      "antibiotics": {
+        "display_name": "Antibiotic Administration",
+        "deterioration_modifier": 0.9,
+        "blood_loss_modifier": 1.0,
+        "duration_minutes": 5,
+        "skill_required": "intermediate",
+        "equipment_required": ["antibiotics", "iv_access"],
+        "contraindications": ["allergy"],
+        "complications_risk": 0.02,
+        "description": "Prevents infection"
+      },
+      "pain_management": {
+        "display_name": "Pain Medication",
+        "deterioration_modifier": 0.95,
+        "blood_loss_modifier": 1.0,
+        "duration_minutes": 5,
+        "skill_required": "intermediate",
+        "equipment_required": ["analgesics"],
+        "contraindications": ["head_injury", "respiratory_depression"],
+        "complications_risk": 0.05,
+        "description": "Manages pain"
+      }
+    },
+    "advanced_treatments": {
+      "intubation": {
+        "display_name": "Endotracheal Intubation",
+        "deterioration_modifier": 0.4,
+        "blood_loss_modifier": 1.0,
+        "application_time_minutes": 10,
+        "skill_required": "advanced",
+        "equipment_required": ["intubation_kit", "ventilator"],
+        "contraindications": [],
+        "complications_risk": 0.15,
+        "description": "Secures airway"
+      },
+      "chest_tube": {
+        "display_name": "Chest Tube Insertion",
+        "deterioration_modifier": 0.5,
+        "blood_loss_modifier": 0.8,
+        "application_time_minutes": 15,
+        "skill_required": "advanced",
+        "equipment_required": ["chest_tube_kit"],
+        "contraindications": [],
+        "complications_risk": 0.10,
+        "description": "Drains chest cavity"
+      },
+      "surgical_airway": {
+        "display_name": "Cricothyrotomy",
+        "deterioration_modifier": 0.3,
+        "blood_loss_modifier": 1.0,
+        "application_time_minutes": 5,
+        "skill_required": "expert",
+        "equipment_required": ["cric_kit"],
+        "contraindications": ["laryngeal_fracture"],
+        "complications_risk": 0.20,
+        "description": "Emergency airway"
+      },
+      "damage_control_surgery": {
+        "display_name": "Damage Control Surgery",
+        "deterioration_modifier": 0.3,
+        "blood_loss_modifier": 0.1,
+        "duration_minutes": 60,
+        "skill_required": "expert",
+        "equipment_required": ["operating_room", "surgical_team"],
+        "contraindications": [],
+        "complications_risk": 0.25,
+        "description": "Life-saving surgery"
+      },
+      "definitive_surgery": {
+        "display_name": "Definitive Surgical Repair",
+        "deterioration_modifier": 0.2,
+        "blood_loss_modifier": 0.05,
+        "duration_minutes": 180,
+        "skill_required": "expert",
+        "equipment_required": ["operating_room", "surgical_team", "specialized_equipment"],
+        "contraindications": ["unstable"],
+        "complications_risk": 0.15,
+        "description": "Complete surgical repair"
+      }
+    }
+  },
+  "treatment_availability": {
+    "point_of_injury": {
+      "treatments": ["tourniquet", "pressure_bandage", "hemostatic_gauze", "airway_positioning"],
+      "personnel": "combat_medic",
+      "response_time_minutes": 5
+    },
+    "role1": {
+      "treatments": ["tourniquet", "pressure_bandage", "hemostatic_gauze", "airway_positioning", "needle_decompression", "iv_access", "iv_fluids", "antibiotics", "pain_management"],
+      "personnel": "physician_assistant",
+      "response_time_minutes": 30
+    },
+    "role2": {
+      "treatments": ["all_immediate", "all_medical", "intubation", "chest_tube", "blood_transfusion", "damage_control_surgery"],
+      "personnel": "emergency_physician",
+      "response_time_minutes": 60
+    },
+    "role3": {
+      "treatments": ["all"],
+      "personnel": "surgical_team",
+      "response_time_minutes": 120
+    },
+    "role4": {
+      "treatments": ["all", "specialized_surgery", "rehabilitation"],
+      "personnel": "specialist_team",
+      "response_time_minutes": 480
+    }
+  },
+  "treatment_combinations": {
+    "hemorrhage_control": {
+      "treatments": ["tourniquet", "pressure_bandage", "hemostatic_gauze"],
+      "combined_modifier": 0.3,
+      "description": "Multiple hemorrhage control methods"
+    },
+    "shock_management": {
+      "treatments": ["iv_fluids", "blood_transfusion", "pressure_bandage"],
+      "combined_modifier": 0.4,
+      "description": "Comprehensive shock treatment"
+    },
+    "airway_management": {
+      "treatments": ["airway_positioning", "intubation"],
+      "combined_modifier": 0.3,
+      "description": "Complete airway control"
+    },
+    "damage_control_resuscitation": {
+      "treatments": ["tourniquet", "blood_transfusion", "damage_control_surgery"],
+      "combined_modifier": 0.2,
+      "description": "Full trauma resuscitation"
+    }
+  },
+  "golden_hour_modifiers": {
+    "immediate": {
+      "time_window_minutes": 10,
+      "effectiveness_multiplier": 1.5,
+      "survival_bonus": 0.30
+    },
+    "golden_hour": {
+      "time_window_minutes": 60,
+      "effectiveness_multiplier": 1.2,
+      "survival_bonus": 0.20
+    },
+    "urgent": {
+      "time_window_minutes": 180,
+      "effectiveness_multiplier": 1.0,
+      "survival_bonus": 0.10
+    },
+    "delayed": {
+      "time_window_minutes": 360,
+      "effectiveness_multiplier": 0.8,
+      "survival_bonus": 0.05
+    },
+    "late": {
+      "time_window_minutes": 99999,
+      "effectiveness_multiplier": 0.6,
+      "survival_bonus": 0.00
+    }
+  }
+}

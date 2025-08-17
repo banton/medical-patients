@@ -59,14 +59,6 @@ static_sites:
       deploy_on_push: true
     source_dir: /static
     
-  - name: timeline-viewer
-    github:
-      repo: banton/medical-patients
-      branch: main
-      deploy_on_push: true
-    build_command: cd patient-timeline-viewer && npm install && npm run build
-    source_dir: /patient-timeline-viewer
-    output_dir: /patient-timeline-viewer/dist
 
 databases:
   - name: medical-patients-db
@@ -85,14 +77,6 @@ domains:
 
 ingress:
   rules:
-    # Timeline viewer on milmed.tech/timeline 
-    - match:
-        path:
-          prefix: /timeline
-      component:
-        name: timeline-viewer
-        rewrite: /
-    
     # API routes on milmed.tech
     - match:
         path:

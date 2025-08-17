@@ -149,5 +149,5 @@ See `memory/active/future-work.md` for:
    - Task commands added (staging:up/down/logs/status)
    - Deployment scripts and guides created
 
-### Update: 2025-07-26 14:36
-- Fixed Redis SSL support for managed Redis and improved graceful fallback when Redis is unavailable
+### Update: 2025-08-14 21:39
+- Fixed Redis URL exposure in production-app-spec.yaml. App running healthy on DigitalOcean. Project analysis shows 15 files needing work, 6 deprecated files, and 10 files with hardcoded values. Most issues are in cache files and documentation.
