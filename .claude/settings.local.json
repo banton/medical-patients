@@ -119,7 +119,15 @@
       "mcp__dementia__recall_context",
       "mcp__sequential-thinking__sequentialthinking",
       "mcp__dementia__tag_path",
-      "mcp__dementia__memory_status"
+      "mcp__dementia__memory_status",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__filesystem__search_files",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_health_score_engine.py)",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_deterioration_calculator.py)",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_treatment_modifiers.py)",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 -c \"\nfrom medical_simulation.treatment_modifiers import TreatmentModifiers\ntm = TreatmentModifiers()\nsingle = tm.calculate_stacked_effects([{''name'': ''tourniquet''}])\nprint(f''Single treatment effect: {single}'')\nprint(f''Tourniquet modifier: {tm.treatments[\"\"tourniquet\"\"][\"\"deterioration_modifier\"\"]}'')\n\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
