@@ -127,7 +127,16 @@
       "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_health_score_engine.py)",
       "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_deterioration_calculator.py)",
       "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_treatment_modifiers.py)",
-      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 -c \"\nfrom medical_simulation.treatment_modifiers import TreatmentModifiers\ntm = TreatmentModifiers()\nsingle = tm.calculate_stacked_effects([{''name'': ''tourniquet''}])\nprint(f''Single treatment effect: {single}'')\nprint(f''Tourniquet modifier: {tm.treatments[\"\"tourniquet\"\"][\"\"deterioration_modifier\"\"]}'')\n\")"
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 -c \"\nfrom medical_simulation.treatment_modifiers import TreatmentModifiers\ntm = TreatmentModifiers()\nsingle = tm.calculate_stacked_effects([{''name'': ''tourniquet''}])\nprint(f''Single treatment effect: {single}'')\nprint(f''Tourniquet modifier: {tm.treatments[\"\"tourniquet\"\"][\"\"deterioration_modifier\"\"]}'')\n\")",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_triage_mapper.py)",
+      "mcp__dementia__sleep",
+      "Bash(PYTHONPATH=. python3 tests/test_death_tracker.py)",
+      "Bash(PYTHONPATH=. python3 -m pytest tests/test_patient_flow_orchestrator.py -xvs)",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_patient_flow_orchestrator.py)",
+      "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py -xvs)",
+      "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py -v)",
+      "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py::TestPatientFlowOrchestrator::test_initialize_patient -xvs)",
+      "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py -v --tb=no)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
