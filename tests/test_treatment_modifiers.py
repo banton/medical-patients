@@ -27,16 +27,28 @@ def test_condition_specific_treatments():
     """Test treatments filtered by patient condition"""
     tm = TreatmentModifiers()
 
-    # Hemorrhage condition
-    hemorrhage_treatments = tm.get_available_treatments("role2", "hemorrhage")
-    assert "tourniquet" in hemorrhage_treatments
-    assert "blood_transfusion" in hemorrhage_treatments
-    assert "chest_tube" not in hemorrhage_treatments  # Not for bleeding
+    # Extremity hemorrhage - tourniquet appropriate
+    leg_treatments = tm.get_available_treatments("role1", "femoral artery bleeding")
+    assert "tourniquet" in leg_treatments
+    assert "iv_fluids" in leg_treatments
 
-    # Respiratory condition
-    respiratory_treatments = tm.get_available_treatments("role2", "respiratory distress")
-    assert "chest_tube" in respiratory_treatments
-    assert "tourniquet" not in respiratory_treatments  # Not for breathing
+    # Chest wound - NO tourniquet!
+    chest_treatments = tm.get_available_treatments("role1", "chest wound with pneumothorax")
+    assert "tourniquet" not in chest_treatments, "Tourniquet should NOT be available for chest wounds"
+    assert "pressure_dressing" in chest_treatments
+    assert "iv_fluids" in chest_treatments
+    
+    # Abdominal injury - NO tourniquet!
+    abdomen_treatments = tm.get_available_treatments("role2", "abdominal trauma")
+    assert "tourniquet" not in abdomen_treatments
+    assert "pressure_dressing" in abdomen_treatments
+    assert "surgical_stabilization" in abdomen_treatments
+    
+    # Head injury - very limited options
+    head_treatments = tm.get_available_treatments("role1", "head trauma")
+    assert "tourniquet" not in head_treatments
+    assert "pressure_dressing" in head_treatments
+    assert len(head_treatments) <= 3  # Limited options for head injuries
 
 
 def test_treatment_application():

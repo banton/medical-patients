@@ -248,7 +248,8 @@ def interactive_demo():
     deterioration = 25.0
     applied_treatments = []
     
-    available = tm.get_available_treatments("role1")
+    # Get appropriate treatments for chest wound (no tourniquet!)
+    available = tm.get_available_treatments("role1", "chest wound with pneumothorax")
     
     while current_health > 0 and current_hour < 6:
         print(f"\n⏰ Time: T+{current_hour:.1f} hours")
