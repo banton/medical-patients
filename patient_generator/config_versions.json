@@ -1,0 +1,31 @@
+{
+  "version_compatibility_matrix": {
+    "1.0.0": {
+      "injuries": "1.0.0",
+      "fronts_config": "1.0.0",
+      "patient_model": "1.0.0",
+      "features": [
+        "deterioration_model",
+        "medical_facilities",
+        "transport_assets",
+        "treatment_capabilities"
+      ],
+      "release_date": "2025-01-19",
+      "notes": "Initial medical simulation enhancement"
+    }
+  },
+  "migration_paths": {
+    "0.9.0_to_1.0.0": {
+      "description": "Adds medical simulation features",
+      "breaking_changes": false,
+      "new_fields": [
+        "injuries.json: deterioration_model, golden_hour_effect, environmental_modifiers, cliff_events",
+        "fronts_config.json: medical_facilities, transport_assets, distances_km, treatment_capabilities"
+      ],
+      "deprecated_fields": [],
+      "migration_notes": "Existing code will ignore new fields. No changes required."
+    }
+  },
+  "current_version": "1.0.0",
+  "minimum_supported_version": "0.9.0"
+}

@@ -1,4 +1,10 @@
 {
+  "config_version": "1.0.0",
+  "config_type": "injuries",
+  "compatible_with": {
+    "fronts_config": ["1.0.0", "1.0.x"],
+    "patient_model": ["1.0.0+"]
+  },
   "total_patients": 1440,
   "days_of_fighting": 8,
   "base_date": "2025-06-01",

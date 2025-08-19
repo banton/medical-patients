@@ -1,4 +1,10 @@
 {
+  "config_version": "1.0.0",
+  "config_type": "fronts",
+  "compatible_with": {
+    "injuries": ["1.0.0", "1.0.x"],
+    "patient_model": ["1.0.0+"]
+  },
   "fronts": [
     {
       "name": "Poland",
