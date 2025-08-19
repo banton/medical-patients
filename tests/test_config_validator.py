@@ -1,10 +1,9 @@
 """Tests for Config Validator"""
 import json
-import tempfile
 from pathlib import Path
-import pytest
+import tempfile
 
-from medical_simulation.config_validator import validate_configs, ValidationResult
+from medical_simulation.config_validator import validate_configs
 
 
 def test_valid_configs():
@@ -30,15 +29,15 @@ def test_version_mismatch():
             "compatible_with": {"injuries": ["2.0.0"]},
             "fronts": []
         }
-        
+
         injuries_path = Path(tmpdir) / "injuries.json"
         fronts_path = Path(tmpdir) / "fronts.json"
-        
+
         with open(injuries_path, "w") as f:
             json.dump(injuries, f)
         with open(fronts_path, "w") as f:
             json.dump(fronts, f)
-            
+
         result = validate_configs(str(injuries_path), str(fronts_path))
         assert not result.is_valid
         assert any("Version mismatch" in e for e in result.errors)
@@ -59,15 +58,15 @@ def test_invalid_deterioration_rate():
             }
         }
         fronts = {"config_version": "1.0.0", "fronts": []}
-        
+
         injuries_path = Path(tmpdir) / "injuries.json"
         fronts_path = Path(tmpdir) / "fronts.json"
-        
+
         with open(injuries_path, "w") as f:
             json.dump(injuries, f)
         with open(fronts_path, "w") as f:
             json.dump(fronts, f)
-            
+
         result = validate_configs(str(injuries_path), str(fronts_path))
         assert not result.is_valid
         assert any("initial_health must be 0-100" in e for e in result.errors)
@@ -91,15 +90,15 @@ def test_role1_or_capacity():
                 }
             }]
         }
-        
+
         injuries_path = Path(tmpdir) / "injuries.json"
         fronts_path = Path(tmpdir) / "fronts.json"
-        
+
         with open(injuries_path, "w") as f:
             json.dump(injuries, f)
         with open(fronts_path, "w") as f:
             json.dump(fronts, f)
-            
+
         result = validate_configs(str(injuries_path), str(fronts_path))
         assert not result.is_valid
         assert any("Role1 cannot have OR capacity" in e for e in result.errors)
@@ -117,15 +116,15 @@ def test_front_ratios():
                 # Missing 0.2!
             ]
         }
-        
+
         injuries_path = Path(tmpdir) / "injuries.json"
         fronts_path = Path(tmpdir) / "fronts.json"
-        
+
         with open(injuries_path, "w") as f:
             json.dump(injuries, f)
         with open(fronts_path, "w") as f:
             json.dump(fronts, f)
-            
+
         result = validate_configs(str(injuries_path), str(fronts_path))
         assert not result.is_valid
         assert any("Front ratios sum to 0.80" in e for e in result.errors)

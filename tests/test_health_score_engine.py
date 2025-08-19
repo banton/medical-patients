@@ -1,22 +1,21 @@
 """Tests for Health Score Engine"""
-import json
 from medical_simulation.health_score_engine import HealthScoreEngine
 
 
 def test_initial_health_scores():
     """Test initial health score assignment"""
     engine = HealthScoreEngine()
-    
+
     # Test different severities
     severe = engine.get_initial_health("Battle Injury", "Severe")
     assert 20 <= severe <= 30, f"Severe battle injury should be 20-30, got {severe}"
-    
+
     moderate = engine.get_initial_health("Battle Injury", "Moderate")
     assert 57 <= moderate <= 63, f"Moderate should be around 60, got {moderate}"
-    
+
     mild = engine.get_initial_health("Battle Injury", "Mild to moderate")
     assert 73 <= mild <= 77, f"Mild should be around 75, got {mild}"
-    
+
     # Disease should have higher initial health
     disease = engine.get_initial_health("Disease", "Severe")
     assert 48 <= disease <= 52, f"Severe disease should be around 50, got {disease}"
@@ -25,7 +24,7 @@ def test_initial_health_scores():
 def test_deterioration_without_treatment():
     """Test patient deteriorates without treatment"""
     engine = HealthScoreEngine()
-    
+
     timeline = engine.calculate_health_timeline(
         injury_type="Battle Injury",
         severity="Severe",
@@ -33,11 +32,11 @@ def test_deterioration_without_treatment():
         deterioration_rate=30,
         modifiers=None
     )
-    
+
     # Should deteriorate each hour
     assert len(timeline) >= 2
     assert timeline[0]["health"] > timeline[1]["health"]
-    
+
     # Should die within a few hours with severe injury
     final_health = timeline[-1]["health"]
     assert final_health <= 0, "Severe injury without treatment should be fatal"
@@ -46,7 +45,7 @@ def test_deterioration_without_treatment():
 def test_treatment_effects():
     """Test that treatments slow deterioration"""
     engine = HealthScoreEngine()
-    
+
     # Without treatment
     timeline_no_treatment = engine.calculate_health_timeline(
         injury_type="Battle Injury",
@@ -55,7 +54,7 @@ def test_treatment_effects():
         deterioration_rate=12,
         modifiers=None
     )
-    
+
     # With treatment
     modifiers = [
         {"hour": 1, "type": "treatment", "modifier": 0.5}  # Tourniquet
@@ -67,7 +66,7 @@ def test_treatment_effects():
         deterioration_rate=12,
         modifiers=modifiers
     )
-    
+
     # Patient with treatment should have better health
     assert timeline_with_treatment[-1]["health"] > timeline_no_treatment[-1]["health"]
 
@@ -75,7 +74,7 @@ def test_treatment_effects():
 def test_golden_hour_effect():
     """Test golden hour increases deterioration"""
     engine = HealthScoreEngine()
-    
+
     timeline = engine.calculate_health_timeline(
         injury_type="Battle Injury",
         severity="Moderate",
@@ -83,7 +82,7 @@ def test_golden_hour_effect():
         deterioration_rate=10,
         modifiers=None
     )
-    
+
     # Check deterioration rates increase after golden hour
     if len(timeline) >= 3:
         # First hour normal, after that accelerated
@@ -95,7 +94,7 @@ def test_golden_hour_effect():
 def test_outcome_prediction():
     """Test outcome prediction from timeline"""
     engine = HealthScoreEngine()
-    
+
     # Dead patient
     dead_timeline = [
         {"hour": 0, "health": 30, "status": "unstable"},
@@ -105,7 +104,7 @@ def test_outcome_prediction():
     outcome = engine.predict_outcome(dead_timeline)
     assert outcome["outcome"] == "death"
     assert outcome["category"] == "DOW"
-    
+
     # Surviving patient
     survivor_timeline = [
         {"hour": 0, "health": 75, "status": "good"},
@@ -120,12 +119,12 @@ def test_outcome_prediction():
 def test_treatment_application():
     """Test applying treatments to health scores"""
     engine = HealthScoreEngine()
-    
+
     # Test tourniquet
     new_health, modifier = engine.apply_treatment_effect(50, "tourniquet")
     assert new_health == 55  # +5 health
     assert modifier == 0.2   # Greatly reduces bleeding
-    
+
     # Test IV fluids
     new_health, modifier = engine.apply_treatment_effect(40, "iv_fluids")
     assert new_health == 50  # +10 health
@@ -135,20 +134,20 @@ def test_treatment_application():
 if __name__ == "__main__":
     test_initial_health_scores()
     print("✅ Initial health scores test passed")
-    
+
     test_deterioration_without_treatment()
     print("✅ Deterioration test passed")
-    
+
     test_treatment_effects()
     print("✅ Treatment effects test passed")
-    
+
     test_golden_hour_effect()
     print("✅ Golden hour test passed")
-    
+
     test_outcome_prediction()
     print("✅ Outcome prediction test passed")
-    
+
     test_treatment_application()
     print("✅ Treatment application test passed")
-    
+
     print("\n✅ All health score engine tests passed!")
