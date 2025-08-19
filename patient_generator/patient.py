@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 class Patient:
     """Represents a patient with demographics and medical history"""
-    
+
     # Version tracking for compatibility checking
     PATIENT_MODEL_VERSION = "1.0.0"
 
@@ -36,21 +36,21 @@ class Patient:
         self.casualty_event_id: Optional[str] = None  # Unique event identifier
         self.is_mass_casualty: bool = False  # Part of mass casualty event
         self.environmental_conditions: List[str] = []  # Active environmental factors
-        
+
         # Medical simulation fields (v1.0.0)
         self.health_score: Optional[int] = None  # Current health 0-100
         self.initial_health: Optional[int] = None  # Health at injury time
         self.deterioration_rate: Optional[float] = None  # Health loss per hour
         self.health_timeline: List[Dict[str, Any]] = []  # [{time: "T+0", health: 60}, ...]
         self.treatments_applied: List[Dict[str, Any]] = []  # [{treatment: "tourniquet", time: "T+0.5h", effect: 0.5}]
-        
+
         # Facility and care tracking
         self.bed_type_assigned: Optional[str] = None  # "T1", "T2", "T3" bed currently in
         self.care_quality: Optional[float] = None  # 1.0 = appropriate care, <1.0 = degraded
-        
+
         # Death tracking (if applicable)
         self.death_details: Optional[Dict[str, Any]] = None  # Category, time, preventability, bottleneck
-        
+
         # Transport and overflow tracking
         self.transport_events: List[Dict[str, Any]] = []  # Transport history with durations
         self.overflow_count: int = 0  # Times redirected due to capacity
