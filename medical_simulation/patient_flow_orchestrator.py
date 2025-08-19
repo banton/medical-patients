@@ -179,7 +179,8 @@ class PatientFlowOrchestrator:
         initial_facility = facility_map.get(patient.triage_category, "Role1")
 
         # Check capacity and route if needed
-        if not self.facility_manager.can_admit(initial_facility):
+        available_beds = self.facility_manager.get_available_beds(initial_facility)
+        if available_beds <= 0:
             initial_facility = self.overflow_router.route_patient(
                 patient.triage_category,
                 initial_facility
@@ -344,11 +345,12 @@ class PatientFlowOrchestrator:
             return False
 
         # Admit to destination
-        if self.facility_manager.admit_patient(
-            patient.destination,
+        admission = self.facility_manager.admit_patient(
             patient_id,
+            patient.destination,
             patient.triage_category
-        ):
+        )
+        if admission["admitted"]:
             patient.current_location = patient.destination
             patient.state = PatientState.IN_TREATMENT
             patient.destination = None
@@ -385,11 +387,11 @@ class PatientFlowOrchestrator:
         for patient_id in patient_ids:
             patient = self.patients.get(patient_id)
             if patient and patient.state != PatientState.DIED:
-                self.csu_coordinator.add_patient(patient_id)
+                self.csu_coordinator.add_to_batch(patient_id, patient.triage_category)
 
         # Check if batch ready
         if self.csu_coordinator.is_batch_ready():
-            batch = self.csu_coordinator.release_batch()
+            batch = self.csu_coordinator.prepare_batch_transfer()
 
             # Schedule batch transport
             for patient_id in batch["patients"]:
@@ -425,18 +427,16 @@ class PatientFlowOrchestrator:
         if patient.state == PatientState.IN_TRANSPORT:
             location = "in_transit"
 
-        self.death_tracker.record_death(
-            patient_id,
-            self.simulation_time,
-            location,
-            cause,
-            {
-                "injury_type": patient.injury_type,
-                "initial_health": patient.initial_health,
-                "final_health": patient.current_health,
-                "treatments": patient.treatments_received
-            }
-        )
+        self.death_tracker.track_death({
+            "patient_id": patient_id,
+            "time_of_death": self.simulation_time,
+            "location": location,
+            "cause": cause,
+            "injury_type": patient.injury_type,
+            "initial_health": patient.initial_health,
+            "final_health": patient.current_health,
+            "treatments": patient.treatments_received
+        })
 
         # Update patient
         patient.state = PatientState.DIED
@@ -456,8 +456,8 @@ class PatientFlowOrchestrator:
         # Free up facility bed if applicable
         if patient.current_location in ["Role1", "Role2", "Role3", "CSU"]:
             self.facility_manager.discharge_patient(
-                patient.current_location,
-                patient_id
+                patient_id,
+                patient.current_location
             )
 
     def get_system_status(self) -> Dict[str, Any]:
@@ -480,9 +480,12 @@ class PatientFlowOrchestrator:
                 "in_transport": sum(1 for p in self.patients.values()
                                   if p.state == PatientState.IN_TRANSPORT)
             },
-            "facilities": self.facility_manager.get_all_status(),
-            "transport": self.transport_scheduler.get_fleet_status(),
-            "csu_batch": self.csu_coordinator.get_batch_status(),
+            "facilities": {"Role1": self.facility_manager.get_occupancy("Role1"),
+             "Role2": self.facility_manager.get_occupancy("Role2"),
+             "Role3": self.facility_manager.get_occupancy("Role3"),
+             "CSU": self.facility_manager.get_occupancy("CSU")},
+            "transport": self.transport_scheduler.get_transport_capacity(),
+            "csu_batch": self.csu_coordinator.get_batch_hold_info(),
             "death_statistics": self.death_tracker.get_statistics(),
             "metrics": self.metrics
         }
@@ -501,8 +504,5 @@ class PatientFlowOrchestrator:
             if patient.state not in [PatientState.DIED, PatientState.EVACUATED]:
                 self.simulate_deterioration(patient.id, minutes)
 
-        # Process CSU hold times
-        self.csu_coordinator.update_hold_times(minutes)
-
-        # Update transport times
-        self.transport_scheduler.advance_time(minutes)
+        # CSU batches are managed internally
+        # Transport times are managed internally
