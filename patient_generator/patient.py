@@ -5,6 +5,9 @@ from typing import Any, Dict, List, Optional
 
 class Patient:
     """Represents a patient with demographics and medical history"""
+    
+    # Version tracking for compatibility checking
+    PATIENT_MODEL_VERSION = "1.0.0"
 
     def __init__(self, patient_id: int):  # patient_id is an int from range()
         self.id: int = patient_id
@@ -33,6 +36,25 @@ class Patient:
         self.casualty_event_id: Optional[str] = None  # Unique event identifier
         self.is_mass_casualty: bool = False  # Part of mass casualty event
         self.environmental_conditions: List[str] = []  # Active environmental factors
+        
+        # Medical simulation fields (v1.0.0)
+        self.health_score: Optional[int] = None  # Current health 0-100
+        self.initial_health: Optional[int] = None  # Health at injury time
+        self.deterioration_rate: Optional[float] = None  # Health loss per hour
+        self.health_timeline: List[Dict[str, Any]] = []  # [{time: "T+0", health: 60}, ...]
+        self.treatments_applied: List[Dict[str, Any]] = []  # [{treatment: "tourniquet", time: "T+0.5h", effect: 0.5}]
+        
+        # Facility and care tracking
+        self.bed_type_assigned: Optional[str] = None  # "T1", "T2", "T3" bed currently in
+        self.care_quality: Optional[float] = None  # 1.0 = appropriate care, <1.0 = degraded
+        
+        # Death tracking (if applicable)
+        self.death_details: Optional[Dict[str, Any]] = None  # Category, time, preventability, bottleneck
+        
+        # Transport and overflow tracking
+        self.transport_events: List[Dict[str, Any]] = []  # Transport history with durations
+        self.overflow_count: int = 0  # Times redirected due to capacity
+        self.total_wait_time: Optional[float] = None  # Hours spent waiting (CSU, queues)
 
     def add_treatment(
         self,
@@ -296,6 +318,18 @@ class Patient:
             "casualty_event_id": self.casualty_event_id,
             "is_mass_casualty": self.is_mass_casualty,
             "environmental_conditions": self.environmental_conditions,
+            # Medical simulation fields (v1.0.0) - only include if populated
+            "health_score": self.health_score,
+            "initial_health": self.initial_health,
+            "deterioration_rate": self.deterioration_rate,
+            "health_timeline": self.health_timeline if self.health_timeline else None,
+            "treatments_applied": self.treatments_applied if self.treatments_applied else None,
+            "bed_type_assigned": self.bed_type_assigned,
+            "care_quality": self.care_quality,
+            "death_details": self.death_details,
+            "transport_events": self.transport_events if self.transport_events else None,
+            "overflow_count": self.overflow_count if self.overflow_count > 0 else None,
+            "total_wait_time": self.total_wait_time,
         }
 
     def to_json(self) -> str:
