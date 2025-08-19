@@ -143,35 +143,35 @@ class TreatmentModifiers:
         # Filter by patient condition if specified
         if patient_condition:
             condition_lower = patient_condition.lower()
-            
+
             # Extremity bleeding (tourniquets appropriate)
             if any(word in condition_lower for word in ["leg", "arm", "femoral", "extremity", "limb"]):
                 return [t for t in base_treatments
                        if t in ["tourniquet", "pressure_dressing",
                                "hemostatic_agent", "blood_transfusion", "iv_fluids"]]
-            
+
             # Chest/torso injuries (NO tourniquets!)
-            elif any(word in condition_lower for word in ["chest", "thorax", "pneumothorax", "lung", "respiratory"]):
+            if any(word in condition_lower for word in ["chest", "thorax", "pneumothorax", "lung", "respiratory"]):
                 return [t for t in base_treatments
                        if t in ["chest_tube", "pressure_dressing", "surgical_stabilization",
                                "blood_transfusion", "iv_fluids", "morphine"]]
-            
+
             # Abdominal injuries (NO tourniquets!)
-            elif any(word in condition_lower for word in ["abdomen", "abdominal", "gut", "intestinal"]):
+            if any(word in condition_lower for word in ["abdomen", "abdominal", "gut", "intestinal"]):
                 return [t for t in base_treatments
                        if t in ["pressure_dressing", "iv_fluids", "blood_transfusion",
                                "surgical_stabilization", "antibiotics", "morphine"]]
-            
+
             # Head injuries (very limited field treatments)
-            elif any(word in condition_lower for word in ["head", "skull", "brain", "cranial"]):
+            if any(word in condition_lower for word in ["head", "skull", "brain", "cranial"]):
                 return [t for t in base_treatments
                        if t in ["pressure_dressing", "iv_fluids", "morphine"]]
-            
+
             # General hemorrhage (unspecified location)
-            elif "hemorrhage" in condition_lower or "bleeding" in condition_lower:
+            if "hemorrhage" in condition_lower or "bleeding" in condition_lower:
                 # Be conservative - no tourniquet unless we know it's an extremity
                 return [t for t in base_treatments
-                       if t in ["pressure_dressing", "hemostatic_agent", 
+                       if t in ["pressure_dressing", "hemostatic_agent",
                                "blood_transfusion", "iv_fluids"]]
 
         return base_treatments

@@ -3,7 +3,6 @@ Deterioration Calculator for Medical Simulation
 Calculates patient health deterioration based on injuries and conditions
 """
 import json
-import random
 from typing import Dict, List, Optional
 
 
@@ -202,7 +201,7 @@ class DeteriorationCalculator:
                 continue  # Already below this threshold
 
             health_drop = current_health - threshold
-            time_hours = health_drop / deterioration_rate if deterioration_rate > 0 else float('inf')
+            time_hours = health_drop / deterioration_rate if deterioration_rate > 0 else float("inf")
 
             points.append({
                 "health_threshold": threshold,
