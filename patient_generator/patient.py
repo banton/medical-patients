@@ -268,69 +268,127 @@ class Patient:
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Convert patient to JSON-serializable dictionary.
-        Handles datetime objects by converting them to ISO strings.
+        Convert patient to optimized JSON-serializable dictionary.
+        - Removes null values
+        - Rounds floats to 1 decimal
+        - Uses numeric severity scale
+        - Eliminates redundancy
         """
-        # Convert injury_timestamp to ISO string if it exists
-        injury_timestamp_str = None
-        if self.injury_timestamp:
-            injury_timestamp_str = self.injury_timestamp.isoformat()
-
-        # Convert timeline events, ensuring datetime objects are serialized
-        serialized_timeline = []
-        for event in self.movement_timeline:
-            serialized_event = {}
-            for key, value in event.items():
-                if isinstance(value, datetime.datetime):
-                    serialized_event[key] = value.isoformat()
-                elif key == "timestamp" and isinstance(value, str):
-                    # Already serialized - keep as is
-                    serialized_event[key] = value
-                else:
-                    serialized_event[key] = value
-            serialized_timeline.append(serialized_event)
-
-        return {
-            # Core patient data
-            "id": self.id,
-            "demographics": self.demographics,
-            "medical_data": self.medical_data,
-            "treatment_history": self.treatment_history,
-            "current_status": self.current_status,
-            "day_of_injury": self.day_of_injury,
-            "injury_type": self.injury_type,
-            "triage_category": self.triage_category,
-            "nationality": self.nationality,
-            "front": self.front,
-            "primary_condition": self.primary_condition,
-            "primary_conditions": self.primary_conditions,
-            "additional_conditions": self.additional_conditions,
-            "gender": self.gender,
-            # Enhanced timeline tracking fields (JSON serializable)
-            "last_facility": self.last_facility,
-            "final_status": self.final_status,
-            "movement_timeline": serialized_timeline,
-            "injury_timestamp": injury_timestamp_str,
-            # Timeline summary for quick access
-            "timeline_summary": self.get_timeline_summary(),
-            # Temporal generation fields
-            "warfare_scenario": self.warfare_scenario,
-            "casualty_event_id": self.casualty_event_id,
-            "is_mass_casualty": self.is_mass_casualty,
-            "environmental_conditions": self.environmental_conditions,
-            # Medical simulation fields (v1.0.0) - only include if populated
-            "health_score": self.health_score,
-            "initial_health": self.initial_health,
-            "deterioration_rate": self.deterioration_rate,
-            "health_timeline": self.health_timeline if self.health_timeline else None,
-            "treatments_applied": self.treatments_applied if self.treatments_applied else None,
-            "bed_type_assigned": self.bed_type_assigned,
-            "care_quality": self.care_quality,
-            "death_details": self.death_details,
-            "transport_events": self.transport_events if self.transport_events else None,
-            "overflow_count": self.overflow_count if self.overflow_count > 0 else None,
-            "total_wait_time": self.total_wait_time,
+        def round_float(value, decimals=1):
+            """Round float values to specified decimals"""
+            if isinstance(value, float):
+                return round(value, decimals)
+            return value
+        
+        # Convert triage to numeric severity (0-9 scale)
+        severity_map = {
+            "T1": 9,  # Critical
+            "T2": 7,  # Urgent  
+            "T3": 4,  # Delayed
+            "T4": 1,  # Minimal
         }
+        
+        # Build optimized output
+        result = {
+            "id": self.id,
+            "nationality": self.nationality,
+            "gender": self.gender or (self.demographics.get("gender") if self.demographics else None),
+            "injury_type": self.injury_type,
+            "severity": severity_map.get(self.triage_category, 5),
+            "status": self.current_status,
+            "front": self.front,
+        }
+        
+        # Add demographics (skip nulls)
+        if self.demographics:
+            demo = {}
+            for k, v in self.demographics.items():
+                if v is not None:
+                    if k == "weight" and isinstance(v, float):
+                        demo[k] = round_float(v)
+                    else:
+                        demo[k] = v
+            if demo:
+                result["demographics"] = demo
+        
+        # Add health score from medical_data
+        if self.medical_data and "health_score" in self.medical_data:
+            health = self.medical_data["health_score"]
+            if health is not None:
+                result["health"] = round_float(health)
+        
+        # Use primary_conditions only (not both primary_condition and primary_conditions)
+        if self.primary_conditions:
+            conditions = []
+            for cond in self.primary_conditions:
+                if isinstance(cond, dict):
+                    # Simplify condition structure
+                    conditions.append({
+                        "code": cond.get("code"),
+                        "name": cond.get("display")
+                    })
+            if conditions:
+                result["conditions"] = conditions
+        
+        # Add additional conditions if present
+        if self.additional_conditions:
+            additional = []
+            for cond in self.additional_conditions:
+                if isinstance(cond, dict):
+                    additional.append({
+                        "code": cond.get("code"),
+                        "name": cond.get("display")
+                    })
+            if additional:
+                result["additional_conditions"] = additional
+        
+        # Add treatments if present
+        if self.treatment_history:
+            result["treatments"] = self.treatment_history
+        
+        # Add timeline if it has events
+        if self.movement_timeline:
+            timeline = []
+            for event in self.movement_timeline:
+                clean_event = {}
+                for k, v in event.items():
+                    if v is not None:
+                        if isinstance(v, (datetime.datetime, datetime.date)):
+                            clean_event[k] = v.isoformat()
+                        elif hasattr(v, 'isoformat'):  # Catch any datetime-like objects
+                            clean_event[k] = v.isoformat()
+                        elif isinstance(v, float):
+                            clean_event[k] = round_float(v)
+                        else:
+                            clean_event[k] = v
+                timeline.append(clean_event)
+            if timeline:
+                result["timeline"] = timeline
+        
+        # Add injury time if present
+        if self.injury_timestamp:
+            if hasattr(self.injury_timestamp, 'isoformat'):
+                result["injury_time"] = self.injury_timestamp.isoformat()
+            elif isinstance(self.injury_timestamp, str):
+                result["injury_time"] = self.injury_timestamp
+        
+        # Add scenario info if present
+        if hasattr(self, "warfare_scenario") and self.warfare_scenario:
+            result["scenario"] = self.warfare_scenario
+        if hasattr(self, "casualty_event_id") and self.casualty_event_id:
+            result["event_id"] = self.casualty_event_id
+        if hasattr(self, "is_mass_casualty") and self.is_mass_casualty:
+            result["mass_casualty"] = True
+        
+        # Add day of injury if present
+        if self.day_of_injury:
+            result["day"] = self.day_of_injury
+            
+        # Add timeline events from medical simulation if present
+        if hasattr(self, 'timeline_events') and self.timeline_events:
+            result["events"] = self.timeline_events
+            
+        return result
 
     def to_json(self) -> str:
         """

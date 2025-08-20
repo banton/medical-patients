@@ -293,11 +293,19 @@ class MedicalSimulationBridge:
         # Enhanced timeline with medical simulation events
         enhanced_events = []
         for event in sim_patient.timeline:
+            # Convert all datetime objects in the event to ISO strings
+            clean_event = {}
+            for k, v in event.items():
+                if isinstance(v, datetime):
+                    clean_event[k] = v.isoformat()
+                else:
+                    clean_event[k] = v
+            
             enhanced_events.append({
                 "timestamp": event.get("timestamp", datetime.now()).isoformat(),
                 "event_type": event.get("event", "unknown"),
                 "location": event.get("location", "unknown"),
-                "details": event
+                "details": clean_event
             })
         
         # Merge with existing timeline
