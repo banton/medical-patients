@@ -19,6 +19,17 @@ from medical_simulation.transport_scheduler import TransportScheduler
 from medical_simulation.treatment_modifiers import TreatmentModifiers
 from medical_simulation.triage_mapper import TriageMapper
 
+# Import diagnostic uncertainty engine - handle import gracefully
+try:
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from patient_generator.diagnostic_uncertainty import DiagnosticUncertaintyEngine
+    DIAGNOSTIC_UNCERTAINTY_AVAILABLE = True
+except ImportError:
+    DIAGNOSTIC_UNCERTAINTY_AVAILABLE = False
+    DiagnosticUncertaintyEngine = None
+
 
 class PatientState(Enum):
     """Patient states in the medical system."""
@@ -49,12 +60,19 @@ class Patient:
     treatments_received: List[Dict] = None
     timeline: List[Dict] = None
     died_at: Optional[datetime] = None
+    
+    # Diagnostic uncertainty fields
+    true_condition: Optional[str] = None  # True SNOMED condition code
+    diagnosed_conditions: List[Dict] = None  # Diagnostic history per facility
+    diagnostic_confidence: float = 0.0  # Current diagnostic confidence
 
     def __post_init__(self):
         if self.treatments_received is None:
             self.treatments_received = []
         if self.timeline is None:
             self.timeline = []
+        if self.diagnosed_conditions is None:
+            self.diagnosed_conditions = []
 
 
 class PatientFlowOrchestrator:
@@ -63,7 +81,7 @@ class PatientFlowOrchestrator:
     Integrates all Agent 1 and Agent 2 modules for complete simulation.
     """
 
-    def __init__(self):
+    def __init__(self, enable_diagnostic_uncertainty: bool = True):
         # Agent 1: Medical Core modules
         self.health_engine = HealthScoreEngine()
         self.deterioration_calc = DeteriorationCalculator()
@@ -76,6 +94,17 @@ class PatientFlowOrchestrator:
         self.overflow_router = OverflowRouter(self.facility_manager)
         self.csu_coordinator = CSUBatchCoordinator(self.facility_manager)
         self.transport_scheduler = TransportScheduler()
+
+        # Diagnostic uncertainty engine (MILESTONE 2)
+        self.diagnostic_engine = None
+        self.diagnostic_uncertainty_enabled = enable_diagnostic_uncertainty and DIAGNOSTIC_UNCERTAINTY_AVAILABLE
+        if self.diagnostic_uncertainty_enabled:
+            try:
+                self.diagnostic_engine = DiagnosticUncertaintyEngine()
+                print("Diagnostic uncertainty engine enabled - progressive diagnosis accuracy")
+            except Exception as e:
+                print(f"Warning: Could not initialize diagnostic uncertainty engine: {e}")
+                self.diagnostic_uncertainty_enabled = False
 
         # Patient tracking
         self.patients: Dict[str, Patient] = {}
@@ -90,11 +119,15 @@ class PatientFlowOrchestrator:
             "average_time_to_treatment": 0,
             "facility_overflow_events": 0,
             "csu_batches_processed": 0,
-            "transport_missions": 0
+            "transport_missions": 0,
+            "diagnostic_accuracy": 0.0,
+            "correct_diagnoses": 0,
+            "misdiagnoses": 0
         }
 
     def initialize_patient(self, patient_id: str, injury_type: str,
-                          severity: str, location: str = "POI") -> Patient:
+                          severity: str, location: str = "POI", 
+                          true_condition_code: Optional[str] = None) -> Patient:
         """
         Initialize a new patient entering the medical system.
 
@@ -103,6 +136,7 @@ class PatientFlowOrchestrator:
             injury_type: Type of injury (gunshot, blast, etc.)
             severity: Injury severity (critical, moderate, minor)
             location: Initial location (default POI)
+            true_condition_code: True SNOMED condition code for diagnostic uncertainty
 
         Returns:
             Initialized Patient object
@@ -127,8 +161,20 @@ class PatientFlowOrchestrator:
             current_health=initial_health,
             triage_category=triage_category,
             state=PatientState.AT_POI,
-            current_location=location
+            current_location=location,
+            true_condition=true_condition_code
         )
+
+        # Track patient FIRST (needed for diagnosis)
+        self.patients[patient_id] = patient
+        self.metrics["total_patients"] += 1
+
+        # Initialize diagnostic uncertainty if enabled
+        if self.diagnostic_uncertainty_enabled and true_condition_code:
+            initial_diagnosis = self.perform_diagnosis(patient_id, location, 
+                                                     {"triage_category": triage_category})
+            patient.diagnosed_conditions.append(initial_diagnosis)
+            patient.diagnostic_confidence = initial_diagnosis.get("confidence", 0.0)
 
         # Add to timeline
         patient.timeline.append({
@@ -139,11 +185,110 @@ class PatientFlowOrchestrator:
             "triage": triage_category
         })
 
-        # Track patient
-        self.patients[patient_id] = patient
-        self.metrics["total_patients"] += 1
-
         return patient
+
+    def perform_diagnosis(self, patient_id: str, facility: str, 
+                         modifiers: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """
+        Perform diagnosis at the current facility with progressive accuracy.
+        
+        Args:
+            patient_id: Patient identifier
+            facility: Current medical facility
+            modifiers: Additional factors affecting diagnostic accuracy
+            
+        Returns:
+            Diagnosis result with confidence and accuracy metrics
+        """
+        patient = self.patients.get(patient_id)
+        if not patient or not self.diagnostic_uncertainty_enabled:
+            return {"diagnosed_code": None, "confidence": 0.0, "facility": facility}
+        
+        # Use true condition if available, otherwise use a default based on injury type
+        true_condition = patient.true_condition
+        if not true_condition:
+            # Map injury types to common SNOMED codes for testing
+            injury_to_condition_map = {
+                "gunshot": "19130008",  # Traumatic brain injury
+                "blast": "48333001",    # Burn injury
+                "shrapnel": "361220002", # Penetrating injury
+                "vehicle": "125605004",  # Fracture of bone
+                "fall": "125667009"      # Contusion
+            }
+            true_condition = injury_to_condition_map.get(patient.injury_type, "22253000")  # Default to Pain
+        
+        # Perform diagnosis using uncertainty engine
+        diagnosis_result = self.diagnostic_engine.diagnose_condition(
+            true_condition, facility, patient_id, modifiers
+        )
+        
+        # Update metrics
+        if diagnosis_result.get("true_positive", False):
+            self.metrics["correct_diagnoses"] += 1
+        else:
+            self.metrics["misdiagnoses"] += 1
+        
+        # Calculate running diagnostic accuracy
+        total_diagnoses = self.metrics["correct_diagnoses"] + self.metrics["misdiagnoses"]
+        if total_diagnoses > 0:
+            self.metrics["diagnostic_accuracy"] = self.metrics["correct_diagnoses"] / total_diagnoses
+        
+        return diagnosis_result
+
+    def update_diagnosis_on_transfer(self, patient_id: str, new_facility: str) -> Optional[Dict[str, Any]]:
+        """
+        Update patient diagnosis when transferred to a new facility with better capabilities.
+        
+        Args:
+            patient_id: Patient identifier
+            new_facility: New facility with potentially better diagnostic accuracy
+            
+        Returns:
+            Updated diagnosis or None if no improvement
+        """
+        patient = self.patients.get(patient_id)
+        if not patient or not self.diagnostic_uncertainty_enabled:
+            return None
+        
+        # Get current diagnosis
+        current_diagnosis_code = None
+        if patient.diagnosed_conditions:
+            current_diagnosis_code = patient.diagnosed_conditions[-1].get("diagnosed_code")
+        
+        # Update diagnostic progression in engine
+        if current_diagnosis_code:
+            progression_update = self.diagnostic_engine.update_diagnosis_with_progression(
+                patient_id, current_diagnosis_code, new_facility
+            )
+            
+            # Perform new diagnosis at the better facility
+            modifiers = {
+                "triage_category": patient.triage_category,
+                "time_with_patient_hours": 0.5,  # Assume 30min examination
+                "additional_information": ["multiple_examinations"]
+            }
+            
+            new_diagnosis = self.perform_diagnosis(patient_id, new_facility, modifiers)
+            
+            # Update patient records
+            patient.diagnosed_conditions.append(new_diagnosis)
+            patient.diagnostic_confidence = new_diagnosis.get("confidence", 0.0)
+            
+            # Add to timeline
+            patient.timeline.append({
+                "timestamp": self.simulation_time,
+                "event": "diagnosis_updated",
+                "facility": new_facility,
+                "previous_diagnosis": current_diagnosis_code,
+                "new_diagnosis": new_diagnosis.get("diagnosed_code"),
+                "confidence": new_diagnosis.get("confidence", 0.0),
+                "accuracy_improvement": new_diagnosis.get("diagnostic_accuracy", 0.0) - 
+                                       patient.diagnosed_conditions[-2].get("diagnostic_accuracy", 0.0) if len(patient.diagnosed_conditions) > 1 else 0.0
+            })
+            
+            return new_diagnosis
+        
+        return None
 
     def process_triage(self, patient_id: str) -> Tuple[str, str]:
         """
@@ -370,6 +515,14 @@ class PatientFlowOrchestrator:
         if admission.get("success", True):
             patient.current_location = patient.destination
             patient.state = PatientState.IN_TREATMENT
+            
+            # Update diagnosis with better facility capability
+            if self.diagnostic_uncertainty_enabled:
+                updated_diagnosis = self.update_diagnosis_on_transfer(patient_id, patient.current_location)
+                if updated_diagnosis:
+                    print(f"Patient {patient_id} diagnosis updated at {patient.current_location}: "
+                          f"confidence {updated_diagnosis.get('confidence', 0.0):.2f}")
+            
             patient.destination = None
             patient.transport_id = None
 

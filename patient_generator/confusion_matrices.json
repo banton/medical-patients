@@ -1,0 +1,253 @@
+{
+  "diagnostic_accuracy": {
+    "POI": 0.65,
+    "Role1": 0.75,
+    "Role2": 0.85,
+    "Role3": 0.95,
+    "Role4": 0.98
+  },
+  "confusion_matrices": {
+    "POI": {
+      "description": "Point of Injury - 65% accuracy, limited diagnostic capability",
+      "common_misdiagnoses": {
+        "19130008": {
+          "name": "Traumatic brain injury",
+          "misdiagnosed_as": [
+            {"code": "62315008", "name": "Diarrhea", "probability": 0.15},
+            {"code": "386807006", "name": "Memory impairment", "probability": 0.12},
+            {"code": "274663001", "name": "Acute confusional state", "probability": 0.08}
+          ]
+        },
+        "125605004": {
+          "name": "Fracture of bone",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.20},
+            {"code": "22253000", "name": "Pain", "probability": 0.10},
+            {"code": "298180004", "name": "Finding of range of joint movement", "probability": 0.05}
+          ]
+        },
+        "48333001": {
+          "name": "Burn injury",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.15},
+            {"code": "271807003", "name": "Rash", "probability": 0.12},
+            {"code": "422587007", "name": "Nausea", "probability": 0.08}
+          ]
+        },
+        "125667009": {
+          "name": "Contusion",
+          "misdiagnosed_as": [
+            {"code": "125605004", "name": "Fracture of bone", "probability": 0.18},
+            {"code": "22253000", "name": "Pain", "probability": 0.12},
+            {"code": "298180004", "name": "Finding of range of joint movement", "probability": 0.05}
+          ]
+        },
+        "361220002": {
+          "name": "Penetrating injury",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.15},
+            {"code": "125605004", "name": "Fracture of bone", "probability": 0.10},
+            {"code": "22253000", "name": "Pain", "probability": 0.10}
+          ]
+        },
+        "62315008": {
+          "name": "Diarrhea",
+          "misdiagnosed_as": [
+            {"code": "422587007", "name": "Nausea", "probability": 0.20},
+            {"code": "271807003", "name": "Rash", "probability": 0.08},
+            {"code": "386807006", "name": "Memory impairment", "probability": 0.07}
+          ]
+        }
+      }
+    },
+    "Role1": {
+      "description": "Role 1 Medical Treatment Facility - 75% accuracy, basic diagnostic tools",
+      "common_misdiagnoses": {
+        "19130008": {
+          "name": "Traumatic brain injury",
+          "misdiagnosed_as": [
+            {"code": "274663001", "name": "Acute confusional state", "probability": 0.15},
+            {"code": "386807006", "name": "Memory impairment", "probability": 0.10}
+          ]
+        },
+        "125605004": {
+          "name": "Fracture of bone",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.15},
+            {"code": "298180004", "name": "Finding of range of joint movement", "probability": 0.10}
+          ]
+        },
+        "48333001": {
+          "name": "Burn injury",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.12},
+            {"code": "271807003", "name": "Rash", "probability": 0.08},
+            {"code": "22253000", "name": "Pain", "probability": 0.05}
+          ]
+        },
+        "361220002": {
+          "name": "Penetrating injury",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.12},
+            {"code": "125605004", "name": "Fracture of bone", "probability": 0.08},
+            {"code": "22253000", "name": "Pain", "probability": 0.05}
+          ]
+        }
+      }
+    },
+    "Role2": {
+      "description": "Role 2 Forward Surgical Team - 85% accuracy, surgical capability, X-ray",
+      "common_misdiagnoses": {
+        "19130008": {
+          "name": "Traumatic brain injury",
+          "misdiagnosed_as": [
+            {"code": "274663001", "name": "Acute confusional state", "probability": 0.10},
+            {"code": "386807006", "name": "Memory impairment", "probability": 0.05}
+          ]
+        },
+        "125605004": {
+          "name": "Fracture of bone",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.08},
+            {"code": "298180004", "name": "Finding of range of joint movement", "probability": 0.07}
+          ]
+        },
+        "48333001": {
+          "name": "Burn injury",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.08},
+            {"code": "271807003", "name": "Rash", "probability": 0.07}
+          ]
+        }
+      }
+    },
+    "Role3": {
+      "description": "Role 3 Combat Support Hospital - 95% accuracy, full surgical suite, CT/MRI",
+      "common_misdiagnoses": {
+        "19130008": {
+          "name": "Traumatic brain injury",
+          "misdiagnosed_as": [
+            {"code": "274663001", "name": "Acute confusional state", "probability": 0.03},
+            {"code": "386807006", "name": "Memory impairment", "probability": 0.02}
+          ]
+        },
+        "125605004": {
+          "name": "Fracture of bone",
+          "misdiagnosed_as": [
+            {"code": "125667009", "name": "Contusion", "probability": 0.03},
+            {"code": "298180004", "name": "Finding of range of joint movement", "probability": 0.02}
+          ]
+        }
+      }
+    },
+    "Role4": {
+      "description": "Role 4 Definitive Care - 98% accuracy, full diagnostic capability",
+      "common_misdiagnoses": {
+        "19130008": {
+          "name": "Traumatic brain injury",
+          "misdiagnosed_as": [
+            {"code": "274663001", "name": "Acute confusional state", "probability": 0.015},
+            {"code": "386807006", "name": "Memory impairment", "probability": 0.005}
+          ]
+        }
+      }
+    }
+  },
+  "hmm_parameters": {
+    "description": "Hidden Markov Model parameters for diagnostic progression",
+    "states": [
+      "initial_assessment",
+      "diagnostic_refinement", 
+      "confirmed_diagnosis"
+    ],
+    "observation_space": "snomed_codes",
+    "transition_probabilities": {
+      "initial_assessment": {
+        "initial_assessment": 0.3,
+        "diagnostic_refinement": 0.6,
+        "confirmed_diagnosis": 0.1
+      },
+      "diagnostic_refinement": {
+        "initial_assessment": 0.05,
+        "diagnostic_refinement": 0.3,
+        "confirmed_diagnosis": 0.65
+      },
+      "confirmed_diagnosis": {
+        "initial_assessment": 0.02,
+        "diagnostic_refinement": 0.08,
+        "confirmed_diagnosis": 0.9
+      }
+    },
+    "emission_probabilities": {
+      "POI": {
+        "correct_diagnosis": 0.65,
+        "related_diagnosis": 0.25,
+        "unrelated_diagnosis": 0.10
+      },
+      "Role1": {
+        "correct_diagnosis": 0.75,
+        "related_diagnosis": 0.20,
+        "unrelated_diagnosis": 0.05
+      },
+      "Role2": {
+        "correct_diagnosis": 0.85,
+        "related_diagnosis": 0.13,
+        "unrelated_diagnosis": 0.02
+      },
+      "Role3": {
+        "correct_diagnosis": 0.95,
+        "related_diagnosis": 0.04,
+        "unrelated_diagnosis": 0.01
+      },
+      "Role4": {
+        "correct_diagnosis": 0.98,
+        "related_diagnosis": 0.019,
+        "unrelated_diagnosis": 0.001
+      }
+    }
+  },
+  "diagnostic_improvement_factors": {
+    "description": "Factors that improve diagnostic accuracy as patient moves through care levels",
+    "time_with_patient": {
+      "POI": {"base": 0.65, "max_improvement": 0.05, "time_factor": 0.1},
+      "Role1": {"base": 0.75, "max_improvement": 0.08, "time_factor": 0.15},
+      "Role2": {"base": 0.85, "max_improvement": 0.05, "time_factor": 0.2},
+      "Role3": {"base": 0.95, "max_improvement": 0.02, "time_factor": 0.25},
+      "Role4": {"base": 0.98, "max_improvement": 0.01, "time_factor": 0.3}
+    },
+    "additional_information": {
+      "patient_history": 0.05,
+      "multiple_examinations": 0.03,
+      "specialist_consultation": 0.08,
+      "diagnostic_imaging": 0.12,
+      "laboratory_results": 0.07
+    }
+  },
+  "severity_impact": {
+    "description": "How injury severity affects diagnostic accuracy",
+    "T1": {
+      "modifier": -0.1,
+      "reason": "Critical injuries may mask other conditions"
+    },
+    "T2": {
+      "modifier": -0.05,
+      "reason": "Urgent injuries require rapid assessment"
+    },
+    "T3": {
+      "modifier": 0.0,
+      "reason": "Delayed injuries allow thorough examination"
+    },
+    "T4": {
+      "modifier": 0.05,
+      "reason": "Minor injuries are easier to diagnose"
+    }
+  },
+  "environmental_factors": {
+    "combat_environment": -0.15,
+    "mass_casualty_event": -0.20,
+    "limited_resources": -0.10,
+    "poor_lighting": -0.08,
+    "noise_interference": -0.05,
+    "time_pressure": -0.12
+  }
+}
