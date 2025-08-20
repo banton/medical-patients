@@ -297,10 +297,13 @@ class PatientFlowOrchestrator:
             raise ValueError(msg)
 
         # Schedule transport
+        priority = "urgent" if patient.triage_category == "T1" else "routine"
         transport = self.transport_scheduler.schedule_transport(
+            patient_id,
             patient.current_location,
             destination,
-            patient.triage_category
+            priority,
+            patient.current_health
         )
 
         if transport:
@@ -314,8 +317,8 @@ class PatientFlowOrchestrator:
                 "event": "transport_started",
                 "from": patient.current_location,
                 "to": destination,
-                "transport_type": transport["type"],
-                "estimated_time": transport["estimated_time"]
+                "transport_type": transport["vehicle_type"],
+                "estimated_time": transport["duration_minutes"]
             })
 
             self.metrics["transport_missions"] += 1
@@ -339,8 +342,16 @@ class PatientFlowOrchestrator:
 
         # Complete transport
         result = self.transport_scheduler.complete_transport(patient.transport_id)
+        
+        # Map the result to expected format
+        if not result.get("success", False):
+            return False
+            
+        # Check if died in transit based on outcome
+        died_in_transit = result.get("outcome") == "died_in_transit"
+        actual_time = result.get("actual_duration", 30)
 
-        if result["died_in_transit"]:
+        if died_in_transit:
             self.handle_patient_death(patient_id, "died_in_transit")
             return False
 
@@ -350,17 +361,17 @@ class PatientFlowOrchestrator:
             patient.destination,
             patient.triage_category
         )
-        if admission["admitted"]:
+        if admission.get("success", True):
             patient.current_location = patient.destination
             patient.state = PatientState.IN_TREATMENT
             patient.destination = None
             patient.transport_id = None
 
             patient.timeline.append({
-                "timestamp": self.simulation_time + timedelta(minutes=result["actual_time"]),
+                "timestamp": self.simulation_time + timedelta(minutes=actual_time),
                 "event": "arrived_at_facility",
                 "facility": patient.current_location,
-                "transport_time": result["actual_time"]
+                "transport_time": actual_time
             })
 
             return True
@@ -394,15 +405,17 @@ class PatientFlowOrchestrator:
             batch = self.csu_coordinator.prepare_batch_transfer()
 
             # Schedule batch transport
-            for patient_id in batch["patients"]:
-                patient = self.patients[patient_id]
-                patient.state = PatientState.EVACUATED
-                patient.timeline.append({
-                    "timestamp": self.simulation_time,
-                    "event": "evacuated_to_csu",
-                    "batch_id": batch["batch_id"],
-                    "hold_time": batch["hold_time"]
-                })
+            for patient_data in batch["patients"]:
+                patient_id = patient_data["patient_id"]
+                patient = self.patients.get(patient_id)
+                if patient:
+                    patient.state = PatientState.EVACUATED
+                    patient.timeline.append({
+                        "timestamp": self.simulation_time,
+                        "event": "evacuated_to_csu",
+                        "batch_id": batch.get("batch_id", "batch-001"),
+                        "hold_time": patient_data.get("wait_time", 0)
+                    })
 
             self.metrics["csu_batches_processed"] += 1
             self.metrics["patients_evacuated"] += len(batch["patients"])
@@ -484,9 +497,9 @@ class PatientFlowOrchestrator:
              "Role2": self.facility_manager.get_occupancy("Role2"),
              "Role3": self.facility_manager.get_occupancy("Role3"),
              "CSU": self.facility_manager.get_occupancy("CSU")},
-            "transport": self.transport_scheduler.get_transport_capacity(),
+            "transport": self.transport_scheduler.get_transport_metrics(),
             "csu_batch": self.csu_coordinator.get_batch_hold_info(),
-            "death_statistics": self.death_tracker.get_statistics(),
+            "death_statistics": self.death_tracker.get_statistics() if hasattr(self.death_tracker, 'get_statistics') else {},
             "metrics": self.metrics
         }
 
