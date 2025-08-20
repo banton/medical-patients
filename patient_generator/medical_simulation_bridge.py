@@ -63,7 +63,9 @@ class MedicalSimulationBridge:
         self.patient_mapping[patient.id] = sim_patient_id
         
         # Map injury type and severity
-        injury_type = self._map_injury_type(patient.injury)
+        # Handle both 'injury' and 'injury_type' attributes for compatibility
+        patient_injury = getattr(patient, 'injury', None) or getattr(patient, 'injury_type', 'unknown')
+        injury_type = self._map_injury_type(patient_injury)
         severity = self._map_severity(patient.triage_category)
         
         # Initialize patient in medical simulation
@@ -169,7 +171,8 @@ class MedicalSimulationBridge:
                 
                 if arrived:
                     # Apply initial treatment
-                    treatments = self._get_treatments_for_injury(original_patient.injury)
+                    patient_injury = getattr(original_patient, 'injury', None) or getattr(original_patient, 'injury_type', 'unknown')
+                    treatments = self._get_treatments_for_injury(patient_injury)
                     if treatments:
                         self.orchestrator.apply_treatment(sim_patient_id, treatments)
                     
@@ -249,8 +252,10 @@ class MedicalSimulationBridge:
         
         patient.current_status = status_mapping.get(sim_patient.state, "In Treatment")
         
-        # Update health score
-        patient.vitals["health_score"] = sim_patient.current_health
+        # Update health score in medical_data
+        if not hasattr(patient, 'medical_data'):
+            patient.medical_data = {}
+        patient.medical_data["health_score"] = sim_patient.current_health
         
         # Enhanced timeline with medical simulation events
         enhanced_events = []
