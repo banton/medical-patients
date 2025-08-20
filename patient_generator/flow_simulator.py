@@ -35,6 +35,18 @@ class PatientFlowSimulator:
 
         # Initialize evacuation time manager for realistic timeline tracking
         self.evacuation_manager = EvacuationTimeManager()
+        
+        # Optional medical simulation enhancement
+        self.use_medical_simulation = os.environ.get('ENABLE_MEDICAL_SIMULATION', 'false').lower() == 'true'
+        self.medical_bridge = None
+        if self.use_medical_simulation:
+            try:
+                from .medical_simulation_bridge import MedicalSimulationBridge
+                self.medical_bridge = MedicalSimulationBridge()
+                print("Medical simulation enhancement enabled")
+            except ImportError as e:
+                print(f"Warning: Could not import medical simulation bridge: {e}")
+                self.use_medical_simulation = False
 
         # --- Load configurations from ConfigurationManager ---
         self.total_patients_to_generate = active_config.total_patients
@@ -350,7 +362,17 @@ class PatientFlowSimulator:
         """
         Enhanced patient flow simulation with detailed timeline tracking.
         Uses EvacuationTimeManager for realistic timing and KIA/RTD rules.
+        Optionally uses medical simulation for enhanced realism.
         """
+        # Use medical simulation enhancement if enabled
+        if self.use_medical_simulation and self.medical_bridge:
+            # Enhance patient with medical simulation
+            patient = self.medical_bridge.enhance_patient(patient)
+            # If medical simulation handled the flow, we're done
+            if hasattr(patient, 'timeline_events') and len(patient.timeline_events) > 0:
+                return
+        
+        # Otherwise, use original simulation logic
         current_time = patient.injury_timestamp
 
         # Track current time through evacuation chain

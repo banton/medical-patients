@@ -71,6 +71,18 @@ def parse_arguments():
     parser.add_argument("--clean-output", action="store_true", help="Remove output directory before starting")
 
     parser.add_argument("--max-memory", type=int, help="Maximum memory usage in MB")
+    
+    parser.add_argument(
+        "--enable-medical-simulation",
+        action="store_true",
+        help="Enable enhanced medical simulation for realistic patient flow"
+    )
+    
+    parser.add_argument(
+        "--medical-config",
+        type=str,
+        help="Path to medical simulation configuration file (JSON)"
+    )
 
     return parser.parse_args()
 
@@ -133,6 +145,21 @@ def main():
         os.environ["PATIENT_GENERATOR_CLEANUP_TEMP"] = "0"
     if args.max_memory:
         os.environ["PATIENT_GENERATOR_MAX_MEMORY"] = str(args.max_memory)
+    
+    # Set medical simulation environment variable
+    if args.enable_medical_simulation:
+        os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
+        print("Medical simulation enhancement enabled")
+        
+        # Load medical config if provided
+        if args.medical_config:
+            try:
+                with open(args.medical_config) as f:
+                    medical_config = json.load(f)
+                    # Could store this config for later use
+                    os.environ["MEDICAL_SIMULATION_CONFIG"] = json.dumps(medical_config)
+            except Exception as e:
+                print(f"Warning: Could not load medical configuration: {e}")
 
     # Print startup information
     print("Military Medical Exercise Patient Generator (Optimized Version)")
