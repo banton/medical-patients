@@ -120,7 +120,12 @@ def main():
         print("\nStarting generation...")
         
         start_time = time.time()
-        patients, bundles, output_files, summary = generator.run()
+        patients, bundles, output_files, summary = generator.run(
+            output_directory=args.output,
+            output_formats=["json", "xml"],
+            use_compression=True,
+            use_encryption=False
+        )
         end_time = time.time()
         
         # Calculate performance metrics
