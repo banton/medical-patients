@@ -65,13 +65,15 @@ class MedicalSimulationBridge:
         # Map injury type and severity
         # Handle both 'injury' and 'injury_type' attributes for compatibility
         patient_injury = getattr(patient, 'injury', None) or getattr(patient, 'injury_type', 'unknown')
-        injury_type = self._map_injury_type(patient_injury)
+        
+        # First map to standard injury category for health engine
+        injury_category = self._map_injury_category(patient_injury)
         severity = self._map_severity(patient.triage_category)
         
-        # Initialize patient in medical simulation
+        # Initialize patient in medical simulation with proper injury category
         sim_patient = self.orchestrator.initialize_patient(
             patient_id=sim_patient_id,
-            injury_type=injury_type,
+            injury_type=injury_category,  # Use category for health engine
             severity=severity,
             location="POI"
         )
@@ -90,6 +92,37 @@ class MedicalSimulationBridge:
         
         return patient
 
+    def _map_injury_category(self, injury: str) -> str:
+        """
+        Map patient injury to standard category for health engine.
+        
+        Args:
+            injury: Raw injury type from patient
+            
+        Returns:
+            Standard category: "Battle Injury", "Non-Battle Injury", or "Disease"
+        """
+        injury_lower = injury.lower()
+        
+        # Disease mappings
+        if any(term in injury_lower for term in ["disease", "illness", "infection", "fever", "covid", "malaria"]):
+            return "Disease"
+        
+        # Battle injury mappings
+        if any(term in injury_lower for term in ["gsw", "gunshot", "blast", "ied", "shrapnel", "combat", "battle"]):
+            return "Battle Injury"
+        
+        # Non-battle injury mappings
+        if any(term in injury_lower for term in ["mvc", "fall", "accident", "crush", "burn", "non-battle"]):
+            return "Non-Battle Injury"
+        
+        # Default based on common patterns
+        if "battle" in injury_lower:
+            return "Battle Injury"
+        
+        # Default to Non-Battle Injury
+        return "Non-Battle Injury"
+    
     def _map_injury_type(self, injury: str) -> str:
         """
         Map patient_generator injury types to medical_simulation types.
@@ -124,25 +157,25 @@ class MedicalSimulationBridge:
 
     def _map_severity(self, triage: str) -> str:
         """
-        Map triage category to severity level.
+        Map triage category to severity level expected by health engine.
         
         Args:
             triage: Triage category (T1, T2, T3, T4, etc.)
             
         Returns:
-            Severity level (critical, moderate, minor)
+            Severity level matching injuries.json (Severe, Moderate to severe, etc.)
         """
         severity_mapping = {
-            "T1": "critical",
-            "T2": "moderate", 
-            "T3": "minor",
-            "T4": "minimal",
-            "Urgent": "critical",
-            "Delayed": "moderate",
-            "Minimal": "minor"
+            "T1": "Severe",
+            "T2": "Moderate to severe", 
+            "T3": "Moderate",
+            "T4": "Mild to moderate",
+            "Urgent": "Severe",
+            "Delayed": "Moderate to severe",
+            "Minimal": "Mild to moderate"
         }
         
-        return severity_mapping.get(triage, "moderate")
+        return severity_mapping.get(triage, "Moderate")
 
     def _simulate_medical_flow(self, sim_patient_id: str, original_patient: Patient):
         """

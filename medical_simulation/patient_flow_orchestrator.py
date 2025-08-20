@@ -38,6 +38,7 @@ class Patient:
     """Patient with full medical and location tracking."""
     id: str
     injury_type: str
+    severity: str  # Original severity level for deterioration calculation
     initial_health: int
     current_health: int
     triage_category: str
@@ -121,6 +122,7 @@ class PatientFlowOrchestrator:
         patient = Patient(
             id=patient_id,
             injury_type=injury_type,
+            severity=severity,  # Store original severity
             initial_health=initial_health,
             current_health=initial_health,
             triage_category=triage_category,
@@ -181,10 +183,14 @@ class PatientFlowOrchestrator:
         # Check capacity and route if needed
         available_beds = self.facility_manager.get_available_beds(initial_facility)
         if available_beds <= 0:
-            initial_facility = self.overflow_router.route_patient(
+            routing_result = self.overflow_router.route_patient(
+                patient_id,  # route_patient expects patient_id as first param
                 patient.triage_category,
-                initial_facility
+                "routine",
+                None
             )
+            # Extract facility string from routing result
+            initial_facility = routing_result.get("facility", initial_facility)
 
         # Update patient
         patient.destination = initial_facility
@@ -262,14 +268,14 @@ class PatientFlowOrchestrator:
         if patient.state == PatientState.DIED:
             return 0
 
-        # Calculate deterioration based on severity
-        severity = "critical" if patient.current_health < 30 else "moderate" if patient.current_health < 70 else "minor"
+        # Calculate deterioration based on original severity
         base_deterioration = self.deterioration_calc.calculate_base_deterioration(
             patient.injury_type,
-            severity
+            patient.severity  # Use stored severity, not recalculated
         )
-        # Scale by time (base is per minute)
-        deterioration = base_deterioration * time_minutes
+        # Convert from per hour to per minute and scale by time
+        deterioration_per_minute = base_deterioration / 60.0
+        deterioration = deterioration_per_minute * time_minutes
 
         # Update health
         patient.current_health = max(0, patient.current_health - deterioration)

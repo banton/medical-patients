@@ -6,6 +6,7 @@ Run this script directly to test the optimized generator.
 
 import argparse
 from collections import Counter
+from datetime import datetime
 import json
 import os
 import shutil
@@ -17,10 +18,66 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 try:
     from patient_generator.app import PatientGeneratorApp
+    from patient_generator.config_manager import ConfigurationManager
+    from patient_generator.schemas_config import ConfigurationTemplateDB
+    from patient_generator.nationality_data import NationalityDataProvider
 except ImportError:
     print("Error importing patient_generator package. Please make sure it's installed or in your Python path.")
     print("Try running: pip install -e .")
     sys.exit(1)
+
+
+def create_config_from_args(args, config_data=None):
+    """Create ConfigurationTemplateDB from command line arguments or config data."""
+    if config_data:
+        # From loaded JSON config
+        return ConfigurationTemplateDB(
+            id="cli-config",
+            name="CLI Configuration",
+            description="Configuration from command line",
+            total_patients=config_data.get("total_patients", args.patients),
+            injury_distribution={
+                "Disease": 0.1,
+                "Non-Battle Injury": 0.2,
+                "Battle Injury": 0.7
+            },
+            front_configs=[],
+            facility_configs=[],
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+    else:
+        # From args directly
+        return ConfigurationTemplateDB(
+            id="cli-config",
+            name="CLI Configuration",
+            description="Configuration from command line",
+            total_patients=args.patients,
+            injury_distribution={
+                "Disease": 0.1,
+                "Non-Battle Injury": 0.2,
+                "Battle Injury": 0.7
+            },
+            front_configs=[],
+            facility_configs=[],
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+
+
+class MockDatabase:
+    """Mock database that returns our CLI configuration."""
+    def __init__(self, config):
+        self.config = config
+        
+
+class MockRepository:
+    """Mock repository that returns our CLI configuration."""
+    def __init__(self, db):
+        self.config = db.config
+    
+    def get_configuration(self, config_id):
+        return self.config
 
 
 def parse_arguments():
@@ -96,51 +153,22 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    # Initialize configuration
+    # Load configuration from file if provided
+    config_data = None
     if args.config:
-        # Load configuration from file
         try:
             with open(args.config) as f:
-                config = json.load(f)
+                config_data = json.load(f)
         except Exception as e:
             print(f"Error loading configuration file: {e}")
             sys.exit(1)
-    else:
-        # Create configuration from command line arguments
-        config = {
-            "total_patients": args.patients,
-            "output_directory": args.output,
-            "front_distribution": {
-                "Polish": args.polish / 100.0,
-                "Estonian": args.estonian / 100.0,
-                "Finnish": args.finnish / 100.0,
-            },
-            "output_formats": args.formats.split(","),
-            "use_compression": not args.no_compress,
-            "use_encryption": not args.no_encrypt,
-        }
-
-        # Add performance configuration
-        performance_config = {}
-        if args.threads > 0:
-            performance_config["num_workers"] = args.threads
-        if args.batch_size > 0:
-            performance_config["batch_size"] = args.batch_size
-        if args.max_memory:
-            performance_config["max_memory_mb"] = args.max_memory
-        if args.temp_dir:
-            performance_config["temp_dir"] = args.temp_dir
-        if args.keep_temp:
-            performance_config["cleanup_temp"] = False
-
-        if performance_config:
-            config["performance"] = performance_config
 
     # Clean output directory if requested
-    if args.clean_output and os.path.exists(config["output_directory"]):
-        print(f"Cleaning output directory: {config['output_directory']}")
+    output_dir = args.output if not config_data else config_data.get("output_directory", args.output)
+    if args.clean_output and os.path.exists(output_dir):
+        print(f"Cleaning output directory: {output_dir}")
         try:
-            shutil.rmtree(config["output_directory"])
+            shutil.rmtree(output_dir)
         except Exception as e:
             print(f"Error cleaning output directory: {e}")
 
@@ -170,30 +198,61 @@ def main():
     # Print startup information
     print("Military Medical Exercise Patient Generator (Optimized Version)")
     print("==============================================================")
-
-    print(f"Generating {config['total_patients']} patients...")
-    print(f"Output directory: {config['output_directory']}")
+    
+    # Create configuration from arguments or loaded config
+    config = create_config_from_args(args, config_data)
+    
+    print(f"Generating {config.total_patients} patients...")
+    print(f"Output directory: {output_dir}")
 
     # Print front distribution
-    front_dist = config.get("front_distribution", {})
     print(
-        f"Front distribution: Polish {front_dist.get('Polish', 0.5) * 100:.1f}%, "
-        f"Estonian {front_dist.get('Estonian', 0.333) * 100:.1f}%, "
-        f"Finnish {front_dist.get('Finnish', 0.167) * 100:.1f}%"
+        f"Front distribution: Polish {args.polish:.1f}%, "
+        f"Estonian {args.estonian:.1f}%, "
+        f"Finnish {args.finnish:.1f}%"
     )
 
-    print(f"Output formats: {', '.join(config.get('output_formats', ['json', 'xml']))}")
-    print(f"Compression: {'Enabled' if config.get('use_compression', True) else 'Disabled'}")
-    print(f"Encryption: {'Enabled' if config.get('use_encryption', True) else 'Disabled'}")
+    output_formats = args.formats.split(",")
+    use_compression = not args.no_compress
+    use_encryption = not args.no_encrypt
+    
+    print(f"Output formats: {', '.join(output_formats)}")
+    print(f"Compression: {'Enabled' if use_compression else 'Disabled'}")
+    print(f"Encryption: {'Enabled' if use_encryption else 'Disabled'}")
 
+    # Create mock database with our config
+    mock_db = MockDatabase(config)
+    
+    # Create ConfigurationManager with mock database
+    config_manager = ConfigurationManager(database_instance=mock_db)
+    
+    # Monkey-patch the repository to return our config
+    config_manager._repository = MockRepository(mock_db)
+    config_manager._active_configuration = config
+    
+    # Create nationality provider
+    nationality_provider = NationalityDataProvider()
+    
     # Initialize and run the generator
-    generator = PatientGeneratorApp(config)
+    generator = PatientGeneratorApp(config_manager, nationality_provider)
+    
+    # Override performance settings if provided
+    if args.threads > 0:
+        generator.num_workers = args.threads
+    if args.batch_size > 0:
+        generator.batch_size = args.batch_size
+    generator.output_directory = output_dir
 
     print(f"Using {generator.num_workers} worker threads with batch size of {generator.batch_size}")
     print("\nStarting generation...")
 
     start_time = time.time()
-    patients, bundles = generator.run()
+    patients, bundles, output_files, summary = generator.run(
+        output_directory=output_dir,
+        output_formats=output_formats,
+        use_compression=use_compression,
+        use_encryption=use_encryption
+    )
     end_time = time.time()
 
     # Calculate performance metrics
@@ -248,14 +307,18 @@ def main():
     
     print("="*60)
 
-    print(f"\nOutput files saved to {config['output_directory']} directory.")
+    print(f"\nOutput files saved to {output_dir} directory.")
+    if output_files:
+        print("Generated files:")
+        for file in output_files:
+            print(f"  - {file}")
 
     if args.benchmark:
         # Write benchmark results to file
         benchmark_file = "benchmark_results.txt"
         with open(benchmark_file, "a") as f:
             f.write(
-                f"{config['total_patients']},{generator.num_workers},{generator.batch_size},{total_time:.2f},{patients_per_second:.2f}\n"
+                f"{config.total_patients},{generator.num_workers},{generator.batch_size},{total_time:.2f},{patients_per_second:.2f}\n"
             )
         print(f"Benchmark results appended to {benchmark_file}")
 
