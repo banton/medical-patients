@@ -280,21 +280,13 @@ class Patient:
                 return round(value, decimals)
             return value
         
-        # Convert triage to numeric severity (0-9 scale)
-        severity_map = {
-            "T1": 9,  # Critical
-            "T2": 7,  # Urgent  
-            "T3": 4,  # Delayed
-            "T4": 1,  # Minimal
-        }
-        
         # Build optimized output
         result = {
             "id": self.id,
             "nationality": self.nationality,
             "gender": self.gender or (self.demographics.get("gender") if self.demographics else None),
             "injury_type": self.injury_type,
-            "severity": severity_map.get(self.triage_category, 5),
+            "triage": self.triage_category,  # Keep triage category (T1-T4)
             "status": self.current_status,
             "front": self.front,
         }
@@ -320,8 +312,12 @@ class Patient:
         # Use primary_conditions only (not both primary_condition and primary_conditions)
         if self.primary_conditions:
             conditions = []
-            for cond in self.primary_conditions:
+            severity = None  # Extract severity from first condition
+            for i, cond in enumerate(self.primary_conditions):
                 if isinstance(cond, dict):
+                    # Extract severity from first condition that has it
+                    if i == 0 and "severity" in cond:
+                        severity = cond.get("severity")
                     # Simplify condition structure
                     conditions.append({
                         "code": cond.get("code"),
@@ -329,6 +325,9 @@ class Patient:
                     })
             if conditions:
                 result["conditions"] = conditions
+            # Add medical severity if found
+            if severity:
+                result["severity"] = severity
         
         # Add additional conditions if present
         if self.additional_conditions:
