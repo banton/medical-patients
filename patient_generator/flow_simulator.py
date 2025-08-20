@@ -47,6 +47,18 @@ class PatientFlowSimulator:
             except ImportError as e:
                 print(f"Warning: Could not import medical simulation bridge: {e}")
                 self.use_medical_simulation = False
+        
+        # Treatment utility model (works independently of medical simulation)
+        self.use_treatment_utility = os.environ.get('ENABLE_TREATMENT_UTILITY_MODEL', 'true').lower() == 'true'
+        self.treatment_model = None
+        if self.use_treatment_utility:
+            try:
+                from .treatment_utility_model import TreatmentUtilityModel
+                self.treatment_model = TreatmentUtilityModel()
+                print("Treatment utility model enabled")
+            except ImportError as e:
+                print(f"Warning: Could not import treatment utility model: {e}")
+                self.use_treatment_utility = False
 
         # --- Load configurations from ConfigurationManager ---
         self.total_patients_to_generate = active_config.total_patients
@@ -563,6 +575,59 @@ class PatientFlowSimulator:
             if facility_config:
                 facility_name_or_type = facility_config.get("name", facility_id)
 
+        # Use treatment utility model if available
+        if self.use_treatment_utility and self.treatment_model:
+            print(f"DEBUG: Utility model check - enabled: {self.use_treatment_utility}, model exists: {self.treatment_model is not None}")
+            # Get SNOMED code from patient's primary condition(s)
+            snomed_code = None
+            print(f"DEBUG: Patient attributes: primary_condition: {hasattr(patient, 'primary_condition')}, primary_conditions: {hasattr(patient, 'primary_conditions')}")
+            if hasattr(patient, 'primary_condition') and isinstance(patient.primary_condition, dict):
+                snomed_code = patient.primary_condition.get('code')
+                print(f"DEBUG: Found primary_condition code: {snomed_code}")
+            elif hasattr(patient, 'primary_conditions') and patient.primary_conditions:
+                # Get first condition's SNOMED code
+                first_condition = patient.primary_conditions[0]
+                if isinstance(first_condition, dict):
+                    snomed_code = first_condition.get('code')
+                    print(f"DEBUG: Found primary_conditions[0] code: {snomed_code}")
+                print(f"DEBUG: primary_conditions: {patient.primary_conditions}")
+            else:
+                print("DEBUG: No valid condition attributes found")
+            
+            # Debug: Log what we found
+            if snomed_code:
+                print(f"DEBUG: Using utility model for SNOMED {snomed_code} at {facility_name_or_type}")
+            
+            if snomed_code:
+                # Map triage to severity for utility model
+                severity_map = {
+                    "T1": "Severe",
+                    "T2": "Moderate to severe",
+                    "T3": "Moderate",
+                    "T4": "Mild to moderate"
+                }
+                severity = severity_map.get(patient.triage_category, "Moderate")
+                
+                # Use utility model to select treatments
+                selected_treatments = self.treatment_model.select_treatments(
+                    injury_code=snomed_code,
+                    severity=severity,
+                    facility=facility_name_or_type,
+                    time_elapsed_minutes=30,  # Simplified - could calculate from timeline
+                    available_resources={'supplies': 100},
+                    max_treatments=3
+                )
+                
+                # Convert to expected format
+                treatments = []
+                for treatment in selected_treatments:
+                    treatments.append({
+                        "code": "utility_model",  # Placeholder code
+                        "display": treatment['name']
+                    })
+                return treatments
+
+        # Fallback to original logic if utility model not available or no SNOMED code
         treatments = []
         # Check if injury type is battle-related (handle all variations)
         injury_upper = patient.injury_type.upper() if patient.injury_type else ""
@@ -675,10 +740,14 @@ class PatientFlowSimulator:
         warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
         temporal_gen = TemporalPatternGenerator(warfare_patterns_path)
 
+        # Use patient count from active configuration if available, otherwise use injuries.json default
+        active_config = self.config_manager.get_active_configuration()
+        total_patients = active_config.total_patients if active_config else injuries_config["total_patients"]
+
         # Generate casualty timeline
         casualty_timeline = temporal_gen.generate_timeline(
             days=injuries_config["days_of_fighting"],
-            total_patients=injuries_config["total_patients"],
+            total_patients=total_patients,  # Use the override from configuration
             active_warfare_types=injuries_config["warfare_types"],
             intensity=injuries_config["intensity"],
             tempo=injuries_config["tempo"],

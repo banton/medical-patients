@@ -280,6 +280,12 @@ class Patient:
                 return round(value, decimals)
             return value
         
+        def round_health(value):
+            """Round health values to nearest integer using mathematical rounding"""
+            if isinstance(value, (float, int)):
+                return round(value)  # Python's round() does proper mathematical rounding
+            return value
+        
         # Build optimized output
         result = {
             "id": self.id,
@@ -307,7 +313,7 @@ class Patient:
         if self.medical_data and "health_score" in self.medical_data:
             health = self.medical_data["health_score"]
             if health is not None:
-                result["health"] = round_float(health)
+                result["health"] = round_health(health)
         
         # Use primary_conditions only (not both primary_condition and primary_conditions)
         if self.primary_conditions:
@@ -325,9 +331,18 @@ class Patient:
                     })
             if conditions:
                 result["conditions"] = conditions
-            # Add medical severity if found
+            # Add medical severity if found (convert to numeric scale)
             if severity:
-                result["severity"] = severity
+                # Convert text severity to numeric scale (0-9)
+                severity_map = {
+                    "Mild": 1,
+                    "Mild to moderate": 2,
+                    "Moderate": 4,
+                    "Moderate to severe": 6,
+                    "Severe": 8,
+                    "Critical": 9
+                }
+                result["severity"] = severity_map.get(severity, 5)  # Default to 5 if unknown
         
         # Add additional conditions if present
         if self.additional_conditions:

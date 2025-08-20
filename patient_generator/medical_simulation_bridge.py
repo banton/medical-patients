@@ -13,6 +13,7 @@ from medical_simulation.patient_flow_orchestrator import (
     PatientState
 )
 from patient_generator.patient import Patient
+from patient_generator.treatment_utility_model import TreatmentUtilityModel
 
 
 class MedicalSimulationBridge:
@@ -32,6 +33,10 @@ class MedicalSimulationBridge:
         self.config = config or {}
         self.enabled = os.environ.get('ENABLE_MEDICAL_SIMULATION', 'false').lower() == 'true'
         
+        # Initialize treatment utility model independently (works with or without medical simulation)
+        self.utility_model_enabled = os.environ.get('ENABLE_TREATMENT_UTILITY_MODEL', 'true').lower() == 'true'
+        self.treatment_model = TreatmentUtilityModel() if self.utility_model_enabled else None
+        
         # Track conversions for batch operations
         self.patient_mapping = {}  # Maps patient_generator ID to medical_sim ID
         
@@ -39,7 +44,10 @@ class MedicalSimulationBridge:
         self.metrics = {
             'total_enhanced': 0,
             'total_time': 0.0,
-            'slowest_patient': 0.0
+            'slowest_patient': 0.0,
+            'treatment_selections': 0,
+            'utility_model_used': 0,
+            'fallback_used': 0
         }
 
     def enhance_patient(self, patient: Patient) -> Patient:
@@ -205,7 +213,7 @@ class MedicalSimulationBridge:
                 if arrived:
                     # Apply initial treatment
                     patient_injury = getattr(original_patient, 'injury', None) or getattr(original_patient, 'injury_type', 'unknown')
-                    treatments = self._get_treatments_for_injury(patient_injury)
+                    treatments = self._get_treatments_for_injury(patient_injury, original_patient)
                     if treatments:
                         self.orchestrator.apply_treatment(sim_patient_id, treatments)
                     
@@ -221,18 +229,24 @@ class MedicalSimulationBridge:
                             self.orchestrator.advance_time(20)
                             self.orchestrator.complete_transport(sim_patient_id)
 
-    def _get_treatments_for_injury(self, injury: str) -> List[Dict[str, Any]]:
+    def _get_treatments_for_injury(self, injury: str, patient: Optional[Patient] = None) -> List[Dict[str, Any]]:
         """
-        Get appropriate treatments based on injury type.
+        Get appropriate treatments based on injury type using utility model.
         
         Args:
-            injury: Injury type
+            injury: Injury type or SNOMED code
+            patient: Optional patient for additional context
             
         Returns:
             List of treatments to apply
         """
         base_time = datetime.now()
         
+        # Use utility model if available
+        if self.treatment_model and self.utility_model_enabled and patient:
+            return self._get_treatments_utility_based(injury, patient)
+        
+        # Fallback to legacy keyword matching
         treatment_protocols = {
             "gunshot": [
                 {"name": "tourniquet", "applied_at": base_time},
@@ -258,10 +272,112 @@ class MedicalSimulationBridge:
         injury_lower = injury.lower()
         for injury_type, treatments in treatment_protocols.items():
             if injury_type in injury_lower:
+                self.metrics['fallback_used'] += 1
                 return treatments
                 
         # Default treatment
+        self.metrics['fallback_used'] += 1
         return [{"name": "basic_bandage", "applied_at": base_time}]
+    
+    def _get_treatments_utility_based(self, injury: str, patient: Patient) -> List[Dict[str, Any]]:
+        """
+        Get treatments using the utility-based model.
+        
+        Args:
+            injury: Injury type or SNOMED code
+            patient: Patient object with condition details
+            
+        Returns:
+            List of treatments selected by utility model
+        """
+        self.metrics['utility_model_used'] += 1
+        
+        # Get SNOMED code from patient conditions
+        snomed_code = None
+        if hasattr(patient, 'primary_condition') and isinstance(patient.primary_condition, dict):
+            snomed_code = patient.primary_condition.get('code')
+        elif hasattr(patient, 'primary_conditions') and patient.primary_conditions:
+            # Use first condition if multiple
+            first_condition = patient.primary_conditions[0]
+            if isinstance(first_condition, dict):
+                snomed_code = first_condition.get('code')
+        
+        # If no SNOMED code, try to map injury type
+        if not snomed_code:
+            snomed_code = self._map_injury_to_snomed(injury)
+        
+        # Get severity
+        severity = "Moderate"  # Default
+        if hasattr(patient, 'severity'):
+            if isinstance(patient.severity, str):
+                severity = patient.severity
+            elif isinstance(patient.severity, int):
+                # Map numeric severity back to text
+                severity_map = {1: "Mild", 2: "Mild to moderate", 4: "Moderate",
+                              6: "Moderate to severe", 8: "Severe", 9: "Critical"}
+                severity = severity_map.get(patient.severity, "Moderate")
+        
+        # Determine current facility (default to POI for initial treatment)
+        facility = "POI"
+        if hasattr(patient, 'last_facility') and patient.last_facility:
+            facility = patient.last_facility
+        
+        # Get time elapsed (simplified - could be enhanced)
+        time_elapsed = 0
+        if hasattr(patient, 'injury_timestamp'):
+            time_elapsed = 30  # Assume 30 minutes for now
+        
+        try:
+            # Use treatment utility model
+            treatments = self.treatment_model.select_treatments(
+                injury_code=snomed_code,
+                severity=severity,
+                facility=facility,
+                time_elapsed_minutes=time_elapsed,
+                available_resources={'supplies': 100},  # Simplified resource model
+                max_treatments=3
+            )
+            
+            self.metrics['treatment_selections'] += len(treatments)
+            return treatments
+            
+        except Exception as e:
+            # Log error and fall back to basic treatment
+            print(f"Treatment utility model error: {e}")
+            self.metrics['fallback_used'] += 1
+            return [{"name": "supportive_care", "applied_at": datetime.now()}]
+    
+    def _map_injury_to_snomed(self, injury: str) -> str:
+        """
+        Map injury description to SNOMED code.
+        
+        Args:
+            injury: Injury description
+            
+        Returns:
+            SNOMED code or default
+        """
+        # Simple mapping - could be enhanced with more sophisticated matching
+        injury_mapping = {
+            "gunshot": "262574004",  # Bullet wound
+            "blast": "125596004",    # Explosive injury  
+            "burn": "7200002",       # Burn of skin
+            "shrapnel": "125689001", # Shrapnel injury
+            "fracture": "37782003",  # Fracture of bone
+            "tbi": "19130008",       # Traumatic brain injury
+            "amputation": "284551006", # Traumatic amputation
+            "stress": "45170000",    # Psychological stress
+            "diarrhea": "62315008",  # Diarrhea
+            "respiratory": "195662009", # Acute respiratory illness
+        }
+        
+        injury_lower = injury.lower()
+        for key, code in injury_mapping.items():
+            if key in injury_lower:
+                return code
+        
+        # Default to general war injury
+        return "125670008"
 
     def _apply_simulation_results(self, patient: Patient, sim_patient_id: str):
         """
@@ -293,20 +409,46 @@ class MedicalSimulationBridge:
         # Enhanced timeline with medical simulation events
         enhanced_events = []
         for event in sim_patient.timeline:
-            # Convert all datetime objects in the event to ISO strings
+            # Convert all datetime objects in the event to ISO strings and clean up structure
             clean_event = {}
             for k, v in event.items():
                 if isinstance(v, datetime):
                     clean_event[k] = v.isoformat()
+                elif isinstance(v, float):
+                    # Round health values to nearest integer using mathematical rounding
+                    if k in ['health', 'health_before', 'health_after', 'current_health']:
+                        clean_event[k] = round(v)  # Proper mathematical rounding
+                    else:
+                        clean_event[k] = round(v, 1)
                 else:
                     clean_event[k] = v
             
-            enhanced_events.append({
-                "timestamp": event.get("timestamp", datetime.now()).isoformat(),
-                "event_type": event.get("event", "unknown"),
-                "location": event.get("location", "unknown"),
-                "details": clean_event
-            })
+            # Use the event type to determine the appropriate structure
+            event_type = event.get("event", "unknown")
+            
+            # For events that happen at a location (treatment, arrival, death)
+            if event_type in ["treatment_applied", "arrived_at_poi", "arrived_at_facility", "died"]:
+                enhanced_event = {
+                    "timestamp": clean_event.get("timestamp"),
+                    "event_type": event_type,
+                    "location": clean_event.get("location", clean_event.get("facility", "POI")),
+                    "details": {k: v for k, v in clean_event.items() 
+                              if k not in ["timestamp", "event", "location", "facility"]}
+                }
+            # For transition events (triage, transport) that happen between locations
+            elif event_type in ["triaged", "transport_started"]:
+                enhanced_event = {
+                    "timestamp": clean_event.get("timestamp"),
+                    "event_type": event_type,
+                    "details": {k: v for k, v in clean_event.items() 
+                              if k not in ["timestamp", "event"]}
+                }
+            else:
+                # Generic structure for unknown events
+                enhanced_event = clean_event
+                enhanced_event["event_type"] = event_type
+            
+            enhanced_events.append(enhanced_event)
         
         # Merge with existing timeline
         if hasattr(patient, 'timeline_events'):

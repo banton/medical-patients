@@ -241,8 +241,8 @@ class PatientFlowOrchestrator:
                 "timestamp": self.simulation_time,
                 "event": "treatment_applied",
                 "treatments": [t["name"] for t in treatments],
-                "health_before": patient.current_health - treatment_effect,
-                "health_after": new_health,
+                "health_before": round(patient.current_health - treatment_effect),
+                "health_after": round(new_health),
                 "location": patient.current_location
             })
 

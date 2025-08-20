@@ -142,7 +142,12 @@
       "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py::TestPatientFlowOrchestrator::test_apply_treatment_success -xvs)",
       "Bash(.venv/bin/python:*)",
       "mcp__dementia__file_insights",
-      "mcp__filesystem__write_file"
+      "mcp__filesystem__write_file",
+      "mcp__filesystem__directory_tree",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --count 5 --output output --format json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 5 --output output --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 3 --output output --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 1 --output output --formats json)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
