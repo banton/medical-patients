@@ -141,7 +141,8 @@
       "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py -v --tb=short)",
       "Bash(.venv/bin/python -m pytest tests/test_patient_flow_orchestrator.py::TestPatientFlowOrchestrator::test_apply_treatment_success -xvs)",
       "Bash(.venv/bin/python:*)",
-      "mcp__dementia__file_insights"
+      "mcp__dementia__file_insights",
+      "mcp__filesystem__write_file"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

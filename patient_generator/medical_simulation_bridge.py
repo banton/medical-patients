@@ -4,6 +4,7 @@ Enhances patient generation with realistic medical simulation.
 """
 
 import os
+import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -33,6 +34,13 @@ class MedicalSimulationBridge:
         
         # Track conversions for batch operations
         self.patient_mapping = {}  # Maps patient_generator ID to medical_sim ID
+        
+        # Simple performance metrics
+        self.metrics = {
+            'total_enhanced': 0,
+            'total_time': 0.0,
+            'slowest_patient': 0.0
+        }
 
     def enhance_patient(self, patient: Patient) -> Patient:
         """
@@ -46,6 +54,9 @@ class MedicalSimulationBridge:
         """
         if not self.enabled:
             return patient
+            
+        # Track timing
+        start_time = time.time()
             
         # Convert patient ID to string for medical simulation
         sim_patient_id = str(patient.id)
@@ -68,6 +79,12 @@ class MedicalSimulationBridge:
         
         # Apply simulation results back to original patient
         self._apply_simulation_results(patient, sim_patient_id)
+        
+        # Update metrics
+        elapsed = time.time() - start_time
+        self.metrics['total_enhanced'] += 1
+        self.metrics['total_time'] += elapsed
+        self.metrics['slowest_patient'] = max(self.metrics['slowest_patient'], elapsed)
         
         return patient
 

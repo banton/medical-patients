@@ -83,6 +83,12 @@ def parse_arguments():
         type=str,
         help="Path to medical simulation configuration file (JSON)"
     )
+    
+    parser.add_argument(
+        "--compare-performance",
+        action="store_true",
+        help="Run twice (with and without medical simulation) to compare performance"
+    )
 
     return parser.parse_args()
 
@@ -193,6 +199,7 @@ def main():
     # Calculate performance metrics
     total_time = end_time - start_time
     patients_per_second = len(patients) / total_time if total_time > 0 else 0
+    time_per_patient = (total_time / len(patients)) * 1000 if patients else 0  # milliseconds
 
     # Print summary statistics
     status_counts = Counter([p.current_status for p in patients])
@@ -210,11 +217,36 @@ def main():
         print(f"  - {nationality}: {count} ({count / len(patients) * 100:.1f}%)")
 
     # Print performance metrics
-    print("\nPerformance metrics:")
-    print(f"  - Total generation time: {total_time:.2f} seconds")
-    print(f"  - Patients per second: {patients_per_second:.2f}")
-    print(f"  - Worker threads: {generator.num_workers}")
-    print(f"  - Batch size: {generator.batch_size}")
+    print("\n" + "="*60)
+    print("PERFORMANCE METRICS")
+    print("="*60)
+    print(f"Total generation time:    {total_time:.2f} seconds")
+    print(f"Patients per second:      {patients_per_second:.1f}")
+    print(f"Time per patient:         {time_per_patient:.1f} ms")
+    print(f"Worker threads:           {generator.num_workers}")
+    print(f"Batch size:               {generator.batch_size}")
+    
+    # Medical simulation metrics if enabled
+    if args.enable_medical_simulation:
+        print("\nMedical Simulation Metrics:")
+        try:
+            # Try to get metrics from the bridge if it exists
+            if hasattr(generator, 'flow_simulator') and hasattr(generator.flow_simulator, 'medical_bridge'):
+                bridge_metrics = generator.flow_simulator.medical_bridge.metrics
+                avg_time = (bridge_metrics['total_time'] / bridge_metrics['total_enhanced'] * 1000 
+                           if bridge_metrics['total_enhanced'] > 0 else 0)
+                print(f"  - Patients enhanced:    {bridge_metrics['total_enhanced']}")
+                print(f"  - Avg enhancement time: {avg_time:.1f} ms")
+                print(f"  - Slowest patient:      {bridge_metrics['slowest_patient']*1000:.1f} ms")
+                
+                # Calculate overhead
+                base_time = time_per_patient - avg_time
+                overhead_pct = (avg_time / time_per_patient * 100) if time_per_patient > 0 else 0
+                print(f"  - Medical sim overhead: {overhead_pct:.1f}%")
+        except:
+            print("  - Metrics unavailable (may need ConfigurationManager fix)")
+    
+    print("="*60)
 
     print(f"\nOutput files saved to {config['output_directory']} directory.")
 
