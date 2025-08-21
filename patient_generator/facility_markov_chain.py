@@ -162,6 +162,8 @@ class FacilityMarkovChain:
     ) -> Dict[str, float]:
         """
         Apply special condition routing rules (burns, TBI, amputations).
+        Role1 is always the first stop from POI, but special conditions
+        affect priority and speed of evacuation FROM Role1.
         
         Args:
             base_probs: Base transition probabilities
@@ -178,32 +180,28 @@ class FacilityMarkovChain:
         
         # Check for special conditions
         for condition in conditions:
-            if "amputation" in condition.lower() and current_facility == "POI":
-                # Bypass Role1 for amputations
-                if "Role1" in adjusted and "Role2" in adjusted:
-                    bypass_prob = self.special_conditions["traumatic_amputation"]["bypass_role1"]
-                    role1_prob = adjusted["Role1"]
-                    adjusted["Role1"] = role1_prob * (1 - bypass_prob)
-                    adjusted["Role2"] = adjusted.get("Role2", 0) + role1_prob * bypass_prob
+            if "amputation" in condition.lower() and current_facility == "Role1":
+                # Amputations get priority evacuation from Role1 to Role2
+                if "Role2" in adjusted and "RTD" in adjusted:
+                    # Increase Role2 probability, decrease RTD
+                    adjusted["Role2"] = min(0.85, adjusted.get("Role2", 0) * 1.5)
+                    adjusted["RTD"] = adjusted.get("RTD", 0) * 0.3
             
-            elif "burn" in condition.lower() and current_facility == "POI":
-                # Major burns go to Role3 or higher
-                if "Role1" in adjusted:
-                    bypass_prob = self.special_conditions["burn_over_20_percent"]["bypass_role1"]
-                    role1_prob = adjusted["Role1"]
-                    adjusted["Role1"] = role1_prob * (1 - bypass_prob)
-                    # Distribute to Role3
-                    adjusted["Role3"] = adjusted.get("Role3", 0) + role1_prob * bypass_prob * 0.7
-                    adjusted["Role2"] = adjusted.get("Role2", 0) + role1_prob * bypass_prob * 0.3
+            elif "burn" in condition.lower() and current_facility == "Role1":
+                # Major burns need specialized care at Role3+
+                if "Role3" in adjusted:
+                    # Increase Role3 probability for burn centers
+                    adjusted["Role3"] = min(0.60, adjusted.get("Role3", 0) * 2.0)
+                    if "RTD" in adjusted:
+                        adjusted["RTD"] = adjusted.get("RTD", 0) * 0.2
             
-            elif "tbi" in condition.lower() or "brain" in condition.lower():
-                # TBI needs neurosurgical capability
-                if current_facility == "POI" and "Role1" in adjusted:
-                    # Bypass Role1 if it lacks neurosurgery
-                    bypass_prob = self.special_conditions["tbi_severe"]["bypass_non_capable"]
-                    role1_prob = adjusted["Role1"]
-                    adjusted["Role1"] = role1_prob * (1 - bypass_prob)
-                    adjusted["Role2"] = adjusted.get("Role2", 0) + role1_prob * bypass_prob
+            elif ("tbi" in condition.lower() or "brain" in condition.lower()) and current_facility == "Role1":
+                # TBI needs neurosurgical capability at Role2+
+                if "Role2" in adjusted:
+                    # Priority evacuation to neurosurgery-capable facility
+                    adjusted["Role2"] = min(0.80, adjusted.get("Role2", 0) * 1.5)
+                    if "RTD" in adjusted:
+                        adjusted["RTD"] = adjusted.get("RTD", 0) * 0.2
             
             elif "psychological" in condition.lower() or "stress" in condition.lower():
                 # Psychological cases often managed at Role1
@@ -245,16 +243,16 @@ class FacilityMarkovChain:
             if "KIA" in adjusted:
                 adjusted["KIA"] *= mass_cas_mod["kia_multiplier"]
             
-            # Reduce RTD probability
+            # Reduce RTD probability (overwhelmed resources)
             if "RTD" in adjusted:
                 adjusted["RTD"] *= mass_cas_mod["rtd_reduction"]
             
-            # Increase facility bypassing for critical patients
-            if triage_category == "T1" and "Role1" in adjusted and "Role2" in adjusted:
-                bypass_factor = mass_cas_mod["bypass_increase"]
-                role1_prob = adjusted["Role1"]
-                adjusted["Role1"] = role1_prob / bypass_factor
-                adjusted["Role2"] += role1_prob * (1 - 1/bypass_factor)
+            # In mass casualty, Role1 may expedite evacuation due to overwhelm
+            # But patients still go through Role1 first (from POI)
+            if current_facility == "Role1" and triage_category == "T1":
+                # Faster evacuation from Role1 when overwhelmed
+                if "Role2" in adjusted:
+                    adjusted["Role2"] = min(0.90, adjusted["Role2"] * 1.3)
         
         # Golden hour modifier for critical patients
         if triage_category == "T1" and "time_since_injury" in modifiers:

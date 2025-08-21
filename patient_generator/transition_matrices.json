@@ -6,63 +6,63 @@
       "description": "Point of Injury - initial patient location",
       "transitions": {
         "T1": {
-          "Role1": 0.10,
-          "Role2": 0.60,
-          "Role3": 0.15,
-          "KIA": 0.15,
-          "description": "Critical patients often skip Role1 for immediate surgery"
+          "Role1": 0.90,
+          "Role2": 0.00,
+          "Role3": 0.00,
+          "KIA": 0.10,
+          "description": "Critical patients go to Role1 first, may die en route"
         },
         "T2": {
-          "Role1": 0.50,
-          "Role2": 0.35,
-          "Role3": 0.10,
+          "Role1": 0.95,
+          "Role2": 0.00,
+          "Role3": 0.00,
           "KIA": 0.05,
-          "description": "Urgent patients typically go to Role1 for stabilization"
+          "description": "Urgent patients go to Role1, may die en route"
         },
         "T3": {
-          "Role1": 0.70,
-          "Role2": 0.20,
-          "Role3": 0.05,
-          "KIA": 0.05,
-          "description": "Delayed patients usually start at Role1"
+          "Role1": 0.98,
+          "Role2": 0.00,
+          "Role3": 0.00,
+          "KIA": 0.02,
+          "description": "Delayed patients go to Role1"
         },
         "T4": {
-          "Role1": 0.85,
-          "RTD": 0.10,
-          "KIA": 0.05,
-          "description": "Minimal patients often RTD early or go to Role1"
+          "Role1": 0.99,
+          "RTD": 0.00,
+          "KIA": 0.01,
+          "description": "Minimal patients go to Role1"
         }
       }
     },
     "Role1": {
-      "description": "Battalion Aid Station - basic medical care",
+      "description": "Battalion Aid Station - triage, stabilization, collection point",
       "transitions": {
         "T1": {
-          "Role2": 0.70,
+          "Role2": 0.75,
           "Role3": 0.15,
-          "KIA": 0.10,
-          "RTD": 0.05,
-          "description": "Critical patients urgently transferred if stabilized"
+          "KIA": 0.08,
+          "RTD": 0.02,
+          "description": "Critical patients re-triaged, immediately evacuated by MEDEVAC"
         },
         "T2": {
-          "Role2": 0.45,
-          "Role3": 0.25,
-          "RTD": 0.20,
-          "KIA": 0.10,
-          "description": "Urgent patients may be treated and RTD or evacuated"
+          "Role2": 0.50,
+          "Role3": 0.20,
+          "RTD": 0.25,
+          "KIA": 0.05,
+          "description": "Urgent patients re-triaged, evacuated based on resources"
         },
         "T3": {
-          "Role2": 0.25,
-          "Role3": 0.15,
-          "RTD": 0.50,
-          "KIA": 0.10,
-          "description": "Delayed patients often RTD after treatment"
+          "Role2": 0.20,
+          "Role3": 0.10,
+          "RTD": 0.68,
+          "KIA": 0.02,
+          "description": "Delayed patients re-triaged, often treated and RTD"
         },
         "T4": {
           "Role2": 0.05,
-          "RTD": 0.90,
-          "KIA": 0.05,
-          "description": "Minimal patients usually RTD from Role1"
+          "RTD": 0.94,
+          "KIA": 0.01,
+          "description": "Minimal patients re-triaged, usually RTD after treatment"
         }
       }
     },
@@ -71,29 +71,29 @@
       "transitions": {
         "T1": {
           "Role3": 0.60,
-          "Role4": 0.15,
-          "KIA": 0.15,
-          "RTD": 0.10,
+          "Role4": 0.20,
+          "KIA": 0.05,
+          "RTD": 0.15,
           "description": "Critical patients need definitive care after surgery"
         },
         "T2": {
           "Role3": 0.40,
           "Role4": 0.20,
-          "RTD": 0.30,
-          "KIA": 0.10,
+          "RTD": 0.38,
+          "KIA": 0.02,
           "description": "Urgent patients may RTD after surgical intervention"
         },
         "T3": {
           "Role3": 0.20,
           "Role4": 0.10,
-          "RTD": 0.65,
-          "KIA": 0.05,
+          "RTD": 0.69,
+          "KIA": 0.01,
           "description": "Delayed patients often RTD after treatment"
         },
         "T4": {
-          "Role3": 0.05,
-          "RTD": 0.93,
-          "KIA": 0.02,
+          "Role3": 0.02,
+          "RTD": 0.98,
+          "KIA": 0.00,
           "description": "Minimal patients rarely need further evacuation"
         }
       }
@@ -103,26 +103,26 @@
       "transitions": {
         "T1": {
           "Role4": 0.70,
-          "RTD": 0.15,
-          "KIA": 0.15,
+          "RTD": 0.25,
+          "KIA": 0.05,
           "description": "Critical patients often need definitive care out of theater"
         },
         "T2": {
           "Role4": 0.40,
-          "RTD": 0.50,
-          "KIA": 0.10,
+          "RTD": 0.58,
+          "KIA": 0.02,
           "description": "Urgent patients may RTD or need further care"
         },
         "T3": {
           "Role4": 0.15,
-          "RTD": 0.80,
-          "KIA": 0.05,
+          "RTD": 0.84,
+          "KIA": 0.01,
           "description": "Delayed patients usually RTD from Role3"
         },
         "T4": {
-          "Role4": 0.02,
-          "RTD": 0.97,
-          "KIA": 0.01,
+          "Role4": 0.01,
+          "RTD": 0.99,
+          "KIA": 0.00,
           "description": "Minimal patients almost always RTD"
         }
       }
@@ -131,23 +131,23 @@
       "description": "Definitive care facility - out of theater",
       "transitions": {
         "T1": {
-          "RTD": 0.75,
-          "KIA": 0.25,
+          "RTD": 0.95,
+          "KIA": 0.05,
           "description": "Critical patients either recover or die at definitive care"
         },
         "T2": {
-          "RTD": 0.90,
-          "KIA": 0.10,
+          "RTD": 0.98,
+          "KIA": 0.02,
           "description": "Urgent patients have good survival at Role4"
         },
         "T3": {
-          "RTD": 0.98,
-          "KIA": 0.02,
+          "RTD": 0.99,
+          "KIA": 0.01,
           "description": "Delayed patients almost always RTD"
         },
         "T4": {
-          "RTD": 0.99,
-          "KIA": 0.01,
+          "RTD": 1.00,
+          "KIA": 0.00,
           "description": "Minimal patients rarely die at Role4"
         }
       }
@@ -250,28 +250,28 @@
     ],
     "base_mortality_rates": {
       "T1": {
-        "POI": 0.15,
-        "during_evacuation": 0.10,
-        "during_treatment": 0.08,
-        "cumulative_cap": 0.40
-      },
-      "T2": {
         "POI": 0.05,
-        "during_evacuation": 0.05,
-        "during_treatment": 0.05,
-        "cumulative_cap": 0.20
-      },
-      "T3": {
-        "POI": 0.02,
         "during_evacuation": 0.03,
         "during_treatment": 0.02,
-        "cumulative_cap": 0.10
+        "cumulative_cap": 0.15
       },
-      "T4": {
-        "POI": 0.01,
+      "T2": {
+        "POI": 0.02,
         "during_evacuation": 0.01,
         "during_treatment": 0.01,
         "cumulative_cap": 0.05
+      },
+      "T3": {
+        "POI": 0.01,
+        "during_evacuation": 0.005,
+        "during_treatment": 0.005,
+        "cumulative_cap": 0.02
+      },
+      "T4": {
+        "POI": 0.00,
+        "during_evacuation": 0.00,
+        "during_treatment": 0.00,
+        "cumulative_cap": 0.00
       }
     }
   },
