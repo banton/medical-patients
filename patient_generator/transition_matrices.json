@@ -6,31 +6,32 @@
       "description": "Point of Injury - initial patient location",
       "transitions": {
         "T1": {
-          "Role1": 0.90,
-          "Role2": 0.00,
-          "Role3": 0.00,
+          "Role1": 0.85,
+          "Role2": 0.03,
+          "Role3": 0.02,
           "KIA": 0.10,
-          "description": "Critical patients go to Role1 first, may die en route"
+          "description": "Critical patients usually go to Role1, rare direct evac if in vehicle"
         },
         "T2": {
-          "Role1": 0.95,
-          "Role2": 0.00,
-          "Role3": 0.00,
+          "Role1": 0.92,
+          "Role2": 0.02,
+          "Role3": 0.01,
           "KIA": 0.05,
-          "description": "Urgent patients go to Role1, may die en route"
+          "description": "Urgent patients to Role1, rare direct evac if near Role2"
         },
         "T3": {
-          "Role1": 0.98,
-          "Role2": 0.00,
-          "Role3": 0.00,
+          "Role1": 0.96,
+          "Role2": 0.01,
+          "Role3": 0.01,
           "KIA": 0.02,
-          "description": "Delayed patients go to Role1"
+          "description": "Delayed patients to Role1, rare direct evac"
         },
         "T4": {
-          "Role1": 0.99,
-          "RTD": 0.00,
+          "Role1": 0.97,
+          "Role2": 0.01,
+          "RTD": 0.01,
           "KIA": 0.01,
-          "description": "Minimal patients go to Role1"
+          "description": "Minimal patients to Role1, may RTD if very minor"
         }
       }
     },
@@ -191,11 +192,21 @@
     }
   },
   "special_conditions": {
+    "vehicle_evacuation": {
+      "description": "Casualty occurs inside or near armored vehicle",
+      "direct_evac_probability": 0.15,
+      "comment": "Tank/APC can bypass Role1 if already moving to rear"
+    },
+    "role1_unavailable": {
+      "description": "Role1 overrun, destroyed, or unreachable",
+      "direct_to_role2": 0.90,
+      "comment": "Emergency routing when Role1 is compromised"
+    },
     "traumatic_amputation": {
       "description": "Special routing for amputation cases",
-      "bypass_role1": 0.80,
+      "priority_evac_from_role1": 0.80,
       "direct_to_role2": 0.70,
-      "comment": "Amputations need surgical capability ASAP"
+      "comment": "Amputations get priority evacuation from Role1"
     },
     "burn_over_20_percent": {
       "description": "Major burn routing",

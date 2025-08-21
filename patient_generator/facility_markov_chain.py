@@ -210,6 +210,18 @@ class FacilityMarkovChain:
                 elif current_facility == "Role1" and "RTD" in adjusted:
                     # Higher RTD rate for psych from Role1
                     adjusted["RTD"] = min(0.75, adjusted.get("RTD", 0) * 1.5)
+            
+            elif "vehicle" in condition.lower() or "armor" in condition.lower():
+                # Casualty in vehicle might bypass Role1
+                if current_facility == "POI" and "Role2" in adjusted:
+                    # Small chance of direct evac in vehicle
+                    vehicle_prob = self.special_conditions.get("vehicle_evacuation", {}).get("direct_evac_probability", 0.15)
+                    if "Role1" in adjusted and adjusted["Role1"] > vehicle_prob:
+                        # Transfer some Role1 probability to Role2/3
+                        transfer = adjusted["Role1"] * vehicle_prob
+                        adjusted["Role1"] -= transfer
+                        adjusted["Role2"] = adjusted.get("Role2", 0) + transfer * 0.7
+                        adjusted["Role3"] = adjusted.get("Role3", 0) + transfer * 0.3
         
         return adjusted
     
