@@ -15,7 +15,9 @@ try:
     from .patient import Patient
     from .temporal_generator import CasualtyEvent, TemporalPatternGenerator
     from .facility_markov_chain import FacilityMarkovChain
+    from .warfare_modifiers import WarfareModifiers
     MARKOV_CHAIN_AVAILABLE = True
+    WARFARE_MODIFIERS_AVAILABLE = True
 except ImportError:
     try:
         from patient_generator.config_manager import ConfigurationManager
@@ -23,7 +25,9 @@ except ImportError:
         from patient_generator.patient import Patient
         from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
         from patient_generator.facility_markov_chain import FacilityMarkovChain
+        from patient_generator.warfare_modifiers import WarfareModifiers
         MARKOV_CHAIN_AVAILABLE = True
+        WARFARE_MODIFIERS_AVAILABLE = True
     except ImportError:
         # Fallback if Markov chain not available
         from patient_generator.config_manager import ConfigurationManager
@@ -31,7 +35,9 @@ except ImportError:
         from patient_generator.patient import Patient
         from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
         MARKOV_CHAIN_AVAILABLE = False
+        WARFARE_MODIFIERS_AVAILABLE = False
         FacilityMarkovChain = None
+        WarfareModifiers = None
 
 
 class PatientFlowSimulator:
@@ -83,6 +89,17 @@ class PatientFlowSimulator:
             except Exception as e:
                 print(f"Warning: Could not initialize Markov chain: {e}")
                 self.use_markov_chain = False
+        
+        # Warfare modifiers for injury patterns (MILESTONE 4)
+        self.use_warfare_modifiers = os.environ.get('ENABLE_WARFARE_MODIFIERS', 'true').lower() == 'true'
+        self.warfare_modifiers = None
+        if self.use_warfare_modifiers and WARFARE_MODIFIERS_AVAILABLE:
+            try:
+                self.warfare_modifiers = WarfareModifiers()
+                print("Warfare modifiers enabled - distinct injury patterns active")
+            except Exception as e:
+                print(f"Warning: Could not initialize warfare modifiers: {e}")
+                self.use_warfare_modifiers = False
 
         # --- Load configurations from ConfigurationManager ---
         self.total_patients_to_generate = active_config.total_patients
@@ -856,6 +873,29 @@ class PatientFlowSimulator:
         # ... more observations
         return observations
 
+    def _get_injury_name(self, snomed_code: str) -> str:
+        """Map SNOMED code to injury name"""
+        # Common injury mappings
+        injury_names = {
+            "125596004": "Injury by explosive",
+            "361220002": "Penetrating injury", 
+            "7200002": "Burn of skin",
+            "125689001": "Traumatic amputation",
+            "127294003": "Traumatic brain injury",
+            "275272006": "Injury of abdomen",
+            "125605004": "Fracture of bone",
+            "267036007": "Dyspnea",
+            "262574004": "Gunshot wound",
+            "2055003": "Laceration of hand",
+            "409711008": "Crush injury",
+            "68566005": "Urinary tract injury",
+            "87991007": "Hemothorax",
+            "16932000": "Nausea and vomiting",
+            "25374005": "Gastroenteritis",
+            "62315008": "Diarrhea",
+        }
+        return injury_names.get(str(snomed_code), f"Injury {snomed_code}")
+    
     def _select_weighted_item(self, weights_dict: Dict[str, float]):
         if not weights_dict:
             return "N/A"  # Handle empty distribution
@@ -1018,9 +1058,35 @@ class PatientFlowSimulator:
         days_since_start = (injury_timestamp.date() - base_date.date()).days
         patient.day_of_injury = f"Day {days_since_start + 1}"
 
-        # Get warfare-specific injury distribution
-        injury_distribution = self._get_warfare_injury_distribution(warfare_type, base_injury_mix, warfare_patterns)
-        patient.injury_type = self._select_weighted_item(injury_distribution)
+        # Use warfare modifiers if available (MILESTONE 4)
+        if self.use_warfare_modifiers and self.warfare_modifiers:
+            # Get injuries using warfare modifiers
+            injury_codes, severity, metadata = self.warfare_modifiers.get_injuries_for_scenario(warfare_type)
+            
+            # Store injuries as primary conditions
+            patient.primary_conditions = []
+            for code in injury_codes:
+                # Map SNOMED codes to condition objects (simplified for now)
+                patient.primary_conditions.append({
+                    "code": code,
+                    "name": self._get_injury_name(code)  # Helper method to get name
+                })
+            
+            # Set severity based on warfare pattern
+            patient.severity = severity
+            
+            # Set injury type based on metadata
+            if metadata.get("polytrauma"):
+                patient.injury_type = "Polytrauma"
+            else:
+                patient.injury_type = "Battle Injury" if "combat" in warfare_type else "Non-Battle Injury"
+            
+            # Store metadata
+            patient.injury_metadata = metadata
+        else:
+            # Fallback to original method
+            injury_distribution = self._get_warfare_injury_distribution(warfare_type, base_injury_mix, warfare_patterns)
+            patient.injury_type = self._select_weighted_item(injury_distribution)
 
         # Get warfare-specific triage distribution
         triage_weights = self._get_warfare_triage_weights(warfare_type, patient.injury_type, warfare_patterns)
