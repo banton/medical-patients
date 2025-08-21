@@ -14,11 +14,24 @@ try:
     from .evacuation_time_manager import EvacuationTimeManager
     from .patient import Patient
     from .temporal_generator import CasualtyEvent, TemporalPatternGenerator
+    from .facility_markov_chain import FacilityMarkovChain
+    MARKOV_CHAIN_AVAILABLE = True
 except ImportError:
-    from patient_generator.config_manager import ConfigurationManager
-    from patient_generator.evacuation_time_manager import EvacuationTimeManager
-    from patient_generator.patient import Patient
-    from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+    try:
+        from patient_generator.config_manager import ConfigurationManager
+        from patient_generator.evacuation_time_manager import EvacuationTimeManager
+        from patient_generator.patient import Patient
+        from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+        from patient_generator.facility_markov_chain import FacilityMarkovChain
+        MARKOV_CHAIN_AVAILABLE = True
+    except ImportError:
+        # Fallback if Markov chain not available
+        from patient_generator.config_manager import ConfigurationManager
+        from patient_generator.evacuation_time_manager import EvacuationTimeManager
+        from patient_generator.patient import Patient
+        from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+        MARKOV_CHAIN_AVAILABLE = False
+        FacilityMarkovChain = None
 
 
 class PatientFlowSimulator:
@@ -59,6 +72,17 @@ class PatientFlowSimulator:
             except ImportError as e:
                 print(f"Warning: Could not import treatment utility model: {e}")
                 self.use_treatment_utility = False
+        
+        # Facility Markov Chain for probabilistic routing (MILESTONE 3)
+        self.use_markov_chain = os.environ.get('ENABLE_MARKOV_CHAIN', 'true').lower() == 'true'
+        self.markov_chain = None
+        if self.use_markov_chain and MARKOV_CHAIN_AVAILABLE:
+            try:
+                self.markov_chain = FacilityMarkovChain()
+                print("Facility Markov Chain enabled - probabilistic patient routing active")
+            except Exception as e:
+                print(f"Warning: Could not initialize Markov chain: {e}")
+                self.use_markov_chain = False
 
         # --- Load configurations from ConfigurationManager ---
         self.total_patients_to_generate = active_config.total_patients
@@ -375,6 +399,7 @@ class PatientFlowSimulator:
         Enhanced patient flow simulation with detailed timeline tracking.
         Uses EvacuationTimeManager for realistic timing and KIA/RTD rules.
         Optionally uses medical simulation for enhanced realism.
+        Now supports Markov chain for probabilistic routing (MILESTONE 3).
         """
         # Use medical simulation enhancement if enabled
         if self.use_medical_simulation and self.medical_bridge:
@@ -384,7 +409,12 @@ class PatientFlowSimulator:
             if hasattr(patient, 'timeline_events') and len(patient.timeline_events) > 0:
                 return
         
-        # Otherwise, use original simulation logic
+        # Use Markov chain if enabled, otherwise fall back to sequential flow
+        if self.use_markov_chain and self.markov_chain:
+            self._simulate_patient_flow_markov(patient)
+            return
+        
+        # Otherwise, use original sequential simulation logic
         current_time = patient.injury_timestamp
 
         # Track current time through evacuation chain
@@ -541,6 +571,156 @@ class PatientFlowSimulator:
             "Role4": 0.6,  # Higher RTD rate at final facility
         }
         return default_rates.get(facility_name, 0.3)
+
+    def _simulate_patient_flow_markov(self, patient: Patient):
+        """
+        Simulate patient flow using Markov chain for probabilistic routing.
+        MILESTONE 3.3: Replaces sequential flow with realistic probabilistic transitions.
+        
+        Args:
+            patient: Patient object to simulate flow for
+        """
+        current_time = patient.injury_timestamp
+        current_facility = "POI"
+        
+        # Extract patient conditions for special routing
+        patient_conditions = []
+        if hasattr(patient, 'primary_conditions') and patient.primary_conditions:
+            for condition in patient.primary_conditions:
+                if isinstance(condition, dict):
+                    condition_name = condition.get('display', condition.get('name', '')).lower()
+                    patient_conditions.append(condition_name)
+        
+        # Build modifiers for Markov chain
+        modifiers = {}
+        
+        # Check for mass casualty event
+        if hasattr(patient, 'is_mass_casualty') and patient.is_mass_casualty:
+            modifiers['mass_casualty'] = True
+        
+        # Track time since injury for golden hour
+        modifiers['time_since_injury'] = 0.0
+        
+        # Check for degraded environment
+        if hasattr(patient, 'environmental_conditions'):
+            if any('combat' in cond.lower() for cond in patient.environmental_conditions):
+                modifiers['degraded_environment'] = True
+        
+        # Generate complete path using Markov chain
+        max_steps = 10
+        visited_facilities = []
+        
+        for step in range(max_steps):
+            # Record arrival at current facility
+            if current_facility not in ["KIA", "RTD"]:
+                visited_facilities.append(current_facility)
+                
+                # Add treatment at this facility
+                patient.add_treatment(
+                    facility=current_facility,
+                    date=current_time,
+                    treatments=self._generate_treatments(patient, current_facility),
+                    observations=self._generate_observations(patient, current_facility),
+                )
+                
+                # Add arrival event
+                patient.add_timeline_event("arrival", current_facility, current_time)
+            
+            # Update time since injury
+            hours_since_injury = (current_time - patient.injury_timestamp).total_seconds() / 3600
+            modifiers['time_since_injury'] = hours_since_injury
+            
+            # Get next facility from Markov chain
+            next_facility = self.markov_chain.get_next_facility(
+                current_facility,
+                patient.triage_category,
+                patient_conditions,
+                modifiers
+            )
+            
+            # Check if we've reached a terminal state
+            if next_facility in ["KIA", "RTD"]:
+                # Determine when the terminal event occurs
+                if current_facility == "POI":
+                    # Quick terminal event at POI
+                    terminal_time = current_time + datetime.timedelta(hours=random.uniform(0.1, 1.0))
+                else:
+                    # Terminal event during evacuation
+                    evac_hours = self.evacuation_manager.get_evacuation_time(
+                        current_facility, patient.triage_category
+                    )
+                    terminal_time = current_time + datetime.timedelta(hours=random.uniform(0, evac_hours))
+                
+                # Set final status
+                if next_facility == "KIA":
+                    patient.set_final_status(
+                        "KIA",
+                        current_facility,
+                        terminal_time,
+                        kia_timing="markov_chain_decision",
+                        facilities_visited=len(visited_facilities)
+                    )
+                else:  # RTD
+                    patient.set_final_status(
+                        "RTD",
+                        current_facility,
+                        terminal_time,
+                        rtd_timing="markov_chain_decision",
+                        facilities_visited=len(visited_facilities)
+                    )
+                return
+            
+            # Not terminal - prepare for evacuation/transit
+            if current_facility != "POI" or next_facility != current_facility:
+                # Get evacuation time at current facility
+                evac_hours = self.evacuation_manager.get_evacuation_time(
+                    current_facility, patient.triage_category
+                )
+                
+                # Add evacuation event
+                patient.add_timeline_event(
+                    "evacuation_start",
+                    current_facility,
+                    current_time,
+                    evacuation_duration_hours=evac_hours,
+                    triage_category=patient.triage_category,
+                    next_facility=next_facility
+                )
+                
+                # Update time after evacuation
+                current_time = current_time + datetime.timedelta(hours=evac_hours)
+                
+                # Get transit time to next facility
+                transit_hours = self.markov_chain.get_evacuation_time(
+                    current_facility, next_facility, "ground"
+                ) / 60.0  # Convert minutes to hours
+                
+                # Add transit event if moving to another facility
+                if next_facility != current_facility:
+                    patient.add_timeline_event(
+                        "transit_start",
+                        current_facility,
+                        current_time,
+                        from_facility=current_facility,
+                        to_facility=next_facility,
+                        transit_duration_hours=transit_hours,
+                        triage_category=patient.triage_category,
+                    )
+                    
+                    # Update time after transit
+                    current_time = current_time + datetime.timedelta(hours=transit_hours)
+            
+            # Move to next facility
+            current_facility = next_facility
+        
+        # If we exit the loop without reaching terminal state, set as Remains_Role4
+        patient.set_final_status(
+            "Remains_Role4",
+            current_facility,
+            current_time,
+            markov_chain_timeout=True,
+            facilities_visited=len(visited_facilities)
+        )
 
     def _determine_next_location(self, patient: Patient, current_facility_id: str) -> str:
         if current_facility_id in self._transition_probabilities:
