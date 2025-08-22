@@ -180,10 +180,11 @@ def main():
     if args.max_memory:
         os.environ["PATIENT_GENERATOR_MAX_MEMORY"] = str(args.max_memory)
     
-    # Set medical simulation environment variable
-    if args.enable_medical_simulation:
-        os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
-        print("Medical simulation enhancement enabled")
+    # Medical simulation is now the default behavior
+    os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
+    if not args.enable_medical_simulation:
+        # Only show message if explicitly disabled (which we don't support anymore)
+        pass
         
         # Load medical config if provided
         if args.medical_config:

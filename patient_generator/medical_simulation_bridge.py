@@ -31,7 +31,7 @@ class MedicalSimulationBridge:
         """
         self.orchestrator = PatientFlowOrchestrator()
         self.config = config or {}
-        self.enabled = os.environ.get('ENABLE_MEDICAL_SIMULATION', 'false').lower() == 'true'
+        self.enabled = os.environ.get('ENABLE_MEDICAL_SIMULATION', 'true').lower() == 'true'
         
         # Initialize treatment utility model independently (works with or without medical simulation)
         self.utility_model_enabled = os.environ.get('ENABLE_TREATMENT_UTILITY_MODEL', 'true').lower() == 'true'

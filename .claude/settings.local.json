@@ -147,7 +147,11 @@
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --count 5 --output output --format json)",
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 5 --output output --formats json)",
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 3 --output output --formats json)",
-      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 1 --output output --formats json)"
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 1 --output output --formats json)",
+      "Bash(ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 100 --output output_test --formats json)",
+      "Bash(time:*)",
+      "Bash(cp:*)",
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients/src python3 -c \"from main import app; print(''API imports OK'')\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

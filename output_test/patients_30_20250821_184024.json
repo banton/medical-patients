@@ -1,0 +1,5678 @@
+{
+  "metadata": {
+    "patient_count": 30,
+    "generated_at": "20250821",
+    "generated_at_iso": "2025-08-21T18:40:24.258111",
+    "generator_version": "2.0.0"
+  },
+  "patients": [
+    {
+      "id": 0,
+      "nationality": "EST",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role2",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Kask",
+        "given_name": "T\u00f5nu",
+        "gender": "male",
+        "birthdate": "1977-03-10",
+        "nationality": "EST",
+        "weight": 94.0,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "125689001",
+          "name": "Shrapnel injury"
+        }
+      ],
+      "severity": 6,
+      "additional_conditions": [
+        {
+          "code": "125670008",
+          "name": "War injury"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 102,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T11:19:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "wound_debridement"
+            },
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.5,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 107,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-02T22:09:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "surgical_exploration"
+            },
+            {
+              "code": "utility_model",
+              "display": "fragment_removal"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 102,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 10.9,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T10:54:00",
+          "hours_since_injury": 10.9,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.4,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T11:19:00",
+          "hours_since_injury": 11.3
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T11:19:00",
+          "hours_since_injury": 11.3,
+          "evacuation_duration_hours": 10.6,
+          "triage_category": "T2",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T21:55:00",
+          "hours_since_injury": 21.9,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.2,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-02T22:09:00",
+          "hours_since_injury": 22.1
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role2",
+          "timestamp": "2025-06-03T02:25:04.476198",
+          "hours_since_injury": 26.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 1,
+      "nationality": "NLD",
+      "gender": "male",
+      "injury_type": "Disease",
+      "triage": "T1",
+      "status": "POI",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "De Boer",
+        "given_name": "Levi",
+        "gender": "male",
+        "birthdate": "1987-09-11",
+        "nationality": "NLD",
+        "religion": "1077",
+        "weight": 80.7,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "25374005",
+          "name": "Gastroenteritis"
+        },
+        {
+          "code": "45170000",
+          "name": "Psychological stress"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "262574004",
+          "name": "Bullet wound"
+        },
+        {
+          "code": "302914006",
+          "name": "Ankle sprain"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 71,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "kia",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:12:01.655547",
+          "hours_since_injury": 0.2,
+          "kia_timing": "markov_chain_decision",
+          "facilities_visited": 1
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 2,
+      "nationality": "POL",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Paw\u0142owski",
+        "given_name": "Teresa",
+        "gender": "female",
+        "birthdate": "1984-08-18",
+        "nationality": "POL",
+        "religion": "1051",
+        "weight": 73.4,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "splint"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 64,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T12:15:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            },
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 84,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 11.5,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T11:30:00",
+          "hours_since_injury": 11.5,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.8,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T12:15:00",
+          "hours_since_injury": 12.2
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T12:43:39.500929",
+          "hours_since_injury": 12.7,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 3,
+      "nationality": "USA",
+      "gender": "female",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role2",
+      "front": "Finland",
+      "demographics": {
+        "family_name": "Martinez",
+        "given_name": "Mary",
+        "gender": "female",
+        "birthdate": "1980-08-05",
+        "nationality": "USA",
+        "religion": "1068",
+        "weight": 64.3,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "275272006",
+          "name": "Crush injury"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-08T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-08T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 61,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-08T12:31:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "anxiolytic"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 68,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-09T04:20:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "chest_tube"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 62,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-08T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-08T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 11.6,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-08T11:36:00",
+          "hours_since_injury": 11.6,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.9,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-08T12:31:00",
+          "hours_since_injury": 12.5
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-08T12:31:00",
+          "hours_since_injury": 12.5,
+          "evacuation_duration_hours": 14.6,
+          "triage_category": "T3",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-09T03:07:00",
+          "hours_since_injury": 27.1,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 1.2,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-09T04:20:00",
+          "hours_since_injury": 28.3
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role2",
+          "timestamp": "2025-06-09T07:42:58.165420",
+          "hours_since_injury": 31.7,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-08T00:00:00",
+      "day": "Day 8"
+    },
+    {
+      "id": 4,
+      "nationality": "POL",
+      "gender": "female",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role3",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Wi\u015bniewski",
+        "given_name": "El\u017cbieta",
+        "gender": "female",
+        "birthdate": "1996-04-08",
+        "nationality": "POL",
+        "religion": "1026",
+        "weight": 60.3,
+        "blood_type": "AB"
+      },
+      "conditions": [
+        {
+          "code": "87991007",
+          "name": "Abdominal pain"
+        },
+        {
+          "code": "372963008",
+          "name": "Heat exhaustion"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 66,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-04T09:23:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "splint"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 67,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-04T22:35:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "orthopedic_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "dialysis"
+            },
+            {
+              "code": "utility_model",
+              "display": "definitive_surgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 66,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.9,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T08:54:00",
+          "hours_since_injury": 8.9,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.5,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T09:23:00",
+          "hours_since_injury": 9.4
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T09:23:00",
+          "hours_since_injury": 9.4,
+          "evacuation_duration_hours": 12.2,
+          "triage_category": "T3",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T21:35:00",
+          "hours_since_injury": 21.6,
+          "from_facility": "Role1",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.0,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T22:35:00",
+          "hours_since_injury": 22.6
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-05T08:38:39.299574",
+          "hours_since_injury": 32.6,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 5,
+      "nationality": "FIN",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role3",
+      "front": "Finland",
+      "demographics": {
+        "family_name": "Heikkil\u00e4",
+        "given_name": "Anne",
+        "gender": "female",
+        "birthdate": "1993-03-27",
+        "nationality": "FIN",
+        "religion": "1025",
+        "weight": 80.7,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        }
+      ],
+      "severity": 6,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "psychological_first_aid"
+            },
+            {
+              "code": "utility_model",
+              "display": "cooling"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.9,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 87,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T09:43:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "counseling"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 89,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-01T20:30:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "damage_control_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "bipap"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 80,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-02T03:39:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            },
+            {
+              "code": "utility_model",
+              "display": "definitive_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "ventilator"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 85,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 9.4,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T09:24:00",
+          "hours_since_injury": 9.4,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.3,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:43:00",
+          "hours_since_injury": 9.7
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:43:00",
+          "hours_since_injury": 9.7,
+          "evacuation_duration_hours": 10.2,
+          "triage_category": "T2",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T19:55:00",
+          "hours_since_injury": 19.9,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.6,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-01T20:30:00",
+          "hours_since_injury": 20.5
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-01T20:30:00",
+          "hours_since_injury": 20.5,
+          "evacuation_duration_hours": 6.0,
+          "triage_category": "T2",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-02T02:30:00",
+          "hours_since_injury": 26.5,
+          "from_facility": "Role2",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.1,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-02T03:39:00",
+          "hours_since_injury": 27.6
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-02T11:12:59.475632",
+          "hours_since_injury": 35.2,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 4
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 6,
+      "nationality": "POL",
+      "gender": "male",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Koz\u0142owski",
+        "given_name": "Marek",
+        "gender": "male",
+        "birthdate": "1990-11-24",
+        "nationality": "POL",
+        "religion": "1013",
+        "weight": 65.7,
+        "blood_type": "AB"
+      },
+      "conditions": [
+        {
+          "code": "302914006",
+          "name": "Ankle sprain"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 72,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T11:06:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            },
+            {
+              "code": "utility_model",
+              "display": "anxiolytic"
+            },
+            {
+              "code": "utility_model",
+              "display": "splint"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 87,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 10.7,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T10:42:00",
+          "hours_since_injury": 10.7,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.4,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T11:06:00",
+          "hours_since_injury": 11.1
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T18:24:03.437853",
+          "hours_since_injury": 18.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 7,
+      "nationality": "GBR",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T1",
+      "status": "Role3",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Hall",
+        "given_name": "Lily",
+        "gender": "female",
+        "birthdate": "1978-07-29",
+        "nationality": "GBR",
+        "weight": 68.3,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        },
+        {
+          "code": "125670008",
+          "name": "War injury"
+        },
+        {
+          "code": "262574004",
+          "name": "Bullet wound"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "361220002",
+          "name": "Penetrating injury"
+        },
+        {
+          "code": "9826008",
+          "name": "Conjunctivitis"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "basic_bandage"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            },
+            {
+              "code": "utility_model",
+              "display": "psychological_first_aid"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 66,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-04T09:06:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "damage_control_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "psychiatric_evaluation"
+            },
+            {
+              "code": "utility_model",
+              "display": "surgical_exploration"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 64,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-04T16:17:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "dialysis"
+            },
+            {
+              "code": "utility_model",
+              "display": "skin_grafting"
+            },
+            {
+              "code": "utility_model",
+              "display": "definitive_surgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 78,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 7.9,
+          "triage_category": "T1",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T07:54:00",
+          "hours_since_injury": 7.9,
+          "from_facility": "POI",
+          "to_facility": "Role2",
+          "transit_duration_hours": 1.2,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T09:06:00",
+          "hours_since_injury": 9.1
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T09:06:00",
+          "hours_since_injury": 9.1,
+          "evacuation_duration_hours": 6.3,
+          "triage_category": "T1",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T15:24:00",
+          "hours_since_injury": 15.4,
+          "from_facility": "Role2",
+          "to_facility": "Role3",
+          "transit_duration_hours": 0.9,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T16:17:00",
+          "hours_since_injury": 16.3
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T21:33:17.919634",
+          "hours_since_injury": 21.6,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 8,
+      "nationality": "POL",
+      "gender": "female",
+      "injury_type": "Disease",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Nowakowski",
+        "given_name": "Halina",
+        "gender": "female",
+        "birthdate": "2003-10-20",
+        "nationality": "POL",
+        "religion": "1025",
+        "weight": 68.3,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "68566005",
+          "name": "Urinary tract infection"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 65,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T08:56:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "urine_culture"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 63,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.1,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T08:06:00",
+          "hours_since_injury": 8.1,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.8,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T08:56:00",
+          "hours_since_injury": 8.9
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T12:40:36.140742",
+          "hours_since_injury": 12.7,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 9,
+      "nationality": "FIN",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role1",
+      "front": "Finland",
+      "demographics": {
+        "family_name": "Virtanen",
+        "given_name": "Leena",
+        "gender": "female",
+        "birthdate": "2005-04-22",
+        "nationality": "FIN",
+        "religion": "1025",
+        "weight": 57.5,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "19130008",
+          "name": "Traumatic brain injury"
+        }
+      ],
+      "severity": 6,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "oxygen"
+            },
+            {
+              "code": "utility_model",
+              "display": "cervical_collar"
+            },
+            {
+              "code": "utility_model",
+              "display": "basic_airway"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.5,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 61,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T11:56:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "mannitol"
+            },
+            {
+              "code": "utility_model",
+              "display": "sedation"
+            },
+            {
+              "code": "utility_model",
+              "display": "hypertonic_saline"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 99,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 11.2,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T11:12:00",
+          "hours_since_injury": 11.2,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T11:56:00",
+          "hours_since_injury": 11.9
+        },
+        {
+          "event_type": "kia",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T23:22:14.710316",
+          "hours_since_injury": 23.4,
+          "kia_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 10,
+      "nationality": "LTU",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T1",
+      "status": "Role3",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Bak\u0161ys",
+        "given_name": "Sofija",
+        "gender": "female",
+        "birthdate": "1987-02-06",
+        "nationality": "LTU",
+        "religion": "1049",
+        "weight": 68.5,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "125670008",
+          "name": "War injury"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "9826008",
+          "name": "Conjunctivitis"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 87,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-04T03:58:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "splint"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 84,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-04T13:33:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "damage_control_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 79,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-04T19:34:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            },
+            {
+              "code": "utility_model",
+              "display": "definitive_surgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 89,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 3.8,
+          "triage_category": "T1",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T03:48:00",
+          "hours_since_injury": 3.8,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.2,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T03:58:00",
+          "hours_since_injury": 4.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T03:58:00",
+          "hours_since_injury": 4.0,
+          "evacuation_duration_hours": 9.0,
+          "triage_category": "T1",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T12:58:00",
+          "hours_since_injury": 13.0,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.6,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T13:33:00",
+          "hours_since_injury": 13.6
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T13:33:00",
+          "hours_since_injury": 13.6,
+          "evacuation_duration_hours": 4.7,
+          "triage_category": "T1",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T18:15:00",
+          "hours_since_injury": 18.2,
+          "from_facility": "Role2",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.3,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T19:34:00",
+          "hours_since_injury": 19.6
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T20:25:23.251058",
+          "hours_since_injury": 20.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 4
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 11,
+      "nationality": "NLD",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "De Groot",
+        "given_name": "Cornelis",
+        "gender": "male",
+        "birthdate": "2001-05-04",
+        "nationality": "NLD",
+        "religion": "1051",
+        "weight": 69.3,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "125670008",
+          "name": "War injury"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 65,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T09:32:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "splint"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 75,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 9.1,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T09:06:00",
+          "hours_since_injury": 9.1,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.4,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T09:32:00",
+          "hours_since_injury": 9.5
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T22:21:12.175324",
+          "hours_since_injury": 22.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 12,
+      "nationality": "GBR",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T1",
+      "status": "Role4",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Wood",
+        "given_name": "Ava",
+        "gender": "female",
+        "birthdate": "1985-03-10",
+        "nationality": "GBR",
+        "religion": "1068",
+        "weight": 56.8,
+        "blood_type": "AB"
+      },
+      "conditions": [
+        {
+          "code": "19130008",
+          "name": "Traumatic brain injury"
+        },
+        {
+          "code": "125689001",
+          "name": "Shrapnel injury"
+        },
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "62106007",
+          "name": "Concussion with loss of consciousness"
+        },
+        {
+          "code": "309557009",
+          "name": "Intracranial hemorrhage"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "oxygen"
+            },
+            {
+              "code": "utility_model",
+              "display": "cervical_collar"
+            },
+            {
+              "code": "utility_model",
+              "display": "basic_airway"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 95,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T04:03:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "mannitol"
+            },
+            {
+              "code": "utility_model",
+              "display": "sedation"
+            },
+            {
+              "code": "utility_model",
+              "display": "hypertonic_saline"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.2,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 54,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-01T10:50:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "icp_monitoring"
+            },
+            {
+              "code": "utility_model",
+              "display": "craniotomy_prep"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 83,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-01T20:06:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "neurosurgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "icp_management"
+            },
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 69,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role4",
+          "date": "2025-06-02T06:35:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "basic_bandage"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.5,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 88,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 3.7,
+          "triage_category": "T1",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T03:42:00",
+          "hours_since_injury": 3.7,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.3,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T04:03:00",
+          "hours_since_injury": 4.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T04:03:00",
+          "hours_since_injury": 4.0,
+          "evacuation_duration_hours": 5.9,
+          "triage_category": "T1",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:57:00",
+          "hours_since_injury": 9.9,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.9,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-01T10:50:00",
+          "hours_since_injury": 10.8
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-01T10:50:00",
+          "hours_since_injury": 10.8,
+          "evacuation_duration_hours": 6.8,
+          "triage_category": "T1",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-01T17:38:00",
+          "hours_since_injury": 17.6,
+          "from_facility": "Role2",
+          "to_facility": "Role3",
+          "transit_duration_hours": 2.5,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-01T20:06:00",
+          "hours_since_injury": 20.1
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-01T20:06:00",
+          "hours_since_injury": 20.1,
+          "evacuation_duration_hours": 4.9,
+          "triage_category": "T1",
+          "next_facility": "Role4"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-02T01:00:00",
+          "hours_since_injury": 25.0,
+          "from_facility": "Role3",
+          "to_facility": "Role4",
+          "transit_duration_hours": 5.6,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role4",
+          "timestamp": "2025-06-02T06:35:00",
+          "hours_since_injury": 30.6
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role4",
+          "timestamp": "2025-06-03T16:45:34.520181",
+          "hours_since_injury": 64.8,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 5
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 13,
+      "nationality": "EST",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T1",
+      "status": "Role1",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Rebane",
+        "given_name": "Rasmus",
+        "gender": "male",
+        "birthdate": "1983-02-06",
+        "nationality": "EST",
+        "religion": "1077",
+        "weight": 79.7,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "284551006",
+          "name": "Traumatic amputation of limb"
+        },
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "23924001",
+          "name": "Tight chest"
+        },
+        {
+          "code": "68566005",
+          "name": "Urinary tract infection"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 67,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T04:43:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "stump_dressing"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.5,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 60,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 4.1,
+          "triage_category": "T1",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T04:06:00",
+          "hours_since_injury": 4.1,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.6,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T04:43:00",
+          "hours_since_injury": 4.7
+        },
+        {
+          "event_type": "kia",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T11:10:46.181459",
+          "hours_since_injury": 11.2,
+          "kia_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 14,
+      "nationality": "LTU",
+      "gender": "male",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role2",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Bak\u0161ys",
+        "given_name": "Benas",
+        "gender": "male",
+        "birthdate": "2001-06-22",
+        "nationality": "LTU",
+        "religion": "1013",
+        "weight": 66.9,
+        "blood_type": "AB"
+      },
+      "conditions": [
+        {
+          "code": "23924001",
+          "name": "Tight chest"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 58,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T09:48:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 80,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-02T01:19:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "psychiatric_evaluation"
+            },
+            {
+              "code": "utility_model",
+              "display": "bipap"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 73,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.8,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T08:48:00",
+          "hours_since_injury": 8.8,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 1.0,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:48:00",
+          "hours_since_injury": 9.8
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:48:00",
+          "hours_since_injury": 9.8,
+          "evacuation_duration_hours": 14.8,
+          "triage_category": "T3",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T00:36:00",
+          "hours_since_injury": 24.6,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-02T01:19:00",
+          "hours_since_injury": 25.3
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role2",
+          "timestamp": "2025-06-02T01:32:32.815248",
+          "hours_since_injury": 25.5,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 15,
+      "nationality": "LTU",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Bak\u0161ys",
+        "given_name": "Mantas",
+        "gender": "male",
+        "birthdate": "1979-09-08",
+        "nationality": "LTU",
+        "religion": "1077",
+        "weight": 79.0,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "125605004",
+          "name": "Traumatic shock"
+        }
+      ],
+      "severity": 4,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            },
+            {
+              "code": "utility_model",
+              "display": "psychological_first_aid"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 77,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-04T09:11:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "splint"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            },
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 56,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 9.1,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T09:06:00",
+          "hours_since_injury": 9.1,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.1,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T09:11:00",
+          "hours_since_injury": 9.2
+        },
+        {
+          "event_type": "kia",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T14:41:36.268056",
+          "hours_since_injury": 14.7,
+          "kia_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 16,
+      "nationality": "EST",
+      "gender": "female",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T2",
+      "status": "Role3",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Luik",
+        "given_name": "Laura",
+        "gender": "female",
+        "birthdate": "2002-12-07",
+        "nationality": "EST",
+        "religion": "1077",
+        "weight": 69.4,
+        "blood_type": "AB"
+      },
+      "conditions": [
+        {
+          "code": "55566008",
+          "name": "Burn injury"
+        },
+        {
+          "code": "302914006",
+          "name": "Ankle sprain"
+        }
+      ],
+      "severity": 4,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 65,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T09:01:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "counseling"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 74,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-02T20:43:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "dialysis"
+            },
+            {
+              "code": "utility_model",
+              "display": "definitive_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "neurosurgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 91,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.2,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T08:12:00",
+          "hours_since_injury": 8.2,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.8,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T09:01:00",
+          "hours_since_injury": 9.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T09:01:00",
+          "hours_since_injury": 9.0,
+          "evacuation_duration_hours": 10.7,
+          "triage_category": "T2",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T19:43:00",
+          "hours_since_injury": 19.7,
+          "from_facility": "Role1",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.0,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-02T20:43:00",
+          "hours_since_injury": 20.7
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-03T03:25:26.556172",
+          "hours_since_injury": 27.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 17,
+      "nationality": "POL",
+      "gender": "male",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role2",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Nowak",
+        "given_name": "Marek",
+        "gender": "male",
+        "birthdate": "1999-02-12",
+        "nationality": "POL",
+        "religion": "1051",
+        "weight": 59.7,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "302914006",
+          "name": "Ankle sprain"
+        },
+        {
+          "code": "87991007",
+          "name": "Abdominal pain"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 75,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T09:51:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "counseling"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 89,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-01T23:25:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "iv_antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "damage_control_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.2,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 83,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 9.5,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T09:30:00",
+          "hours_since_injury": 9.5,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.3,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:51:00",
+          "hours_since_injury": 9.8
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T09:51:00",
+          "hours_since_injury": 9.8,
+          "evacuation_duration_hours": 12.2,
+          "triage_category": "T3",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T22:03:00",
+          "hours_since_injury": 22.1,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 1.4,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-01T23:25:00",
+          "hours_since_injury": 23.4
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role2",
+          "timestamp": "2025-06-02T00:57:07.736757",
+          "hours_since_injury": 25.0,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 18,
+      "nationality": "EST",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T1",
+      "status": "Role4",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Sepp",
+        "given_name": "Mari",
+        "gender": "female",
+        "birthdate": "1991-04-28",
+        "nationality": "EST",
+        "religion": "1051",
+        "weight": 74.1,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "125670008",
+          "name": "War injury"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "372963008",
+          "name": "Heat exhaustion"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 78,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-04T06:48:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            },
+            {
+              "code": "utility_model",
+              "display": "definitive_surgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.9,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 62,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role4",
+          "date": "2025-06-04T23:14:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "basic_bandage"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 83,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 5.8,
+          "triage_category": "T1",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T05:48:00",
+          "hours_since_injury": 5.8,
+          "from_facility": "POI",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.0,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T06:48:00",
+          "hours_since_injury": 6.8
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T06:48:00",
+          "hours_since_injury": 6.8,
+          "evacuation_duration_hours": 10.5,
+          "triage_category": "T1",
+          "next_facility": "Role4"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-04T17:18:00",
+          "hours_since_injury": 17.3,
+          "from_facility": "Role3",
+          "to_facility": "Role4",
+          "transit_duration_hours": 5.9,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role4",
+          "timestamp": "2025-06-04T23:14:00",
+          "hours_since_injury": 23.2
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role4",
+          "timestamp": "2025-06-05T05:46:26.602874",
+          "hours_since_injury": 29.8,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 19,
+      "nationality": "EST",
+      "gender": "female",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Kukk",
+        "given_name": "Anne",
+        "gender": "female",
+        "birthdate": "1989-04-09",
+        "nationality": "EST",
+        "religion": "1077",
+        "weight": 60.9,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "267036007",
+          "name": "Dyspnea"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 35.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 113,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T11:50:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 72,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 11.6,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T11:36:00",
+          "hours_since_injury": 11.6,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.2,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T11:50:00",
+          "hours_since_injury": 11.8
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T16:21:30.747875",
+          "hours_since_injury": 16.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 20,
+      "nationality": "LTU",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role2",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Luko\u0161evi\u010dius",
+        "given_name": "Herkus",
+        "gender": "male",
+        "birthdate": "1978-11-10",
+        "nationality": "LTU",
+        "religion": "1049",
+        "weight": 69.0,
+        "blood_type": "AB"
+      },
+      "conditions": [
+        {
+          "code": "361220002",
+          "name": "Penetrating injury"
+        }
+      ],
+      "severity": 4,
+      "additional_conditions": [
+        {
+          "code": "43878008",
+          "name": "Streptococcal pharyngitis"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 77,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T08:35:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 108,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-02T19:07:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "surgical_exploration"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_tube"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 87,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.3,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T08:18:00",
+          "hours_since_injury": 8.3,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.3,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T08:35:00",
+          "hours_since_injury": 8.6
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T08:35:00",
+          "hours_since_injury": 8.6,
+          "evacuation_duration_hours": 9.8,
+          "triage_category": "T2",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T18:23:00",
+          "hours_since_injury": 18.4,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-02T19:07:00",
+          "hours_since_injury": 19.1
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role2",
+          "timestamp": "2025-06-03T03:27:17.316537",
+          "hours_since_injury": 27.5,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 21,
+      "nationality": "ESP",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role3",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Rodr\u00edguez",
+        "given_name": "Antonio",
+        "gender": "male",
+        "birthdate": "2003-12-23",
+        "nationality": "ESP",
+        "religion": "1013",
+        "weight": 77.2,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "2055003",
+          "name": "Laceration of hand"
+        }
+      ],
+      "severity": 6,
+      "additional_conditions": [
+        {
+          "code": "125670008",
+          "name": "War injury"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "oral_rehydration"
+            },
+            {
+              "code": "utility_model",
+              "display": "cooling"
+            },
+            {
+              "code": "utility_model",
+              "display": "buddy_aid"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 81,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-04T10:18:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "splint"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 70,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-05T01:29:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "surgical_exploration"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_tube"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 89,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-05T13:33:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            },
+            {
+              "code": "utility_model",
+              "display": "skin_grafting"
+            },
+            {
+              "code": "utility_model",
+              "display": "orthopedic_surgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 40,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 10.0,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T10:00:00",
+          "hours_since_injury": 10.0,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.3,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T10:18:00",
+          "hours_since_injury": 10.3
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T10:18:00",
+          "hours_since_injury": 10.3,
+          "evacuation_duration_hours": 14.5,
+          "triage_category": "T2",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-05T00:48:00",
+          "hours_since_injury": 24.8,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-05T01:29:00",
+          "hours_since_injury": 25.5
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-05T01:29:00",
+          "hours_since_injury": 25.5,
+          "evacuation_duration_hours": 10.4,
+          "triage_category": "T2",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-05T11:53:00",
+          "hours_since_injury": 35.9,
+          "from_facility": "Role2",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.7,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-05T13:33:00",
+          "hours_since_injury": 37.5
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-05T15:21:50.456352",
+          "hours_since_injury": 39.4,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 4
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 22,
+      "nationality": "EST",
+      "gender": "male",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T2",
+      "status": "Role1",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Kaasik",
+        "given_name": "Oliver",
+        "gender": "male",
+        "birthdate": "1979-04-24",
+        "nationality": "EST",
+        "religion": "1077",
+        "weight": 80.5,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "87991007",
+          "name": "Abdominal pain"
+        },
+        {
+          "code": "37782003",
+          "name": "Fracture of bone"
+        },
+        {
+          "code": "409711008",
+          "name": "Vehicle accident injury"
+        }
+      ],
+      "severity": 4,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 41,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T10:27:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "counseling"
+            },
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 65,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 9.8,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T09:48:00",
+          "hours_since_injury": 9.8,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T10:27:00",
+          "hours_since_injury": 10.4
+        },
+        {
+          "event_type": "kia",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T20:06:37.664006",
+          "hours_since_injury": 20.1,
+          "kia_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 23,
+      "nationality": "GBR",
+      "gender": "female",
+      "injury_type": "Disease",
+      "triage": "T1",
+      "status": "Role4",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Davies",
+        "given_name": "Jennifer",
+        "gender": "female",
+        "birthdate": "2002-10-10",
+        "nationality": "GBR",
+        "religion": "1077",
+        "weight": 75.8,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "195662009",
+          "name": "Acute respiratory illness"
+        },
+        {
+          "code": "386661006",
+          "name": "Fever"
+        },
+        {
+          "code": "68566005",
+          "name": "Urinary tract infection"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-08T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-08T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 71,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-08T05:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "intubation"
+            },
+            {
+              "code": "utility_model",
+              "display": "ventilator"
+            },
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 76,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role4",
+          "date": "2025-06-08T21:06:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "basic_bandage"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 77,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-08T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-08T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 4.0,
+          "triage_category": "T1",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-08T04:00:00",
+          "hours_since_injury": 4.0,
+          "from_facility": "POI",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.0,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-08T05:00:00",
+          "hours_since_injury": 5.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-08T05:00:00",
+          "hours_since_injury": 5.0,
+          "evacuation_duration_hours": 11.1,
+          "triage_category": "T1",
+          "next_facility": "Role4"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-08T16:06:00",
+          "hours_since_injury": 16.1,
+          "from_facility": "Role3",
+          "to_facility": "Role4",
+          "transit_duration_hours": 5.0,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role4",
+          "timestamp": "2025-06-08T21:06:00",
+          "hours_since_injury": 21.1
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role4",
+          "timestamp": "2025-06-09T17:39:30.838233",
+          "hours_since_injury": 41.7,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-08T00:00:00",
+      "day": "Day 8"
+    },
+    {
+      "id": 24,
+      "nationality": "POL",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "W\u00f3jcik",
+        "given_name": "Barbara",
+        "gender": "female",
+        "birthdate": "1981-12-19",
+        "nationality": "POL",
+        "religion": "1049",
+        "weight": 63.5,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "19130008",
+          "name": "Traumatic brain injury"
+        }
+      ],
+      "severity": 4,
+      "additional_conditions": [
+        {
+          "code": "309557009",
+          "name": "Intracranial hemorrhage"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "oxygen"
+            },
+            {
+              "code": "utility_model",
+              "display": "cervical_collar"
+            },
+            {
+              "code": "utility_model",
+              "display": "basic_airway"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 100,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-01T08:27:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "mannitol"
+            },
+            {
+              "code": "utility_model",
+              "display": "sedation"
+            },
+            {
+              "code": "utility_model",
+              "display": "hypertonic_saline"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.5,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 102,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 7.8,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-01T07:48:00",
+          "hours_since_injury": 7.8,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T08:27:00",
+          "hours_since_injury": 8.4
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-01T14:05:14.097893",
+          "hours_since_injury": 14.1,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-01T00:00:00",
+      "day": "Day 1"
+    },
+    {
+      "id": 25,
+      "nationality": "NLD",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T1",
+      "status": "Role4",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Jansen",
+        "given_name": "Antonius",
+        "gender": "male",
+        "birthdate": "1991-07-04",
+        "nationality": "NLD",
+        "religion": "1013",
+        "weight": 71.3,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "125605004",
+          "name": "Traumatic shock"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "125689001",
+          "name": "Shrapnel injury"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-08T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-08T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "cooling"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine_autoinjector"
+            },
+            {
+              "code": "utility_model",
+              "display": "buddy_aid"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 73,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-08T04:37:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.5,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 90,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-08T10:32:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "bipap"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_tube"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 70,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-08T16:37:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "orthopedic_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "dialysis"
+            },
+            {
+              "code": "utility_model",
+              "display": "neurosurgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 81,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role4",
+          "date": "2025-06-09T02:13:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "basic_bandage"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 74,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-08T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-08T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 4.2,
+          "triage_category": "T1",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-08T04:12:00",
+          "hours_since_injury": 4.2,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.4,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-08T04:37:00",
+          "hours_since_injury": 4.6
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-08T04:37:00",
+          "hours_since_injury": 4.6,
+          "evacuation_duration_hours": 5.3,
+          "triage_category": "T1",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-08T09:55:00",
+          "hours_since_injury": 9.9,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.6,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-08T10:32:00",
+          "hours_since_injury": 10.5
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-08T10:32:00",
+          "hours_since_injury": 10.5,
+          "evacuation_duration_hours": 4.1,
+          "triage_category": "T1",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role2",
+          "timestamp": "2025-06-08T14:38:00",
+          "hours_since_injury": 14.6,
+          "from_facility": "Role2",
+          "to_facility": "Role3",
+          "transit_duration_hours": 2.0,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-08T16:37:00",
+          "hours_since_injury": 16.6
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-08T16:37:00",
+          "hours_since_injury": 16.6,
+          "evacuation_duration_hours": 4.4,
+          "triage_category": "T1",
+          "next_facility": "Role4"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role3",
+          "timestamp": "2025-06-08T21:01:00",
+          "hours_since_injury": 21.0,
+          "from_facility": "Role3",
+          "to_facility": "Role4",
+          "transit_duration_hours": 5.2,
+          "triage_category": "T1"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role4",
+          "timestamp": "2025-06-09T02:13:00",
+          "hours_since_injury": 26.2
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role4",
+          "timestamp": "2025-06-09T16:32:37.336424",
+          "hours_since_injury": 40.5,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 5
+        }
+      ],
+      "injury_time": "2025-06-08T00:00:00",
+      "day": "Day 8"
+    },
+    {
+      "id": 26,
+      "nationality": "NLD",
+      "gender": "male",
+      "injury_type": "Battle Injury",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Peters",
+        "given_name": "Johan",
+        "gender": "male",
+        "birthdate": "2007-02-25",
+        "nationality": "NLD",
+        "religion": "1026",
+        "weight": 84.2,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "262574004",
+          "name": "Bullet wound"
+        }
+      ],
+      "severity": 2,
+      "additional_conditions": [
+        {
+          "code": "20376005",
+          "name": "Hemorrhage"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 51,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T11:25:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.8,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 72,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 10.7,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T10:42:00",
+          "hours_since_injury": 10.7,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.7,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T11:25:00",
+          "hours_since_injury": 11.4
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T12:46:07.727221",
+          "hours_since_injury": 12.8,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 27,
+      "nationality": "NLD",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T3",
+      "status": "Role2",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "De Boer",
+        "given_name": "Anna",
+        "gender": "female",
+        "birthdate": "1981-11-16",
+        "nationality": "NLD",
+        "weight": 68.2,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "262574004",
+          "name": "Bullet wound"
+        }
+      ],
+      "severity": 2,
+      "additional_conditions": [
+        {
+          "code": "20376005",
+          "name": "Hemorrhage"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-04T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "hemostatic_gauze"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.1,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 90,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-04T09:42:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "chest_seal"
+            },
+            {
+              "code": "utility_model",
+              "display": "morphine"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.6,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 65,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role2",
+          "date": "2025-06-04T22:29:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "damage_control_surgery"
+            },
+            {
+              "code": "utility_model",
+              "display": "blood_transfusion"
+            },
+            {
+              "code": "utility_model",
+              "display": "chest_tube"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 38.3,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 81,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.8,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-04T08:48:00",
+          "hours_since_injury": 8.8,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.9,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T09:42:00",
+          "hours_since_injury": 9.7
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T09:42:00",
+          "hours_since_injury": 9.7,
+          "evacuation_duration_hours": 12.3,
+          "triage_category": "T3",
+          "next_facility": "Role2"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-04T22:00:00",
+          "hours_since_injury": 22.0,
+          "from_facility": "Role1",
+          "to_facility": "Role2",
+          "transit_duration_hours": 0.5,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T22:29:00",
+          "hours_since_injury": 22.5
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role2",
+          "timestamp": "2025-06-04T22:49:04.629696",
+          "hours_since_injury": 22.8,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-04T00:00:00",
+      "day": "Day 4"
+    },
+    {
+      "id": 28,
+      "nationality": "LTU",
+      "gender": "female",
+      "injury_type": "Battle Injury",
+      "triage": "T2",
+      "status": "Role3",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Mickevi\u010dius",
+        "given_name": "Laura",
+        "gender": "female",
+        "birthdate": "2005-01-20",
+        "nationality": "LTU",
+        "religion": "1026",
+        "weight": 54.0,
+        "blood_type": "A"
+      },
+      "conditions": [
+        {
+          "code": "125596004",
+          "name": "Injury by explosive"
+        }
+      ],
+      "severity": 4,
+      "additional_conditions": [
+        {
+          "code": "43878008",
+          "name": "Streptococcal pharyngitis"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "buddy_aid"
+            },
+            {
+              "code": "utility_model",
+              "display": "oral_rehydration"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 36.7,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 90,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T10:23:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "anxiolytic"
+            },
+            {
+              "code": "utility_model",
+              "display": "antibiotics"
+            },
+            {
+              "code": "utility_model",
+              "display": "pressure_dressing"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.4,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 62,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role3",
+          "date": "2025-06-03T01:53:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "dialysis"
+            },
+            {
+              "code": "utility_model",
+              "display": "icu_care"
+            },
+            {
+              "code": "utility_model",
+              "display": "neurosurgery"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 86,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 9.9,
+          "triage_category": "T2",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T09:54:00",
+          "hours_since_injury": 9.9,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.5,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T10:23:00",
+          "hours_since_injury": 10.4
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T10:23:00",
+          "hours_since_injury": 10.4,
+          "evacuation_duration_hours": 14.5,
+          "triage_category": "T2",
+          "next_facility": "Role3"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "Role1",
+          "timestamp": "2025-06-03T00:53:00",
+          "hours_since_injury": 24.9,
+          "from_facility": "Role1",
+          "to_facility": "Role3",
+          "transit_duration_hours": 1.0,
+          "triage_category": "T2"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role3",
+          "timestamp": "2025-06-03T01:53:00",
+          "hours_since_injury": 25.9
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role3",
+          "timestamp": "2025-06-03T04:01:34.159695",
+          "hours_since_injury": 28.0,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 3
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    },
+    {
+      "id": 29,
+      "nationality": "GBR",
+      "gender": "male",
+      "injury_type": "Non-Battle Injury",
+      "triage": "T3",
+      "status": "Role1",
+      "front": "Estonia",
+      "demographics": {
+        "family_name": "Wright",
+        "given_name": "Richard",
+        "gender": "male",
+        "birthdate": "1994-09-30",
+        "nationality": "GBR",
+        "religion": "1051",
+        "weight": 54.9,
+        "blood_type": "B"
+      },
+      "conditions": [
+        {
+          "code": "87991007",
+          "name": "Abdominal pain"
+        }
+      ],
+      "severity": 2,
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-02T00:00:00",
+          "treatments": [],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.2,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 85,
+              "unit": "/min"
+            }
+          ]
+        },
+        {
+          "facility": "Role1",
+          "date": "2025-06-02T08:53:00",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "counseling"
+            },
+            {
+              "code": "utility_model",
+              "display": "iv_fluids"
+            },
+            {
+              "code": "utility_model",
+              "display": "tourniquet"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 81,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "evacuation_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T00:00:00",
+          "hours_since_injury": 0.0,
+          "evacuation_duration_hours": 8.8,
+          "triage_category": "T3",
+          "next_facility": "Role1"
+        },
+        {
+          "event_type": "transit_start",
+          "facility": "POI",
+          "timestamp": "2025-06-02T08:48:00",
+          "hours_since_injury": 8.8,
+          "from_facility": "POI",
+          "to_facility": "Role1",
+          "transit_duration_hours": 0.1,
+          "triage_category": "T3"
+        },
+        {
+          "event_type": "arrival",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T08:53:00",
+          "hours_since_injury": 8.9
+        },
+        {
+          "event_type": "rtd",
+          "facility": "Role1",
+          "timestamp": "2025-06-02T18:31:51.174095",
+          "hours_since_injury": 18.5,
+          "rtd_timing": "markov_chain_decision",
+          "facilities_visited": 2
+        }
+      ],
+      "injury_time": "2025-06-02T00:00:00",
+      "day": "Day 2"
+    }
+  ]
+}
