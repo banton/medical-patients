@@ -90,7 +90,7 @@ class AccordionComponent {
         this.validators.set(0, this.validateBattleFronts.bind(this));
         this.validators.set(1, this.validateInjuries.bind(this));
         this.validators.set(2, this.validateMedicalSimulation.bind(this)); // Medical Simulation Settings
-        this.validators.set(3, this.validateAdvancedConfig.bind(this));    // Advanced Configuration
+        this.validators.set(3, this.validateAdvancedConfig.bind(this)); // Advanced Configuration
     }
 
     handleKeyDown(e, index) {
@@ -200,18 +200,19 @@ class AccordionComponent {
         // Special handling for Medical Simulation Settings (index 2) - no editor, uses checkboxes
         // and Advanced Configuration (index 3) - optional section with default valid state
         if (index === 2 || index === 3) {
-            if (!validator) return;
-            
+            if (!validator) {
+                return;
+            }
+
             // For Advanced Config, use editor content if available, otherwise empty string
             let content = '';
             if (index === 3 && item.editor) {
                 content = item.editor.value.trim();
             }
-            
+
             const result = validator(content);
             this.updateValidationUI(index, result);
             item.isValid = result.valid;
-            
             // Emit validation event
             this.container.dispatchEvent(
                 new CustomEvent('accordion:validate', {
@@ -360,7 +361,6 @@ class AccordionComponent {
 
             // Check if this is simplified scenario format (injury_mix) or legacy format (injury_distribution)
             const hasInjuryMix = config.injury_mix && typeof config.injury_mix === 'object';
-            const hasInjuryDistribution = config.injury_distribution && typeof config.injury_distribution === 'object';
 
             if (hasInjuryMix || config.base_date || config.days_of_fighting) {
                 // Validate scenario configuration
@@ -456,7 +456,9 @@ class AccordionComponent {
             // Validate treatment effectiveness if provided
             if (config.treatment_effectiveness) {
                 for (const [treatment, value] of Object.entries(config.treatment_effectiveness)) {
-                    if (treatment === 'description') continue;
+                    if (treatment === 'description') {
+                        continue;
+                    }
                     if (typeof value !== 'number' || value < 0 || value > 1) {
                         return {
                             valid: false,
@@ -469,7 +471,9 @@ class AccordionComponent {
             // Validate diagnostic accuracy if provided
             if (config.diagnostic_accuracy) {
                 for (const [facility, value] of Object.entries(config.diagnostic_accuracy)) {
-                    if (facility === 'description') continue;
+                    if (facility === 'description') {
+                        continue;
+                    }
                     if (typeof value !== 'number' || value < 0 || value > 1) {
                         return {
                             valid: false,
