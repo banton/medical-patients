@@ -365,7 +365,7 @@ class TreatmentUtilityModel:
         n_selections = min(max_selections, len(treatment_utilities))
 
         # Use numpy's random choice with probabilities
-        indices = np.random.choice(
+        indices = np.random.choice(  # noqa: NPY002
             len(treatment_utilities),
             size=min(n_selections, len(treatment_utilities)),
             replace=False,

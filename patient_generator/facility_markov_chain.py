@@ -155,7 +155,7 @@ class FacilityMarkovChain:
         facilities = list(normalized_probs.keys())
         probabilities = list(normalized_probs.values())
 
-        return np.random.choice(facilities, p=probabilities)
+        return np.random.choice(facilities, p=probabilities)  # noqa: NPY002
 
 
     def _apply_special_conditions(
@@ -374,7 +374,7 @@ class FacilityMarkovChain:
         std_time = time_params.get("std", mean_time * 0.2)
 
         # Generate time with normal distribution, ensure positive
-        return max(5, int(np.random.normal(mean_time, std_time)))
+        return max(5, int(np.random.normal(mean_time, std_time)))  # noqa: NPY002
 
 
     def assess_mortality(

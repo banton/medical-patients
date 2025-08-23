@@ -186,7 +186,7 @@ class DiagnosticUncertaintyEngine:
         normalized_probs = [item["probability"] / total_prob for item in condition_misdiagnoses]
 
         # Select misdiagnosis using weighted random choice
-        selected_idx = np.random.choice(len(condition_misdiagnoses), p=normalized_probs)
+        selected_idx = np.random.choice(len(condition_misdiagnoses), p=normalized_probs)  # noqa: NPY002
         return condition_misdiagnoses[selected_idx]["code"]
 
     def _generic_misdiagnosis(self, true_condition_code: str) -> str:
@@ -283,7 +283,7 @@ class DiagnosticUncertaintyEngine:
         states = list(transition_probs.keys())
         probabilities = list(transition_probs.values())
 
-        next_state = np.random.choice(states, p=probabilities)
+        next_state = np.random.choice(states, p=probabilities)  # noqa: NPY002
         self.patient_diagnostic_states[patient_id]["current_state"] = next_state
 
     def get_diagnostic_confidence(self, patient_id: str) -> Dict[str, Any]:

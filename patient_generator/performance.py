@@ -86,7 +86,7 @@ class PerformanceMonitor:
         # Track CPU at start
         try:
             phase.cpu_percent = self.process.cpu_percent()
-        except:
+        except Exception:
             phase.cpu_percent = None
 
         self.metrics[phase_name] = phase
@@ -101,7 +101,7 @@ class PerformanceMonitor:
             try:
                 current_memory = self.process.memory_info().rss
                 phase.peak_memory = max(phase.start_memory, current_memory, phase.end_memory)
-            except:
+            except Exception:
                 phase.peak_memory = phase.end_memory
 
     def update_patient_count(self, phase_name: str, count: int):

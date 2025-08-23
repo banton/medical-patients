@@ -60,7 +60,7 @@ class PatientFlowSimulator:
         self.medical_bridge = None
         if self.use_medical_simulation:
             try:
-                from .medical_simulation_bridge import MedicalSimulationBridge
+                from .medical_simulation_bridge import MedicalSimulationBridge  # noqa: PLC0415
                 self.medical_bridge = MedicalSimulationBridge()
                 print("Medical simulation enhancement enabled")
             except ImportError as e:
@@ -72,7 +72,7 @@ class PatientFlowSimulator:
         self.treatment_model = None
         if self.use_treatment_utility:
             try:
-                from .treatment_utility_model import TreatmentUtilityModel
+                from .treatment_utility_model import TreatmentUtilityModel  # noqa: PLC0415
                 self.treatment_model = TreatmentUtilityModel()
                 print("Treatment utility model enabled")
             except ImportError as e:

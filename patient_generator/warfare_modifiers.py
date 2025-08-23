@@ -266,7 +266,7 @@ class WarfareModifiers:
             # Weight selection by distribution
             injury_codes = list(pattern.injury_distribution.keys())
             probabilities = list(pattern.injury_distribution.values())
-            primary_injury = np.random.choice(injury_codes, p=probabilities)
+            primary_injury = np.random.choice(injury_codes, p=probabilities)  # noqa: NPY002
             injuries.append(primary_injury)
 
         # Add correlated injuries for polytrauma
@@ -274,7 +274,7 @@ class WarfareModifiers:
             primary = injuries[0]
             if primary in self.injury_correlations:
                 # Add 1-3 correlated injuries
-                num_additional = min(3, np.random.poisson(1.5))
+                num_additional = min(3, np.random.poisson(1.5))  # noqa: NPY002
                 correlated = self.injury_correlations[primary]
                 additional = random.sample(
                     correlated,
