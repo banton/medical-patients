@@ -438,7 +438,7 @@ class AccordionComponent {
         }
     }
 
-    validateMedicalSimulation(content) {
+    validateMedicalSimulation(_content) {
         // Medical Simulation Settings don't need JSON validation - they use checkboxes
         // This section is always valid
         return { valid: true, message: 'Medical simulation settings configured' };
@@ -486,7 +486,9 @@ class AccordionComponent {
             // Validate markov overrides if provided
             if (config.markov_overrides) {
                 for (const [transition, value] of Object.entries(config.markov_overrides)) {
-                    if (transition === 'description') continue;
+                    if (transition === 'description') {
+                        continue;
+                    }
                     if (value !== null && (typeof value !== 'number' || value < 0 || value > 1)) {
                         return {
                             valid: false,
@@ -499,7 +501,9 @@ class AccordionComponent {
             // Validate polytrauma rates if provided
             if (config.polytrauma_rates) {
                 for (const [warfareType, value] of Object.entries(config.polytrauma_rates)) {
-                    if (warfareType === 'description') continue;
+                    if (warfareType === 'description') {
+                        continue;
+                    }
                     if (typeof value !== 'number' || value < 0 || value > 1) {
                         return {
                             valid: false,
