@@ -95,6 +95,11 @@ ignore = [
     "N818",   # error-suffix-on-exception-name (not critical)
     "RUF012", # mutable-class-default (sometimes intentional)
     "SIM108", # if-else-block-instead-of-if-exp (readability preference)
+    "SIM102", # use-single-if (readability preference in complex conditions)
+    "PLC0415", # import-outside-top-level (needed for optional dependencies)
+    "PLR0911", # too-many-return-statements (sometimes necessary in complex logic)
+    "PLW0602", # global-variable-not-assigned (false positive)
+    "RET504", # unnecessary-assign (sometimes aids readability)
 ]
 
 # Allow unused variables when underscore-prefixed

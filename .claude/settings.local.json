@@ -157,7 +157,9 @@
       "Read(//private/tmp/**)",
       "Read(//private/tmp/**)",
       "Bash(docker ps:*)",
-      "Bash(unzip:*)"
+      "Bash(unzip:*)",
+      "Bash(/dev/null)",
+      "Bash(echo \"Exit code: $?\")"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
