@@ -545,11 +545,14 @@ class MedicalSimulationBridge:
 
             enhanced_events.append(enhanced_event)
 
-        # Merge with existing timeline
-        if hasattr(patient, "timeline_events"):
-            patient.timeline_events.extend(enhanced_events)
+        # Merge with existing timeline (use movement_timeline which is what to_dict expects)
+        if hasattr(patient, "movement_timeline"):
+            patient.movement_timeline.extend(enhanced_events)
         else:
-            patient.timeline_events = enhanced_events
+            patient.movement_timeline = enhanced_events
+        
+        # Also set timeline_events for backward compatibility
+        patient.timeline_events = enhanced_events
 
         # Update triage category from simulation
         patient.triage_category = sim_patient.triage_category

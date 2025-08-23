@@ -173,7 +173,11 @@
       "Read(//Users/banton/Downloads/Military Medical Exercise Patient Data (2)/**)",
       "Bash(cat:*)",
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output death_analysis --formats json)",
-      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output death_analysis_v2 --formats json)"
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output death_analysis_v2 --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output death_validation --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 20 --output test_deaths --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 50 --output test_fixed --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 200 --output test_mortality --formats json)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
