@@ -140,7 +140,7 @@ class FacilityMarkovChain:
 
         # Apply environmental modifiers
         adjusted_probs = self._apply_modifiers(
-            adjusted_probs, modifiers, triage_category
+            adjusted_probs, current_facility, modifiers, triage_category
         )
 
         # Normalize probabilities
@@ -232,6 +232,7 @@ class FacilityMarkovChain:
     def _apply_modifiers(
         self,
         base_probs: Dict[str, float],
+        current_facility: str,
         modifiers: Optional[Dict[str, Any]] = None,
         triage_category: str = "T3"
     ) -> Dict[str, float]:
