@@ -130,12 +130,12 @@ class PatientGeneratorApp {
         // Medical simulation checkbox events
         const medicalCheckboxes = [
             'enable-treatment-utility',
-            'enable-diagnostic-uncertainty', 
+            'enable-diagnostic-uncertainty',
             'enable-markov-chain',
             'enable-warfare-modifiers'
         ];
-        
-        medicalCheckboxes.forEach(id => {
+
+        medicalCheckboxes.forEach((id) => {
             const checkbox = document.getElementById(id);
             if (checkbox) {
                 checkbox.addEventListener('change', () => {
@@ -375,33 +375,33 @@ class PatientGeneratorApp {
         if (!medSimEl) return;
 
         const features = [
-            { 
-                id: 'enable-treatment-utility', 
-                label: 'TUM', 
+            {
+                id: 'enable-treatment-utility',
+                label: 'TUM',
                 title: 'Treatment Utility Model',
                 colorClass: 'bg-cyan-100 text-cyan-700'
             },
-            { 
-                id: 'enable-diagnostic-uncertainty', 
-                label: 'DU', 
+            {
+                id: 'enable-diagnostic-uncertainty',
+                label: 'DU',
                 title: 'Diagnostic Uncertainty',
                 colorClass: 'bg-purple-100 text-purple-700'
             },
-            { 
-                id: 'enable-markov-chain', 
-                label: 'MCR', 
+            {
+                id: 'enable-markov-chain',
+                label: 'MCR',
                 title: 'Markov Chain Routing',
                 colorClass: 'bg-green-100 text-green-700'
             },
-            { 
-                id: 'enable-warfare-modifiers', 
-                label: 'WM', 
+            {
+                id: 'enable-warfare-modifiers',
+                label: 'WM',
                 title: 'Warfare Modifiers',
                 colorClass: 'bg-red-100 text-red-700'
             }
         ];
 
-        const enabledFeatures = features.filter(f => {
+        const enabledFeatures = features.filter((f) => {
             const checkbox = document.getElementById(f.id);
             return checkbox && checkbox.checked;
         });
@@ -409,9 +409,12 @@ class PatientGeneratorApp {
         if (enabledFeatures.length === 0) {
             medSimEl.innerHTML = '<span class="text-slate-500 text-xs">None enabled</span>';
         } else {
-            medSimEl.innerHTML = enabledFeatures.map(f => 
-                `<span class="${f.colorClass} px-2 py-1 rounded text-xs font-medium" title="${f.title}">${f.label}</span>`
-            ).join('');
+            medSimEl.innerHTML = enabledFeatures
+                .map(
+                    (f) =>
+                        `<span class="${f.colorClass} px-2 py-1 rounded text-xs font-medium" title="${f.title}">${f.label}</span>`
+                )
+                .join('');
         }
     }
 
@@ -542,17 +545,17 @@ class PatientGeneratorApp {
 
     buildConfiguration() {
         const accordionContent = this.accordion.getAllContent();
-        
+
         // Medical Simulation Settings (index 2) returns empty string since it has no editor
         // So we need to handle the indexing correctly:
         // [0] = Battle Fronts, [1] = Scenario, [2] = empty (Medical Sim), [3] = Advanced
         const frontsJson = accordionContent[0];
-        const scenarioJson = accordionContent[1]; 
+        const scenarioJson = accordionContent[1];
         const advancedJson = accordionContent[3]; // Skip index 2 (empty)
 
         const fronts = JSON.parse(frontsJson);
         const scenario = JSON.parse(scenarioJson);
-        
+
         // Get warfare types from checkboxes
         const warfareTypes = {
             conventional: document.getElementById('warfare-conventional')?.checked ?? true,
@@ -564,7 +567,7 @@ class PatientGeneratorApp {
             cbrn: document.getElementById('warfare-cbrn')?.checked ?? false,
             peacekeeping: document.getElementById('warfare-peacekeeping')?.checked ?? false
         };
-        
+
         // Get medical simulation settings from toggle switches
         const medicalSimulationSettings = {
             enable_treatment_utility: document.getElementById('enable-treatment-utility')?.checked ?? true,
@@ -572,7 +575,7 @@ class PatientGeneratorApp {
             enable_markov_chain: document.getElementById('enable-markov-chain')?.checked ?? true,
             enable_warfare_modifiers: document.getElementById('enable-warfare-modifiers')?.checked ?? true
         };
-        
+
         // Parse advanced configuration if provided
         let advancedConfig = {};
         if (advancedJson && advancedJson.trim() !== '') {
@@ -582,10 +585,10 @@ class PatientGeneratorApp {
                 console.warn('Invalid advanced configuration JSON, using defaults');
             }
         }
-        
+
         // Extract scenario modifiers from advanced config if present
         const scenarioModifiers = advancedConfig.scenario_modifiers || {};
-        
+
         // Build unified configuration
         return {
             name: `Patient Generation ${new Date().toLocaleString()}`,
@@ -593,11 +596,12 @@ class PatientGeneratorApp {
             total_patients: scenario.total_patients || 1440,
             days_of_fighting: scenario.days_of_fighting || 8,
             base_date: scenario.base_date || '2025-06-01',
-            injury_mix: scenario.injury_mix || scenario.injury_distribution || {
-                "Disease": 0.52,
-                "Non-Battle Injury": 0.33,
-                "Battle Injury": 0.15
-            },
+            injury_mix: scenario.injury_mix ||
+                scenario.injury_distribution || {
+                    Disease: 0.52,
+                    'Non-Battle Injury': 0.33,
+                    'Battle Injury': 0.15
+                },
             warfare_types: warfareTypes,
             intensity: scenarioModifiers.intensity || 'high',
             tempo: scenarioModifiers.tempo || 'sustained',

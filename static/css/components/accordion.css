@@ -4,11 +4,11 @@
  */
 
 /* Toggle switch styles for Medical Simulation Settings */
-input[type="checkbox"]:checked + div {
+input[type='checkbox']:checked + div {
     background-color: #0891b2 !important; /* cyan-600 */
 }
 
-input[type="checkbox"]:focus + div {
+input[type='checkbox']:focus + div {
     box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.3); /* cyan-300 with opacity */
 }
 
