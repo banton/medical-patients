@@ -274,6 +274,7 @@ class Patient:
         - Uses numeric severity scale
         - Eliminates redundancy
         """
+
         def round_float(value, decimals=1):
             """Round float values to specified decimals"""
             if isinstance(value, float):
@@ -325,10 +326,7 @@ class Patient:
                     if i == 0 and "severity" in cond:
                         severity = cond.get("severity")
                     # Simplify condition structure
-                    conditions.append({
-                        "code": cond.get("code"),
-                        "name": cond.get("display")
-                    })
+                    conditions.append({"code": cond.get("code"), "name": cond.get("display")})
             if conditions:
                 result["conditions"] = conditions
             # Add medical severity if found (convert to numeric scale)
@@ -340,7 +338,7 @@ class Patient:
                     "Moderate": 4,
                     "Moderate to severe": 6,
                     "Severe": 8,
-                    "Critical": 9
+                    "Critical": 9,
                 }
                 result["severity"] = severity_map.get(severity, 5)  # Default to 5 if unknown
 
@@ -349,10 +347,7 @@ class Patient:
             additional = []
             for cond in self.additional_conditions:
                 if isinstance(cond, dict):
-                    additional.append({
-                        "code": cond.get("code"),
-                        "name": cond.get("display")
-                    })
+                    additional.append({"code": cond.get("code"), "name": cond.get("display")})
             if additional:
                 result["additional_conditions"] = additional
 

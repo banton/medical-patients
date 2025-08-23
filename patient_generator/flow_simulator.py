@@ -16,6 +16,7 @@ try:
     from .patient import Patient
     from .temporal_generator import CasualtyEvent, TemporalPatternGenerator
     from .warfare_modifiers import WarfareModifiers
+
     MARKOV_CHAIN_AVAILABLE = True
     WARFARE_MODIFIERS_AVAILABLE = True
 except ImportError:
@@ -26,6 +27,7 @@ except ImportError:
         from patient_generator.patient import Patient
         from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
         from patient_generator.warfare_modifiers import WarfareModifiers
+
         MARKOV_CHAIN_AVAILABLE = True
         WARFARE_MODIFIERS_AVAILABLE = True
     except ImportError:
@@ -34,6 +36,7 @@ except ImportError:
         from patient_generator.evacuation_time_manager import EvacuationTimeManager
         from patient_generator.patient import Patient
         from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+
         MARKOV_CHAIN_AVAILABLE = False
         WARFARE_MODIFIERS_AVAILABLE = False
         FacilityMarkovChain = None
@@ -61,6 +64,7 @@ class PatientFlowSimulator:
         if self.use_medical_simulation:
             try:
                 from .medical_simulation_bridge import MedicalSimulationBridge
+
                 self.medical_bridge = MedicalSimulationBridge()
                 print("Medical simulation enhancement enabled")
             except ImportError as e:
@@ -73,6 +77,7 @@ class PatientFlowSimulator:
         if self.use_treatment_utility:
             try:
                 from .treatment_utility_model import TreatmentUtilityModel
+
                 self.treatment_model = TreatmentUtilityModel()
                 print("Treatment utility model enabled")
             except ImportError as e:
@@ -649,10 +654,7 @@ class PatientFlowSimulator:
 
             # Get next facility from Markov chain
             next_facility = self.markov_chain.get_next_facility(
-                current_facility,
-                patient.triage_category,
-                patient_conditions,
-                modifiers
+                current_facility, patient.triage_category, patient_conditions, modifiers
             )
 
             # Check if we've reached a terminal state
@@ -663,9 +665,7 @@ class PatientFlowSimulator:
                     terminal_time = current_time + datetime.timedelta(hours=random.uniform(0.1, 1.0))
                 else:
                     # Terminal event during evacuation
-                    evac_hours = self.evacuation_manager.get_evacuation_time(
-                        current_facility, patient.triage_category
-                    )
+                    evac_hours = self.evacuation_manager.get_evacuation_time(current_facility, patient.triage_category)
                     terminal_time = current_time + datetime.timedelta(hours=random.uniform(0, evac_hours))
 
                 # Set final status
@@ -675,7 +675,7 @@ class PatientFlowSimulator:
                         current_facility,
                         terminal_time,
                         kia_timing="markov_chain_decision",
-                        facilities_visited=len(visited_facilities)
+                        facilities_visited=len(visited_facilities),
                     )
                 else:  # RTD
                     patient.set_final_status(
@@ -683,16 +683,14 @@ class PatientFlowSimulator:
                         current_facility,
                         terminal_time,
                         rtd_timing="markov_chain_decision",
-                        facilities_visited=len(visited_facilities)
+                        facilities_visited=len(visited_facilities),
                     )
                 return
 
             # Not terminal - prepare for evacuation/transit
             if current_facility != "POI" or next_facility != current_facility:
                 # Get evacuation time at current facility
-                evac_hours = self.evacuation_manager.get_evacuation_time(
-                    current_facility, patient.triage_category
-                )
+                evac_hours = self.evacuation_manager.get_evacuation_time(current_facility, patient.triage_category)
 
                 # Add evacuation event
                 patient.add_timeline_event(
@@ -701,16 +699,16 @@ class PatientFlowSimulator:
                     current_time,
                     evacuation_duration_hours=evac_hours,
                     triage_category=patient.triage_category,
-                    next_facility=next_facility
+                    next_facility=next_facility,
                 )
 
                 # Update time after evacuation
                 current_time = current_time + datetime.timedelta(hours=evac_hours)
 
                 # Get transit time to next facility
-                transit_hours = self.markov_chain.get_evacuation_time(
-                    current_facility, next_facility, "ground"
-                ) / 60.0  # Convert minutes to hours
+                transit_hours = (
+                    self.markov_chain.get_evacuation_time(current_facility, next_facility, "ground") / 60.0
+                )  # Convert minutes to hours
 
                 # Add transit event if moving to another facility
                 if next_facility != current_facility:
@@ -736,7 +734,7 @@ class PatientFlowSimulator:
             current_facility,
             current_time,
             markov_chain_timeout=True,
-            facilities_visited=len(visited_facilities)
+            facilities_visited=len(visited_facilities),
         )
 
     def _determine_next_location(self, patient: Patient, current_facility_id: str) -> str:
@@ -774,10 +772,14 @@ class PatientFlowSimulator:
 
         # Use treatment utility model if available
         if self.use_treatment_utility and self.treatment_model:
-            print(f"DEBUG: Utility model check - enabled: {self.use_treatment_utility}, model exists: {self.treatment_model is not None}")
+            print(
+                f"DEBUG: Utility model check - enabled: {self.use_treatment_utility}, model exists: {self.treatment_model is not None}"
+            )
             # Get SNOMED code from patient's primary condition(s)
             snomed_code = None
-            print(f"DEBUG: Patient attributes: primary_condition: {hasattr(patient, 'primary_condition')}, primary_conditions: {hasattr(patient, 'primary_conditions')}")
+            print(
+                f"DEBUG: Patient attributes: primary_condition: {hasattr(patient, 'primary_condition')}, primary_conditions: {hasattr(patient, 'primary_conditions')}"
+            )
             if hasattr(patient, "primary_condition") and isinstance(patient.primary_condition, dict):
                 snomed_code = patient.primary_condition.get("code")
                 print(f"DEBUG: Found primary_condition code: {snomed_code}")
@@ -797,12 +799,7 @@ class PatientFlowSimulator:
 
             if snomed_code:
                 # Map triage to severity for utility model
-                severity_map = {
-                    "T1": "Severe",
-                    "T2": "Moderate to severe",
-                    "T3": "Moderate",
-                    "T4": "Mild to moderate"
-                }
+                severity_map = {"T1": "Severe", "T2": "Moderate to severe", "T3": "Moderate", "T4": "Mild to moderate"}
                 severity = severity_map.get(patient.triage_category, "Moderate")
 
                 # Use utility model to select treatments
@@ -812,16 +809,18 @@ class PatientFlowSimulator:
                     facility=facility_name_or_type,
                     time_elapsed_minutes=30,  # Simplified - could calculate from timeline
                     available_resources={"supplies": 100},
-                    max_treatments=3
+                    max_treatments=3,
                 )
 
                 # Convert to expected format
                 treatments = []
                 for treatment in selected_treatments:
-                    treatments.append({
-                        "code": "utility_model",  # Placeholder code
-                        "display": treatment["name"]
-                    })
+                    treatments.append(
+                        {
+                            "code": "utility_model",  # Placeholder code
+                            "display": treatment["name"],
+                        }
+                    )
                 return treatments
 
         # Fallback to original logic if utility model not available or no SNOMED code
@@ -1068,10 +1067,12 @@ class PatientFlowSimulator:
             patient.primary_conditions = []
             for code in injury_codes:
                 # Map SNOMED codes to condition objects (simplified for now)
-                patient.primary_conditions.append({
-                    "code": code,
-                    "name": self._get_injury_name(code)  # Helper method to get name
-                })
+                patient.primary_conditions.append(
+                    {
+                        "code": code,
+                        "name": self._get_injury_name(code),  # Helper method to get name
+                    }
+                )
 
             # Set severity based on warfare pattern
             patient.severity = severity

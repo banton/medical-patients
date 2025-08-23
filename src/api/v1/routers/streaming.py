@@ -152,14 +152,10 @@ async def generate_patients_stream(
                     "schema": StreamingPatientResponse.schema(),
                     "example": {
                         "patients": [
-                            {
-                                "patient_id": "NATO-BEL-12345",
-                                "name": "John Doe",
-                                "injury_type": "Battle Injury"
-                            }
+                            {"patient_id": "NATO-BEL-12345", "name": "John Doe", "injury_type": "Battle Injury"}
                         ],
-                        "total_patients": 100
-                    }
+                        "total_patients": 100,
+                    },
                 }
             },
         }
@@ -251,14 +247,10 @@ async def stream_patients(
                     "schema": StreamingPatientResponse.schema(),
                     "example": {
                         "patients": [
-                            {
-                                "patient_id": "NATO-BEL-12345",
-                                "name": "John Doe",
-                                "injury_type": "Battle Injury"
-                            }
+                            {"patient_id": "NATO-BEL-12345", "name": "John Doe", "injury_type": "Battle Injury"}
                         ],
-                        "total_patients": 100
-                    }
+                        "total_patients": 100,
+                    },
                 }
             },
         }

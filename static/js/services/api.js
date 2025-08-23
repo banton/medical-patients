@@ -34,6 +34,7 @@ class ApiClient {
 
         if (data && ['POST', 'PUT', 'PATCH'].includes(method.toUpperCase())) {
             config.body = JSON.stringify(data);
+            console.log(`API ${method} ${endpoint}:`, data);
         }
 
         try {

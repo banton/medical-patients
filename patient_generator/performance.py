@@ -18,6 +18,7 @@ import psutil
 @dataclass
 class PhaseMetrics:
     """Metrics for a single phase of execution."""
+
     name: str
     start_time: float = 0.0
     end_time: float = 0.0
@@ -80,7 +81,7 @@ class PerformanceMonitor:
             start_time=time.time(),
             start_memory=self.process.memory_info().rss,
             patient_count=patient_count,
-            thread_count=threading.active_count()
+            thread_count=threading.active_count(),
         )
 
         # Track CPU at start
@@ -118,16 +119,16 @@ class PerformanceMonitor:
         overall_memory_delta = (self.process.memory_info().rss - self.overall_start_memory) / (1024 * 1024)
 
         lines = [
-            "\n" + "="*80,
+            "\n" + "=" * 80,
             "PERFORMANCE METRICS REPORT",
-            "="*80,
+            "=" * 80,
             f"Overall Runtime: {overall_time:.2f}s | Memory Delta: {overall_memory_delta:+.1f}MB",
-            "-"*80
+            "-" * 80,
         ]
 
         # Phase breakdown
         lines.append(f"{'Phase':<20} {'Time(s)':<10} {'Rate(p/s)':<12} {'Memory(MB)':<12} {'Threads':<8}")
-        lines.append("-"*80)
+        lines.append("-" * 80)
 
         total_patients = 0
         for phase in self.metrics.values():
@@ -142,13 +143,19 @@ class PerformanceMonitor:
             )
 
         # Summary statistics
-        lines.extend([
-            "-"*80,
-            f"Total Patients: {total_patients}",
-            f"Overall Rate: {total_patients/overall_time:.1f} patients/second" if overall_time > 0 else "Overall Rate: N/A",
-            f"Peak Memory: {max(p.peak_memory_mb for p in self.metrics.values()):.1f}MB" if self.metrics else "Peak Memory: N/A",
-            "="*80
-        ])
+        lines.extend(
+            [
+                "-" * 80,
+                f"Total Patients: {total_patients}",
+                f"Overall Rate: {total_patients / overall_time:.1f} patients/second"
+                if overall_time > 0
+                else "Overall Rate: N/A",
+                f"Peak Memory: {max(p.peak_memory_mb for p in self.metrics.values()):.1f}MB"
+                if self.metrics
+                else "Peak Memory: N/A",
+                "=" * 80,
+            ]
+        )
 
         report_text = "\n".join(lines)
         print(report_text)
@@ -185,6 +192,7 @@ class PerformanceMonitor:
 # Global instance for easy CLI usage
 _global_monitor: Optional[PerformanceMonitor] = None
 
+
 def get_monitor() -> PerformanceMonitor:
     """Get or create global performance monitor."""
     global _global_monitor
@@ -192,10 +200,12 @@ def get_monitor() -> PerformanceMonitor:
         _global_monitor = PerformanceMonitor(enabled=False)  # Disabled by default
     return _global_monitor
 
+
 def enable_monitoring():
     """Enable performance monitoring globally."""
     global _global_monitor
     _global_monitor = PerformanceMonitor(enabled=True)
+
 
 def disable_monitoring():
     """Disable performance monitoring globally."""

@@ -40,9 +40,7 @@ def run_hemorrhage_tests():
         print("-" * 40)
 
         profile = HemorrhageModel.calculate_hemorrhage_profile(
-            injury_code=injury_code,
-            body_region=region,
-            severity=severity
+            injury_code=injury_code, body_region=region, severity=severity
         )
 
         print(f"  Category: {profile.category.value}")
@@ -61,9 +59,7 @@ def run_hemorrhage_tests():
     generator = EnhancedMedicalConditionGenerator()
 
     # Generate a polytrauma case
-    conditions = generator.generate_multiple_conditions_with_hemorrhage(
-        "Battle Injury", "T1", count=3
-    )
+    conditions = generator.generate_multiple_conditions_with_hemorrhage("Battle Injury", "T1", count=3)
 
     print("\nPolytrauma Patient - 3 Battle Injuries (T1)")
     print("-" * 40)
@@ -108,7 +104,7 @@ def run_hemorrhage_tests():
     femoral_profile = HemorrhageModel.calculate_hemorrhage_profile(
         injury_code="262574004",  # Bullet wound
         body_region=BodyRegion.LEFT_LEG,
-        severity="Severe"
+        severity="Severe",
     )
 
     integration = HemorrhageIntegration()
@@ -118,11 +114,7 @@ def run_hemorrhage_tests():
     print("Tourniquet Applied at: 5 minutes")
     print("-" * 40)
 
-    timeline = integration.calculate_blood_volume_timeline(
-        femoral_profile,
-        duration_minutes=30,
-        tourniquet_time=5
-    )
+    timeline = integration.calculate_blood_volume_timeline(femoral_profile, duration_minutes=30, tourniquet_time=5)
 
     print("\nTime  | Blood Volume | Status")
     print("------|--------------|------------------")

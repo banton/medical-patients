@@ -2,6 +2,7 @@
 Facility Capacity Manager for Medical Simulation
 Manages bed availability, queues, and patient flow through medical facilities
 """
+
 from collections import deque
 from typing import Any, Dict, List, Optional
 
@@ -26,36 +27,22 @@ class FacilityCapacityManager:
                 "occupied": 0,
                 "patients": [],
                 "queue": deque(),
-                "overflow_threshold": 0.8  # Trigger overflow at 80%
+                "overflow_threshold": 0.8,  # Trigger overflow at 80%
             },
-            "Role2": {
-                "capacity": 60,
-                "occupied": 0,
-                "patients": [],
-                "queue": deque(),
-                "overflow_threshold": 0.85
-            },
-            "Role3": {
-                "capacity": 200,
-                "occupied": 0,
-                "patients": [],
-                "queue": deque(),
-                "overflow_threshold": 0.9
-            },
+            "Role2": {"capacity": 60, "occupied": 0, "patients": [], "queue": deque(), "overflow_threshold": 0.85},
+            "Role3": {"capacity": 200, "occupied": 0, "patients": [], "queue": deque(), "overflow_threshold": 0.9},
             "CSU": {
                 "capacity": 50,
                 "occupied": 0,
                 "patients": [],
                 "queue": deque(),
                 "overflow_threshold": 0.8,
-                "batch_size": 10  # CSU moves patients in batches
-            }
+                "batch_size": 10,  # CSU moves patients in batches
+            },
         }
 
         # Priority queue for urgent cases
-        self.priority_queues = {
-            facility: deque() for facility in self.facilities
-        }
+        self.priority_queues = {facility: deque() for facility in self.facilities}
 
     def get_capacity(self, facility: str) -> int:
         """Get total bed capacity for a facility"""
@@ -96,11 +83,7 @@ class FacilityCapacityManager:
         if fac["occupied"] < fac["capacity"]:
             fac["patients"].append(patient_id)
             fac["occupied"] += 1
-            return {
-                "success": True,
-                "facility": facility,
-                "bed_number": fac["occupied"]
-            }
+            return {"success": True, "facility": facility, "bed_number": fac["occupied"]}
         # Add to queue
         if priority == "urgent":
             self.priority_queues[facility].append(patient_id)
@@ -111,7 +94,7 @@ class FacilityCapacityManager:
             "success": False,
             "reason": "facility_full",
             "queued": True,
-            "queue_position": len(fac["queue"]) + len(self.priority_queues[facility])
+            "queue_position": len(fac["queue"]) + len(self.priority_queues[facility]),
         }
 
     def discharge_patient(self, patient_id: str, facility: str) -> Dict[str, Any]:
@@ -222,7 +205,7 @@ class FacilityCapacityManager:
             "utilization": occupied / capacity if capacity > 0 else 0,
             "queue_length": self.get_queue_length(facility),
             "patients": fac["patients"][:],  # Return copy
-            "overflow_triggered": (occupied / capacity) >= fac["overflow_threshold"] if capacity > 0 else False
+            "overflow_triggered": (occupied / capacity) >= fac["overflow_threshold"] if capacity > 0 else False,
         }
 
     def get_system_overview(self) -> Dict[str, Any]:
@@ -237,7 +220,7 @@ class FacilityCapacityManager:
                 "occupied": status["occupied"],
                 "available": status["available"],
                 "utilization": status["utilization"],
-                "queue": status["queue_length"]
+                "queue": status["queue_length"],
             }
 
         return {
@@ -245,7 +228,7 @@ class FacilityCapacityManager:
             "total_occupied": total_occupied,
             "total_available": total_capacity - total_occupied,
             "system_utilization": total_occupied / total_capacity if total_capacity > 0 else 0,
-            "facilities": facilities_status
+            "facilities": facilities_status,
         }
 
     def check_overflow_needed(self, facility: str) -> bool:
@@ -264,17 +247,14 @@ class FacilityCapacityManager:
             "Role1": ["CSU", "Role2"],
             "Role2": ["Role3"],
             "Role3": [],  # No overflow from Role3
-            "CSU": ["Role2", "Role3"]
+            "CSU": ["Role2", "Role3"],
         }
 
         if facility not in overflow_routes:
             return {}
 
         routes = overflow_routes[facility]
-        return {
-            "primary": routes[0] if len(routes) > 0 else None,
-            "secondary": routes[1] if len(routes) > 1 else None
-        }
+        return {"primary": routes[0] if len(routes) > 0 else None, "secondary": routes[1] if len(routes) > 1 else None}
 
     def is_csu_batch_ready(self) -> bool:
         """Check if CSU has enough patients for batch transfer"""

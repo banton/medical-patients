@@ -9,13 +9,14 @@ import sys
 
 def run_command(cmd, description):
     """Run a command and report results"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Running: {description}")
     print(f"Command: {cmd}")
-    print("="*60)
+    print("=" * 60)
 
     result = subprocess.run(cmd, check=False, shell=True)
     return result.returncode == 0
+
 
 def main():
     """Run test suites grouped by requirements"""
@@ -37,9 +38,6 @@ def main():
     ]
 
     # Quick smoke tests
-    smoke_tests = [
-        ("Deployment smoke tests", "pytest tests/test_smoke.py -v"),
-    ]
 
     print("SIMPLIFIED TEST SUITE")
     print("====================")
@@ -79,9 +77,9 @@ def main():
     print(f"\n✅ Integration tests passed: {integration_passed}/{len(integration_tests)}")
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST SUMMARY")
-    print("="*60)
+    print("=" * 60)
     print(f"Unit tests: {unit_passed}/{len(unit_tests)}")
     print(f"Integration tests: {integration_passed}/{len(integration_tests)}")
     print(f"Total: {unit_passed + integration_passed}/{len(unit_tests) + len(integration_tests)}")
@@ -90,6 +88,7 @@ def main():
         print("\n✅ All tests passed! The system is working correctly.")
     else:
         print("\n❌ Some tests failed. Check the output above.")
+
 
 if __name__ == "__main__":
     main()

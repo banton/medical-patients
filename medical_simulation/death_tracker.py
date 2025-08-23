@@ -2,6 +2,7 @@
 Death Tracker for Medical Simulation
 Categorizes and tracks patient deaths (KIA, DOW, DNB, Non-Battle)
 """
+
 from typing import Any, Dict, List
 
 
@@ -90,7 +91,7 @@ class DeathTracker:
             "time_of_death": death_event.get("time", 0),
             "location": death_event.get("location", "Unknown"),
             "health_at_death": death_event.get("health", 0),
-            "injury_type": patient_data.get("injury_type", "Unknown")
+            "injury_type": patient_data.get("injury_type", "Unknown"),
         }
 
         # Categorize the death
@@ -101,7 +102,7 @@ class DeathTracker:
             "time_of_death": death_info["time_of_death"],
             "treatments_applied": patient_data.get("treatments_applied", []),
             "location": death_info["location"],
-            "initial_health": patient_data.get("initial_health", 50)
+            "initial_health": patient_data.get("initial_health", 50),
         }
         preventable = self.determine_preventability(preventability_info)
 
@@ -113,7 +114,7 @@ class DeathTracker:
             "location_of_death": death_info["location"],
             "preventable": preventable,
             "injury_type": patient_data.get("injury_type", "Unknown"),
-            "initial_health": patient_data.get("initial_health", 50)
+            "initial_health": patient_data.get("initial_health", 50),
         }
 
         # Store the record
@@ -163,7 +164,7 @@ class DeathTracker:
                 "total_deaths": 0,
                 "by_category": dict.fromkeys(self.death_categories, 0),
                 "preventable_deaths": 0,
-                "mortality_rate": 0.0
+                "mortality_rate": 0.0,
             }
 
         # Count by category
@@ -182,7 +183,7 @@ class DeathTracker:
             "total_deaths": len(self.tracked_deaths),
             "by_category": by_category,
             "preventable_deaths": preventable_count,
-            "mortality_rate": preventable_count / len(self.tracked_deaths) if self.tracked_deaths else 0.0
+            "mortality_rate": preventable_count / len(self.tracked_deaths) if self.tracked_deaths else 0.0,
         }
 
     def export_summary(self) -> Dict[str, Any]:
@@ -192,7 +193,4 @@ class DeathTracker:
         Returns:
             Dictionary with all death records and statistics
         """
-        return {
-            "deaths": self.tracked_deaths,
-            "statistics": self.get_statistics()
-        }
+        return {"deaths": self.tracked_deaths, "statistics": self.get_statistics()}

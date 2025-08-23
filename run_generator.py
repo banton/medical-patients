@@ -36,15 +36,11 @@ def create_config_from_args(args, config_data=None):
             name="CLI Configuration",
             description="Configuration from command line",
             total_patients=config_data.get("total_patients", args.patients),
-            injury_distribution={
-                "Disease": 0.1,
-                "Non-Battle Injury": 0.2,
-                "Battle Injury": 0.7
-            },
+            injury_distribution={"Disease": 0.1, "Non-Battle Injury": 0.2, "Battle Injury": 0.7},
             front_configs=[],
             facility_configs=[],
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
     # From args directly
     return ConfigurationTemplateDB(
@@ -52,26 +48,24 @@ def create_config_from_args(args, config_data=None):
         name="CLI Configuration",
         description="Configuration from command line",
         total_patients=args.patients,
-        injury_distribution={
-            "Disease": 0.1,
-            "Non-Battle Injury": 0.2,
-            "Battle Injury": 0.7
-        },
+        injury_distribution={"Disease": 0.1, "Non-Battle Injury": 0.2, "Battle Injury": 0.7},
         front_configs=[],
         facility_configs=[],
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
 
 
 class MockDatabase:
     """Mock database that returns our CLI configuration."""
+
     def __init__(self, config):
         self.config = config
 
 
 class MockRepository:
     """Mock repository that returns our CLI configuration."""
+
     def __init__(self, db):
         self.config = db.config
 
@@ -131,19 +125,15 @@ def parse_arguments():
     parser.add_argument(
         "--enable-medical-simulation",
         action="store_true",
-        help="Enable enhanced medical simulation for realistic patient flow"
+        help="Enable enhanced medical simulation for realistic patient flow",
     )
 
-    parser.add_argument(
-        "--medical-config",
-        type=str,
-        help="Path to medical simulation configuration file (JSON)"
-    )
+    parser.add_argument("--medical-config", type=str, help="Path to medical simulation configuration file (JSON)")
 
     parser.add_argument(
         "--compare-performance",
         action="store_true",
-        help="Run twice (with and without medical simulation) to compare performance"
+        help="Run twice (with and without medical simulation) to compare performance",
     )
 
     return parser.parse_args()
@@ -205,11 +195,7 @@ def main():
     print(f"Output directory: {output_dir}")
 
     # Print front distribution
-    print(
-        f"Front distribution: Polish {args.polish:.1f}%, "
-        f"Estonian {args.estonian:.1f}%, "
-        f"Finnish {args.finnish:.1f}%"
-    )
+    print(f"Front distribution: Polish {args.polish:.1f}%, Estonian {args.estonian:.1f}%, Finnish {args.finnish:.1f}%")
 
     output_formats = args.formats.split(",")
     use_compression = not args.no_compress
@@ -250,7 +236,7 @@ def main():
         output_directory=output_dir,
         output_formats=output_formats,
         use_compression=use_compression,
-        use_encryption=use_encryption
+        use_encryption=use_encryption,
     )
     end_time = time.time()
 
@@ -275,9 +261,9 @@ def main():
         print(f"  - {nationality}: {count} ({count / len(patients) * 100:.1f}%)")
 
     # Print performance metrics
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("PERFORMANCE METRICS")
-    print("="*60)
+    print("=" * 60)
     print(f"Total generation time:    {total_time:.2f} seconds")
     print(f"Patients per second:      {patients_per_second:.1f}")
     print(f"Time per patient:         {time_per_patient:.1f} ms")
@@ -291,20 +277,23 @@ def main():
             # Try to get metrics from the bridge if it exists
             if hasattr(generator, "flow_simulator") and hasattr(generator.flow_simulator, "medical_bridge"):
                 bridge_metrics = generator.flow_simulator.medical_bridge.metrics
-                avg_time = (bridge_metrics["total_time"] / bridge_metrics["total_enhanced"] * 1000
-                           if bridge_metrics["total_enhanced"] > 0 else 0)
+                avg_time = (
+                    bridge_metrics["total_time"] / bridge_metrics["total_enhanced"] * 1000
+                    if bridge_metrics["total_enhanced"] > 0
+                    else 0
+                )
                 print(f"  - Patients enhanced:    {bridge_metrics['total_enhanced']}")
                 print(f"  - Avg enhancement time: {avg_time:.1f} ms")
-                print(f"  - Slowest patient:      {bridge_metrics['slowest_patient']*1000:.1f} ms")
+                print(f"  - Slowest patient:      {bridge_metrics['slowest_patient'] * 1000:.1f} ms")
 
                 # Calculate overhead
-                base_time = time_per_patient - avg_time
+                time_per_patient - avg_time
                 overhead_pct = (avg_time / time_per_patient * 100) if time_per_patient > 0 else 0
                 print(f"  - Medical sim overhead: {overhead_pct:.1f}%")
         except:
             print("  - Metrics unavailable (may need ConfigurationManager fix)")
 
-    print("="*60)
+    print("=" * 60)
 
     print(f"\nOutput files saved to {output_dir} directory.")
     if output_files:

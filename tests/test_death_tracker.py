@@ -1,4 +1,5 @@
 """Tests for Death Tracker module"""
+
 from medical_simulation.death_tracker import DeathTracker
 
 
@@ -20,7 +21,7 @@ class TestDeathTracker:
             "time_of_death": 5,  # minutes from injury
             "location": "POI",
             "health_at_death": 0,
-            "injury_type": "Battle Injury"
+            "injury_type": "Battle Injury",
         }
 
         category = tracker.categorize_death(death_info)
@@ -34,7 +35,7 @@ class TestDeathTracker:
             "time_of_death": 45,  # minutes from injury
             "location": "Role1",
             "health_at_death": 0,
-            "injury_type": "Battle Injury"
+            "injury_type": "Battle Injury",
         }
 
         category = tracker.categorize_death(death_info)
@@ -48,7 +49,7 @@ class TestDeathTracker:
             "time_of_death": 180,  # 3 hours from injury
             "location": "Role2",
             "health_at_death": 0,
-            "injury_type": "Battle Injury"
+            "injury_type": "Battle Injury",
         }
 
         category = tracker.categorize_death(death_info)
@@ -62,7 +63,7 @@ class TestDeathTracker:
             "time_of_death": 4320,  # 3 days
             "location": "Role3",
             "health_at_death": 0,
-            "injury_type": "Disease"
+            "injury_type": "Disease",
         }
 
         category = tracker.categorize_death(death_info)
@@ -76,7 +77,7 @@ class TestDeathTracker:
             "time_of_death": 60,
             "location": "Role1",
             "health_at_death": 0,
-            "injury_type": "Non-Battle Injury"
+            "injury_type": "Non-Battle Injury",
         }
 
         category = tracker.categorize_death(death_info)
@@ -94,8 +95,8 @@ class TestDeathTracker:
                 {"time": 0, "health": 25, "location": "POI"},
                 {"time": 15, "health": 18, "location": "POI"},
                 {"time": 30, "health": 10, "location": "Role1"},
-                {"time": 45, "health": 0, "location": "Role1"}
-            ]
+                {"time": 45, "health": 0, "location": "Role1"},
+            ],
         }
 
         death_record = tracker.track_death(patient_data)
@@ -115,7 +116,7 @@ class TestDeathTracker:
             "time_of_death": 45,  # Within golden hour
             "treatments_applied": [],
             "location": "Role1",
-            "initial_health": 30
+            "initial_health": 30,
         }
 
         preventable = tracker.determine_preventability(death_info)
@@ -126,7 +127,7 @@ class TestDeathTracker:
             "time_of_death": 45,
             "treatments_applied": ["tourniquet", "IV fluids"],
             "location": "Role1",
-            "initial_health": 15
+            "initial_health": 15,
         }
 
         preventable_treated = tracker.determine_preventability(death_info_treated)
@@ -141,7 +142,7 @@ class TestDeathTracker:
             "time_of_death": 180,  # 3 hours
             "treatments_applied": ["tourniquet"],
             "location": "Role2",
-            "initial_health": 25
+            "initial_health": 25,
         }
 
         preventable = tracker.determine_preventability(death_info)
@@ -159,8 +160,8 @@ class TestDeathTracker:
                 "initial_health": 15,
                 "health_timeline": [
                     {"time": 0, "health": 15, "location": "POI"},
-                    {"time": 10, "health": 0, "location": "POI"}
-                ]
+                    {"time": 10, "health": 0, "location": "POI"},
+                ],
             },
             {
                 "id": "US-002",
@@ -168,8 +169,8 @@ class TestDeathTracker:
                 "initial_health": 30,
                 "health_timeline": [
                     {"time": 0, "health": 30, "location": "POI"},
-                    {"time": 60, "health": 0, "location": "Role1"}
-                ]
+                    {"time": 60, "health": 0, "location": "Role1"},
+                ],
             },
             {
                 "id": "US-003",
@@ -177,9 +178,9 @@ class TestDeathTracker:
                 "initial_health": 60,
                 "health_timeline": [
                     {"time": 0, "health": 60, "location": "Role2"},
-                    {"time": 2880, "health": 0, "location": "Role3"}
-                ]
-            }
+                    {"time": 2880, "health": 0, "location": "Role3"},
+                ],
+            },
         ]
 
         for patient in patients:
@@ -205,8 +206,8 @@ class TestDeathTracker:
             "initial_health": 20,
             "health_timeline": [
                 {"time": 0, "health": 20, "location": "POI"},
-                {"time": 30, "health": 0, "location": "POI"}
-            ]
+                {"time": 30, "health": 0, "location": "POI"},
+            ],
         }
 
         tracker.track_death(patient)

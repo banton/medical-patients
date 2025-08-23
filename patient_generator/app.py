@@ -194,7 +194,11 @@ class PatientGeneratorApp:
                 )
 
                 # Regenerate treatments using utility model now that conditions are set
-                if hasattr(self, "flow_simulator") and hasattr(self.flow_simulator, "treatment_model") and self.flow_simulator.treatment_model:
+                if (
+                    hasattr(self, "flow_simulator")
+                    and hasattr(self.flow_simulator, "treatment_model")
+                    and self.flow_simulator.treatment_model
+                ):
                     # Update treatments in treatment history using utility model
                     for treatment_entry in patient.treatment_history:
                         if treatment_entry.get("treatments"):

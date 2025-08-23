@@ -22,7 +22,7 @@ async def test_verify_api_key_with_demo_key():
         is_active=True,
         is_demo=True,
         max_patients_per_request=50,
-        max_requests_per_day=100
+        max_requests_per_day=100,
     )
 
     # Mock database session and repository
@@ -78,7 +78,7 @@ async def test_verify_api_key_context_with_demo_key():
         max_patients_per_request=50,
         max_requests_per_day=100,
         daily_requests=0,
-        total_requests=0
+        total_requests=0,
     )
 
     # Mock database session and repository

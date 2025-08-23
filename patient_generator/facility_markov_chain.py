@@ -41,9 +41,7 @@ class FacilityMarkovChain:
         Args:
             config_path: Path to transition_matrices.json config file
         """
-        self.config_path = config_path or os.path.join(
-            os.path.dirname(__file__), "transition_matrices.json"
-        )
+        self.config_path = config_path or os.path.join(os.path.dirname(__file__), "transition_matrices.json")
         self.config = self._load_transition_matrices()
 
         # Extract key components
@@ -87,10 +85,7 @@ class FacilityMarkovChain:
                 total = sum(probs)
 
                 if abs(total - 1.0) > 0.01:  # Allow small rounding errors
-                    msg = (
-                        f"Transition probabilities for {facility} {triage_cat} "
-                                   f"sum to {total}, not 1.0"
-                    )
+                    msg = f"Transition probabilities for {facility} {triage_cat} sum to {total}, not 1.0"
                     raise ValueError(msg)
 
     def get_next_facility(
@@ -98,7 +93,7 @@ class FacilityMarkovChain:
         current_facility: str,
         triage_category: str,
         patient_conditions: Optional[List[str]] = None,
-        modifiers: Optional[Dict[str, Any]] = None
+        modifiers: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Determine next facility using Markov chain transition probabilities.
@@ -134,19 +129,15 @@ class FacilityMarkovChain:
             del base_probs["description"]
 
         # Apply special condition modifiers
-        adjusted_probs = self._apply_special_conditions(
-            base_probs, current_facility, patient_conditions
-        )
+        adjusted_probs = self._apply_special_conditions(base_probs, current_facility, patient_conditions)
 
         # Apply environmental modifiers
-        adjusted_probs = self._apply_modifiers(
-            adjusted_probs, current_facility, modifiers, triage_category
-        )
+        adjusted_probs = self._apply_modifiers(adjusted_probs, current_facility, modifiers, triage_category)
 
         # Normalize probabilities
         total = sum(adjusted_probs.values())
         if total > 0:
-            normalized_probs = {k: v/total for k, v in adjusted_probs.items()}
+            normalized_probs = {k: v / total for k, v in adjusted_probs.items()}
         else:
             # Fallback if all probabilities are zero
             normalized_probs = base_probs
@@ -157,12 +148,8 @@ class FacilityMarkovChain:
 
         return np.random.choice(facilities, p=probabilities)  # noqa: NPY002
 
-
     def _apply_special_conditions(
-        self,
-        base_probs: Dict[str, float],
-        current_facility: str,
-        conditions: Optional[List[str]] = None
+        self, base_probs: Dict[str, float], current_facility: str, conditions: Optional[List[str]] = None
     ) -> Dict[str, float]:
         """
         Apply special condition routing rules (burns, TBI, amputations).
@@ -219,7 +206,9 @@ class FacilityMarkovChain:
                 # Casualty in vehicle might bypass Role1
                 if current_facility == "POI" and "Role2" in adjusted:
                     # Small chance of direct evac in vehicle
-                    vehicle_prob = self.special_conditions.get("vehicle_evacuation", {}).get("direct_evac_probability", 0.15)
+                    vehicle_prob = self.special_conditions.get("vehicle_evacuation", {}).get(
+                        "direct_evac_probability", 0.15
+                    )
                     if "Role1" in adjusted and adjusted["Role1"] > vehicle_prob:
                         # Transfer some Role1 probability to Role2/3
                         transfer = adjusted["Role1"] * vehicle_prob
@@ -234,7 +223,7 @@ class FacilityMarkovChain:
         base_probs: Dict[str, float],
         current_facility: str,
         modifiers: Optional[Dict[str, Any]] = None,
-        triage_category: str = "T3"
+        triage_category: str = "T3",
     ) -> Dict[str, float]:
         """
         Apply environmental and situational modifiers.
@@ -279,7 +268,7 @@ class FacilityMarkovChain:
                 # Within golden hour - better survival
                 survival_bonus = self.modifiers["golden_hour"]["within_1hr"]["survival_bonus"]
                 if "KIA" in adjusted:
-                    adjusted["KIA"] *= (1 - survival_bonus)
+                    adjusted["KIA"] *= 1 - survival_bonus
             else:
                 # Beyond golden hour - worse survival
                 kia_mult = self.modifiers["golden_hour"]["beyond_1hr"]["kia_multiplier"]
@@ -300,7 +289,7 @@ class FacilityMarkovChain:
         triage_category: str,
         patient_conditions: Optional[List[str]] = None,
         modifiers: Optional[Dict[str, Any]] = None,
-        max_steps: int = 10
+        max_steps: int = 10,
     ) -> List[str]:
         """
         Generate complete patient path from POI to terminal state.
@@ -318,12 +307,7 @@ class FacilityMarkovChain:
         current_facility = "POI"
 
         for _ in range(max_steps):
-            next_facility = self.get_next_facility(
-                current_facility,
-                triage_category,
-                patient_conditions,
-                modifiers
-            )
+            next_facility = self.get_next_facility(current_facility, triage_category, patient_conditions, modifiers)
 
             path.append(next_facility)
 
@@ -334,12 +318,7 @@ class FacilityMarkovChain:
 
         return path
 
-    def get_evacuation_time(
-        self,
-        from_facility: str,
-        to_facility: str,
-        transport_type: str = "ground"
-    ) -> int:
+    def get_evacuation_time(self, from_facility: str, to_facility: str, transport_type: str = "ground") -> int:
         """
         Get evacuation time between facilities with realistic variance.
 
@@ -376,13 +355,7 @@ class FacilityMarkovChain:
         # Generate time with normal distribution, ensure positive
         return max(5, int(np.random.normal(mean_time, std_time)))  # noqa: NPY002
 
-
-    def assess_mortality(
-        self,
-        triage_category: str,
-        checkpoint: str,
-        cumulative_mortality: float = 0.0
-    ) -> bool:
+    def assess_mortality(self, triage_category: str, checkpoint: str, cumulative_mortality: float = 0.0) -> bool:
         """
         Assess if patient dies at a mortality checkpoint.
 
@@ -422,12 +395,7 @@ class FacilityMarkovChain:
         Returns:
             Validation results with any warnings or errors
         """
-        validation = {
-            "valid": True,
-            "warnings": [],
-            "errors": [],
-            "metrics": {}
-        }
+        validation = {"valid": True, "warnings": [], "errors": [], "metrics": {}}
 
         # Check for duplicate facilities (shouldn't revisit)
         non_terminal = [f for f in path if f not in self.terminal_states]
@@ -452,6 +420,7 @@ class FacilityMarkovChain:
 
 
 # Utility functions for integration
+
 
 def create_markov_chain(config_path: Optional[str] = None) -> FacilityMarkovChain:
     """

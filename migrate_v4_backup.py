@@ -24,7 +24,7 @@ def migrate_context_locks(db_path):
 
     # Get all locked contexts
     cursor = conn.execute("""
-        SELECT id, label, content, metadata 
+        SELECT id, label, content, metadata
         FROM context_locks
     """)
 
@@ -70,11 +70,14 @@ def migrate_context_locks(db_path):
             metadata["created_at"] = "2024-01-01T00:00:00"  # Default for old entries
 
         # Update database
-        conn.execute("""
-            UPDATE context_locks 
+        conn.execute(
+            """
+            UPDATE context_locks
             SET metadata = ?
             WHERE id = ?
-        """, (json.dumps(metadata), ctx["id"]))
+        """,
+            (json.dumps(metadata), ctx["id"]),
+        )
 
         migrated += 1
         print(f"  ✓ {ctx['label']}: {priority} priority")
@@ -84,6 +87,7 @@ def migrate_context_locks(db_path):
 
     print(f"\n✅ Migrated {migrated} locked contexts")
     return True
+
 
 def check_migration_needed(db_path):
     """Check if migration is needed"""
@@ -95,7 +99,7 @@ def check_migration_needed(db_path):
     cursor = conn.execute("""
         SELECT COUNT(*) as count
         FROM context_locks
-        WHERE metadata IS NULL 
+        WHERE metadata IS NULL
            OR metadata NOT LIKE '%priority%'
     """)
 
@@ -103,6 +107,7 @@ def check_migration_needed(db_path):
     conn.close()
 
     return result[0] > 0
+
 
 def main():
     """Run migration for all known databases"""
@@ -143,6 +148,7 @@ def main():
     print("  • check_contexts() tool for violation detection")
     print("  • High-priority contexts shown at wake_up()")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

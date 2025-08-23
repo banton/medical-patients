@@ -12,6 +12,7 @@ import sys
 # Add project paths
 sys.path.append(os.path.dirname(__file__))
 
+
 # Test with a small batch of patients
 def test_markov_chain_integration():
     """Test that Markov chain produces expected routing patterns."""
@@ -25,12 +26,13 @@ def test_markov_chain_integration():
     os.makedirs("output", exist_ok=True)
 
     print("Generating 30 patients with Markov chain routing...")
-    result = subprocess.run([
-        "python3", "run_generator.py",
-        "--patients", "30",
-        "--output", "output",
-        "--formats", "json"
-    ], check=False, capture_output=True, text=True, env={**os.environ, "ENABLE_MARKOV_CHAIN": "true"})
+    result = subprocess.run(
+        ["python3", "run_generator.py", "--patients", "30", "--output", "output", "--formats", "json"],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "ENABLE_MARKOV_CHAIN": "true"},
+    )
 
     if result.returncode != 0:
         print(f"Error running generator: {result.stderr}")
@@ -170,8 +172,8 @@ def analyze_triage_group(patients, triage_cat, expect_bypass_role1=False, expect
         print("  Sample paths:")
         for i, path in enumerate(facilities_visited[:3]):
             path_str = " -> ".join(path) if path else "No path"
-            outcome = list(final_outcomes.keys())[0] if final_outcomes else "Unknown"
-            print(f"    Patient {i+1}: {path_str} -> {outcome}")
+            outcome = next(iter(final_outcomes.keys())) if final_outcomes else "Unknown"
+            print(f"    Patient {i + 1}: {path_str} -> {outcome}")
 
 
 def analyze_mortality(patients):
@@ -227,7 +229,7 @@ if __name__ == "__main__":
         success = test_markov_chain_integration()
 
         if success:
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("✅ MILESTONE 3 TEST COMPLETE: Markov chain integration successful!")
             print("Key achievements:")
             print("  - Probabilistic routing based on triage severity")
@@ -240,4 +242,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ Test error: {e}")
         import traceback
+
         traceback.print_exc()

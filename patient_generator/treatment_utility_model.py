@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TreatmentOption:
     """Represents a treatment option with utility scoring."""
+
     name: str
     utility_score: float
     resource_cost: int = 1
@@ -53,7 +54,7 @@ class TreatmentUtilityModel:
         "urgency": 0.25,
         "effectiveness": 0.20,
         "availability": 0.15,
-        "capability": 0.05
+        "capability": 0.05,
     }
 
     # Softmax temperature for treatment selection
@@ -104,14 +105,14 @@ class TreatmentUtilityModel:
                 "POI": {"available_treatments": ["pressure_dressing", "morphine_autoinjector"]},
                 "Role1": {"available_treatments": ["iv_fluids", "antibiotics"]},
                 "Role2": {"available_treatments": ["blood_transfusion", "surgery"]},
-                "Role3": {"available_treatments": ["icu_care", "definitive_surgery"]}
+                "Role3": {"available_treatments": ["icu_care", "definitive_surgery"]},
             },
             "default_fallbacks": {
                 "POI": "pressure_dressing",
                 "Role1": "iv_fluids",
                 "Role2": "supportive_care",
-                "Role3": "comprehensive_assessment"
-            }
+                "Role3": "comprehensive_assessment",
+            },
         }
 
     def calculate_utility(
@@ -121,7 +122,7 @@ class TreatmentUtilityModel:
         severity: str,
         facility: str,
         time_elapsed_minutes: int = 0,
-        available_resources: Optional[Dict[str, int]] = None
+        available_resources: Optional[Dict[str, int]] = None,
     ) -> float:
         """
         Calculate utility score for a treatment option.
@@ -156,11 +157,11 @@ class TreatmentUtilityModel:
 
         # Weighted sum of components
         utility = (
-            self.WEIGHTS["appropriateness"] * appropriateness +
-            self.WEIGHTS["urgency"] * urgency +
-            self.WEIGHTS["effectiveness"] * effectiveness +
-            self.WEIGHTS["availability"] * availability +
-            self.WEIGHTS["capability"] * capability
+            self.WEIGHTS["appropriateness"] * appropriateness
+            + self.WEIGHTS["urgency"] * urgency
+            + self.WEIGHTS["effectiveness"] * effectiveness
+            + self.WEIGHTS["availability"] * availability
+            + self.WEIGHTS["capability"] * capability
         )
 
         return min(1.0, max(0.0, utility))  # Clamp to [0, 1]
@@ -204,11 +205,11 @@ class TreatmentUtilityModel:
         """Get treatment effectiveness based on severity."""
         # Severity modifiers
         severity_modifiers = {
-            "Severe": 0.9,      # High effectiveness needed
+            "Severe": 0.9,  # High effectiveness needed
             "Moderate to severe": 0.85,
             "Moderate": 0.8,
             "Mild to moderate": 0.75,
-            "Mild": 0.7
+            "Mild": 0.7,
         }
 
         base_effectiveness = 0.8  # Default effectiveness
@@ -258,7 +259,7 @@ class TreatmentUtilityModel:
         facility: str,
         time_elapsed_minutes: int = 0,
         available_resources: Optional[Dict[str, int]] = None,
-        max_treatments: int = 3
+        max_treatments: int = 3,
     ) -> List[Dict[str, Any]]:
         """
         Select treatments using softmax probability distribution.
@@ -306,16 +307,12 @@ class TreatmentUtilityModel:
                 continue
 
             utility = self.calculate_utility(
-                treatment, injury_code, severity, facility,
-                time_elapsed_minutes, available_resources
+                treatment, injury_code, severity, facility, time_elapsed_minutes, available_resources
             )
 
             # Only consider treatments with positive utility
             if utility > 0.2:  # Threshold for minimum viability
-                treatment_utilities.append({
-                    "name": treatment,
-                    "utility": utility
-                })
+                treatment_utilities.append({"name": treatment, "utility": utility})
 
         if not treatment_utilities:
             # No viable treatments, use injury-appropriate fallback
@@ -332,19 +329,19 @@ class TreatmentUtilityModel:
         # Format results
         results = []
         for treatment in selected:
-            results.append({
-                "name": treatment["name"],
-                "utility_score": round(treatment["utility"], 3),
-                "applied_at": datetime.now(),
-                "facility": facility
-            })
+            results.append(
+                {
+                    "name": treatment["name"],
+                    "utility_score": round(treatment["utility"], 3),
+                    "applied_at": datetime.now(),
+                    "facility": facility,
+                }
+            )
 
         return results
 
     def _softmax_selection(
-        self,
-        treatment_utilities: List[Dict[str, Any]],
-        max_selections: int
+        self, treatment_utilities: List[Dict[str, Any]], max_selections: int
     ) -> List[Dict[str, Any]]:
         """
         Select treatments using softmax probability distribution.
@@ -366,10 +363,7 @@ class TreatmentUtilityModel:
 
         # Use numpy's random choice with probabilities
         indices = np.random.choice(  # noqa: NPY002
-            len(treatment_utilities),
-            size=min(n_selections, len(treatment_utilities)),
-            replace=False,
-            p=probabilities
+            len(treatment_utilities), size=min(n_selections, len(treatment_utilities)), replace=False, p=probabilities
         )
 
         selected = [treatment_utilities[i] for i in indices]
@@ -379,11 +373,7 @@ class TreatmentUtilityModel:
 
         return selected
 
-    def get_treatment_for_snomed(
-        self,
-        snomed_code: str,
-        facility: str = "POI"
-    ) -> List[str]:
+    def get_treatment_for_snomed(self, snomed_code: str, facility: str = "POI") -> List[str]:
         """
         Get recommended treatments for a SNOMED code at a facility.
 
@@ -399,12 +389,7 @@ class TreatmentUtilityModel:
         default = self.protocols.get("default_fallbacks", {}).get(facility, "supportive_care")
         return [default]
 
-    def validate_treatment_selection(
-        self,
-        treatment: str,
-        injury_code: str,
-        facility: str
-    ) -> Tuple[bool, str]:
+    def validate_treatment_selection(self, treatment: str, injury_code: str, facility: str) -> Tuple[bool, str]:
         """
         Validate if a treatment is appropriate for an injury at a facility.
 

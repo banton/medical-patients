@@ -2,6 +2,7 @@
 Overflow Router for Medical Simulation
 Routes patients to appropriate facilities based on capacity and triage
 """
+
 from typing import Any, Dict, List, Optional
 
 from medical_simulation.facility_capacity_manager import FacilityCapacityManager
@@ -25,7 +26,7 @@ class OverflowRouter:
             "T1": ["Role2", "Role3"],  # Urgent - need surgery
             "T2": ["Role1", "CSU", "Role2"],  # Delayed - can wait
             "T3": ["Role1", "CSU"],  # Routine - minor injuries
-            "Expectant": ["Role1"]  # Comfort care
+            "Expectant": ["Role1"],  # Comfort care
         }
 
         # Transport times in minutes (simplified)
@@ -35,16 +36,11 @@ class OverflowRouter:
             "Role1_to_CSU": 5,
             "Role1_to_Role2": 20,
             "CSU_to_Role2": 15,
-            "Role2_to_Role3": 45
+            "Role2_to_Role3": 45,
         }
 
         # Metrics tracking
-        self.routing_metrics = {
-            "total_routed": 0,
-            "overflow_events": 0,
-            "by_facility": {},
-            "by_triage": {}
-        }
+        self.routing_metrics = {"total_routed": 0, "overflow_events": 0, "by_facility": {}, "by_triage": {}}
 
     def find_available_facility(self, triage: str) -> Optional[str]:
         """
@@ -85,11 +81,7 @@ class OverflowRouter:
         return self.find_available_facility(triage)
 
     def route_patient(
-        self,
-        patient_id: str,
-        triage: str,
-        priority: str = "routine",
-        constraints: Optional[Dict] = None
+        self, patient_id: str, triage: str, priority: str = "routine", constraints: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """
         Route a patient to appropriate facility.
@@ -105,8 +97,7 @@ class OverflowRouter:
         """
         # Update metrics
         self.routing_metrics["total_routed"] += 1
-        self.routing_metrics["by_triage"][triage] = \
-            self.routing_metrics["by_triage"].get(triage, 0) + 1
+        self.routing_metrics["by_triage"][triage] = self.routing_metrics["by_triage"].get(triage, 0) + 1
 
         # Check constraints
         max_transport = None
@@ -174,7 +165,7 @@ class OverflowRouter:
             "admitted": False,
             "queued": True,
             "reason": "all_facilities_full",
-            "priority": priority
+            "priority": priority,
         }
 
     def _admit_to_facility(self, patient_id: str, facility: str, priority: str) -> Dict:
@@ -182,14 +173,13 @@ class OverflowRouter:
         result = self.capacity_manager.admit_patient(patient_id, facility, priority)
 
         # Track facility metrics
-        self.routing_metrics["by_facility"][facility] = \
-            self.routing_metrics["by_facility"].get(facility, 0) + 1
+        self.routing_metrics["by_facility"][facility] = self.routing_metrics["by_facility"].get(facility, 0) + 1
 
         return {
             "routed_to": facility,
             "admitted": result["success"],
             "queued": result.get("queued", False),
-            "priority": priority
+            "priority": priority,
         }
 
     def mass_casualty_routing(self, patients: List[Dict]) -> List[Dict]:
@@ -206,16 +196,11 @@ class OverflowRouter:
 
         # Sort by triage priority (T1 first)
         triage_order = {"T1": 0, "T2": 1, "T3": 2, "Expectant": 3}
-        sorted_patients = sorted(
-            patients,
-            key=lambda p: triage_order.get(p["triage"], 99)
-        )
+        sorted_patients = sorted(patients, key=lambda p: triage_order.get(p["triage"], 99))
 
         for patient in sorted_patients:
             result = self.route_patient(
-                patient["id"],
-                patient["triage"],
-                priority="urgent" if patient["triage"] == "T1" else "routine"
+                patient["id"], patient["triage"], priority="urgent" if patient["triage"] == "T1" else "routine"
             )
             results.append(result)
 
@@ -239,19 +224,11 @@ class OverflowRouter:
         # For now, return first N patients
         evac_list = []
         for i, patient_id in enumerate(patients[:count]):
-            evac_list.append({
-                "patient_id": patient_id,
-                "priority": i + 1,
-                "reason": "stable_for_transfer"
-            })
+            evac_list.append({"patient_id": patient_id, "priority": i + 1, "reason": "stable_for_transfer"})
 
         return evac_list
 
-    def get_facility_recommendations(
-        self,
-        injury_type: str,
-        triage: str
-    ) -> List[str]:
+    def get_facility_recommendations(self, injury_type: str, triage: str) -> List[str]:
         """
         Get facility recommendations based on injury and triage.
 
@@ -264,8 +241,11 @@ class OverflowRouter:
         """
         # Surgical cases need Role2 or Role3
         surgical_injuries = [
-            "penetrating_trauma", "gunshot", "blast_injury",
-            "traumatic_amputation", "internal_bleeding"
+            "penetrating_trauma",
+            "gunshot",
+            "blast_injury",
+            "traumatic_amputation",
+            "internal_bleeding",
         ]
 
         if any(inj in injury_type.lower() for inj in surgical_injuries):

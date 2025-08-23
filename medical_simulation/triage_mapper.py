@@ -2,6 +2,7 @@
 Triage Mapper for Medical Simulation
 Maps patient conditions to military triage categories
 """
+
 from typing import Dict, List, Optional, Tuple
 
 
@@ -26,12 +27,7 @@ class TriageMapper:
                 "description": "Life-threatening injuries requiring immediate treatment",
                 "health_range": (0, 40),
                 "max_wait_minutes": 60,
-                "examples": [
-                    "Airway obstruction",
-                    "Tension pneumothorax",
-                    "Uncontrolled hemorrhage",
-                    "Severe shock"
-                ]
+                "examples": ["Airway obstruction", "Tension pneumothorax", "Uncontrolled hemorrhage", "Severe shock"],
             },
             "T2": {
                 "name": "Delayed",
@@ -40,12 +36,7 @@ class TriageMapper:
                 "description": "Urgent injuries that can wait short period",
                 "health_range": (40, 70),
                 "max_wait_minutes": 240,
-                "examples": [
-                    "Open fractures",
-                    "Moderate burns",
-                    "Stable abdominal wounds",
-                    "Eye injuries"
-                ]
+                "examples": ["Open fractures", "Moderate burns", "Stable abdominal wounds", "Eye injuries"],
             },
             "T3": {
                 "name": "Minimal",
@@ -54,12 +45,7 @@ class TriageMapper:
                 "description": "Minor injuries, ambulatory patients",
                 "health_range": (70, 100),
                 "max_wait_minutes": 1440,
-                "examples": [
-                    "Minor lacerations",
-                    "Sprains",
-                    "Minor burns",
-                    "Walking wounded"
-                ]
+                "examples": ["Minor lacerations", "Sprains", "Minor burns", "Walking wounded"],
             },
             "T4": {
                 "name": "Expectant",
@@ -68,13 +54,8 @@ class TriageMapper:
                 "description": "Injuries incompatible with life given resources",
                 "health_range": (-1, 10),
                 "max_wait_minutes": 0,
-                "examples": [
-                    "Massive head trauma",
-                    "90% burns",
-                    "Exposed brain matter",
-                    "Agonal respirations"
-                ]
-            }
+                "examples": ["Massive head trauma", "90% burns", "Exposed brain matter", "Agonal respirations"],
+            },
         }
 
     def _define_injury_mappings(self) -> Dict[str, Dict]:
@@ -86,23 +67,20 @@ class TriageMapper:
             "tension_pneumothorax": {"category": "T1", "modifier": -20},
             "hemorrhagic_shock": {"category": "T1", "modifier": -25},
             "severe_tbi": {"category": "T1", "modifier": -30},
-
             # Delayed (T2) conditions
             "open_fracture": {"category": "T2", "modifier": -5},
             "closed_head_injury": {"category": "T2", "modifier": -10},
             "penetrating_abdomen": {"category": "T2", "modifier": -8},
             "moderate_burns": {"category": "T2", "modifier": -5},
-
             # Minimal (T3) conditions
             "simple_fracture": {"category": "T3", "modifier": 0},
             "laceration": {"category": "T3", "modifier": 0},
             "minor_burns": {"category": "T3", "modifier": 0},
             "sprain": {"category": "T3", "modifier": 0},
-
             # Expectant (T4) conditions
             "massive_head_trauma": {"category": "T4", "modifier": -50},
             "full_thickness_burns_90": {"category": "T4", "modifier": -60},
-            "traumatic_arrest": {"category": "T4", "modifier": -100}
+            "traumatic_arrest": {"category": "T4", "modifier": -100},
         }
 
     def calculate_triage_category(
@@ -110,7 +88,7 @@ class TriageMapper:
         health_score: int,
         injury_severity: str,
         specific_injuries: Optional[List[str]] = None,
-        mass_casualty: bool = False
+        mass_casualty: bool = False,
     ) -> Tuple[str, Dict]:
         """
         Calculate triage category for a patient.
@@ -145,9 +123,7 @@ class TriageMapper:
 
         # Mass casualty adjustments
         if mass_casualty:
-            base_category = self._adjust_for_mass_casualty(
-                base_category, health_score, injury_severity
-            )
+            base_category = self._adjust_for_mass_casualty(base_category, health_score, injury_severity)
 
         # Get category details
         details = self.categories[base_category].copy()
@@ -167,12 +143,7 @@ class TriageMapper:
             return "T2"  # Delayed
         return "T3"  # Minimal
 
-    def _adjust_for_mass_casualty(
-        self,
-        category: str,
-        health: int,
-        severity: str
-    ) -> str:
+    def _adjust_for_mass_casualty(self, category: str, health: int, severity: str) -> str:
         """
         Adjust triage in mass casualty situations.
         More conservative with resources.
@@ -198,14 +169,11 @@ class TriageMapper:
             "T1": "T1_bed",  # ICU/Resuscitation
             "T2": "T2_bed",  # Urgent care
             "T3": "T3_bed",  # Routine care
-            "T4": None        # Comfort care only
+            "T4": None,  # Comfort care only
         }
         return bed_map.get(triage_category)
 
-    def calculate_treatment_priority(
-        self,
-        patients: List[Dict]
-    ) -> List[Dict]:
+    def calculate_treatment_priority(self, patients: List[Dict]) -> List[Dict]:
         """
         Sort patients by treatment priority.
 
@@ -231,10 +199,7 @@ class TriageMapper:
         return sorted(patients, key=lambda x: x["priority_score"])
 
     def estimate_survival_probability(
-        self,
-        triage_category: str,
-        wait_time_minutes: int,
-        has_treatment: bool = False
+        self, triage_category: str, wait_time_minutes: int, has_treatment: bool = False
     ) -> float:
         """
         Estimate survival probability based on triage and wait time.
@@ -245,8 +210,8 @@ class TriageMapper:
         base_survival = {
             "T1": 0.7,  # With immediate treatment
             "T2": 0.9,  # Good prognosis
-            "T3": 0.99, # Minor injuries
-            "T4": 0.05  # Poor prognosis
+            "T3": 0.99,  # Minor injuries
+            "T4": 0.05,  # Poor prognosis
         }
 
         prob = base_survival.get(triage_category, 0.5)
@@ -255,7 +220,7 @@ class TriageMapper:
         # Reduce survival for excessive wait
         if max_wait > 0 and wait_time_minutes > max_wait:
             excess_ratio = wait_time_minutes / max_wait
-            prob *= (1.0 / excess_ratio)  # Exponential decay
+            prob *= 1.0 / excess_ratio  # Exponential decay
 
         # Treatment improves odds
         if has_treatment:
@@ -281,9 +246,7 @@ if __name__ == "__main__":
     print("-" * 60)
 
     for health, severity, injuries, mass_cas in scenarios:
-        category, details = tm.calculate_triage_category(
-            health, severity, injuries, mass_cas
-        )
+        category, details = tm.calculate_triage_category(health, severity, injuries, mass_cas)
 
         mass_str = " (MASCAL)" if mass_cas else ""
         print(f"Health: {health:3d}%, Severity: {severity:15s}, Injuries: {injuries[0]:20s}")

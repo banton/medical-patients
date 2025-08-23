@@ -159,7 +159,21 @@
       "Bash(docker ps:*)",
       "Bash(unzip:*)",
       "Bash(/dev/null)",
-      "Bash(echo \"Exit code: $?\")"
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(gh run watch:*)",
+      "Read(//var/folders/lp/y8m8sn3s4d1bp2959n1cpqx40000gn/T/TemporaryItems/NSIRD_screencaptureui_oGGLXK/**)",
+      "mcp__playwright__playwright_navigate",
+      "mcp__playwright__playwright_screenshot",
+      "mcp__playwright__playwright_console_logs",
+      "mcp__playwright__playwright_evaluate",
+      "mcp__playwright__playwright_click",
+      "mcp__playwright__playwright_close",
+      "Read(//Users/banton/Downloads/Military Medical Exercise Patient Data (2)/**)",
+      "Read(//Users/banton/Downloads/Military Medical Exercise Patient Data (2)/**)",
+      "Read(//Users/banton/Downloads/Military Medical Exercise Patient Data (2)/**)",
+      "Bash(cat:*)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output death_analysis --formats json)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output death_analysis_v2 --formats json)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

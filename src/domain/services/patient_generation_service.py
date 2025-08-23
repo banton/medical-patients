@@ -236,6 +236,7 @@ class AsyncPatientGenerationService:
         # Initialize components with config manager
         # Enable medical simulation for enhanced realistic patient data
         import os
+
         os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
         os.environ["ENABLE_TREATMENT_UTILITY_MODEL"] = "true"
         os.environ["ENABLE_MARKOV_CHAIN"] = "true"

@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 class BodyRegion(Enum):
     """Major body regions for injury localization."""
+
     HEAD = "head"
     NECK = "neck"
     CHEST = "chest"
@@ -21,16 +22,18 @@ class BodyRegion(Enum):
 
 class VesselType(Enum):
     """Types of blood vessels that can be damaged."""
+
     MAJOR_ARTERY = "major_artery"  # Aorta, iliac, carotid
-    LIMB_ARTERY = "limb_artery"    # Femoral, brachial
-    SMALL_VESSEL = "small_vessel"   # Small arteries and veins
-    ORGAN = "organ"                 # Internal organ bleeding
-    CAPILLARY = "capillary"         # Surface/soft tissue
+    LIMB_ARTERY = "limb_artery"  # Femoral, brachial
+    SMALL_VESSEL = "small_vessel"  # Small arteries and veins
+    ORGAN = "organ"  # Internal organ bleeding
+    CAPILLARY = "capillary"  # Surface/soft tissue
 
 
 @dataclass
 class BodyLocation:
     """Detailed body location with anatomical information."""
+
     region: BodyRegion
     specific_area: str  # e.g., "upper thigh", "forearm", "liver"
     major_vessels: List[str]  # Named vessels in this area
@@ -44,62 +47,62 @@ BODY_REGION_ANATOMY: Dict[BodyRegion, Dict] = {
         "vessels": ["carotid_artery", "jugular_vein", "cerebral_arteries"],
         "organs": ["brain", "eyes", "skull"],
         "tourniquetable": False,
-        "hemorrhage_risk": "high"  # Due to inability to compress
+        "hemorrhage_risk": "high",  # Due to inability to compress
     },
     BodyRegion.NECK: {
         "vessels": ["carotid_artery", "jugular_vein", "vertebral_artery"],
         "organs": ["trachea", "esophagus", "thyroid"],
         "tourniquetable": False,
-        "hemorrhage_risk": "critical"
+        "hemorrhage_risk": "critical",
     },
     BodyRegion.CHEST: {
         "vessels": ["aorta", "pulmonary_artery", "subclavian_artery", "intercostal_arteries"],
         "organs": ["heart", "lungs", "great_vessels"],
         "tourniquetable": False,
-        "hemorrhage_risk": "critical"
+        "hemorrhage_risk": "critical",
     },
     BodyRegion.ABDOMEN: {
         "vessels": ["abdominal_aorta", "celiac_artery", "mesenteric_arteries", "renal_arteries"],
         "organs": ["liver", "spleen", "kidneys", "intestines", "stomach"],
         "tourniquetable": False,
-        "hemorrhage_risk": "high"
+        "hemorrhage_risk": "high",
     },
     BodyRegion.PELVIS: {
         "vessels": ["iliac_artery", "iliac_vein", "femoral_artery_proximal"],
         "organs": ["bladder", "reproductive_organs", "rectum"],
         "tourniquetable": False,  # Junctional area
-        "hemorrhage_risk": "critical"
+        "hemorrhage_risk": "critical",
     },
     BodyRegion.LEFT_ARM: {
         "vessels": ["brachial_artery", "radial_artery", "ulnar_artery"],
         "organs": [],
         "tourniquetable": True,
-        "hemorrhage_risk": "moderate"
+        "hemorrhage_risk": "moderate",
     },
     BodyRegion.RIGHT_ARM: {
         "vessels": ["brachial_artery", "radial_artery", "ulnar_artery"],
         "organs": [],
         "tourniquetable": True,
-        "hemorrhage_risk": "moderate"
+        "hemorrhage_risk": "moderate",
     },
     BodyRegion.LEFT_LEG: {
         "vessels": ["femoral_artery", "popliteal_artery", "tibial_arteries"],
         "organs": [],
         "tourniquetable": True,
-        "hemorrhage_risk": "high"  # Femoral can be fatal
+        "hemorrhage_risk": "high",  # Femoral can be fatal
     },
     BodyRegion.RIGHT_LEG: {
         "vessels": ["femoral_artery", "popliteal_artery", "tibial_arteries"],
         "organs": [],
         "tourniquetable": True,
-        "hemorrhage_risk": "high"
+        "hemorrhage_risk": "high",
     },
     BodyRegion.BACK: {
         "vessels": ["posterior_intercostal_arteries", "lumbar_arteries"],
         "organs": ["kidneys", "spine"],
         "tourniquetable": False,
-        "hemorrhage_risk": "moderate"
-    }
+        "hemorrhage_risk": "moderate",
+    },
 }
 
 
@@ -121,7 +124,7 @@ def get_body_location(region: BodyRegion, specific_area: Optional[str] = None) -
         specific_area=specific_area or region.value,
         major_vessels=anatomy.get("vessels", []),
         organs=anatomy.get("organs", []),
-        tourniquetable=anatomy.get("tourniquetable", False)
+        tourniquetable=anatomy.get("tourniquetable", False),
     )
 
 
@@ -178,8 +181,7 @@ def get_affected_vessel_type(region: BodyRegion, injury_depth: str = "deep") -> 
         return VesselType.ORGAN
 
     # Limb injuries
-    if region in [BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG,
-                  BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM]:
+    if region in [BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG, BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM]:
         if injury_depth == "deep":
             return VesselType.LIMB_ARTERY
         return VesselType.SMALL_VESSEL

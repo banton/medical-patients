@@ -1,4 +1,5 @@
 """Tests for Deterioration Calculator"""
+
 from medical_simulation.deterioration_calculator import DeteriorationCalculator
 
 
@@ -27,9 +28,7 @@ def test_hemorrhage_detection():
 
     # With hemorrhage
     hemorrhage_injuries = [{"condition": "Arterial bleeding from leg"}]
-    hemorrhage_rate = calc.calculate_base_deterioration(
-        "Battle Injury", "Severe", hemorrhage_injuries
-    )
+    hemorrhage_rate = calc.calculate_base_deterioration("Battle Injury", "Severe", hemorrhage_injuries)
 
     assert hemorrhage_rate > base_rate, "Hemorrhage should increase deterioration"
     assert hemorrhage_rate >= base_rate * 1.5, "Hemorrhage multiplier should be at least 1.5x"
@@ -46,9 +45,7 @@ def test_environmental_modifiers():
     assert cold_rate > base_rate, "Cold should increase deterioration"
 
     # Multiple conditions compound
-    harsh_rate = calc.apply_environmental_factors(
-        base_rate, ["extreme_cold", "extreme_heat"]
-    )
+    harsh_rate = calc.apply_environmental_factors(base_rate, ["extreme_cold", "extreme_heat"])
     assert harsh_rate > cold_rate, "Multiple conditions should compound"
 
 
@@ -57,15 +54,12 @@ def test_compound_injuries():
     calc = DeteriorationCalculator()
 
     # Single injury
-    single = calc.calculate_compound_deterioration([
-        {"type": "Battle Injury", "severity": "Moderate"}
-    ])
+    single = calc.calculate_compound_deterioration([{"type": "Battle Injury", "severity": "Moderate"}])
 
     # Multiple injuries
-    multiple = calc.calculate_compound_deterioration([
-        {"type": "Battle Injury", "severity": "Severe"},
-        {"type": "Battle Injury", "severity": "Moderate"}
-    ])
+    multiple = calc.calculate_compound_deterioration(
+        [{"type": "Battle Injury", "severity": "Severe"}, {"type": "Battle Injury", "severity": "Moderate"}]
+    )
 
     assert multiple > single, "Multiple injuries should deteriorate faster"
     # But not simply additive (diminishing returns)
@@ -98,7 +92,7 @@ def test_intervention_points():
 
     points = calc.calculate_intervention_points(
         deterioration_rate=20,  # 20 health/hour
-        initial_health=60
+        initial_health=60,
     )
 
     # Should have intervention points

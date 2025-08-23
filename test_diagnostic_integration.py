@@ -34,7 +34,7 @@ def test_diagnostic_progression():
         injury_type="gunshot",
         severity="critical",
         location="POI",
-        true_condition_code=true_condition
+        true_condition_code=true_condition,
     )
 
     print("Patient initialized at POI:")
@@ -89,7 +89,7 @@ def test_diagnostic_progression():
         facility = diagnosis.get("facility", "Unknown")
         confidence = diagnosis.get("confidence", 0.0)
         correct = diagnosis.get("true_positive", False)
-        print(f"    {i+1}. {facility}: {confidence:.2f} confidence {'✓' if correct else '✗'}")
+        print(f"    {i + 1}. {facility}: {confidence:.2f} confidence {'✓' if correct else '✗'}")
 
     # Print metrics
     print("\nSystem Metrics:")
@@ -110,18 +110,15 @@ def test_multiple_patients():
     # Test conditions with their expected facility accuracy
     test_cases = [
         ("patient_001", "gunshot", "19130008"),  # TBI
-        ("patient_002", "blast", "48333001"),    # Burn
-        ("patient_003", "shrapnel", "361220002"), # Penetrating injury
+        ("patient_002", "blast", "48333001"),  # Burn
+        ("patient_003", "shrapnel", "361220002"),  # Penetrating injury
         ("patient_004", "vehicle", "125605004"),  # Fracture
-        ("patient_005", "fall", "125667009")     # Contusion
+        ("patient_005", "fall", "125667009"),  # Contusion
     ]
 
     for patient_id, injury_type, condition_code in test_cases:
         patient = orchestrator.initialize_patient(
-            patient_id=patient_id,
-            injury_type=injury_type,
-            severity="moderate",
-            true_condition_code=condition_code
+            patient_id=patient_id, injury_type=injury_type, severity="moderate", true_condition_code=condition_code
         )
 
         # Process through Role1
@@ -147,7 +144,7 @@ if __name__ == "__main__":
         # Test multiple patients
         multi_accuracy = test_multiple_patients()
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("MILESTONE 2.3 INTEGRATION TEST RESULTS:")
         print("✓ Diagnostic uncertainty engine integrated successfully")
         print("✓ Progressive diagnosis through facility chain working")
@@ -162,4 +159,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ Integration test failed: {e}")
         import traceback
+
         traceback.print_exc()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Comprehensive Statistical Analysis of 1000-Patient Medical Simulation
-Validates all 4 milestones: Treatment Utility, Diagnostic Uncertainty, 
+Validates all 4 milestones: Treatment Utility, Diagnostic Uncertainty,
 Facility Markov Chain, and Warfare Patterns
 """
 
@@ -14,11 +14,12 @@ def load_data(filepath):
     with open(filepath) as f:
         return json.load(f)
 
+
 def analyze_treatment_utility(patients):
     """Analyze Treatment Utility Model effectiveness"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("MILESTONE 1: TREATMENT UTILITY MODEL ANALYSIS")
-    print("="*60)
+    print("=" * 60)
 
     # Track treatment appropriateness
     treatment_stats = {
@@ -26,7 +27,7 @@ def analyze_treatment_utility(patients):
         "utility_model_treatments": 0,
         "inappropriate_treatments": [],
         "treatment_by_facility": defaultdict(Counter),
-        "treatment_by_condition": defaultdict(Counter)
+        "treatment_by_condition": defaultdict(Counter),
     }
 
     # Define inappropriate treatment patterns
@@ -54,16 +55,21 @@ def analyze_treatment_utility(patients):
 
                         if treatment_name in inappropriate_patterns:
                             if condition_code in inappropriate_patterns[treatment_name]:
-                                treatment_stats["inappropriate_treatments"].append({
-                                    "patient_id": patient["id"],
-                                    "treatment": treatment_name,
-                                    "condition": condition_code,
-                                    "facility": facility
-                                })
+                                treatment_stats["inappropriate_treatments"].append(
+                                    {
+                                        "patient_id": patient["id"],
+                                        "treatment": treatment_name,
+                                        "condition": condition_code,
+                                        "facility": facility,
+                                    }
+                                )
 
     # Calculate statistics
-    utility_percentage = (treatment_stats["utility_model_treatments"] /
-                         treatment_stats["total_treatments"] * 100) if treatment_stats["total_treatments"] > 0 else 0
+    utility_percentage = (
+        (treatment_stats["utility_model_treatments"] / treatment_stats["total_treatments"] * 100)
+        if treatment_stats["total_treatments"] > 0
+        else 0
+    )
 
     print("\nTreatment Statistics:")
     print(f"  Total treatments applied: {treatment_stats['total_treatments']}")
@@ -86,18 +92,19 @@ def analyze_treatment_utility(patients):
 
     return treatment_stats
 
+
 def analyze_diagnostic_uncertainty(patients):
     """Analyze Diagnostic Uncertainty (HMM) implementation"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("MILESTONE 2: DIAGNOSTIC UNCERTAINTY ANALYSIS")
-    print("="*60)
+    print("=" * 60)
 
     diagnostic_stats = {
         "poi_diagnoses": 0,
         "poi_changes": 0,
         "facility_accuracy": defaultdict(lambda: {"correct": 0, "total": 0}),
         "diagnostic_progression": [],
-        "misdiagnosis_patterns": defaultdict(int)
+        "misdiagnosis_patterns": defaultdict(int),
     }
 
     # Track diagnostic changes through facilities
@@ -121,18 +128,22 @@ def analyze_diagnostic_uncertainty(patients):
         if len(treatments_by_facility) > 1:
             facilities = list(treatments_by_facility.keys())
             for i in range(1, len(facilities)):
-                prev_treatments = set(treatments_by_facility[facilities[i-1]])
+                prev_treatments = set(treatments_by_facility[facilities[i - 1]])
                 curr_treatments = set(treatments_by_facility[facilities[i]])
 
                 # Significant change in treatment indicates diagnostic refinement
-                if len(prev_treatments.symmetric_difference(curr_treatments)) > len(prev_treatments.intersection(curr_treatments)):
+                if len(prev_treatments.symmetric_difference(curr_treatments)) > len(
+                    prev_treatments.intersection(curr_treatments)
+                ):
                     diagnostic_stats["poi_changes"] += 1
-                    diagnostic_stats["diagnostic_progression"].append({
-                        "patient_id": patient["id"],
-                        "from_facility": facilities[i-1],
-                        "to_facility": facilities[i],
-                        "treatment_change": True
-                    })
+                    diagnostic_stats["diagnostic_progression"].append(
+                        {
+                            "patient_id": patient["id"],
+                            "from_facility": facilities[i - 1],
+                            "to_facility": facilities[i],
+                            "treatment_change": True,
+                        }
+                    )
 
     # Estimate diagnostic accuracy based on treatment appropriateness
     print("\nDiagnostic Progression:")
@@ -159,11 +170,12 @@ def analyze_diagnostic_uncertainty(patients):
 
     return diagnostic_stats
 
+
 def analyze_markov_chain(patients):
     """Analyze Facility Markov Chain routing patterns"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("MILESTONE 3: FACILITY MARKOV CHAIN ANALYSIS")
-    print("="*60)
+    print("=" * 60)
 
     markov_stats = {
         "total_patients": len(patients["patients"]),
@@ -173,7 +185,7 @@ def analyze_markov_chain(patients):
         "rtd_by_facility": defaultdict(int),
         "facility_transitions": defaultdict(lambda: defaultdict(int)),
         "t1_bypass_role1": 0,
-        "t4_early_rtd": 0
+        "t4_early_rtd": 0,
     }
 
     for patient in patients["patients"]:
@@ -196,12 +208,12 @@ def analyze_markov_chain(patients):
 
         # Track transitions
         for i in range(len(facility_sequence) - 1):
-            markov_stats["facility_transitions"][facility_sequence[i]][facility_sequence[i+1]] += 1
+            markov_stats["facility_transitions"][facility_sequence[i]][facility_sequence[i + 1]] += 1
 
         # Check for T1 bypass of Role1
         if triage == "T1" and facility_sequence:
             if "POI" in facility_sequence and "Role2" in facility_sequence:
-                if "Role1" not in facility_sequence[:facility_sequence.index("Role2")]:
+                if "Role1" not in facility_sequence[: facility_sequence.index("Role2")]:
                     markov_stats["t1_bypass_role1"] += 1
 
         # Check for T4 early RTD
@@ -225,16 +237,16 @@ def analyze_markov_chain(patients):
 
     print("\nPatient Flow Statistics:")
     print(f"  Total patients: {markov_stats['total_patients']}")
-    print(f"  Total KIA: {total_kia} ({total_kia/markov_stats['total_patients']*100:.1f}%)")
-    print(f"  Total RTD: {total_rtd} ({total_rtd/markov_stats['total_patients']*100:.1f}%)")
+    print(f"  Total KIA: {total_kia} ({total_kia / markov_stats['total_patients'] * 100:.1f}%)")
+    print(f"  Total RTD: {total_rtd} ({total_rtd / markov_stats['total_patients'] * 100:.1f}%)")
 
     print("\nKIA by Facility:")
     for facility, count in sorted(markov_stats["kia_by_facility"].items()):
-        print(f"  {facility}: {count} ({count/total_kia*100:.1f}% of KIA)")
+        print(f"  {facility}: {count} ({count / total_kia * 100:.1f}% of KIA)")
 
     print("\nRTD by Facility:")
     for facility, count in sorted(markov_stats["rtd_by_facility"].items())[:5]:
-        print(f"  {facility}: {count} ({count/total_rtd*100:.1f}% of RTD)")
+        print(f"  {facility}: {count} ({count / total_rtd * 100:.1f}% of RTD)")
 
     print("\nTriage-Specific Routing:")
     print(f"  T1 patients bypassing Role1: {markov_stats['t1_bypass_role1']}")
@@ -242,8 +254,7 @@ def analyze_markov_chain(patients):
 
     # Show top routing patterns
     print("\nTop 5 Routing Patterns:")
-    sorted_patterns = sorted(markov_stats["routing_patterns"].items(),
-                           key=lambda x: len(x[1]), reverse=True)[:5]
+    sorted_patterns = sorted(markov_stats["routing_patterns"].items(), key=lambda x: len(x[1]), reverse=True)[:5]
     for pattern, patient_ids in sorted_patterns:
         print(f"  {pattern}: {len(patient_ids)} patients")
 
@@ -255,16 +266,17 @@ def analyze_markov_chain(patients):
             total = sum(transitions.values())
             print(f"  From {from_facility}:")
             for to_facility, count in sorted(transitions.items()):
-                prob = count/total*100 if total > 0 else 0
+                prob = count / total * 100 if total > 0 else 0
                 print(f"    → {to_facility}: {count} ({prob:.1f}%)")
 
     return markov_stats
 
+
 def analyze_warfare_patterns(patients):
     """Analyze Warfare Pattern implementation"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("MILESTONE 4: WARFARE PATTERNS ANALYSIS")
-    print("="*60)
+    print("=" * 60)
 
     warfare_stats = {
         "injury_types": Counter(),
@@ -272,7 +284,7 @@ def analyze_warfare_patterns(patients):
         "polytrauma_cases": 0,
         "injury_severity": defaultdict(list),
         "temporal_clustering": defaultdict(list),
-        "front_patterns": defaultdict(lambda: defaultdict(int))
+        "front_patterns": defaultdict(lambda: defaultdict(int)),
     }
 
     # Define warfare pattern indicators
@@ -286,7 +298,7 @@ def analyze_warfare_patterns(patients):
         # Analyze injury combinations
         conditions = patient.get("conditions", [])
         condition_codes = {c["code"] for c in conditions}
-        condition_names = [c["name"] for c in conditions]
+        [c["name"] for c in conditions]
 
         # Check for polytrauma
         if len(conditions) >= 2:
@@ -318,19 +330,19 @@ def analyze_warfare_patterns(patients):
 
     print("\nInjury Type Distribution:")
     for injury_type, count in warfare_stats["injury_types"].items():
-        print(f"  {injury_type}: {count} ({count/len(patients['patients'])*100:.1f}%)")
+        print(f"  {injury_type}: {count} ({count / len(patients['patients']) * 100:.1f}%)")
 
     print("\nPolytrauma Statistics:")
-    print(f"  Polytrauma cases: {warfare_stats['polytrauma_cases']} ({warfare_stats['polytrauma_cases']/len(patients['patients'])*100:.1f}%)")
+    print(
+        f"  Polytrauma cases: {warfare_stats['polytrauma_cases']} ({warfare_stats['polytrauma_cases'] / len(patients['patients']) * 100:.1f}%)"
+    )
     print(f"  IED pattern detected: {len(warfare_stats['injury_severity'].get('ied_pattern', []))} patients")
     print(f"  Blast pattern detected: {len(warfare_stats['injury_severity'].get('blast_pattern', []))} patients")
 
     # Analyze temporal clustering
     print("\nTemporal Clustering (Mass Casualty Events):")
     mass_casualty_events = [
-        (time, len(patients))
-        for time, patients in warfare_stats["temporal_clustering"].items()
-        if len(patients) >= 10
+        (time, len(patients)) for time, patients in warfare_stats["temporal_clustering"].items() if len(patients) >= 10
     ]
 
     if mass_casualty_events:
@@ -342,8 +354,7 @@ def analyze_warfare_patterns(patients):
 
     # Show top injury combinations
     print("\nTop Injury Combinations (Polytrauma):")
-    sorted_combos = sorted(warfare_stats["injury_combinations"].items(),
-                          key=lambda x: x[1], reverse=True)[:5]
+    sorted_combos = sorted(warfare_stats["injury_combinations"].items(), key=lambda x: x[1], reverse=True)[:5]
     for combo, count in sorted_combos:
         # Get names for the codes
         combo_names = []
@@ -359,18 +370,18 @@ def analyze_warfare_patterns(patients):
     print("\nTop Injuries by Front:")
     for front in ["Poland", "Estonia", "Finland"]:
         if front in warfare_stats["front_patterns"]:
-            top_injuries = sorted(warfare_stats["front_patterns"][front].items(),
-                                key=lambda x: x[1], reverse=True)[:3]
+            top_injuries = sorted(warfare_stats["front_patterns"][front].items(), key=lambda x: x[1], reverse=True)[:3]
             if top_injuries:
                 print(f"  {front}: {', '.join([f'{inj[0]}({inj[1]})' for inj in top_injuries])}")
 
     return warfare_stats
 
+
 def generate_summary_report(treatment_stats, diagnostic_stats, markov_stats, warfare_stats):
     """Generate executive summary of all analyses"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("EXECUTIVE SUMMARY: 1000-PATIENT VALIDATION")
-    print("="*60)
+    print("=" * 60)
 
     print("\n✅ MILESTONE COMPLETION STATUS:\n")
 
@@ -378,7 +389,9 @@ def generate_summary_report(treatment_stats, diagnostic_stats, markov_stats, war
     inappropriate_count = len(treatment_stats.get("inappropriate_treatments", []))
     m1_status = "✅ PASS" if inappropriate_count == 0 else f"⚠️ ISSUES ({inappropriate_count} inappropriate)"
     print(f"1. Treatment Utility Model: {m1_status}")
-    print(f"   - Utility model coverage: {treatment_stats['utility_model_treatments']}/{treatment_stats['total_treatments']} treatments")
+    print(
+        f"   - Utility model coverage: {treatment_stats['utility_model_treatments']}/{treatment_stats['total_treatments']} treatments"
+    )
 
     # Milestone 2: Diagnostic Uncertainty
     m2_status = "✅ PASS" if diagnostic_stats["poi_changes"] > 0 else "⚠️ NO PROGRESSION DETECTED"
@@ -391,18 +404,19 @@ def generate_summary_report(treatment_stats, diagnostic_stats, markov_stats, war
     print(f"   - T1 bypass Role1: {markov_stats['t1_bypass_role1']} patients")
     print(f"   - T4 early RTD: {markov_stats['t4_early_rtd']} patients")
     kia_total = sum(markov_stats["kia_by_facility"].values())
-    print(f"   - Mortality rate: {kia_total/markov_stats['total_patients']*100:.1f}%")
+    print(f"   - Mortality rate: {kia_total / markov_stats['total_patients'] * 100:.1f}%")
 
     # Milestone 4: Warfare Patterns
     m4_status = "✅ PASS" if warfare_stats["polytrauma_cases"] > 100 else "⚠️ LOW POLYTRAUMA"
     print(f"\n4. Warfare Patterns: {m4_status}")
-    print(f"   - Polytrauma rate: {warfare_stats['polytrauma_cases']/1000*100:.1f}%")
+    print(f"   - Polytrauma rate: {warfare_stats['polytrauma_cases'] / 1000 * 100:.1f}%")
     print(f"   - IED patterns: {len(warfare_stats['injury_severity'].get('ied_pattern', []))} patients")
     print(f"   - Blast patterns: {len(warfare_stats['injury_severity'].get('blast_pattern', []))} patients")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SYSTEM VALIDATION: COMPLETE")
-    print("="*60)
+    print("=" * 60)
+
 
 def main():
     # Load data
@@ -426,6 +440,7 @@ def main():
     # Save report
     report_path = "output/statistical_analysis_1000_patients.txt"
     print(f"\nSaving full report to: {report_path}")
+
 
 if __name__ == "__main__":
     main()

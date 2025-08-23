@@ -33,7 +33,7 @@ class HemorrhageIntegration:
             "total_blood_loss_rate": 0.0,
             "time_to_critical": float("inf"),
             "requires_tourniquet": False,
-            "requires_surgery": False
+            "requires_surgery": False,
         }
 
         # Check if patient has conditions that could cause hemorrhage
@@ -46,7 +46,7 @@ class HemorrhageIntegration:
             profile = self.hemorrhage_model.calculate_hemorrhage_profile(
                 injury_code=condition.get("code", "125670008"),
                 severity=condition.get("severity", "Moderate"),
-                multiple_injuries=len(patient.primary_conditions) > 1
+                multiple_injuries=len(patient.primary_conditions) > 1,
             )
 
             if profile.category != HemorrhageCategory.NO_HEMORRHAGE:
@@ -67,18 +67,13 @@ class HemorrhageIntegration:
             # Treatment requirements
             hemorrhage_data["requires_tourniquet"] = any(p.controllable for p in profiles)
             hemorrhage_data["requires_surgery"] = any(
-                p.category in [HemorrhageCategory.MASSIVE_HEMORRHAGE,
-                              HemorrhageCategory.TORSO_WOUND]
-                for p in profiles
+                p.category in [HemorrhageCategory.MASSIVE_HEMORRHAGE, HemorrhageCategory.TORSO_WOUND] for p in profiles
             )
 
         return hemorrhage_data
 
     def calculate_blood_volume_timeline(
-        self,
-        hemorrhage_profile: HemorrhageProfile,
-        duration_minutes: int = 60,
-        tourniquet_time: Optional[int] = None
+        self, hemorrhage_profile: HemorrhageProfile, duration_minutes: int = 60, tourniquet_time: Optional[int] = None
     ) -> List[Dict]:
         """
         Calculate blood volume over time for a hemorrhage profile.
@@ -110,13 +105,15 @@ class HemorrhageIntegration:
             current_volume = max(0, current_volume)
 
             # Record state
-            timeline.append({
-                "minute": minute,
-                "blood_volume_ml": current_volume,
-                "blood_volume_percent": (current_volume / initial_blood_volume) * 100,
-                "blood_loss_rate": blood_loss_rate,
-                "status": self._get_hemorrhage_status(current_volume / initial_blood_volume)
-            })
+            timeline.append(
+                {
+                    "minute": minute,
+                    "blood_volume_ml": current_volume,
+                    "blood_volume_percent": (current_volume / initial_blood_volume) * 100,
+                    "blood_loss_rate": blood_loss_rate,
+                    "status": self._get_hemorrhage_status(current_volume / initial_blood_volume),
+                }
+            )
 
             # Stop if exsanguinated
             if current_volume <= 0:
@@ -157,7 +154,7 @@ class HemorrhageIntegration:
             "vessel_type": profile.vessel_type.value,
             "tourniquetable": profile.controllable,
             "blood_loss_ml_per_min": profile.blood_loss_ml_per_min,
-            "time_to_exsanguination_min": profile.time_to_exsanguination_min
+            "time_to_exsanguination_min": profile.time_to_exsanguination_min,
         }
 
     @staticmethod
@@ -224,13 +221,13 @@ def example_usage():
                 {
                     "code": "262574004",  # Bullet wound
                     "display": "Bullet wound",
-                    "severity": "Severe"
+                    "severity": "Severe",
                 },
                 {
                     "code": "125689001",  # Shrapnel injury
                     "display": "Shrapnel injury",
-                    "severity": "Moderate"
-                }
+                    "severity": "Moderate",
+                },
             ]
 
     # Create patient and hemorrhage integration
@@ -250,21 +247,21 @@ def example_usage():
     # Calculate blood volume timeline for first hemorrhage
     if hemorrhage_data["profiles"]:
         first_profile = HemorrhageModel.calculate_hemorrhage_profile(
-            injury_code="262574004",
-            body_region=BodyRegion.CHEST,
-            severity="Severe"
+            injury_code="262574004", body_region=BodyRegion.CHEST, severity="Severe"
         )
 
         timeline = hemorrhage_int.calculate_blood_volume_timeline(
             first_profile,
             duration_minutes=30,
-            tourniquet_time=5  # Applied at 5 minutes
+            tourniquet_time=5,  # Applied at 5 minutes
         )
 
         print("\nBlood Volume Timeline (first 30 minutes):")
         for _i, point in enumerate(timeline[::5]):  # Every 5 minutes
-            print(f"  {point['minute']:2d} min: {point['blood_volume_percent']:.1f}% "
-                  f"({point['status']}) - Loss rate: {point['blood_loss_rate']:.1f} ml/min")
+            print(
+                f"  {point['minute']:2d} min: {point['blood_volume_percent']:.1f}% "
+                f"({point['status']}) - Loss rate: {point['blood_loss_rate']:.1f} ml/min"
+            )
 
 
 if __name__ == "__main__":

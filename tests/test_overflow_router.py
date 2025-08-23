@@ -1,4 +1,5 @@
 """Tests for Overflow Router module"""
+
 from medical_simulation.facility_capacity_manager import FacilityCapacityManager
 from medical_simulation.overflow_router import OverflowRouter
 
@@ -99,10 +100,9 @@ class TestOverflowRouter:
         router = OverflowRouter(capacity_manager)
 
         # Simulate mass casualty - route 100 patients
-        results = router.mass_casualty_routing([
-            {"id": f"US-MC-{i:03d}", "triage": ["T1", "T2", "T3"][i % 3]}
-            for i in range(100)
-        ])
+        results = router.mass_casualty_routing(
+            [{"id": f"US-MC-{i:03d}", "triage": ["T1", "T2", "T3"][i % 3]} for i in range(100)]
+        )
 
         # Check distribution
         facility_counts = {}
@@ -134,17 +134,11 @@ class TestOverflowRouter:
         router = OverflowRouter(capacity_manager)
 
         # Surgical case should prefer Role2
-        recommendations = router.get_facility_recommendations(
-            injury_type="penetrating_trauma",
-            triage="T1"
-        )
+        recommendations = router.get_facility_recommendations(injury_type="penetrating_trauma", triage="T1")
         assert recommendations[0] == "Role2"  # Has surgery capability
 
         # Minor injury should prefer Role1
-        recommendations = router.get_facility_recommendations(
-            injury_type="minor_laceration",
-            triage="T3"
-        )
+        recommendations = router.get_facility_recommendations(injury_type="minor_laceration", triage="T3")
         assert recommendations[0] == "Role1"
 
     def test_transport_time_consideration(self):
@@ -156,7 +150,7 @@ class TestOverflowRouter:
         result = router.route_patient(
             "US-CRIT-001",
             "T1",
-            constraints={"max_transport_time": 15}  # 15 minutes max
+            constraints={"max_transport_time": 15},  # 15 minutes max
         )
 
         # Should route to closest available facility

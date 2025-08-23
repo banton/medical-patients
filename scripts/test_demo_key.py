@@ -27,19 +27,9 @@ def test_demo_key(base_url="http://localhost:8000"):
     # Test 2: Generate patients with demo key
     print("\n2. Testing generation with demo key...")
     headers = {"X-API-Key": demo_key}
-    data = {
-        "configuration": {
-            "name": "Demo Test",
-            "total_patients": 5
-        },
-        "output_formats": ["json"]
-    }
+    data = {"configuration": {"name": "Demo Test", "total_patients": 5}, "output_formats": ["json"]}
 
-    response = requests.post(
-        f"{base_url}/api/v1/generation/",
-        json=data,
-        headers=headers
-    )
+    response = requests.post(f"{base_url}/api/v1/generation/", json=data, headers=headers)
 
     if response.status_code in [200, 201, 202]:
         result = response.json()
@@ -53,11 +43,7 @@ def test_demo_key(base_url="http://localhost:8000"):
     print("\n3. Testing demo key limits...")
     data["configuration"]["total_patients"] = 100  # Exceeds 50 patient limit
 
-    response = requests.post(
-        f"{base_url}/api/v1/generation/",
-        json=data,
-        headers=headers
-    )
+    response = requests.post(f"{base_url}/api/v1/generation/", json=data, headers=headers)
 
     if response.status_code == 400:
         print("   ✓ Correctly rejected over-limit request")
@@ -68,10 +54,7 @@ def test_demo_key(base_url="http://localhost:8000"):
 
     # Test 4: Check response headers
     print("\n4. Checking API key headers...")
-    response = requests.get(
-        f"{base_url}/api/v1/health",
-        headers=headers
-    )
+    response = requests.get(f"{base_url}/api/v1/health", headers=headers)
 
     if "X-API-Key-Type" in response.headers:
         print(f"   ✓ API Key Type: {response.headers.get('X-API-Key-Type')}")

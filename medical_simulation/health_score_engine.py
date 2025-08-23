@@ -2,6 +2,7 @@
 Health Score Engine for Medical Simulation
 Manages patient health scores (0-100) and calculates health timelines
 """
+
 import json
 import random
 from typing import Any, Dict, List, Optional, Tuple
@@ -35,11 +36,57 @@ class HealthScoreEngine:
         Returns:
             Initial health score (0-100)
         """
-        if injury_type not in self.deterioration_model:
-            # Default for unknown injury types
+        # Map injury types from uppercase/underscore format to expected format
+        injury_type_map = {
+            "BATTLE_TRAUMA": "Battle Injury",
+            "DISEASE": "Disease",
+            "NON_BATTLE_INJURY": "Non-Battle Injury",
+            "Battle Injury": "Battle Injury",
+            "Disease": "Disease",
+            "Non-Battle Injury": "Non-Battle Injury",
+        }
+
+        # Map numeric severity to text descriptions
+        severity_map = {
+            # Numeric severity (1-10 scale)
+            1: "Mild to moderate",
+            2: "Mild to moderate",
+            3: "Mild to moderate",
+            4: "Moderate",
+            5: "Moderate",
+            6: "Moderate",
+            7: "Moderate to severe",
+            8: "Moderate to severe",
+            9: "Severe",
+            10: "Severe",
+            # Text severity (keep as-is)
+            "Severe": "Severe",
+            "Moderate to severe": "Moderate to severe",
+            "Moderate": "Moderate",
+            "Mild to moderate": "Mild to moderate",
+        }
+
+        # Convert inputs to expected format
+        mapped_injury = injury_type_map.get(injury_type, injury_type)
+        mapped_severity = (
+            severity_map.get(severity, severity)
+            if isinstance(severity, int)
+            else severity_map.get(severity, "Moderate")
+        )
+
+        if mapped_injury not in self.deterioration_model:
+            # More varied defaults based on triage/severity
+            if isinstance(severity, int):
+                if severity >= 9:
+                    return random.randint(15, 30)  # Critical
+                if severity >= 7:
+                    return random.randint(35, 50)  # Severe
+                if severity >= 4:
+                    return random.randint(55, 70)  # Moderate
+                return random.randint(75, 90)  # Mild
             return 70
 
-        severity_data = self.deterioration_model[injury_type].get(severity, {})
+        severity_data = self.deterioration_model[mapped_injury].get(mapped_severity, {})
 
         # Check for specific conditions first
         if condition and "specific_conditions" in severity_data:
@@ -63,7 +110,7 @@ class HealthScoreEngine:
         severity: str,
         duration_hours: int,
         deterioration_rate: float,
-        modifiers: Optional[List[Dict]] = None
+        modifiers: Optional[List[Dict]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Calculate complete health timeline from injury to outcome.
@@ -118,18 +165,24 @@ class HealthScoreEngine:
 
             # Check for cliff events (sudden deterioration)
             cliff_config = self.config.get("cliff_events", {})
-            if cliff_config.get("enabled", False) and hour > 0 and random.random() < cliff_config.get("probability_per_hour", 0.05):
+            if (
+                cliff_config.get("enabled", False)
+                and hour > 0
+                and random.random() < cliff_config.get("probability_per_hour", 0.05)
+            ):
                 health_range = cliff_config.get("applies_to_health_range", [20, 60])
                 if health_range[0] <= current_health <= health_range[1]:
                     drop_range = cliff_config.get("health_drop_range", [15, 30])
                     cliff_drop = random.randint(drop_range[0], drop_range[1])
                     current_health -= cliff_drop
-                    timeline.append({
-                        "hour": hour,
-                        "health": max(0, current_health),
-                        "status": "cliff_event",
-                        "event": f"Sudden deterioration: -{cliff_drop} health"
-                    })
+                    timeline.append(
+                        {
+                            "hour": hour,
+                            "health": max(0, current_health),
+                            "status": "cliff_event",
+                            "event": f"Sudden deterioration: -{cliff_drop} health",
+                        }
+                    )
                     continue
 
             # Regular deterioration
@@ -140,12 +193,14 @@ class HealthScoreEngine:
             status = self._determine_status(current_health)
 
             # Add to timeline
-            timeline.append({
-                "hour": hour,
-                "health": max(0, min(100, current_health)),
-                "status": status,
-                "deterioration_rate": effective_rate if hour > 0 else 0
-            })
+            timeline.append(
+                {
+                    "hour": hour,
+                    "health": max(0, min(100, current_health)),
+                    "status": status,
+                    "deterioration_rate": effective_rate if hour > 0 else 0,
+                }
+            )
 
             # Stop if patient dies
             if current_health <= 0:
@@ -166,10 +221,7 @@ class HealthScoreEngine:
         return "good"
 
     def apply_treatment_effect(
-        self,
-        current_health: int,
-        treatment: str,
-        treatment_config: Optional[Dict] = None
+        self, current_health: int, treatment: str, treatment_config: Optional[Dict] = None
     ) -> Tuple[int, float]:
         """
         Apply immediate treatment effect to health score.
@@ -186,9 +238,9 @@ class HealthScoreEngine:
             # Default effects if no config provided
             default_effects = {
                 "tourniquet": (5, 0.2),  # +5 health, 0.2x deterioration
-                "iv_fluids": (10, 0.7),   # +10 health, 0.7x deterioration
-                "morphine": (0, 0.9),      # No health boost, 0.9x deterioration
-                "surgery": (20, 0.1),      # +20 health, 0.1x deterioration
+                "iv_fluids": (10, 0.7),  # +10 health, 0.7x deterioration
+                "morphine": (0, 0.9),  # No health boost, 0.9x deterioration
+                "surgery": (20, 0.1),  # +20 health, 0.1x deterioration
             }
             health_boost, modifier = default_effects.get(treatment, (0, 1.0))
         else:
@@ -217,20 +269,20 @@ class HealthScoreEngine:
                 "outcome": "death",
                 "time_hours": time_hours,
                 "final_health": 0,
-                "category": "DOW"  # Died of Wounds
+                "category": "DOW",  # Died of Wounds
             }
         if final_health < 40:
             return {
                 "outcome": "critical_survival",
                 "time_hours": time_hours,
                 "final_health": final_health,
-                "needs_evacuation": True
+                "needs_evacuation": True,
             }
         return {
             "outcome": "stable_survival",
             "time_hours": time_hours,
             "final_health": final_health,
-            "rtd_eligible": final_health > 70
+            "rtd_eligible": final_health > 70,
         }
 
 
@@ -249,11 +301,7 @@ if __name__ == "__main__":
     ]
 
     timeline = engine.calculate_health_timeline(
-        injury_type="Battle Injury",
-        severity="Severe",
-        duration_hours=8,
-        deterioration_rate=30,
-        modifiers=modifiers
+        injury_type="Battle Injury", severity="Severe", duration_hours=8, deterioration_rate=30, modifiers=modifiers
     )
 
     print("\nHealth timeline:")

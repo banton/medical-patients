@@ -40,9 +40,7 @@ class DiagnosticUncertaintyEngine:
         Args:
             config_path: Path to confusion_matrices.json config file
         """
-        self.config_path = config_path or os.path.join(
-            os.path.dirname(__file__), "confusion_matrices.json"
-        )
+        self.config_path = config_path or os.path.join(os.path.dirname(__file__), "confusion_matrices.json")
         self.confusion_data = self._load_confusion_matrices()
 
         # Extract key configuration
@@ -109,11 +107,7 @@ class DiagnosticUncertaintyEngine:
         return max(0.0, min(1.0, base_accuracy))
 
     def diagnose_condition(
-        self,
-        true_condition_code: str,
-        facility: str,
-        patient_id: str,
-        modifiers: Optional[Dict[str, Any]] = None
+        self, true_condition_code: str, facility: str, patient_id: str, modifiers: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Perform probabilistic diagnosis with potential misdiagnosis.
@@ -140,7 +134,7 @@ class DiagnosticUncertaintyEngine:
                 "true_positive": True,
                 "misdiagnosis_type": None,
                 "facility": facility,
-                "diagnostic_accuracy": accuracy
+                "diagnostic_accuracy": accuracy,
             }
 
         # Handle misdiagnosis - select from confusion matrix
@@ -153,7 +147,7 @@ class DiagnosticUncertaintyEngine:
             "misdiagnosis_type": "facility_confusion",
             "true_condition": true_condition_code,
             "facility": facility,
-            "diagnostic_accuracy": accuracy
+            "diagnostic_accuracy": accuracy,
         }
 
     def _select_misdiagnosis(self, true_condition_code: str, facility: str) -> str:
@@ -168,9 +162,9 @@ class DiagnosticUncertaintyEngine:
             SNOMED code of misdiagnosed condition
         """
         facility_matrix = self.confusion_matrices.get(facility, {})
-        condition_misdiagnoses = facility_matrix.get("common_misdiagnoses", {}).get(
-            true_condition_code, {}
-        ).get("misdiagnosed_as", [])
+        condition_misdiagnoses = (
+            facility_matrix.get("common_misdiagnoses", {}).get(true_condition_code, {}).get("misdiagnosed_as", [])
+        )
 
         if not condition_misdiagnoses:
             # Fallback to generic misdiagnosis pattern
@@ -201,20 +195,16 @@ class DiagnosticUncertaintyEngine:
         """
         # Common generic misdiagnoses for unknown conditions
         generic_misdiagnoses = [
-            "22253000",   # Pain
+            "22253000",  # Pain
             "125667009",  # Contusion
             "422587007",  # Nausea
             "271807003",  # Rash
-            "386807006"   # Memory impairment
+            "386807006",  # Memory impairment
         ]
         return random.choice(generic_misdiagnoses)
 
     def update_diagnosis_with_progression(
-        self,
-        patient_id: str,
-        current_diagnosis: str,
-        new_facility: str,
-        additional_info: Optional[List[str]] = None
+        self, patient_id: str, current_diagnosis: str, new_facility: str, additional_info: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Update diagnosis as patient progresses through facilities.
@@ -232,13 +222,15 @@ class DiagnosticUncertaintyEngine:
         if patient_id not in self.patient_diagnostic_states:
             self.patient_diagnostic_states[patient_id] = {
                 "diagnostic_history": [],
-                "current_state": "initial_assessment"
+                "current_state": "initial_assessment",
             }
 
         patient_state = self.patient_diagnostic_states[patient_id]
 
         # Calculate improvement probability
-        old_accuracy = self.facility_accuracy.get(patient_state["diagnostic_history"][-1]["facility"] if patient_state["diagnostic_history"] else "POI", 0.65)
+        old_accuracy = self.facility_accuracy.get(
+            patient_state["diagnostic_history"][-1]["facility"] if patient_state["diagnostic_history"] else "POI", 0.65
+        )
         new_accuracy = self.facility_accuracy.get(new_facility, 0.65)
 
         improvement_prob = new_accuracy - old_accuracy
@@ -259,7 +251,7 @@ class DiagnosticUncertaintyEngine:
             "accuracy": new_accuracy,
             "improvement_probability": max(0.0, improvement_prob),
             "hmm_state": patient_state["current_state"],
-            "additional_info": additional_info or []
+            "additional_info": additional_info or [],
         }
 
         patient_state["diagnostic_history"].append(diagnostic_update)
@@ -311,7 +303,7 @@ class DiagnosticUncertaintyEngine:
             "confidence": latest_diagnosis["accuracy"],
             "diagnostic_history": patient_state["diagnostic_history"],
             "hmm_state": patient_state["current_state"],
-            "improvement_trend": self._calculate_improvement_trend(patient_state["diagnostic_history"])
+            "improvement_trend": self._calculate_improvement_trend(patient_state["diagnostic_history"]),
         }
 
     def _calculate_improvement_trend(self, diagnostic_history: List[Dict[str, Any]]) -> Dict[str, float]:
@@ -337,7 +329,7 @@ class DiagnosticUncertaintyEngine:
             "trend": trend,
             "total_improvement": total_improvement,
             "initial_accuracy": accuracies[0],
-            "final_accuracy": accuracies[-1]
+            "final_accuracy": accuracies[-1],
         }
 
     def reset_patient_state(self, patient_id: str):
@@ -352,6 +344,7 @@ class DiagnosticUncertaintyEngine:
 
 
 # Utility functions for integration
+
 
 def create_diagnostic_uncertainty_engine(config_path: Optional[str] = None) -> DiagnosticUncertaintyEngine:
     """
@@ -376,13 +369,7 @@ def get_facility_diagnostic_accuracy(facility: str) -> float:
     Returns:
         Base diagnostic accuracy for facility
     """
-    accuracy_map = {
-        "POI": 0.65,
-        "Role1": 0.75,
-        "Role2": 0.85,
-        "Role3": 0.95,
-        "Role4": 0.98
-    }
+    accuracy_map = {"POI": 0.65, "Role1": 0.75, "Role2": 0.85, "Role3": 0.95, "Role4": 0.98}
     return accuracy_map.get(facility, 0.65)
 
 
@@ -402,9 +389,7 @@ if __name__ == "__main__":
     print(f"POI Diagnosis: {poi_diagnosis}")
 
     # Role1 progression
-    engine.update_diagnosis_with_progression(
-        patient_id, poi_diagnosis["diagnosed_code"], "Role1"
-    )
+    engine.update_diagnosis_with_progression(patient_id, poi_diagnosis["diagnosed_code"], "Role1")
     role1_diagnosis = engine.diagnose_condition(true_condition, "Role1", patient_id)
     print(f"Role1 Diagnosis: {role1_diagnosis}")
 

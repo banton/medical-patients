@@ -3,6 +3,7 @@
 QA MILESTONE 1: Interactive Health Deterioration Demo
 Shows realistic patient health decline and treatment effects
 """
+
 import os
 import sys
 import time
@@ -47,21 +48,20 @@ def print_timeline_point(hour: float, health: int, status: str, event: Optional[
 
 def demo_scenario_1():
     """Scenario 1: Severe battle injury without treatment - Patient dies"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SCENARIO 1: Severe Battle Injury - No Treatment")
-    print("="*80)
+    print("=" * 80)
     print("\nPatient: 22-year-old soldier")
     print("Injury: IED blast with multiple fragment wounds and arterial bleeding")
     print("Location: Remote patrol base, 2 hours from Role 2 facility")
-    print("-"*80)
+    print("-" * 80)
 
     engine = HealthScoreEngine()
     calc = DeteriorationCalculator()
 
     # Calculate deterioration rate
     base_rate = calc.calculate_base_deterioration(
-        "Battle Injury", "Severe",
-        injuries=[{"condition": "Arterial bleeding from femoral artery"}]
+        "Battle Injury", "Severe", injuries=[{"condition": "Arterial bleeding from femoral artery"}]
     )
 
     print("\nInitial Assessment:")
@@ -74,20 +74,15 @@ def demo_scenario_1():
         severity="Severe",
         duration_hours=3,
         deterioration_rate=base_rate,
-        modifiers=None  # No treatment!
+        modifiers=None,  # No treatment!
     )
 
     print("\nHealth Timeline:")
     print("Time  │ Health                                              │ Status       │ Event")
-    print("─"*80)
+    print("─" * 80)
 
     for point in timeline:
-        print_timeline_point(
-            point["hour"],
-            point["health"],
-            point["status"],
-            point.get("event")
-        )
+        print_timeline_point(point["hour"], point["health"], point["status"], point.get("event"))
         time.sleep(0.3)  # Dramatic effect
 
     print("\n⚰️  OUTCOME: KIA (Killed in Action) - Preventable death")
@@ -96,28 +91,27 @@ def demo_scenario_1():
 
 def demo_scenario_2():
     """Scenario 2: Same injury with tourniquet at 15 minutes - Patient survives"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SCENARIO 2: Severe Battle Injury - Tourniquet Applied")
-    print("="*80)
+    print("=" * 80)
     print("\nPatient: 24-year-old soldier")
     print("Injury: IED blast with multiple fragment wounds and arterial bleeding")
     print("Location: Squad medic applies tourniquet at T+15 minutes")
-    print("-"*80)
+    print("-" * 80)
 
     engine = HealthScoreEngine()
     calc = DeteriorationCalculator()
     TreatmentModifiers()
 
     base_rate = calc.calculate_base_deterioration(
-        "Battle Injury", "Severe",
-        injuries=[{"condition": "Arterial bleeding from femoral artery"}]
+        "Battle Injury", "Severe", injuries=[{"condition": "Arterial bleeding from femoral artery"}]
     )
 
     # Treatment timeline
     treatments = [
         {"hour": 0.25, "type": "treatment", "modifier": 0.2},  # Tourniquet at 15 min
-        {"hour": 0.5, "type": "treatment", "modifier": 0.7},   # IV fluids at 30 min
-        {"hour": 2.0, "type": "treatment", "modifier": 0.1}    # Surgery at Role 2
+        {"hour": 0.5, "type": "treatment", "modifier": 0.7},  # IV fluids at 30 min
+        {"hour": 2.0, "type": "treatment", "modifier": 0.1},  # Surgery at Role 2
     ]
 
     # Generate more granular timeline (every 15 minutes)
@@ -147,11 +141,13 @@ def demo_scenario_2():
 
         current_health = max(0, min(100, current_health))
 
-        detailed_timeline.append({
-            "hour": hour,
-            "health": int(current_health),
-            "status": "stable" if current_health > 40 else "unstable" if current_health > 10 else "critical"
-        })
+        detailed_timeline.append(
+            {
+                "hour": hour,
+                "health": int(current_health),
+                "status": "stable" if current_health > 40 else "unstable" if current_health > 10 else "critical",
+            }
+        )
 
         if current_health <= 0:
             break
@@ -160,7 +156,7 @@ def demo_scenario_2():
 
     print("\nHealth Timeline with Interventions:")
     print("Time  │ Health                                              │ Status       │ Event")
-    print("─"*80)
+    print("─" * 80)
 
     for i, point in enumerate(timeline):
         event = point.get("event")
@@ -173,12 +169,7 @@ def demo_scenario_2():
         elif point["hour"] == 2.0:
             event = "🏥 SURGERY at Role 2 - Definitive care"
 
-        print_timeline_point(
-            point["hour"],
-            point["health"],
-            point["status"],
-            event
-        )
+        print_timeline_point(point["hour"], point["health"], point["status"], event)
 
         if i < len(timeline) - 1:
             time.sleep(0.2)
@@ -190,11 +181,11 @@ def demo_scenario_2():
 
 def demo_scenario_3():
     """Scenario 3: Golden Hour demonstration"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("SCENARIO 3: Golden Hour Effect Demonstration")
-    print("="*80)
+    print("=" * 80)
     print("\nComparing treatment timing impact on survival")
-    print("-"*80)
+    print("-" * 80)
 
     engine = HealthScoreEngine()
     DeteriorationCalculator()
@@ -203,11 +194,11 @@ def demo_scenario_3():
         ("Immediate (5 min)", 0.083),
         ("Within Golden Hour (45 min)", 0.75),
         ("After Golden Hour (90 min)", 1.5),
-        ("Delayed (3 hours)", 3.0)
+        ("Delayed (3 hours)", 3.0),
     ]
 
     print("\nTreatment Timing Comparison:")
-    print("─"*50)
+    print("─" * 50)
 
     for desc, treatment_hour in scenarios:
         timeline = engine.calculate_health_timeline(
@@ -215,7 +206,7 @@ def demo_scenario_3():
             severity="Moderate to severe",
             duration_hours=6,
             deterioration_rate=20,
-            modifiers=[{"hour": treatment_hour, "type": "treatment", "modifier": 0.3}]
+            modifiers=[{"hour": treatment_hour, "type": "treatment", "modifier": 0.3}],
         )
 
         final_health = timeline[-1]["health"]
@@ -229,9 +220,9 @@ def demo_scenario_3():
 
 def interactive_demo():
     """Interactive demo where user can apply treatments"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("INTERACTIVE DEMO: You're the Combat Medic!")
-    print("="*80)
+    print("=" * 80)
 
     engine = HealthScoreEngine()
     DeteriorationCalculator()
@@ -240,7 +231,7 @@ def interactive_demo():
     print("\n🚨 CASUALTY ALERT!")
     print("Soldier hit by sniper fire - chest wound with suspected pneumothorax")
     print("You have limited supplies at this forward position (Role 1)")
-    print("-"*80)
+    print("-" * 80)
 
     initial_health = engine.get_initial_health("Battle Injury", "Severe")
     current_health = initial_health
@@ -260,8 +251,10 @@ def interactive_demo():
             print("\nAvailable treatments:")
             for i, treatment in enumerate(available, 1):
                 t_data = tm.treatments[treatment]
-                print(f"  {i}. {treatment:20s} (+{t_data['health_boost']} health, "
-                      f"{t_data['deterioration_modifier']:.1f}x deterioration)")
+                print(
+                    f"  {i}. {treatment:20s} (+{t_data['health_boost']} health, "
+                    f"{t_data['deterioration_modifier']:.1f}x deterioration)"
+                )
             print("  0. Wait and observe (advance 30 minutes)")
 
             try:
@@ -272,9 +265,7 @@ def interactive_demo():
                     idx = int(choice) - 1
                     if 0 <= idx < len(available):
                         treatment = available[idx]
-                        new_h, new_d, info = tm.apply_treatment(
-                            treatment, current_health, deterioration
-                        )
+                        new_h, new_d, info = tm.apply_treatment(treatment, current_health, deterioration)
                         print(f"\n✅ Applied {treatment}!")
                         print(f"   Health: {current_health:.0f} → {new_h:.0f}")
                         print(f"   Deterioration: {deterioration:.1f} → {new_d:.1f}")
@@ -290,7 +281,7 @@ def interactive_demo():
         current_health -= deterioration * 0.5
         current_health = max(0, current_health)
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     if current_health > 0:
         print(f"✅ PATIENT SURVIVED! Final health: {current_health:.0f}%")
         print(f"Treatments applied: {', '.join(applied_treatments)}")
@@ -301,9 +292,9 @@ def interactive_demo():
 
 def main():
     """Run the demo suite"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(" MEDICAL SIMULATION - HEALTH DETERIORATION DEMONSTRATION")
-    print("="*80)
+    print("=" * 80)
     print("\nThis demo shows realistic combat casualty health modeling:")
     print("• Deterioration rates based on injury severity")
     print("• Golden Hour effects on survival")
@@ -311,7 +302,7 @@ def main():
     print("• Critical decision points for medical personnel")
 
     while True:
-        print("\n" + "-"*50)
+        print("\n" + "-" * 50)
         print("Select Demo:")
         print("1. Scenario 1: No Treatment (KIA)")
         print("2. Scenario 2: Tourniquet Success")

@@ -24,10 +24,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
         self.hemorrhage_integration = HemorrhageIntegration()
 
     def generate_condition_with_hemorrhage(
-        self,
-        injury_type: str,
-        triage_category: str,
-        include_body_location: bool = True
+        self, injury_type: str, triage_category: str, include_body_location: bool = True
     ) -> Dict[str, Any]:
         """
         Generate a medical condition with hemorrhage profile.
@@ -46,8 +43,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
         # Add hemorrhage profile if it's a trauma condition
         if injury_type.upper() != "DISEASE":
             hemorrhage_profile = self.hemorrhage_model.calculate_hemorrhage_profile(
-                injury_code=condition["code"],
-                severity=condition["severity"]
+                injury_code=condition["code"], severity=condition["severity"]
             )
 
             # Add hemorrhage data to condition
@@ -57,7 +53,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
                 "bleeding_rate_alpha": hemorrhage_profile.alpha_0,
                 "lethal_triad_k": hemorrhage_profile.k,
                 "blood_loss_ml_min": hemorrhage_profile.blood_loss_ml_per_min,
-                "time_to_critical_min": hemorrhage_profile.time_to_exsanguination_min
+                "time_to_critical_min": hemorrhage_profile.time_to_exsanguination_min,
             }
 
             if include_body_location:
@@ -66,7 +62,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
                     "specific_area": hemorrhage_profile.body_location.specific_area,
                     "tourniquetable": hemorrhage_profile.body_location.tourniquetable,
                     "major_vessels": hemorrhage_profile.body_location.major_vessels,
-                    "organs": hemorrhage_profile.body_location.organs
+                    "organs": hemorrhage_profile.body_location.organs,
                 }
         else:
             condition["hemorrhage"] = {"has_hemorrhage": False}
@@ -74,10 +70,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
         return condition
 
     def generate_multiple_conditions_with_hemorrhage(
-        self,
-        injury_type: str,
-        triage_category: str,
-        count: int = 2
+        self, injury_type: str, triage_category: str, count: int = 2
     ) -> List[Dict[str, Any]]:
         """
         Generate multiple conditions with hemorrhage profiles.
@@ -102,7 +95,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
                     injury_code=condition["code"],
                     body_region=body_regions[i] if i < len(body_regions) else None,
                     severity=condition["severity"],
-                    multiple_injuries=count > 1
+                    multiple_injuries=count > 1,
                 )
 
                 # Add hemorrhage and location data
@@ -112,21 +105,18 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
                     "bleeding_rate_alpha": hemorrhage_profile.alpha_0,
                     "lethal_triad_k": hemorrhage_profile.k,
                     "blood_loss_ml_min": hemorrhage_profile.blood_loss_ml_per_min,
-                    "time_to_critical_min": hemorrhage_profile.time_to_exsanguination_min
+                    "time_to_critical_min": hemorrhage_profile.time_to_exsanguination_min,
                 }
 
                 condition["body_location"] = {
                     "region": hemorrhage_profile.body_location.region.value,
                     "specific_area": hemorrhage_profile.body_location.specific_area,
-                    "tourniquetable": hemorrhage_profile.body_location.tourniquetable
+                    "tourniquetable": hemorrhage_profile.body_location.tourniquetable,
                 }
 
         return conditions
 
-    def calculate_combined_hemorrhage_effects(
-        self,
-        conditions: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def calculate_combined_hemorrhage_effects(self, conditions: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Calculate combined hemorrhage effects from multiple conditions.
 
@@ -187,8 +177,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
             "requires_tourniquet": requires_tourniquet,
             "requires_surgery": requires_surgery,
             "affected_body_regions": affected_regions,
-            "number_of_bleeding_sites": len([c for c in conditions
-                                            if c.get("hemorrhage", {}).get("has_hemorrhage")])
+            "number_of_bleeding_sites": len([c for c in conditions if c.get("hemorrhage", {}).get("has_hemorrhage")]),
         }
 
     @staticmethod
@@ -198,18 +187,13 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
 
         if count == 1:
             # Single injury - common locations
-            return [random.choice([
-                BodyRegion.CHEST,
-                BodyRegion.ABDOMEN,
-                BodyRegion.LEFT_LEG,
-                BodyRegion.RIGHT_LEG
-            ])]
+            return [random.choice([BodyRegion.CHEST, BodyRegion.ABDOMEN, BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG])]
         if count == 2:
             # Two injuries - often related regions
             patterns = [
                 [BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG],  # Bilateral lower
-                [BodyRegion.CHEST, BodyRegion.ABDOMEN],       # Torso
-                [BodyRegion.LEFT_ARM, BodyRegion.CHEST],      # Upper body
+                [BodyRegion.CHEST, BodyRegion.ABDOMEN],  # Torso
+                [BodyRegion.LEFT_ARM, BodyRegion.CHEST],  # Upper body
             ]
             return random.choice(patterns)
         # Multiple injuries - blast/polytrauma pattern
@@ -217,7 +201,7 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
             BodyRegion.CHEST,
             BodyRegion.ABDOMEN,
             random.choice([BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG]),
-            random.choice([BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM])
+            random.choice([BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM]),
         ][:count]
 
 

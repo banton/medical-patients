@@ -41,14 +41,18 @@ def ensure_demo_key():
             if existing_key:
                 print(f"✓ Demo API key already exists: {DEMO_API_KEY_CONFIG['key']}")
                 print(f"  Name: {existing_key.name}")
-                print(f"  Limits: {existing_key.max_patients_per_request} patients, {existing_key.max_requests_per_day} requests/day")
+                print(
+                    f"  Limits: {existing_key.max_patients_per_request} patients, {existing_key.max_requests_per_day} requests/day"
+                )
                 return True
 
             # Create the demo key
             demo_key = repo.create_demo_key_if_not_exists()
             print(f"✓ Created demo API key: {DEMO_API_KEY_CONFIG['key']}")
             print(f"  Name: {demo_key.name}")
-            print(f"  Limits: {demo_key.max_patients_per_request} patients, {demo_key.max_requests_per_day} requests/day")
+            print(
+                f"  Limits: {demo_key.max_patients_per_request} patients, {demo_key.max_requests_per_day} requests/day"
+            )
             return True
 
     except Exception as e:

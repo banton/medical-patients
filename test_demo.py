@@ -8,13 +8,14 @@ from collections import Counter
 import json
 import os
 import subprocess
+from typing import Optional
 
 
-def run_test(description: str, env_vars: dict = None):
+def run_test(description: str, env_vars: Optional[dict] = None):
     """Run a single test scenario."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"TEST: {description}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Base environment
     env = os.environ.copy()
@@ -34,6 +35,7 @@ def run_test(description: str, env_vars: dict = None):
         data = json.load(f)
 
     analyze_results(data, description)
+
 
 def analyze_results(data: dict, test_name: str):
     """Analyze and display patient statistics."""
@@ -82,11 +84,11 @@ def analyze_results(data: dict, test_name: str):
 
     print("\n  Triage Distribution:")
     for triage, count in sorted(triage_categories.items()):
-        print(f"    {triage}: {count} ({count/len(patients)*100:.1f}%)")
+        print(f"    {triage}: {count} ({count / len(patients) * 100:.1f}%)")
 
     print("\n  Final Outcomes:")
     for status, count in sorted(final_statuses.items()):
-        print(f"    {status}: {count} ({count/len(patients)*100:.1f}%)")
+        print(f"    {status}: {count} ({count / len(patients) * 100:.1f}%)")
 
     # Analyze facility flows
     flow_counter = Counter(facility_flows)
@@ -106,12 +108,13 @@ def analyze_results(data: dict, test_name: str):
     print(f"    Direct evacuation rate: {direct_evac_rate:.1f}%")
     print(f"    Polytrauma rate (>2 injuries): {polytrauma_rate:.1f}%")
 
+
 def main():
     """Run demonstration tests."""
-    print("="*60)
+    print("=" * 60)
     print("MEDICAL SIMULATION ENHANCEMENT DEMONSTRATION")
     print("Showcasing Markov Chain Routing & Warfare Patterns")
-    print("="*60)
+    print("=" * 60)
 
     # Test 1: Baseline (no enhancements)
     run_test(
@@ -119,18 +122,14 @@ def main():
         {
             "ENABLE_MARKOV_CHAIN": "false",
             "ENABLE_WARFARE_MODIFIERS": "false",
-            "ENABLE_TREATMENT_UTILITY_MODEL": "false"
-        }
+            "ENABLE_TREATMENT_UTILITY_MODEL": "false",
+        },
     )
 
     # Test 2: With Markov Chain only
     run_test(
         "WITH MARKOV CHAIN - Probabilistic Routing",
-        {
-            "ENABLE_MARKOV_CHAIN": "true",
-            "ENABLE_WARFARE_MODIFIERS": "false",
-            "ENABLE_TREATMENT_UTILITY_MODEL": "true"
-        }
+        {"ENABLE_MARKOV_CHAIN": "true", "ENABLE_WARFARE_MODIFIERS": "false", "ENABLE_TREATMENT_UTILITY_MODEL": "true"},
     )
 
     # Test 3: With Warfare Modifiers (Artillery)
@@ -140,8 +139,8 @@ def main():
             "ENABLE_MARKOV_CHAIN": "true",
             "ENABLE_WARFARE_MODIFIERS": "true",
             "ENABLE_TREATMENT_UTILITY_MODEL": "true",
-            "WARFARE_SCENARIO": "artillery"
-        }
+            "WARFARE_SCENARIO": "artillery",
+        },
     )
 
     # Test 4: With Warfare Modifiers (Urban)
@@ -151,8 +150,8 @@ def main():
             "ENABLE_MARKOV_CHAIN": "true",
             "ENABLE_WARFARE_MODIFIERS": "true",
             "ENABLE_TREATMENT_UTILITY_MODEL": "true",
-            "WARFARE_SCENARIO": "urban"
-        }
+            "WARFARE_SCENARIO": "urban",
+        },
     )
 
     # Test 5: With Warfare Modifiers (IED)
@@ -162,19 +161,20 @@ def main():
             "ENABLE_MARKOV_CHAIN": "true",
             "ENABLE_WARFARE_MODIFIERS": "true",
             "ENABLE_TREATMENT_UTILITY_MODEL": "true",
-            "WARFARE_SCENARIO": "ied"
-        }
+            "WARFARE_SCENARIO": "ied",
+        },
     )
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("✅ DEMONSTRATION COMPLETE")
-    print("="*60)
+    print("=" * 60)
     print("\nKey Achievements:")
     print("1. ✅ Markov chain routing: POI → Role1 is now standard path")
     print("2. ✅ Direct evacuation: Rare (2-4%) for vehicle casualties")
     print("3. ✅ Warfare patterns: Distinct injury distributions per scenario")
     print("4. ✅ Realistic mortality: 10-20% range vs 75% before fixes")
     print("5. ✅ Polytrauma modeling: Varies by warfare type (IED highest)")
+
 
 if __name__ == "__main__":
     main()

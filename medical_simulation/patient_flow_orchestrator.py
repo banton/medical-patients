@@ -23,8 +23,10 @@ from medical_simulation.triage_mapper import TriageMapper
 try:
     import os
     import sys
+
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
     from patient_generator.diagnostic_uncertainty import DiagnosticUncertaintyEngine
+
     DIAGNOSTIC_UNCERTAINTY_AVAILABLE = True
 except ImportError:
     DIAGNOSTIC_UNCERTAINTY_AVAILABLE = False
@@ -33,6 +35,7 @@ except ImportError:
 
 class PatientState(Enum):
     """Patient states in the medical system."""
+
     AT_POI = "at_poi"
     IN_TRIAGE = "in_triage"
     IN_TREATMENT = "in_treatment"
@@ -47,6 +50,7 @@ class PatientState(Enum):
 @dataclass
 class Patient:
     """Patient with full medical and location tracking."""
+
     id: str
     injury_type: str
     severity: str  # Original severity level for deterioration calculation
@@ -122,12 +126,17 @@ class PatientFlowOrchestrator:
             "transport_missions": 0,
             "diagnostic_accuracy": 0.0,
             "correct_diagnoses": 0,
-            "misdiagnoses": 0
+            "misdiagnoses": 0,
         }
 
-    def initialize_patient(self, patient_id: str, injury_type: str,
-                          severity: str, location: str = "POI",
-                          true_condition_code: Optional[str] = None) -> Patient:
+    def initialize_patient(
+        self,
+        patient_id: str,
+        injury_type: str,
+        severity: str,
+        location: str = "POI",
+        true_condition_code: Optional[str] = None,
+    ) -> Patient:
         """
         Initialize a new patient entering the medical system.
 
@@ -142,14 +151,10 @@ class PatientFlowOrchestrator:
             Initialized Patient object
         """
         # Calculate initial health score
-        initial_health = self.health_engine.get_initial_health(
-            injury_type, severity
-        )
+        initial_health = self.health_engine.get_initial_health(injury_type, severity)
 
         # Determine triage category
-        triage_result = self.triage_mapper.calculate_triage_category(
-            initial_health, severity
-        )
+        triage_result = self.triage_mapper.calculate_triage_category(initial_health, severity)
         triage_category = triage_result[0]  # Get category from tuple
 
         # Create patient
@@ -162,7 +167,7 @@ class PatientFlowOrchestrator:
             triage_category=triage_category,
             state=PatientState.AT_POI,
             current_location=location,
-            true_condition=true_condition_code
+            true_condition=true_condition_code,
         )
 
         # Track patient FIRST (needed for diagnosis)
@@ -171,32 +176,34 @@ class PatientFlowOrchestrator:
 
         # Initialize diagnostic uncertainty if enabled
         if self.diagnostic_uncertainty_enabled and true_condition_code:
-            initial_diagnosis = self.perform_diagnosis(patient_id, location,
-                                                     {"triage_category": triage_category})
+            initial_diagnosis = self.perform_diagnosis(patient_id, location, {"triage_category": triage_category})
             patient.diagnosed_conditions.append(initial_diagnosis)
             patient.diagnostic_confidence = initial_diagnosis.get("confidence", 0.0)
 
         # Add to timeline
-        patient.timeline.append({
-            "timestamp": self.simulation_time,
-            "event": "arrived_at_poi",
-            "location": location,
-            "health": initial_health,
-            "triage": triage_category
-        })
+        patient.timeline.append(
+            {
+                "timestamp": self.simulation_time,
+                "event": "arrived_at_poi",
+                "location": location,
+                "health": initial_health,
+                "triage": triage_category,
+            }
+        )
 
         return patient
 
-    def perform_diagnosis(self, patient_id: str, facility: str,
-                         modifiers: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def perform_diagnosis(
+        self, patient_id: str, facility: str, modifiers: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Perform diagnosis at the current facility with progressive accuracy.
-        
+
         Args:
             patient_id: Patient identifier
             facility: Current medical facility
             modifiers: Additional factors affecting diagnostic accuracy
-            
+
         Returns:
             Diagnosis result with confidence and accuracy metrics
         """
@@ -210,17 +217,15 @@ class PatientFlowOrchestrator:
             # Map injury types to common SNOMED codes for testing
             injury_to_condition_map = {
                 "gunshot": "19130008",  # Traumatic brain injury
-                "blast": "48333001",    # Burn injury
-                "shrapnel": "361220002", # Penetrating injury
+                "blast": "48333001",  # Burn injury
+                "shrapnel": "361220002",  # Penetrating injury
                 "vehicle": "125605004",  # Fracture of bone
-                "fall": "125667009"      # Contusion
+                "fall": "125667009",  # Contusion
             }
             true_condition = injury_to_condition_map.get(patient.injury_type, "22253000")  # Default to Pain
 
         # Perform diagnosis using uncertainty engine
-        diagnosis_result = self.diagnostic_engine.diagnose_condition(
-            true_condition, facility, patient_id, modifiers
-        )
+        diagnosis_result = self.diagnostic_engine.diagnose_condition(true_condition, facility, patient_id, modifiers)
 
         # Update metrics
         if diagnosis_result.get("true_positive", False):
@@ -238,11 +243,11 @@ class PatientFlowOrchestrator:
     def update_diagnosis_on_transfer(self, patient_id: str, new_facility: str) -> Optional[Dict[str, Any]]:
         """
         Update patient diagnosis when transferred to a new facility with better capabilities.
-        
+
         Args:
             patient_id: Patient identifier
             new_facility: New facility with potentially better diagnostic accuracy
-            
+
         Returns:
             Updated diagnosis or None if no improvement
         """
@@ -257,7 +262,7 @@ class PatientFlowOrchestrator:
 
         # Update diagnostic progression in engine
         if current_diagnosis_code:
-            progression_update = self.diagnostic_engine.update_diagnosis_with_progression(
+            self.diagnostic_engine.update_diagnosis_with_progression(
                 patient_id, current_diagnosis_code, new_facility
             )
 
@@ -265,7 +270,7 @@ class PatientFlowOrchestrator:
             modifiers = {
                 "triage_category": patient.triage_category,
                 "time_with_patient_hours": 0.5,  # Assume 30min examination
-                "additional_information": ["multiple_examinations"]
+                "additional_information": ["multiple_examinations"],
             }
 
             new_diagnosis = self.perform_diagnosis(patient_id, new_facility, modifiers)
@@ -275,16 +280,20 @@ class PatientFlowOrchestrator:
             patient.diagnostic_confidence = new_diagnosis.get("confidence", 0.0)
 
             # Add to timeline
-            patient.timeline.append({
-                "timestamp": self.simulation_time,
-                "event": "diagnosis_updated",
-                "facility": new_facility,
-                "previous_diagnosis": current_diagnosis_code,
-                "new_diagnosis": new_diagnosis.get("diagnosed_code"),
-                "confidence": new_diagnosis.get("confidence", 0.0),
-                "accuracy_improvement": new_diagnosis.get("diagnostic_accuracy", 0.0) -
-                                       patient.diagnosed_conditions[-2].get("diagnostic_accuracy", 0.0) if len(patient.diagnosed_conditions) > 1 else 0.0
-            })
+            patient.timeline.append(
+                {
+                    "timestamp": self.simulation_time,
+                    "event": "diagnosis_updated",
+                    "facility": new_facility,
+                    "previous_diagnosis": current_diagnosis_code,
+                    "new_diagnosis": new_diagnosis.get("diagnosed_code"),
+                    "confidence": new_diagnosis.get("confidence", 0.0),
+                    "accuracy_improvement": new_diagnosis.get("diagnostic_accuracy", 0.0)
+                    - patient.diagnosed_conditions[-2].get("diagnostic_accuracy", 0.0)
+                    if len(patient.diagnosed_conditions) > 1
+                    else 0.0,
+                }
+            )
 
             return new_diagnosis
 
@@ -310,9 +319,7 @@ class PatientFlowOrchestrator:
 
         # Re-assess triage based on current health
         severity = "critical" if patient.current_health < 30 else "moderate" if patient.current_health < 70 else "minor"
-        triage_result = self.triage_mapper.calculate_triage_category(
-            patient.current_health, severity
-        )
+        triage_result = self.triage_mapper.calculate_triage_category(patient.current_health, severity)
         patient.triage_category = triage_result[0]  # Get category from tuple
 
         # Determine initial facility based on triage
@@ -320,7 +327,7 @@ class PatientFlowOrchestrator:
             "T1": "Role2",  # Critical -> Role2 or higher
             "T2": "Role1",  # Urgent -> Role1 can stabilize
             "T3": "Role1",  # Delayed -> Role1 for basic care
-            "T4": "Role1"   # Minimal -> Role1 for observation
+            "T4": "Role1",  # Minimal -> Role1 for observation
         }
 
         initial_facility = facility_map.get(patient.triage_category, "Role1")
@@ -332,19 +339,21 @@ class PatientFlowOrchestrator:
                 patient_id,  # route_patient expects patient_id as first param
                 patient.triage_category,
                 "routine",
-                None
+                None,
             )
             # Extract facility string from routing result
             initial_facility = routing_result.get("facility", initial_facility)
 
         # Update patient
         patient.destination = initial_facility
-        patient.timeline.append({
-            "timestamp": self.simulation_time,
-            "event": "triaged",
-            "triage": patient.triage_category,
-            "assigned_to": initial_facility
-        })
+        patient.timeline.append(
+            {
+                "timestamp": self.simulation_time,
+                "event": "triaged",
+                "triage": patient.triage_category,
+                "assigned_to": initial_facility,
+            }
+        )
 
         return patient.triage_category, initial_facility
 
@@ -382,14 +391,16 @@ class PatientFlowOrchestrator:
         if new_health <= 0:
             self.handle_patient_death(patient_id, "treatment_failed")
         else:
-            patient.timeline.append({
-                "timestamp": self.simulation_time,
-                "event": "treatment_applied",
-                "treatments": [t["name"] for t in treatments],
-                "health_before": round(patient.current_health - treatment_effect),
-                "health_after": round(new_health),
-                "location": patient.current_location
-            })
+            patient.timeline.append(
+                {
+                    "timestamp": self.simulation_time,
+                    "event": "treatment_applied",
+                    "treatments": [t["name"] for t in treatments],
+                    "health_before": round(patient.current_health - treatment_effect),
+                    "health_after": round(new_health),
+                    "location": patient.current_location,
+                }
+            )
 
         return new_health
 
@@ -416,7 +427,7 @@ class PatientFlowOrchestrator:
         # Calculate deterioration based on original severity
         base_deterioration = self.deterioration_calc.calculate_base_deterioration(
             patient.injury_type,
-            patient.severity  # Use stored severity, not recalculated
+            patient.severity,  # Use stored severity, not recalculated
         )
         # Convert from per hour to per minute and scale by time
         deterioration_per_minute = base_deterioration / 60.0
@@ -450,11 +461,7 @@ class PatientFlowOrchestrator:
         # Schedule transport
         priority = "urgent" if patient.triage_category == "T1" else "routine"
         transport = self.transport_scheduler.schedule_transport(
-            patient_id,
-            patient.current_location,
-            destination,
-            priority,
-            patient.current_health
+            patient_id, patient.current_location, destination, priority, patient.current_health
         )
 
         if transport:
@@ -463,14 +470,16 @@ class PatientFlowOrchestrator:
             patient.destination = destination
             patient.transport_id = transport["transport_id"]
 
-            patient.timeline.append({
-                "timestamp": self.simulation_time,
-                "event": "transport_started",
-                "from": patient.current_location,
-                "to": destination,
-                "transport_type": transport["vehicle_type"],
-                "estimated_time": transport["duration_minutes"]
-            })
+            patient.timeline.append(
+                {
+                    "timestamp": self.simulation_time,
+                    "event": "transport_started",
+                    "from": patient.current_location,
+                    "to": destination,
+                    "transport_type": transport["vehicle_type"],
+                    "estimated_time": transport["duration_minutes"],
+                }
+            )
 
             self.metrics["transport_missions"] += 1
             return transport["transport_id"]
@@ -507,11 +516,7 @@ class PatientFlowOrchestrator:
             return False
 
         # Admit to destination
-        admission = self.facility_manager.admit_patient(
-            patient_id,
-            patient.destination,
-            patient.triage_category
-        )
+        admission = self.facility_manager.admit_patient(patient_id, patient.destination, patient.triage_category)
         if admission.get("success", True):
             patient.current_location = patient.destination
             patient.state = PatientState.IN_TREATMENT
@@ -520,25 +525,26 @@ class PatientFlowOrchestrator:
             if self.diagnostic_uncertainty_enabled:
                 updated_diagnosis = self.update_diagnosis_on_transfer(patient_id, patient.current_location)
                 if updated_diagnosis:
-                    print(f"Patient {patient_id} diagnosis updated at {patient.current_location}: "
-                          f"confidence {updated_diagnosis.get('confidence', 0.0):.2f}")
+                    print(
+                        f"Patient {patient_id} diagnosis updated at {patient.current_location}: "
+                        f"confidence {updated_diagnosis.get('confidence', 0.0):.2f}"
+                    )
 
             patient.destination = None
             patient.transport_id = None
 
-            patient.timeline.append({
-                "timestamp": self.simulation_time + timedelta(minutes=actual_time),
-                "event": "arrived_at_facility",
-                "facility": patient.current_location,
-                "transport_time": actual_time
-            })
+            patient.timeline.append(
+                {
+                    "timestamp": self.simulation_time + timedelta(minutes=actual_time),
+                    "event": "arrived_at_facility",
+                    "facility": patient.current_location,
+                    "transport_time": actual_time,
+                }
+            )
 
             return True
         # Facility full, find overflow
-        new_destination = self.overflow_router.route_patient(
-            patient.triage_category,
-            patient.destination
-        )
+        new_destination = self.overflow_router.route_patient(patient.triage_category, patient.destination)
         patient.destination = new_destination
         self.metrics["facility_overflow_events"] += 1
         return self.transport_patient(patient_id, new_destination) is not None
@@ -569,12 +575,14 @@ class PatientFlowOrchestrator:
                 patient = self.patients.get(patient_id)
                 if patient:
                     patient.state = PatientState.EVACUATED
-                    patient.timeline.append({
-                        "timestamp": self.simulation_time,
-                        "event": "evacuated_to_csu",
-                        "batch_id": batch.get("batch_id", "batch-001"),
-                        "hold_time": patient_data.get("wait_time", 0)
-                    })
+                    patient.timeline.append(
+                        {
+                            "timestamp": self.simulation_time,
+                            "event": "evacuated_to_csu",
+                            "batch_id": batch.get("batch_id", "batch-001"),
+                            "hold_time": patient_data.get("wait_time", 0),
+                        }
+                    )
 
             self.metrics["csu_batches_processed"] += 1
             self.metrics["patients_evacuated"] += len(batch["patients"])
@@ -599,38 +607,34 @@ class PatientFlowOrchestrator:
         if patient.state == PatientState.IN_TRANSPORT:
             location = "in_transit"
 
-        self.death_tracker.track_death({
-            "patient_id": patient_id,
-            "time_of_death": self.simulation_time,
-            "location": location,
-            "cause": cause,
-            "injury_type": patient.injury_type,
-            "initial_health": patient.initial_health,
-            "final_health": patient.current_health,
-            "treatments": patient.treatments_received
-        })
+        self.death_tracker.track_death(
+            {
+                "patient_id": patient_id,
+                "time_of_death": self.simulation_time,
+                "location": location,
+                "cause": cause,
+                "injury_type": patient.injury_type,
+                "initial_health": patient.initial_health,
+                "final_health": patient.current_health,
+                "treatments": patient.treatments_received,
+            }
+        )
 
         # Update patient
         patient.state = PatientState.DIED
         patient.died_at = self.simulation_time
         patient.current_health = 0
 
-        patient.timeline.append({
-            "timestamp": self.simulation_time,
-            "event": "died",
-            "cause": cause,
-            "location": location
-        })
+        patient.timeline.append(
+            {"timestamp": self.simulation_time, "event": "died", "cause": cause, "location": location}
+        )
 
         # Update metrics
         self.metrics["patients_died"] += 1
 
         # Free up facility bed if applicable
         if patient.current_location in ["Role1", "Role2", "Role3", "CSU"]:
-            self.facility_manager.discharge_patient(
-                patient_id,
-                patient.current_location
-            )
+            self.facility_manager.discharge_patient(patient_id, patient.current_location)
 
     def get_system_status(self) -> Dict[str, Any]:
         """
@@ -643,23 +647,24 @@ class PatientFlowOrchestrator:
             "simulation_time": self.simulation_time.isoformat(),
             "patients": {
                 "total": self.metrics["total_patients"],
-                "alive": sum(1 for p in self.patients.values()
-                           if p.state != PatientState.DIED),
+                "alive": sum(1 for p in self.patients.values() if p.state != PatientState.DIED),
                 "died": self.metrics["patients_died"],
                 "evacuated": self.metrics["patients_evacuated"],
-                "in_treatment": sum(1 for p in self.patients.values()
-                                  if p.state == PatientState.IN_TREATMENT),
-                "in_transport": sum(1 for p in self.patients.values()
-                                  if p.state == PatientState.IN_TRANSPORT)
+                "in_treatment": sum(1 for p in self.patients.values() if p.state == PatientState.IN_TREATMENT),
+                "in_transport": sum(1 for p in self.patients.values() if p.state == PatientState.IN_TRANSPORT),
             },
-            "facilities": {"Role1": self.facility_manager.get_occupancy("Role1"),
-             "Role2": self.facility_manager.get_occupancy("Role2"),
-             "Role3": self.facility_manager.get_occupancy("Role3"),
-             "CSU": self.facility_manager.get_occupancy("CSU")},
+            "facilities": {
+                "Role1": self.facility_manager.get_occupancy("Role1"),
+                "Role2": self.facility_manager.get_occupancy("Role2"),
+                "Role3": self.facility_manager.get_occupancy("Role3"),
+                "CSU": self.facility_manager.get_occupancy("CSU"),
+            },
             "transport": self.transport_scheduler.get_transport_metrics(),
             "csu_batch": self.csu_coordinator.get_batch_hold_info(),
-            "death_statistics": self.death_tracker.get_statistics() if hasattr(self.death_tracker, "get_statistics") else {},
-            "metrics": self.metrics
+            "death_statistics": self.death_tracker.get_statistics()
+            if hasattr(self.death_tracker, "get_statistics")
+            else {},
+            "metrics": self.metrics,
         }
 
     def advance_time(self, minutes: int):

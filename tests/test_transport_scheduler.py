@@ -1,4 +1,5 @@
 """Tests for Transport Scheduler module"""
+
 from medical_simulation.transport_scheduler import TransportScheduler
 
 
@@ -17,10 +18,7 @@ class TestTransportScheduler:
         scheduler = TransportScheduler()
 
         transport = scheduler.schedule_transport(
-            patient_id="US-001",
-            from_facility="Role1",
-            to_facility="Role2",
-            priority="routine"
+            patient_id="US-001", from_facility="Role1", to_facility="Role2", priority="routine"
         )
 
         assert transport["transport_id"] is not None
@@ -33,10 +31,7 @@ class TestTransportScheduler:
         scheduler = TransportScheduler()
 
         transport = scheduler.schedule_transport(
-            patient_id="US-CRIT-001",
-            from_facility="Role2",
-            to_facility="Role3",
-            priority="urgent"
+            patient_id="US-CRIT-001", from_facility="Role2", to_facility="Role3", priority="urgent"
         )
 
         assert transport["vehicle_type"] == "air_ambulance"  # Urgent gets air
@@ -50,19 +45,13 @@ class TestTransportScheduler:
         # Schedule all ground ambulances
         for i in range(scheduler.ground_ambulances):
             transport = scheduler.schedule_transport(
-                patient_id=f"US-{i:03d}",
-                from_facility="Role1",
-                to_facility="Role2",
-                priority="routine"
+                patient_id=f"US-{i:03d}", from_facility="Role1", to_facility="Role2", priority="routine"
             )
             assert transport["status"] == "scheduled"
 
         # Next request should be queued
         transport = scheduler.schedule_transport(
-            patient_id="US-OVERFLOW",
-            from_facility="Role1",
-            to_facility="Role2",
-            priority="routine"
+            patient_id="US-OVERFLOW", from_facility="Role1", to_facility="Role2", priority="routine"
         )
         assert transport["status"] == "queued"
         assert transport["queue_position"] > 0
@@ -73,10 +62,7 @@ class TestTransportScheduler:
 
         # Schedule transport
         transport = scheduler.schedule_transport(
-            patient_id="US-001",
-            from_facility="Role1",
-            to_facility="Role2",
-            priority="routine"
+            patient_id="US-001", from_facility="Role1", to_facility="Role2", priority="routine"
         )
         transport_id = transport["transport_id"]
 
@@ -99,7 +85,7 @@ class TestTransportScheduler:
             from_facility="Role2",
             to_facility="Role3",
             priority="routine",
-            patient_health=15  # Low health
+            patient_health=15,  # Low health
         )
 
         # Check deterioration risk
@@ -116,15 +102,12 @@ class TestTransportScheduler:
             from_facility="Role1",
             to_facility="Role3",
             priority="routine",
-            patient_health=5  # Very low health
+            patient_health=5,  # Very low health
         )
         transport_id = transport["transport_id"]
 
         # Complete with death outcome
-        result = scheduler.complete_transport(
-            transport_id,
-            outcome="died_in_transit"
-        )
+        result = scheduler.complete_transport(transport_id, outcome="died_in_transit")
         assert result["success"] is True
         assert result["outcome"] == "died_in_transit"
 
@@ -138,11 +121,7 @@ class TestTransportScheduler:
 
         # Schedule batch transport (10 patients)
         patients = [f"US-{i:03d}" for i in range(10)]
-        transport = scheduler.schedule_batch_transport(
-            patients=patients,
-            from_facility="CSU",
-            to_facility="Role2"
-        )
+        transport = scheduler.schedule_batch_transport(patients=patients, from_facility="CSU", to_facility="Role2")
 
         assert transport["vehicle_type"] == "bus"  # Batch uses bus
         assert transport["patient_count"] == 10
@@ -155,26 +134,17 @@ class TestTransportScheduler:
         # Fill all vehicles
         for i in range(scheduler.ground_ambulances + scheduler.air_ambulances):
             scheduler.schedule_transport(
-                patient_id=f"FILL-{i:03d}",
-                from_facility="Role1",
-                to_facility="Role2",
-                priority="routine"
+                patient_id=f"FILL-{i:03d}", from_facility="Role1", to_facility="Role2", priority="routine"
             )
 
         # Add routine patient to queue
         routine = scheduler.schedule_transport(
-            patient_id="US-ROUTINE",
-            from_facility="Role1",
-            to_facility="Role2",
-            priority="routine"
+            patient_id="US-ROUTINE", from_facility="Role1", to_facility="Role2", priority="routine"
         )
 
         # Add urgent patient - should jump queue
         urgent = scheduler.schedule_transport(
-            patient_id="US-URGENT",
-            from_facility="Role1",
-            to_facility="Role2",
-            priority="urgent"
+            patient_id="US-URGENT", from_facility="Role1", to_facility="Role2", priority="urgent"
         )
 
         assert urgent["queue_position"] < routine["queue_position"]
@@ -185,10 +155,7 @@ class TestTransportScheduler:
 
         # Schedule transport
         transport = scheduler.schedule_transport(
-            patient_id="US-001",
-            from_facility="Role1",
-            to_facility="Role2",
-            priority="routine"
+            patient_id="US-001", from_facility="Role1", to_facility="Role2", priority="routine"
         )
         transport_id = transport["transport_id"]
 
@@ -205,10 +172,7 @@ class TestTransportScheduler:
         # Schedule and complete multiple transports
         for i in range(5):
             transport = scheduler.schedule_transport(
-                patient_id=f"US-{i:03d}",
-                from_facility="Role1",
-                to_facility="Role2",
-                priority="routine"
+                patient_id=f"US-{i:03d}", from_facility="Role1", to_facility="Role2", priority="routine"
             )
             scheduler.complete_transport(transport["transport_id"])
 

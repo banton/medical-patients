@@ -22,17 +22,10 @@ async def test_redis_connection(redis_url: str) -> bool:
         # Create connection pool with appropriate SSL settings
         if is_ssl:
             pool = redis.ConnectionPool.from_url(
-                redis_url,
-                decode_responses=True,
-                max_connections=10,
-                ssl_cert_reqs="required"
+                redis_url, decode_responses=True, max_connections=10, ssl_cert_reqs="required"
             )
         else:
-            pool = redis.ConnectionPool.from_url(
-                redis_url,
-                decode_responses=True,
-                max_connections=10
-            )
+            pool = redis.ConnectionPool.from_url(redis_url, decode_responses=True, max_connections=10)
 
         # Create client
         client = redis.Redis(connection_pool=pool)

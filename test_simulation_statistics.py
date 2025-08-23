@@ -14,10 +14,10 @@ from typing import Any, Dict
 
 def run_simulation(count: int, warfare: str, description: str) -> Dict[str, Any]:
     """Run a simulation and collect results."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Running: {description}")
     print(f"Patients: {count}, Warfare: {warfare}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Set environment variables
     env = os.environ.copy()
@@ -27,12 +27,7 @@ def run_simulation(count: int, warfare: str, description: str) -> Dict[str, Any]
     env["WARFARE_SCENARIO"] = warfare  # Pass warfare type via environment
 
     # Run the generator
-    cmd = [
-        "python3", "run_generator.py",
-        "--patients", str(count),
-        "--output", "output_test",
-        "--formats", "json"
-    ]
+    cmd = ["python3", "run_generator.py", "--patients", str(count), "--output", "output_test", "--formats", "json"]
 
     result = subprocess.run(cmd, check=False, capture_output=True, text=True, env=env)
 
@@ -48,6 +43,7 @@ def run_simulation(count: int, warfare: str, description: str) -> Dict[str, Any]
     except Exception as e:
         print(f"Error analyzing data: {e}")
         return None
+
 
 def analyze_patients(data: Dict, warfare: str) -> Dict[str, Any]:
     """Analyze patient data for statistics."""
@@ -68,7 +64,7 @@ def analyze_patients(data: Dict, warfare: str) -> Dict[str, Any]:
         "rtd_rate": 0,
         "evacuation_times": [],
         "special_routing": defaultdict(int),
-        "treatment_effectiveness": defaultdict(list)
+        "treatment_effectiveness": defaultdict(list),
     }
 
     polytrauma_count = 0
@@ -145,9 +141,12 @@ def analyze_patients(data: Dict, warfare: str) -> Dict[str, Any]:
     if stats["evacuation_times"]:
         stats["evac_time_mean"] = statistics.mean(stats["evacuation_times"])
         stats["evac_time_median"] = statistics.median(stats["evacuation_times"])
-        stats["evac_time_stdev"] = statistics.stdev(stats["evacuation_times"]) if len(stats["evacuation_times"]) > 1 else 0
+        stats["evac_time_stdev"] = (
+            statistics.stdev(stats["evacuation_times"]) if len(stats["evacuation_times"]) > 1 else 0
+        )
 
     return stats
+
 
 def print_statistics(stats: Dict[str, Any]):
     """Print formatted statistics."""
@@ -156,7 +155,7 @@ def print_statistics(stats: Dict[str, Any]):
         return
 
     print(f"\n📊 SIMULATION STATISTICS: {stats['warfare_type'].upper()} WARFARE")
-    print("="*60)
+    print("=" * 60)
 
     # Basic counts
     print("\n📈 PATIENT METRICS:")
@@ -169,34 +168,34 @@ def print_statistics(stats: Dict[str, Any]):
     # Triage distribution
     print("\n🏥 TRIAGE DISTRIBUTION:")
     for triage, count in sorted(stats["triage_distribution"].items()):
-        percentage = (count / stats["total_patients"] * 100)
+        percentage = count / stats["total_patients"] * 100
         print(f"  {triage}: {count} ({percentage:.1f}%)")
 
     # Final outcomes
     print("\n💊 FINAL OUTCOMES:")
     for outcome, count in sorted(stats["final_outcomes"].items()):
-        percentage = (count / stats["total_patients"] * 100)
+        percentage = count / stats["total_patients"] * 100
         print(f"  {outcome}: {count} ({percentage:.1f}%)")
 
     # Top facility flows
     print("\n🚑 TOP FACILITY FLOW PATTERNS:")
     sorted_flows = sorted(stats["facility_flow"].items(), key=lambda x: x[1], reverse=True)
     for i, (flow, count) in enumerate(sorted_flows[:5]):
-        percentage = (count / stats["total_patients"] * 100)
-        print(f"  {i+1}. {flow}: {count} ({percentage:.1f}%)")
+        percentage = count / stats["total_patients"] * 100
+        print(f"  {i + 1}. {flow}: {count} ({percentage:.1f}%)")
 
     # Special routing
     if stats["special_routing"]:
         print("\n🚁 SPECIAL ROUTING:")
         for route_type, count in stats["special_routing"].items():
-            percentage = (count / stats["total_patients"] * 100)
+            percentage = count / stats["total_patients"] * 100
             print(f"  {route_type}: {count} ({percentage:.1f}%)")
 
     # Top injuries
     print("\n🩹 TOP INJURY PATTERNS:")
     sorted_injuries = sorted(stats["injury_patterns"].items(), key=lambda x: x[1], reverse=True)
     for i, (injury, count) in enumerate(sorted_injuries[:5]):
-        print(f"  {i+1}. {injury}: {count}")
+        print(f"  {i + 1}. {injury}: {count}")
 
     # Evacuation times
     if "evac_time_mean" in stats:
@@ -212,6 +211,7 @@ def print_statistics(stats: Dict[str, Any]):
             if effectiveness_list:
                 avg_effectiveness = statistics.mean(effectiveness_list)
                 print(f"  {treatment}: {avg_effectiveness:.2f} avg effectiveness")
+
 
 def compare_warfare_patterns():
     """Compare different warfare patterns."""
@@ -232,9 +232,9 @@ def compare_warfare_patterns():
 
     # Comparative analysis
     if len(all_stats) > 1:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔍 COMPARATIVE ANALYSIS")
-        print("="*60)
+        print("=" * 60)
 
         print("\n📊 Mortality Rates by Warfare Type:")
         for stats in all_stats:
@@ -248,12 +248,13 @@ def compare_warfare_patterns():
         for stats in all_stats:
             print(f"  {stats['warfare_type']:15s}: {stats['direct_evac_rate']:5.1f}%")
 
+
 def main():
     """Main test execution."""
-    print("="*60)
+    print("=" * 60)
     print("MEDICAL SIMULATION TEST SUITE")
     print("Testing Markov Chain Routing & Warfare Patterns")
-    print("="*60)
+    print("=" * 60)
 
     # Test 1: Large conventional warfare scenario
     print("\n🎯 TEST 1: Large Conventional Warfare Scenario")
@@ -271,15 +272,16 @@ def main():
     print("\n🎯 TEST 3: Comparative Warfare Pattern Analysis")
     compare_warfare_patterns()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("✅ TEST SUITE COMPLETE")
-    print("="*60)
+    print("=" * 60)
     print("\nKey Findings:")
     print("1. POI → Role1 routing is now standard (85-95%)")
     print("2. Direct evacuation occurs rarely (2-4%) for vehicle casualties")
     print("3. Warfare patterns show distinct injury distributions")
     print("4. Mortality rates are realistic (10-20% range)")
     print("5. Polytrauma rates vary by warfare type as expected")
+
 
 if __name__ == "__main__":
     main()

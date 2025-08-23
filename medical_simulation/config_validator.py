@@ -2,12 +2,14 @@
 Config Validator for Medical Simulation
 Validates JSON configurations for compatibility and correctness
 """
+
 import json
 from typing import Dict, List
 
 
 class ValidationResult:
     """Simple container for validation results"""
+
     def __init__(self):
         self.errors: List[str] = []
         self.warnings: List[str] = []
@@ -73,7 +75,9 @@ def check_versions(injuries: Dict, fronts: Dict, result: ValidationResult):
         injuries_compat = fronts.get("compatible_with", {}).get("injuries", [])
 
         if fronts_version not in fronts_compat and injuries_version not in injuries_compat:
-            result.add_error(f"Version mismatch: injuries.json v{injuries_version} incompatible with fronts_config.json v{fronts_version}")
+            result.add_error(
+                f"Version mismatch: injuries.json v{injuries_version} incompatible with fronts_config.json v{fronts_version}"
+            )
 
 
 def validate_injuries_config(config: Dict, result: ValidationResult):
@@ -126,11 +130,17 @@ def validate_fronts_config(config: Dict, result: ValidationResult):
             facilities = front["medical_facilities"]
 
             # Validate Role hierarchy
-            role1_capacity = facilities.get("role1", {}).get("capacity_per_facility", 0) * facilities.get("role1", {}).get("count", 0)
-            role2_capacity = facilities.get("role2", {}).get("capacity_per_facility", 0) * facilities.get("role2", {}).get("count", 0)
+            role1_capacity = facilities.get("role1", {}).get("capacity_per_facility", 0) * facilities.get(
+                "role1", {}
+            ).get("count", 0)
+            role2_capacity = facilities.get("role2", {}).get("capacity_per_facility", 0) * facilities.get(
+                "role2", {}
+            ).get("count", 0)
 
             if role1_capacity > role2_capacity * 2:
-                result.add_warning(f"{name}: Role1 total capacity ({role1_capacity}) seems high compared to Role2 ({role2_capacity})")
+                result.add_warning(
+                    f"{name}: Role1 total capacity ({role1_capacity}) seems high compared to Role2 ({role2_capacity})"
+                )
 
             # Check OR capacity
             for role in ["role1", "role2", "role3"]:
@@ -178,10 +188,7 @@ def cross_validate_configs(injuries: Dict, fronts: Dict, result: ValidationResul
 
 if __name__ == "__main__":
     # Test validation
-    result = validate_configs(
-        "patient_generator/injuries.json",
-        "patient_generator/fronts_config.json"
-    )
+    result = validate_configs("patient_generator/injuries.json", "patient_generator/fronts_config.json")
 
     print(f"Validation {'PASSED' if result.is_valid else 'FAILED'}")
 

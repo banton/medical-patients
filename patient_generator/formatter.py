@@ -84,9 +84,9 @@ class OutputFormatter:
                 "patient_count": len(bundles),
                 "generated_at": datetime.now().strftime("%Y%m%d"),  # ISO standard YYYYMMDD format
                 "generated_at_iso": datetime.now().isoformat(),  # Full ISO timestamp for precision
-                "generator_version": "2.0.0"
+                "generator_version": "2.0.0",
             },
-            "patients": bundles
+            "patients": bundles,
         }
 
         if stream:
@@ -299,6 +299,7 @@ class OutputFormatter:
             else:
                 # Standard output for complete dataset with timestamped filename
                 from datetime import datetime
+
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 patient_count = len(bundles)
                 # Keep both old and new filenames for compatibility

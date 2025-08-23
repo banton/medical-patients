@@ -1,4 +1,5 @@
 """Tests for Treatment Modifiers"""
+
 from medical_simulation.treatment_modifiers import TreatmentModifiers
 
 
@@ -59,9 +60,7 @@ def test_treatment_application():
     initial_health = 30
     initial_deterioration = 25.0
 
-    new_health, new_deterioration, info = tm.apply_treatment(
-        "tourniquet", initial_health, initial_deterioration
-    )
+    new_health, new_deterioration, info = tm.apply_treatment("tourniquet", initial_health, initial_deterioration)
 
     assert new_health == 35  # +5 health boost
     assert new_deterioration == 5.0  # 25 * 0.2 = 5
@@ -69,9 +68,7 @@ def test_treatment_application():
     assert info["duration_hours"] == 2
 
     # Apply blood transfusion
-    new_health2, new_deterioration2, info2 = tm.apply_treatment(
-        "blood_transfusion", new_health, new_deterioration
-    )
+    new_health2, new_deterioration2, info2 = tm.apply_treatment("blood_transfusion", new_health, new_deterioration)
 
     assert new_health2 == 55  # +20 health boost
     assert new_deterioration2 == 2.5  # 5 * 0.5 = 2.5
@@ -86,20 +83,13 @@ def test_stacked_treatments():
     assert abs(single - 0.2) < 0.01  # Tourniquet alone (with floating point tolerance)
 
     # Two treatments
-    double = tm.calculate_stacked_effects([
-        {"name": "tourniquet"},
-        {"name": "iv_fluids"}
-    ])
+    double = tm.calculate_stacked_effects([{"name": "tourniquet"}, {"name": "iv_fluids"}])
     # Second treatment at 80% effectiveness
     # 0.2 * (1 - (1-0.7)*0.8) = 0.2 * 0.76 = 0.152
     assert 0.15 < double < 0.16
 
     # Three treatments show further diminishing returns
-    triple = tm.calculate_stacked_effects([
-        {"name": "tourniquet"},
-        {"name": "iv_fluids"},
-        {"name": "morphine"}
-    ])
+    triple = tm.calculate_stacked_effects([{"name": "tourniquet"}, {"name": "iv_fluids"}, {"name": "morphine"}])
     assert triple < double  # More treatments, lower combined modifier
     assert triple >= 0.1  # Never below 10%
 
@@ -110,11 +100,7 @@ def test_treatment_prioritization():
 
     # Critical patient
     available = ["morphine", "tourniquet", "antibiotics", "iv_fluids"]
-    priority = tm.get_treatment_priority(
-        available,
-        patient_health=20,
-        deterioration_rate=30
-    )
+    priority = tm.get_treatment_priority(available, patient_health=20, deterioration_rate=30)
 
     # Tourniquet should be first for critical bleeding patient
     assert priority[0] == "tourniquet"
@@ -122,11 +108,7 @@ def test_treatment_prioritization():
     assert "antibiotics" in priority[-2:]  # Antibiotics lower priority
 
     # Stable patient
-    priority_stable = tm.get_treatment_priority(
-        available,
-        patient_health=70,
-        deterioration_rate=5
-    )
+    priority_stable = tm.get_treatment_priority(available, patient_health=70, deterioration_rate=5)
 
     # Different priority for stable patient
     assert priority_stable != priority

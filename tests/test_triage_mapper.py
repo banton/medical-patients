@@ -1,4 +1,5 @@
 """Tests for Triage Mapper"""
+
 from medical_simulation.triage_mapper import TriageMapper
 
 
@@ -33,21 +34,15 @@ def test_injury_overrides():
     tm = TriageMapper()
 
     # Arterial bleeding forces T1 even with moderate health
-    cat, _ = tm.calculate_triage_category(
-        60, "Moderate", ["arterial_bleeding"]
-    )
+    cat, _ = tm.calculate_triage_category(60, "Moderate", ["arterial_bleeding"])
     assert cat == "T1", "Arterial bleeding should force T1"
 
     # Massive head trauma with low health becomes T4
-    cat, _ = tm.calculate_triage_category(
-        15, "Severe", ["massive_head_trauma"]
-    )
+    cat, _ = tm.calculate_triage_category(15, "Severe", ["massive_head_trauma"])
     assert cat == "T4", "Massive head trauma with low health should be T4"
 
     # Simple fracture stays T3 if health good
-    cat, _ = tm.calculate_triage_category(
-        75, "Mild", ["simple_fracture"]
-    )
+    cat, _ = tm.calculate_triage_category(75, "Mild", ["simple_fracture"])
     assert cat == "T3"
 
 
@@ -56,22 +51,16 @@ def test_mass_casualty_adjustments():
     tm = TriageMapper()
 
     # Normal triage
-    normal_cat, _ = tm.calculate_triage_category(
-        35, "Severe", ["hemorrhage"], mass_casualty=False
-    )
+    normal_cat, _ = tm.calculate_triage_category(35, "Severe", ["hemorrhage"], mass_casualty=False)
 
     # Mass casualty - same patient might be triaged differently
-    mass_cat, details = tm.calculate_triage_category(
-        12, "Severe", ["hemorrhage"], mass_casualty=True
-    )
+    mass_cat, details = tm.calculate_triage_category(12, "Severe", ["hemorrhage"], mass_casualty=True)
 
     # Very low health + severe in mass casualty might become T4
     assert details["mass_casualty_adjusted"] is True
 
     # Borderline T2 becomes T3 in mass casualty
-    cat, _ = tm.calculate_triage_category(
-        68, "Mild to moderate", [], mass_casualty=True
-    )
+    cat, _ = tm.calculate_triage_category(68, "Mild to moderate", [], mass_casualty=True)
     assert cat == "T3", "Borderline T2 should become T3 in mass casualty"
 
 

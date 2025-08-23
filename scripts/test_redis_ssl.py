@@ -29,12 +29,7 @@ async def test_redis_connection():
             ssl_context = ssl.create_default_context()
             ssl_context.check_hostname = False
 
-            client = redis.from_url(
-                redis_url,
-                decode_responses=True,
-                ssl_cert_reqs="required",
-                ssl_context=ssl_context
-            )
+            client = redis.from_url(redis_url, decode_responses=True, ssl_cert_reqs="required", ssl_context=ssl_context)
         else:
             # Regular Redis connection
             client = redis.from_url(redis_url, decode_responses=True)

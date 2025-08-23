@@ -1,4 +1,5 @@
 """Tests for Facility Capacity Manager module"""
+
 from medical_simulation.facility_capacity_manager import FacilityCapacityManager
 
 

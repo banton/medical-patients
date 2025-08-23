@@ -2,6 +2,7 @@
 Deterioration Calculator for Medical Simulation
 Calculates patient health deterioration based on injuries and conditions
 """
+
 import json
 from typing import Dict, List, Optional
 
@@ -20,10 +21,7 @@ class DeteriorationCalculator:
         self.environmental_modifiers = self.config.get("environmental_modifiers", {})
 
     def calculate_base_deterioration(
-        self,
-        injury_type: str,
-        severity: str,
-        injuries: Optional[List[Dict]] = None
+        self, injury_type: str, severity: str, injuries: Optional[List[Dict]] = None
     ) -> float:
         """
         Calculate base deterioration rate from injury profile.
@@ -56,17 +54,19 @@ class DeteriorationCalculator:
     def _has_hemorrhage(self, injury: Dict) -> bool:
         """Check if injury involves significant bleeding"""
         hemorrhage_keywords = [
-            "hemorrhage", "bleeding", "laceration", "amputation",
-            "arterial", "vascular", "penetrating", "gunshot"
+            "hemorrhage",
+            "bleeding",
+            "laceration",
+            "amputation",
+            "arterial",
+            "vascular",
+            "penetrating",
+            "gunshot",
         ]
         injury_text = str(injury).lower()
         return any(keyword in injury_text for keyword in hemorrhage_keywords)
 
-    def apply_environmental_factors(
-        self,
-        base_rate: float,
-        conditions: List[str]
-    ) -> float:
+    def apply_environmental_factors(self, base_rate: float, conditions: List[str]) -> float:
         """
         Apply environmental modifiers to deterioration rate.
 
@@ -87,10 +87,7 @@ class DeteriorationCalculator:
 
         return modified_rate
 
-    def calculate_compound_deterioration(
-        self,
-        injuries: List[Dict[str, str]]
-    ) -> float:
+    def calculate_compound_deterioration(self, injuries: List[Dict[str, str]]) -> float:
         """
         Calculate deterioration for multiple injuries.
 
@@ -124,11 +121,7 @@ class DeteriorationCalculator:
         # Combined rate: primary + diminished secondaries
         return min(100.0, primary_rate + secondary_sum)
 
-    def get_stabilization_window(
-        self,
-        injury_type: str,
-        severity: str
-    ) -> Dict[str, float]:
+    def get_stabilization_window(self, injury_type: str, severity: str) -> Dict[str, float]:
         """
         Get time windows for stabilization opportunities.
 
@@ -136,48 +129,21 @@ class DeteriorationCalculator:
             Dict with golden_hour, platinum_10, and maximum_survivable times
         """
         base_times = {
-            "Severe": {
-                "platinum_10_minutes": 10,
-                "golden_hour": 60,
-                "maximum_survivable": 180
-            },
-            "Moderate to severe": {
-                "platinum_10_minutes": 15,
-                "golden_hour": 90,
-                "maximum_survivable": 360
-            },
-            "Moderate": {
-                "platinum_10_minutes": 30,
-                "golden_hour": 180,
-                "maximum_survivable": 720
-            },
-            "Mild to moderate": {
-                "platinum_10_minutes": 60,
-                "golden_hour": 360,
-                "maximum_survivable": 1440
-            }
+            "Severe": {"platinum_10_minutes": 10, "golden_hour": 60, "maximum_survivable": 180},
+            "Moderate to severe": {"platinum_10_minutes": 15, "golden_hour": 90, "maximum_survivable": 360},
+            "Moderate": {"platinum_10_minutes": 30, "golden_hour": 180, "maximum_survivable": 720},
+            "Mild to moderate": {"platinum_10_minutes": 60, "golden_hour": 360, "maximum_survivable": 1440},
         }
 
         # Adjust for injury type
-        multipliers = {
-            "Battle Injury": 1.0,
-            "Non-Battle Injury": 1.5,
-            "Disease": 3.0
-        }
+        multipliers = {"Battle Injury": 1.0, "Non-Battle Injury": 1.5, "Disease": 3.0}
 
         windows = base_times.get(severity, base_times["Moderate"])
         multiplier = multipliers.get(injury_type, 1.0)
 
-        return {
-            key: value * multiplier
-            for key, value in windows.items()
-        }
+        return {key: value * multiplier for key, value in windows.items()}
 
-    def calculate_intervention_points(
-        self,
-        deterioration_rate: float,
-        initial_health: int
-    ) -> List[Dict[str, float]]:
+    def calculate_intervention_points(self, deterioration_rate: float, initial_health: int) -> List[Dict[str, float]]:
         """
         Calculate critical intervention points in patient timeline.
 
@@ -193,7 +159,7 @@ class DeteriorationCalculator:
             (50, "urgent_treatment", "Urgent treatment required"),
             (30, "critical_intervention", "Critical intervention needed"),
             (10, "life_saving", "Immediate life-saving measures required"),
-            (0, "death", "Patient death without intervention")
+            (0, "death", "Patient death without intervention"),
         ]
 
         for threshold, category, description in thresholds:
@@ -203,12 +169,14 @@ class DeteriorationCalculator:
             health_drop = current_health - threshold
             time_hours = health_drop / deterioration_rate if deterioration_rate > 0 else float("inf")
 
-            points.append({
-                "health_threshold": threshold,
-                "time_hours": round(time_hours, 2),
-                "category": category,
-                "description": description
-            })
+            points.append(
+                {
+                    "health_threshold": threshold,
+                    "time_hours": round(time_hours, 2),
+                    "category": category,
+                    "description": description,
+                }
+            )
 
         return points
 
@@ -223,9 +191,7 @@ if __name__ == "__main__":
 
     # Test with hemorrhage
     injuries = [{"condition": "Gunshot wound with arterial bleeding"}]
-    rate_hemorrhage = calc.calculate_base_deterioration(
-        "Battle Injury", "Severe", injuries
-    )
+    rate_hemorrhage = calc.calculate_base_deterioration("Battle Injury", "Severe", injuries)
     print(f"With hemorrhage: {rate_hemorrhage} health/hour")
 
     # Test environmental factors
@@ -234,18 +200,12 @@ if __name__ == "__main__":
     print(f"In harsh environment: {modified} health/hour")
 
     # Test compound injuries
-    multiple = [
-        {"type": "Battle Injury", "severity": "Severe"},
-        {"type": "Battle Injury", "severity": "Moderate"}
-    ]
+    multiple = [{"type": "Battle Injury", "severity": "Severe"}, {"type": "Battle Injury", "severity": "Moderate"}]
     compound = calc.calculate_compound_deterioration(multiple)
     print(f"Multiple injuries: {compound} health/hour")
 
     # Get intervention points
-    points = calc.calculate_intervention_points(
-        deterioration_rate=30,
-        initial_health=60
-    )
+    points = calc.calculate_intervention_points(deterioration_rate=30, initial_health=60)
     print("\nIntervention timeline:")
     for point in points:
         print(f"  {point['time_hours']:.1f}h: {point['description']}")

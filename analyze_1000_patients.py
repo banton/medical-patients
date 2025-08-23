@@ -15,6 +15,7 @@ def load_data():
     with open("output_1000/patients.json") as f:
         return json.load(f)
 
+
 def analyze_routing(patients):
     """Analyze Markov chain routing patterns."""
     results = {
@@ -24,7 +25,7 @@ def analyze_routing(patients):
         "path_patterns": Counter(),
         "direct_evac": 0,
         "poi_to_role1": 0,
-        "complete_chains": 0
+        "complete_chains": 0,
     }
 
     for patient in patients:
@@ -69,6 +70,7 @@ def analyze_routing(patients):
 
     return results
 
+
 def analyze_warfare_injuries(patients):
     """Analyze injury patterns and polytrauma."""
     results = {
@@ -76,7 +78,7 @@ def analyze_warfare_injuries(patients):
         "injury_types": Counter(),
         "polytrauma_cases": 0,
         "severity_distribution": Counter(),
-        "triage_distribution": Counter()
+        "triage_distribution": Counter(),
     }
 
     for patient in patients:
@@ -107,6 +109,7 @@ def analyze_warfare_injuries(patients):
 
     return results
 
+
 def analyze_temporal_flow(patients):
     """Analyze temporal aspects and treatment times."""
     results = {
@@ -115,7 +118,7 @@ def analyze_temporal_flow(patients):
         "evacuation_times": [],
         "kia_times": [],
         "rtd_times": [],
-        "events_per_patient": []
+        "events_per_patient": [],
     }
 
     for patient in patients:
@@ -154,6 +157,7 @@ def analyze_temporal_flow(patients):
 
     return results
 
+
 def analyze_outcomes(patients):
     """Analyze medical outcomes."""
     results = {
@@ -161,7 +165,7 @@ def analyze_outcomes(patients):
         "rtd_count": 0,
         "kia_by_facility": Counter(),
         "rtd_by_facility": Counter(),
-        "mortality_by_triage": defaultdict(lambda: {"total": 0, "kia": 0})
+        "mortality_by_triage": defaultdict(lambda: {"total": 0, "kia": 0}),
     }
 
     for patient in patients:
@@ -186,6 +190,7 @@ def analyze_outcomes(patients):
 
     return results
 
+
 def generate_report(data):
     """Generate comprehensive statistical report."""
     patients = data["patients"][:1000]  # Ensure we analyze exactly 1000
@@ -202,7 +207,7 @@ def generate_report(data):
     report = f"""
 # COMPREHENSIVE STATISTICAL ANALYSIS REPORT
 ## 1000 Patient Medical Simulation Dataset
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ================================================================================
 ## EXECUTIVE SUMMARY
@@ -210,13 +215,13 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 Total Patients Analyzed: {total}
 Generation Time: 0.9 seconds (1,111 patients/second)
-Performance: {1000/0.9:.0f} patients per second
+Performance: {1000 / 0.9:.0f} patients per second
 
 Key Metrics:
-- POI → Role1 Compliance: {routing['poi_to_role1']/total*100:.1f}%
-- Overall Mortality Rate: {outcomes['kia_count']/total*100:.1f}%
-- Polytrauma Rate: {warfare['polytrauma_cases']/total*100:.1f}%
-- Direct Evacuation Rate: {routing['direct_evac']/total*100:.1f}%
+- POI → Role1 Compliance: {routing["poi_to_role1"] / total * 100:.1f}%
+- Overall Mortality Rate: {outcomes["kia_count"] / total * 100:.1f}%
+- Polytrauma Rate: {warfare["polytrauma_cases"] / total * 100:.1f}%
+- Direct Evacuation Rate: {routing["direct_evac"] / total * 100:.1f}%
 
 ================================================================================
 ## 1. MARKOV CHAIN ROUTING ANALYSIS
@@ -246,9 +251,9 @@ Key Metrics:
     report += f"""
 
 ### Routing Compliance Metrics
-  POI → Role1 Standard Path: {routing['poi_to_role1']:4d} ({poi_role1_rate:5.1f}%)
-  Direct Evacuation Cases:   {routing['direct_evac']:4d} ({direct_evac_rate:5.1f}%)
-  Complete Chain (to Role4): {routing['complete_chains']:4d} ({routing['complete_chains']/total*100:5.1f}%)
+  POI → Role1 Standard Path: {routing["poi_to_role1"]:4d} ({poi_role1_rate:5.1f}%)
+  Direct Evacuation Cases:   {routing["direct_evac"]:4d} ({direct_evac_rate:5.1f}%)
+  Complete Chain (to Role4): {routing["complete_chains"]:4d} ({routing["complete_chains"] / total * 100:5.1f}%)
 
 ### Top 10 Movement Patterns
 """
@@ -264,14 +269,14 @@ Key Metrics:
 ================================================================================
 
 ### Injury Statistics
-  Total Injuries Recorded: {sum(warfare['injury_counts'])}
-  Average Injuries per Patient: {statistics.mean(warfare['injury_counts']):.2f}
-  Median Injuries per Patient: {statistics.median(warfare['injury_counts']):.1f}
-  
+  Total Injuries Recorded: {sum(warfare["injury_counts"])}
+  Average Injuries per Patient: {statistics.mean(warfare["injury_counts"]):.2f}
+  Median Injuries per Patient: {statistics.median(warfare["injury_counts"]):.1f}
+
 ### Polytrauma Analysis
-  Polytrauma Cases (>2 injuries): {warfare['polytrauma_cases']} ({warfare['polytrauma_cases']/total*100:.1f}%)
-  Single Injury Cases: {sum(1 for c in warfare['injury_counts'] if c == 1)} ({sum(1 for c in warfare['injury_counts'] if c == 1)/total*100:.1f}%)
-  Two Injury Cases: {sum(1 for c in warfare['injury_counts'] if c == 2)} ({sum(1 for c in warfare['injury_counts'] if c == 2)/total*100:.1f}%)
+  Polytrauma Cases (>2 injuries): {warfare["polytrauma_cases"]} ({warfare["polytrauma_cases"] / total * 100:.1f}%)
+  Single Injury Cases: {sum(1 for c in warfare["injury_counts"] if c == 1)} ({sum(1 for c in warfare["injury_counts"] if c == 1) / total * 100:.1f}%)
+  Two Injury Cases: {sum(1 for c in warfare["injury_counts"] if c == 2)} ({sum(1 for c in warfare["injury_counts"] if c == 2) / total * 100:.1f}%)
 
 ### Top 15 Injuries
 """
@@ -297,41 +302,41 @@ Key Metrics:
 ================================================================================
 
 ### Timeline Statistics
-  Average Events per Patient: {statistics.mean(temporal['events_per_patient']):.1f}
-  Total Timeline Events: {sum(temporal['events_per_patient'])}
+  Average Events per Patient: {statistics.mean(temporal["events_per_patient"]):.1f}
+  Total Timeline Events: {sum(temporal["events_per_patient"])}
 
 ### Treatment Times (hours from injury)
 """
 
     if temporal["total_times"]:
-        report += f"""  Mean Total Time: {statistics.mean(temporal['total_times']):.1f} hours
-  Median Total Time: {statistics.median(temporal['total_times']):.1f} hours
-  Max Total Time: {max(temporal['total_times']):.1f} hours
+        report += f"""  Mean Total Time: {statistics.mean(temporal["total_times"]):.1f} hours
+  Median Total Time: {statistics.median(temporal["total_times"]):.1f} hours
+  Max Total Time: {max(temporal["total_times"]):.1f} hours
 """
 
     if temporal["poi_to_role1_times"]:
         report += f"""
 ### POI to Role1 Transit Times
-  Mean Transit Time: {statistics.mean(temporal['poi_to_role1_times']):.2f} hours
-  Median Transit Time: {statistics.median(temporal['poi_to_role1_times']):.2f} hours
-  Min Transit Time: {min(temporal['poi_to_role1_times']):.2f} hours
-  Max Transit Time: {max(temporal['poi_to_role1_times']):.2f} hours
+  Mean Transit Time: {statistics.mean(temporal["poi_to_role1_times"]):.2f} hours
+  Median Transit Time: {statistics.median(temporal["poi_to_role1_times"]):.2f} hours
+  Min Transit Time: {min(temporal["poi_to_role1_times"]):.2f} hours
+  Max Transit Time: {max(temporal["poi_to_role1_times"]):.2f} hours
 """
 
     if temporal["kia_times"]:
         report += f"""
 ### Time to KIA
-  Mean Time to KIA: {statistics.mean(temporal['kia_times']):.2f} hours
-  Median Time to KIA: {statistics.median(temporal['kia_times']):.2f} hours
-  Earliest KIA: {min(temporal['kia_times']):.2f} hours
+  Mean Time to KIA: {statistics.mean(temporal["kia_times"]):.2f} hours
+  Median Time to KIA: {statistics.median(temporal["kia_times"]):.2f} hours
+  Earliest KIA: {min(temporal["kia_times"]):.2f} hours
 """
 
     if temporal["rtd_times"]:
         report += f"""
 ### Time to RTD
-  Mean Time to RTD: {statistics.mean(temporal['rtd_times']):.2f} hours
-  Median Time to RTD: {statistics.median(temporal['rtd_times']):.2f} hours
-  Fastest RTD: {min(temporal['rtd_times']):.2f} hours
+  Mean Time to RTD: {statistics.mean(temporal["rtd_times"]):.2f} hours
+  Median Time to RTD: {statistics.median(temporal["rtd_times"]):.2f} hours
+  Fastest RTD: {min(temporal["rtd_times"]):.2f} hours
 """
 
     report += f"""
@@ -341,9 +346,9 @@ Key Metrics:
 ================================================================================
 
 ### Overall Outcomes
-  KIA (Killed in Action): {outcomes['kia_count']} ({outcomes['kia_count']/total*100:.1f}%)
-  RTD (Return to Duty): {outcomes['rtd_count']} ({outcomes['rtd_count']/total*100:.1f}%)
-  In Treatment: {total - outcomes['kia_count'] - outcomes['rtd_count']} ({(total - outcomes['kia_count'] - outcomes['rtd_count'])/total*100:.1f}%)
+  KIA (Killed in Action): {outcomes["kia_count"]} ({outcomes["kia_count"] / total * 100:.1f}%)
+  RTD (Return to Duty): {outcomes["rtd_count"]} ({outcomes["rtd_count"] / total * 100:.1f}%)
+  In Treatment: {total - outcomes["kia_count"] - outcomes["rtd_count"]} ({(total - outcomes["kia_count"] - outcomes["rtd_count"]) / total * 100:.1f}%)
 
 ### KIA by Facility
 """
@@ -379,11 +384,11 @@ Key Metrics:
 ================================================================================
 
 ### Success Criteria Assessment
-✓ POI → Role1 Compliance: {poi_role1_rate:.1f}% (Target: >85%) {'✓ PASS' if poi_role1_rate > 85 else '✗ FAIL'}
-✓ Direct Evacuation Rate: {direct_evac_rate:.1f}% (Target: 2-4%) {'✓ PASS' if 2 <= direct_evac_rate <= 4 else '✗ FAIL'}
-✓ Overall Mortality: {outcomes['kia_count']/total*100:.1f}% (Target: 10-20%) {'✓ PASS' if 10 <= outcomes['kia_count']/total*100 <= 20 else '✓ PASS (Below target)'}
-✓ Polytrauma Rate: {warfare['polytrauma_cases']/total*100:.1f}% (Target: 15-25%) {'✓ PASS' if 15 <= warfare['polytrauma_cases']/total*100 <= 25 else '✗ ADJUST'}
-✓ Performance: {1000/0.9:.0f} patients/sec (Target: >20/sec) ✓ PASS
+✓ POI → Role1 Compliance: {poi_role1_rate:.1f}% (Target: >85%) {"✓ PASS" if poi_role1_rate > 85 else "✗ FAIL"}
+✓ Direct Evacuation Rate: {direct_evac_rate:.1f}% (Target: 2-4%) {"✓ PASS" if 2 <= direct_evac_rate <= 4 else "✗ FAIL"}
+✓ Overall Mortality: {outcomes["kia_count"] / total * 100:.1f}% (Target: 10-20%) {"✓ PASS" if 10 <= outcomes["kia_count"] / total * 100 <= 20 else "✓ PASS (Below target)"}
+✓ Polytrauma Rate: {warfare["polytrauma_cases"] / total * 100:.1f}% (Target: 15-25%) {"✓ PASS" if 15 <= warfare["polytrauma_cases"] / total * 100 <= 25 else "✗ ADJUST"}
+✓ Performance: {1000 / 0.9:.0f} patients/sec (Target: >20/sec) ✓ PASS
 
 ### Statistical Confidence (n=1000)
   Margin of Error: ±3.1% at 95% CI
@@ -394,17 +399,17 @@ Key Metrics:
 ## 6. KEY FINDINGS & CONCLUSIONS
 ================================================================================
 
-1. ROUTING COMPLIANCE: The Markov chain successfully routes {poi_role1_rate:.1f}% of patients 
+1. ROUTING COMPLIANCE: The Markov chain successfully routes {poi_role1_rate:.1f}% of patients
    through Role1, demonstrating proper military medical doctrine compliance.
 
-2. MORTALITY REALISM: Overall mortality of {outcomes['kia_count']/total*100:.1f}% falls within 
+2. MORTALITY REALISM: Overall mortality of {outcomes["kia_count"] / total * 100:.1f}% falls within
    realistic combat casualty ranges (10-20% expected).
 
-3. POLYTRAUMA MODELING: {warfare['polytrauma_cases']/total*100:.1f}% of patients present with 
+3. POLYTRAUMA MODELING: {warfare["polytrauma_cases"] / total * 100:.1f}% of patients present with
    multiple injuries, consistent with modern warfare patterns.
 
-4. TEMPORAL INTEGRITY: Complete timeline tracking preserved with average of 
-   {statistics.mean(temporal['events_per_patient']):.1f} events per patient.
+4. TEMPORAL INTEGRITY: Complete timeline tracking preserved with average of
+   {statistics.mean(temporal["events_per_patient"]):.1f} events per patient.
 
 5. PERFORMANCE: System generates 1,111 patients per second, exceeding requirements
    by 55x (target: 20 patients/second).
@@ -418,13 +423,14 @@ Key Metrics:
 3. Performance exceeds requirements by significant margin
 4. Consider adjusting warfare modifiers for higher polytrauma if needed
 
-Report Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Report Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 Analysis Tool Version: 1.0.0
 Dataset: output_1000/patients.json
 ================================================================================
 """
 
     return report
+
 
 def main():
     """Generate and save the report."""
@@ -442,6 +448,7 @@ def main():
 
     # Also print to console
     print(report)
+
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,7 @@
 Transport Scheduler for Medical Simulation
 Manages medical transport vehicles and patient transfers between facilities
 """
+
 from collections import deque
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -40,7 +41,7 @@ class TransportScheduler:
             "Role2_to_Role3": 45,
             "Role1_to_Role3": 60,
             "POI_to_Role1": 10,
-            "POI_to_CSU": 15
+            "POI_to_CSU": 15,
         }
 
         # Air transport is 3x faster
@@ -56,11 +57,7 @@ class TransportScheduler:
             "total_transports": 0,
             "completed": 0,
             "died_in_transit": 0,
-            "by_vehicle_type": {
-                "ground_ambulance": 0,
-                "air_ambulance": 0,
-                "bus": 0
-            }
+            "by_vehicle_type": {"ground_ambulance": 0, "air_ambulance": 0, "bus": 0},
         }
 
     def schedule_transport(
@@ -69,7 +66,7 @@ class TransportScheduler:
         from_facility: str,
         to_facility: str,
         priority: str = "routine",
-        patient_health: Optional[int] = None
+        patient_health: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Schedule patient transport.
@@ -112,9 +109,7 @@ class TransportScheduler:
             status = "queued"
 
         # Calculate deterioration risk
-        deterioration_risk = self._calculate_deterioration_risk(
-            patient_health, duration
-        )
+        deterioration_risk = self._calculate_deterioration_risk(patient_health, duration)
 
         # Create transport record
         transport = {
@@ -128,7 +123,7 @@ class TransportScheduler:
             "priority": priority,
             "scheduled_time": datetime.now(),
             "estimated_arrival": datetime.now() + timedelta(minutes=duration),
-            "deterioration_risk": deterioration_risk
+            "deterioration_risk": deterioration_risk,
         }
 
         if status == "scheduled":
@@ -154,11 +149,7 @@ class TransportScheduler:
         # Default to ground
         return "ground_ambulance"
 
-    def _calculate_deterioration_risk(
-        self,
-        patient_health: Optional[int],
-        duration: int
-    ) -> str:
+    def _calculate_deterioration_risk(self, patient_health: Optional[int], duration: int) -> str:
         """Calculate risk of deterioration during transport"""
         if patient_health is None:
             return "unknown"
@@ -170,11 +161,7 @@ class TransportScheduler:
             return "moderate"
         return "low"
 
-    def complete_transport(
-        self,
-        transport_id: str,
-        outcome: str = "delivered"
-    ) -> Dict[str, Any]:
+    def complete_transport(self, transport_id: str, outcome: str = "delivered") -> Dict[str, Any]:
         """
         Complete a transport.
 
@@ -210,11 +197,7 @@ class TransportScheduler:
         # Process queue if vehicles available
         self._process_queue()
 
-        return {
-            "success": True,
-            "transport_id": transport_id,
-            "outcome": outcome
-        }
+        return {"success": True, "transport_id": transport_id, "outcome": outcome}
 
     def _process_queue(self):
         """Process waiting transports when vehicles become available"""
@@ -241,20 +224,13 @@ class TransportScheduler:
 
         transport["status"] = "in_transit"
         transport["scheduled_time"] = datetime.now()
-        transport["estimated_arrival"] = datetime.now() + timedelta(
-            minutes=transport["duration_minutes"]
-        )
+        transport["estimated_arrival"] = datetime.now() + timedelta(minutes=transport["duration_minutes"])
 
         self.active_transports[transport["transport_id"]] = transport
         self.transport_metrics["total_transports"] += 1
         self.transport_metrics["by_vehicle_type"][vehicle_type] += 1
 
-    def schedule_batch_transport(
-        self,
-        patients: List[str],
-        from_facility: str,
-        to_facility: str
-    ) -> Dict[str, Any]:
+    def schedule_batch_transport(self, patients: List[str], from_facility: str, to_facility: str) -> Dict[str, Any]:
         """
         Schedule batch transport (CSU batch transfer).
 
@@ -289,7 +265,7 @@ class TransportScheduler:
             "duration_minutes": duration,
             "status": status,
             "scheduled_time": datetime.now(),
-            "estimated_arrival": datetime.now() + timedelta(minutes=duration)
+            "estimated_arrival": datetime.now() + timedelta(minutes=duration),
         }
 
         if status == "scheduled":
@@ -315,7 +291,7 @@ class TransportScheduler:
             "vehicle_type": transport["vehicle_type"],
             "time_elapsed": round(time_elapsed, 1),
             "time_remaining": round(time_remaining, 1),
-            "estimated_arrival": transport["estimated_arrival"].isoformat()
+            "estimated_arrival": transport["estimated_arrival"].isoformat(),
         }
 
     def get_vehicle_availability(self) -> Dict[str, int]:
@@ -326,7 +302,7 @@ class TransportScheduler:
             "air_available": self.available_air,
             "air_total": self.air_ambulances,
             "buses_available": self.available_buses,
-            "buses_total": self.buses
+            "buses_total": self.buses,
         }
 
     def get_transport_metrics(self) -> Dict[str, Any]:

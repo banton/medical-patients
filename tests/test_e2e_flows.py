@@ -25,22 +25,16 @@ def test_basic_generation_flow():
         "name": f"E2E Test {uuid4().hex[:8]}",
         "description": "Basic E2E test",
         "total_patients": 10,  # Small number for quick test
-        "injury_distribution": {
-            "Disease": 50.0,
-            "Non-Battle Injury": 30.0,
-            "Battle Injury": 20.0
-        },
-        "front_configs": [{
-            "id": "test_front",
-            "name": "Test Front",
-            "casualty_rate": 1.0,
-            "nationality_distribution": [
-                {"nationality_code": "US", "percentage": 100.0}
-            ]
-        }],
-        "facility_configs": [
-            {"id": "ROLE_1", "name": "Role 1", "kia_rate": 0.1, "rtd_rate": 0.1, "capacity": 50}
-        ]
+        "injury_distribution": {"Disease": 50.0, "Non-Battle Injury": 30.0, "Battle Injury": 20.0},
+        "front_configs": [
+            {
+                "id": "test_front",
+                "name": "Test Front",
+                "casualty_rate": 1.0,
+                "nationality_distribution": [{"nationality_code": "US", "percentage": 100.0}],
+            }
+        ],
+        "facility_configs": [{"id": "ROLE_1", "name": "Role 1", "kia_rate": 0.1, "rtd_rate": 0.1, "capacity": 50}],
     }
 
     # Create configuration
@@ -53,7 +47,7 @@ def test_basic_generation_flow():
         "configuration_id": config_id,
         "output_formats": ["json"],
         "use_compression": False,
-        "use_encryption": False
+        "use_encryption": False,
     }
 
     response = client.post("/api/v1/generation/", json=generation_request, headers=HEADERS)

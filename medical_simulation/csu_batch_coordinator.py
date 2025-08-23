@@ -2,6 +2,7 @@
 CSU Batch Coordinator for Medical Simulation
 Manages batch operations for Casualty Staging Unit transfers
 """
+
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -32,7 +33,7 @@ class CSUBatchCoordinator:
             "total_batches": 0,
             "total_patients_transferred": 0,
             "partial_batches": 0,
-            "full_batches": 0
+            "full_batches": 0,
         }
 
     def add_to_batch(self, patient_id: str, triage: str) -> Dict[str, Any]:
@@ -51,11 +52,7 @@ class CSUBatchCoordinator:
             self.batch_start_time = datetime.now()
 
         # Add to batch
-        self.current_batch.append({
-            "patient_id": patient_id,
-            "triage": triage,
-            "added_time": datetime.now()
-        })
+        self.current_batch.append({"patient_id": patient_id, "triage": triage, "added_time": datetime.now()})
 
         batch_ready = len(self.current_batch) >= self.batch_size
 
@@ -63,7 +60,7 @@ class CSUBatchCoordinator:
             "success": True,
             "batch_count": len(self.current_batch),
             "batch_ready": batch_ready,
-            "batch_size": self.batch_size
+            "batch_size": self.batch_size,
         }
 
     def is_batch_ready(self) -> bool:
@@ -87,11 +84,7 @@ class CSUBatchCoordinator:
             Batch information including patients and destination
         """
         if not self.current_batch:
-            return {
-                "patients": [],
-                "destination": None,
-                "transport_required": False
-            }
+            return {"patients": [], "destination": None, "transport_required": False}
 
         # Get prioritized patient list
         patients = self.get_prioritized_batch()
@@ -103,14 +96,10 @@ class CSUBatchCoordinator:
             "patients": patients,
             "destination": destination,
             "transport_required": True,
-            "batch_size": len(patients)
+            "batch_size": len(patients),
         }
 
-    def execute_batch_transfer(
-        self,
-        destination: str,
-        force: bool = False
-    ) -> Dict[str, Any]:
+    def execute_batch_transfer(self, destination: str, force: bool = False) -> Dict[str, Any]:
         """
         Execute batch transfer to destination facility.
 
@@ -127,7 +116,7 @@ class CSUBatchCoordinator:
                 "success": False,
                 "reason": "batch_not_ready",
                 "current_size": len(self.current_batch),
-                "required_size": self.batch_size
+                "required_size": self.batch_size,
             }
 
         # Check destination capacity
@@ -135,12 +124,7 @@ class CSUBatchCoordinator:
         batch_size = len(self.current_batch)
 
         if available < batch_size:
-            return {
-                "success": False,
-                "reason": "insufficient_capacity",
-                "required": batch_size,
-                "available": available
-            }
+            return {"success": False, "reason": "insufficient_capacity", "required": batch_size, "available": available}
 
         # Transfer each patient
         transferred = []
@@ -148,9 +132,7 @@ class CSUBatchCoordinator:
             patient_id = patient_info["patient_id"]
 
             # Transfer from CSU to destination
-            result = self.capacity_manager.transfer_patient(
-                patient_id, "CSU", destination
-            )
+            result = self.capacity_manager.transfer_patient(patient_id, "CSU", destination)
 
             if result["success"]:
                 transferred.append(patient_id)
@@ -172,7 +154,7 @@ class CSUBatchCoordinator:
             "success": True,
             "transferred_count": len(transferred),
             "destination": destination,
-            "partial_batch": len(transferred) < self.batch_size
+            "partial_batch": len(transferred) < self.batch_size,
         }
 
     def get_prioritized_batch(self) -> List[Dict]:
@@ -185,11 +167,7 @@ class CSUBatchCoordinator:
         # Sort by triage priority
         triage_priority = {"T1": 0, "T2": 1, "T3": 2, "Expectant": 3}
 
-        return sorted(
-            self.current_batch,
-            key=lambda p: triage_priority.get(p["triage"], 99)
-        )
-
+        return sorted(self.current_batch, key=lambda p: triage_priority.get(p["triage"], 99))
 
     def get_batch_hold_info(self) -> Dict[str, Any]:
         """
@@ -199,11 +177,7 @@ class CSUBatchCoordinator:
             Hold time information
         """
         if not self.batch_start_time:
-            return {
-                "batch_size": 0,
-                "hold_duration": 0,
-                "max_hold_time": self.max_hold_time
-            }
+            return {"batch_size": 0, "hold_duration": 0, "max_hold_time": self.max_hold_time}
 
         hold_duration = (datetime.now() - self.batch_start_time).seconds / 60
 
@@ -212,7 +186,7 @@ class CSUBatchCoordinator:
             "first_patient_time": self.batch_start_time.isoformat(),
             "current_hold_duration": round(hold_duration, 1),
             "max_hold_time": self.max_hold_time,
-            "time_remaining": max(0, self.max_hold_time - hold_duration)
+            "time_remaining": max(0, self.max_hold_time - hold_duration),
         }
 
     def recommend_destination(self) -> str:
@@ -244,12 +218,8 @@ class CSUBatchCoordinator:
 
         # Calculate averages
         if metrics["total_batches"] > 0:
-            metrics["average_batch_size"] = (
-                metrics["total_patients_transferred"] / metrics["total_batches"]
-            )
-            metrics["partial_batch_rate"] = (
-                metrics["partial_batches"] / metrics["total_batches"]
-            )
+            metrics["average_batch_size"] = metrics["total_patients_transferred"] / metrics["total_batches"]
+            metrics["partial_batch_rate"] = metrics["partial_batches"] / metrics["total_batches"]
         else:
             metrics["average_batch_size"] = 0
             metrics["partial_batch_rate"] = 0

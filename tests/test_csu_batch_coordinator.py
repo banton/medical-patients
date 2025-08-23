@@ -1,4 +1,5 @@
 """Tests for CSU Batch Coordinator module"""
+
 from medical_simulation.csu_batch_coordinator import CSUBatchCoordinator
 from medical_simulation.facility_capacity_manager import FacilityCapacityManager
 

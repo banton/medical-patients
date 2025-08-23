@@ -78,7 +78,8 @@ class APIKeyCLI:
             # Create async database engine
             database_url = config.DATABASE_URL
             if not database_url:
-                raise ValueError("DATABASE_URL not configured")
+                msg = "DATABASE_URL not configured"
+                raise ValueError(msg)
 
             self.engine = create_async_engine(database_url, echo=False)
             self.session_factory = sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)

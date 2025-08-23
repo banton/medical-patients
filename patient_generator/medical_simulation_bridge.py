@@ -4,7 +4,9 @@ Enhances patient generation with realistic medical simulation.
 """
 
 from datetime import datetime
+import json
 import os
+import random
 import time
 from typing import Any, Dict, List, Optional
 
@@ -30,6 +32,11 @@ class MedicalSimulationBridge:
         self.config = config or {}
         self.enabled = os.environ.get("ENABLE_MEDICAL_SIMULATION", "true").lower() == "true"
 
+        # Load realistic evacuation and transit times
+        evac_times_path = os.path.join(os.path.dirname(__file__), "evacuation_transit_times.json")
+        with open(evac_times_path) as f:
+            self.timing_config = json.load(f)
+
         # Initialize treatment utility model independently (works with or without medical simulation)
         self.utility_model_enabled = os.environ.get("ENABLE_TREATMENT_UTILITY_MODEL", "true").lower() == "true"
         self.treatment_model = TreatmentUtilityModel() if self.utility_model_enabled else None
@@ -44,7 +51,7 @@ class MedicalSimulationBridge:
             "slowest_patient": 0.0,
             "treatment_selections": 0,
             "utility_model_used": 0,
-            "fallback_used": 0
+            "fallback_used": 0,
         }
 
     def enhance_patient(self, patient: Patient) -> Patient:
@@ -80,7 +87,7 @@ class MedicalSimulationBridge:
             patient_id=sim_patient_id,
             injury_type=injury_category,  # Use category for health engine
             severity=severity,
-            location="POI"
+            location="POI",
         )
 
         # Run through medical simulation flow
@@ -150,7 +157,7 @@ class MedicalSimulationBridge:
             "Crush": "crush",
             "Fall": "blunt_trauma",
             "MVC": "blunt_trauma",  # Motor Vehicle Crash
-            "Blunt": "blunt_trauma"
+            "Blunt": "blunt_trauma",
         }
 
         # Default to the original if no mapping found
@@ -177,47 +184,132 @@ class MedicalSimulationBridge:
             "T4": "Mild to moderate",
             "Urgent": "Severe",
             "Delayed": "Moderate to severe",
-            "Minimal": "Mild to moderate"
+            "Minimal": "Mild to moderate",
         }
 
         return severity_mapping.get(triage, "Moderate")
 
     def _simulate_medical_flow(self, sim_patient_id: str, original_patient: Patient):
         """
-        Run patient through medical simulation flow.
+        Run patient through medical simulation flow with realistic combat times.
 
         Args:
             sim_patient_id: Medical simulation patient ID
             original_patient: Original patient for context
         """
-        # Process triage
+        sim_patient = self.orchestrator.patients.get(sim_patient_id)
+        if not sim_patient:
+            return
+
+        # Determine if this is a mass casualty event (affects medic response time)
+        is_mass_casualty = getattr(original_patient, "is_mass_casualty", False)
+
+        # REALISTIC WAIT FOR COMBAT MEDIC AT POI
+        # Individual casualty: minutes to ~1 hour
+        # Mass casualty: could be hours if medics are overwhelmed or casualties themselves
+        if is_mass_casualty:
+            # Mass casualty - medics overwhelmed, possibly casualties
+            medic_arrival_minutes = random.randint(60, 240)  # 1-4 hours
+        else:
+            # Individual casualty - faster response
+            medic_arrival_minutes = random.randint(10, 60)  # 10-60 minutes
+
+        # Simulate waiting for medic (patient deteriorates while waiting)
+        self.orchestrator.simulate_deterioration(sim_patient_id, medic_arrival_minutes)
+
+        # Check if patient died waiting for medic
+        sim_patient = self.orchestrator.patients.get(sim_patient_id)
+        if sim_patient and sim_patient.state == PatientState.DIED:
+            # Died at POI before medic arrived
+            return
+
+        # Medic arrives and performs triage (may be incorrect)
         triage_category, initial_facility = self.orchestrator.process_triage(sim_patient_id)
 
-        # Simulate initial deterioration (time to triage)
-        self.orchestrator.simulate_deterioration(sim_patient_id, 10)  # 10 minutes to triage
+        # Get REALISTIC evacuation wait time from JSON (hours, not minutes!)
+        evac_times = self.timing_config["evacuation_times"]["POI"]
+        triage_key = sim_patient.triage_category if sim_patient.triage_category in evac_times else "T2"
+        wait_hours = random.uniform(evac_times[triage_key]["min_hours"], evac_times[triage_key]["max_hours"])
+        wait_minutes = int(wait_hours * 60)
+
+        # Simulate waiting for evacuation (this is where many die)
+        self.orchestrator.simulate_deterioration(sim_patient_id, wait_minutes)
+
+        # Check if patient died waiting for evacuation
+        sim_patient = self.orchestrator.patients.get(sim_patient_id)
+        if sim_patient and sim_patient.state == PatientState.DIED:
+            # Died at POI waiting for evacuation
+            return
+
+        # Process triage again after wait (condition may have changed)
+        triage_category, initial_facility = self.orchestrator.process_triage(sim_patient_id)
 
         # Transport to initial facility
         if initial_facility:
             transport_id = self.orchestrator.transport_patient(sim_patient_id, initial_facility)
 
             if transport_id:
-                # Advance time for transport
-                self.orchestrator.advance_time(15)  # Average transport time
+                # Get REALISTIC transit time from JSON
+                transit_key = f"POI_to_{initial_facility}"
+                if transit_key in self.timing_config["transit_times"]:
+                    transit_times = self.timing_config["transit_times"][transit_key]
+                    triage_key = sim_patient.triage_category if sim_patient.triage_category in transit_times else "T2"
+                    transit_hours = random.uniform(
+                        transit_times[triage_key]["min_hours"], transit_times[triage_key]["max_hours"]
+                    )
+                    transit_minutes = int(transit_hours * 60)
+                else:
+                    # Fallback if route not defined
+                    transit_minutes = 120  # 2 hours default
+
+                # Simulate transit time (patients can die in transit)
+                self.orchestrator.advance_time(transit_minutes)
 
                 # Complete transport
                 arrived = self.orchestrator.complete_transport(sim_patient_id)
 
                 if arrived:
                     # Apply initial treatment
-                    patient_injury = getattr(original_patient, "injury", None) or getattr(original_patient, "injury_type", "unknown")
+                    patient_injury = getattr(original_patient, "injury", None) or getattr(
+                        original_patient, "injury_type", "unknown"
+                    )
                     treatments = self._get_treatments_for_injury(patient_injury, original_patient)
                     if treatments:
                         self.orchestrator.apply_treatment(sim_patient_id, treatments)
 
-                    # Simulate time in treatment
-                    self.orchestrator.advance_time(30)  # 30 minutes treatment
+                    # Get REALISTIC treatment time at facility from JSON
+                    sim_patient = self.orchestrator.patients[sim_patient_id]
+                    current_facility = sim_patient.current_location
 
-                    # Check if needs further evacuation
+                    if current_facility in self.timing_config["evacuation_times"]:
+                        facility_times = self.timing_config["evacuation_times"][current_facility]
+                        triage_key = (
+                            sim_patient.triage_category if sim_patient.triage_category in facility_times else "T2"
+                        )
+                        treatment_hours = random.uniform(
+                            facility_times[triage_key]["min_hours"], facility_times[triage_key]["max_hours"]
+                        )
+                    else:
+                        treatment_hours = 6  # Default 6 hours if not specified
+
+                    # Simulate treatment over realistic timeframe
+                    hours_per_cycle = 2  # Apply treatments every 2 hours
+                    total_cycles = int(treatment_hours / hours_per_cycle)
+
+                    for _cycle in range(total_cycles):
+                        # Check patient state
+                        if sim_patient.state == PatientState.DIED:
+                            break
+
+                        # Advance time
+                        self.orchestrator.advance_time(hours_per_cycle * 60)
+
+                        # Reapply treatments for living patients
+                        if sim_patient.state != PatientState.DIED and sim_patient.current_health < 50:
+                            # Critical and moderate patients get repeated treatment
+                            self.orchestrator.apply_treatment(sim_patient_id, treatments)
+
+                    # Check if needs further evacuation (if still alive)
                     sim_patient = self.orchestrator.patients[sim_patient_id]
                     if sim_patient.current_health > 50 and sim_patient.state != PatientState.DIED:
                         # Consider evacuation to higher care
@@ -248,22 +340,22 @@ class MedicalSimulationBridge:
             "gunshot": [
                 {"name": "tourniquet", "applied_at": base_time},
                 {"name": "hemostatic_dressing", "applied_at": base_time},
-                {"name": "morphine", "applied_at": base_time}
+                {"name": "morphine", "applied_at": base_time},
             ],
             "blast": [
                 {"name": "pressure_bandage", "applied_at": base_time},
                 {"name": "splint", "applied_at": base_time},
-                {"name": "iv_fluids", "applied_at": base_time}
+                {"name": "iv_fluids", "applied_at": base_time},
             ],
             "burn": [
                 {"name": "burn_dressing", "applied_at": base_time},
                 {"name": "morphine", "applied_at": base_time},
-                {"name": "iv_fluids", "applied_at": base_time}
+                {"name": "iv_fluids", "applied_at": base_time},
             ],
             "shrapnel": [
                 {"name": "pressure_bandage", "applied_at": base_time},
-                {"name": "hemostatic_dressing", "applied_at": base_time}
-            ]
+                {"name": "hemostatic_dressing", "applied_at": base_time},
+            ],
         }
 
         injury_lower = injury.lower()
@@ -310,8 +402,14 @@ class MedicalSimulationBridge:
                 severity = patient.severity
             elif isinstance(patient.severity, int):
                 # Map numeric severity back to text
-                severity_map = {1: "Mild", 2: "Mild to moderate", 4: "Moderate",
-                              6: "Moderate to severe", 8: "Severe", 9: "Critical"}
+                severity_map = {
+                    1: "Mild",
+                    2: "Mild to moderate",
+                    4: "Moderate",
+                    6: "Moderate to severe",
+                    8: "Severe",
+                    9: "Critical",
+                }
                 severity = severity_map.get(patient.severity, "Moderate")
 
         # Determine current facility (default to POI for initial treatment)
@@ -332,7 +430,7 @@ class MedicalSimulationBridge:
                 facility=facility,
                 time_elapsed_minutes=time_elapsed,
                 available_resources={"supplies": 100},  # Simplified resource model
-                max_treatments=3
+                max_treatments=3,
             )
 
             self.metrics["treatment_selections"] += len(treatments)
@@ -357,15 +455,15 @@ class MedicalSimulationBridge:
         # Simple mapping - could be enhanced with more sophisticated matching
         injury_mapping = {
             "gunshot": "262574004",  # Bullet wound
-            "blast": "125596004",    # Explosive injury
-            "burn": "7200002",       # Burn of skin
-            "shrapnel": "125689001", # Shrapnel injury
+            "blast": "125596004",  # Explosive injury
+            "burn": "7200002",  # Burn of skin
+            "shrapnel": "125689001",  # Shrapnel injury
             "fracture": "37782003",  # Fracture of bone
-            "tbi": "19130008",       # Traumatic brain injury
-            "amputation": "284551006", # Traumatic amputation
-            "stress": "45170000",    # Psychological stress
+            "tbi": "19130008",  # Traumatic brain injury
+            "amputation": "284551006",  # Traumatic amputation
+            "stress": "45170000",  # Psychological stress
             "diarrhea": "62315008",  # Diarrhea
-            "respiratory": "195662009", # Acute respiratory illness
+            "respiratory": "195662009",  # Acute respiratory illness
         }
 
         injury_lower = injury.lower()
@@ -393,7 +491,7 @@ class MedicalSimulationBridge:
             PatientState.DIED: "KIA" if sim_patient.current_location == "POI" else "DOW",
             PatientState.EVACUATED: "Evacuated",
             PatientState.IN_TREATMENT: self._map_facility_to_role(sim_patient.current_location),
-            PatientState.DISCHARGED: "RTD"
+            PatientState.DISCHARGED: "RTD",
         }
 
         patient.current_status = status_mapping.get(sim_patient.state, "In Treatment")
@@ -429,16 +527,16 @@ class MedicalSimulationBridge:
                     "timestamp": clean_event.get("timestamp"),
                     "event_type": event_type,
                     "location": clean_event.get("location", clean_event.get("facility", "POI")),
-                    "details": {k: v for k, v in clean_event.items()
-                              if k not in ["timestamp", "event", "location", "facility"]}
+                    "details": {
+                        k: v for k, v in clean_event.items() if k not in ["timestamp", "event", "location", "facility"]
+                    },
                 }
             # For transition events (triage, transport) that happen between locations
             elif event_type in ["triaged", "transport_started"]:
                 enhanced_event = {
                     "timestamp": clean_event.get("timestamp"),
                     "event_type": event_type,
-                    "details": {k: v for k, v in clean_event.items()
-                              if k not in ["timestamp", "event"]}
+                    "details": {k: v for k, v in clean_event.items() if k not in ["timestamp", "event"]},
                 }
             else:
                 # Generic structure for unknown events
@@ -462,7 +560,7 @@ class MedicalSimulationBridge:
                 {
                     "treatment": t.get("name", "unknown"),
                     "timestamp": t.get("applied_at", datetime.now()).isoformat(),
-                    "location": sim_patient.current_location
+                    "location": sim_patient.current_location,
                 }
                 for t in sim_patient.treatments_received
             ]
@@ -477,13 +575,7 @@ class MedicalSimulationBridge:
         Returns:
             Role status for patient_generator
         """
-        mapping = {
-            "Role1": "R1",
-            "Role2": "R2",
-            "Role3": "R3",
-            "CSU": "R4",
-            "POI": "POI"
-        }
+        mapping = {"Role1": "R1", "Role2": "R2", "Role3": "R3", "CSU": "R4", "POI": "POI"}
         return mapping.get(facility, facility)
 
     def get_simulation_metrics(self) -> Dict[str, Any]:
@@ -499,5 +591,5 @@ class MedicalSimulationBridge:
         return {
             "enabled": True,
             "metrics": self.orchestrator.metrics,
-            "system_status": self.orchestrator.get_system_status()
+            "system_status": self.orchestrator.get_system_status(),
         }

@@ -16,9 +16,7 @@ class TestPatientFlowOrchestrator:
 
     def test_initialize_patient(self):
         """Test patient initialization with health and triage."""
-        patient = self.orchestrator.initialize_patient(
-            "P001", "gunshot", "critical", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P001", "gunshot", "critical", "POI")
 
         assert patient.id == "P001"
         assert patient.injury_type == "gunshot"
@@ -32,9 +30,7 @@ class TestPatientFlowOrchestrator:
 
     def test_process_triage_with_capacity(self):
         """Test triage processing when facilities have capacity."""
-        patient = self.orchestrator.initialize_patient(
-            "P002", "blast", "moderate", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P002", "blast", "moderate", "POI")
 
         triage, facility = self.orchestrator.process_triage("P002")
 
@@ -47,13 +43,9 @@ class TestPatientFlowOrchestrator:
         """Test triage when primary facility is full."""
         # Fill Role2 to capacity
         for i in range(60):  # Role2 capacity
-            self.orchestrator.facility_manager.admit_patient(
-                "Role2", f"dummy{i}", "T1"
-            )
+            self.orchestrator.facility_manager.admit_patient("Role2", f"dummy{i}", "T1")
 
-        self.orchestrator.initialize_patient(
-            "P003", "gunshot", "critical", "POI"
-        )
+        self.orchestrator.initialize_patient("P003", "gunshot", "critical", "POI")
 
         triage, facility = self.orchestrator.process_triage("P003")
 
@@ -62,13 +54,9 @@ class TestPatientFlowOrchestrator:
 
     def test_apply_treatment_success(self):
         """Test successful treatment application."""
-        patient = self.orchestrator.initialize_patient(
-            "P004", "gunshot", "moderate", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P004", "gunshot", "moderate", "POI")
 
-        treatments = [
-            {"name": "pressure_bandage", "applied_at": datetime.now()}
-        ]
+        treatments = [{"name": "pressure_bandage", "applied_at": datetime.now()}]
 
         new_health = self.orchestrator.apply_treatment("P004", treatments)
 
@@ -80,9 +68,7 @@ class TestPatientFlowOrchestrator:
 
     def test_apply_treatment_death(self):
         """Test treatment failure leading to death."""
-        patient = self.orchestrator.initialize_patient(
-            "P005", "gunshot", "critical", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P005", "gunshot", "critical", "POI")
         patient.current_health = 5  # Near death
 
         # Apply treatment that won't save them
@@ -96,9 +82,7 @@ class TestPatientFlowOrchestrator:
 
     def test_simulate_deterioration(self):
         """Test patient deterioration over time."""
-        patient = self.orchestrator.initialize_patient(
-            "P006", "blast", "moderate", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P006", "blast", "moderate", "POI")
         initial_health = patient.current_health
 
         # Simulate 10 minutes
@@ -110,9 +94,7 @@ class TestPatientFlowOrchestrator:
 
     def test_transport_patient(self):
         """Test patient transport scheduling."""
-        patient = self.orchestrator.initialize_patient(
-            "P007", "shrapnel", "minor", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P007", "shrapnel", "minor", "POI")
         patient.current_location = "Role1"
 
         transport_id = self.orchestrator.transport_patient("P007", "Role2")
@@ -124,9 +106,7 @@ class TestPatientFlowOrchestrator:
 
     def test_complete_transport_success(self):
         """Test successful transport completion."""
-        patient = self.orchestrator.initialize_patient(
-            "P008", "burn", "moderate", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P008", "burn", "moderate", "POI")
         patient.current_location = "Role1"
 
         # Schedule transport
@@ -145,9 +125,7 @@ class TestPatientFlowOrchestrator:
         # Create 10 patients for a full batch
         patient_ids = []
         for i in range(10):
-            patient = self.orchestrator.initialize_patient(
-                f"P{i:03d}", "shrapnel", "minor", "POI"
-            )
+            patient = self.orchestrator.initialize_patient(f"P{i:03d}", "shrapnel", "minor", "POI")
             patient_ids.append(patient.id)
 
         # Evacuate batch
@@ -163,9 +141,7 @@ class TestPatientFlowOrchestrator:
 
     def test_handle_patient_death(self):
         """Test death handling and tracking."""
-        patient = self.orchestrator.initialize_patient(
-            "P010", "gunshot", "critical", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P010", "gunshot", "critical", "POI")
         patient.current_location = "Role2"
 
         self.orchestrator.handle_patient_death("P010", "deterioration")
@@ -224,9 +200,7 @@ class TestPatientFlowOrchestrator:
     def test_full_patient_journey(self):
         """Test complete patient journey from POI to evacuation."""
         # Initialize patient
-        patient = self.orchestrator.initialize_patient(
-            "P016", "blast", "moderate", "POI"
-        )
+        patient = self.orchestrator.initialize_patient("P016", "blast", "moderate", "POI")
 
         # Triage
         triage, facility = self.orchestrator.process_triage("P016")
@@ -243,7 +217,7 @@ class TestPatientFlowOrchestrator:
         # Apply treatment
         treatments = [
             {"name": "tourniquet", "applied_at": datetime.now()},
-            {"name": "morphine", "applied_at": datetime.now()}
+            {"name": "morphine", "applied_at": datetime.now()},
         ]
         new_health = self.orchestrator.apply_treatment("P016", treatments)
         assert new_health > patient.initial_health
