@@ -86,6 +86,7 @@ async def generate_patients(
                 "use_encryption": request.use_encryption,
                 "encryption_password": request.encryption_password,
                 "priority": request.priority,
+                "total_patients": request.total_patients,  # Add total_patients override
             }
         )
 
@@ -262,6 +263,14 @@ async def _run_generation_task(
 
             # Save to database
             config_template = config_repo.create_configuration(config_create)
+
+        # Override total_patients if provided in request
+        if config.get("total_patients") is not None:
+            # Create a copy of the config template with overridden total_patients
+            config_dict = config_template.dict() if hasattr(config_template, "dict") else config_template.__dict__.copy()
+            config_dict["total_patients"] = config.get("total_patients")
+            # Convert back to the same type as config_template
+            config_template = type(config_template)(**config_dict)
 
         # Create generation context
         generation_context = GenerationContext(

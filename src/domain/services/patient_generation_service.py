@@ -110,8 +110,10 @@ class PatientGenerationPipeline:
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
-        # This would initialize any necessary state in the generators
-        # For now, we'll use the existing synchronous initialization
+        # Update the flow simulator's patient count if it was overridden
+        if hasattr(self.flow_simulator, "total_patients_to_generate"):
+            self.flow_simulator.total_patients_to_generate = context.config.total_patients
+            print(f"🔧 Updated flow simulator patient count to: {context.config.total_patients}")
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate base patients - check for temporal vs legacy generation."""
@@ -234,11 +236,11 @@ class AsyncPatientGenerationService:
         # Initialize components with config manager
         # Enable medical simulation for enhanced realistic patient data
         import os
-        os.environ['ENABLE_MEDICAL_SIMULATION'] = 'true'
-        os.environ['ENABLE_TREATMENT_UTILITY_MODEL'] = 'true'
-        os.environ['ENABLE_MARKOV_CHAIN'] = 'true'
-        os.environ['ENABLE_WARFARE_MODIFIERS'] = 'true'
-        
+        os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
+        os.environ["ENABLE_TREATMENT_UTILITY_MODEL"] = "true"
+        os.environ["ENABLE_MARKOV_CHAIN"] = "true"
+        os.environ["ENABLE_WARFARE_MODIFIERS"] = "true"
+
         # Use cached services' generators
         self.pipeline = PatientGenerationPipeline(
             flow_simulator=PatientFlowSimulator(self.config_manager),
