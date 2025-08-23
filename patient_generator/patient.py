@@ -279,13 +279,13 @@ class Patient:
             if isinstance(value, float):
                 return round(value, decimals)
             return value
-        
+
         def round_health(value):
             """Round health values to nearest integer using mathematical rounding"""
             if isinstance(value, (float, int)):
                 return round(value)  # Python's round() does proper mathematical rounding
             return value
-        
+
         # Build optimized output
         result = {
             "id": self.id,
@@ -296,7 +296,7 @@ class Patient:
             "status": self.current_status,
             "front": self.front,
         }
-        
+
         # Add demographics (skip nulls)
         if self.demographics:
             demo = {}
@@ -308,13 +308,13 @@ class Patient:
                         demo[k] = v
             if demo:
                 result["demographics"] = demo
-        
+
         # Add health score from medical_data
         if self.medical_data and "health_score" in self.medical_data:
             health = self.medical_data["health_score"]
             if health is not None:
                 result["health"] = round_health(health)
-        
+
         # Use primary_conditions only (not both primary_condition and primary_conditions)
         if self.primary_conditions:
             conditions = []
@@ -343,7 +343,7 @@ class Patient:
                     "Critical": 9
                 }
                 result["severity"] = severity_map.get(severity, 5)  # Default to 5 if unknown
-        
+
         # Add additional conditions if present
         if self.additional_conditions:
             additional = []
@@ -355,11 +355,11 @@ class Patient:
                     })
             if additional:
                 result["additional_conditions"] = additional
-        
+
         # Add treatments if present
         if self.treatment_history:
             result["treatments"] = self.treatment_history
-        
+
         # Add timeline if it has events
         if self.movement_timeline:
             timeline = []
@@ -367,9 +367,7 @@ class Patient:
                 clean_event = {}
                 for k, v in event.items():
                     if v is not None:
-                        if isinstance(v, (datetime.datetime, datetime.date)):
-                            clean_event[k] = v.isoformat()
-                        elif hasattr(v, 'isoformat'):  # Catch any datetime-like objects
+                        if isinstance(v, (datetime.datetime, datetime.date)) or hasattr(v, "isoformat"):
                             clean_event[k] = v.isoformat()
                         elif isinstance(v, float):
                             clean_event[k] = round_float(v)
@@ -378,14 +376,14 @@ class Patient:
                 timeline.append(clean_event)
             if timeline:
                 result["timeline"] = timeline
-        
+
         # Add injury time if present
         if self.injury_timestamp:
-            if hasattr(self.injury_timestamp, 'isoformat'):
+            if hasattr(self.injury_timestamp, "isoformat"):
                 result["injury_time"] = self.injury_timestamp.isoformat()
             elif isinstance(self.injury_timestamp, str):
                 result["injury_time"] = self.injury_timestamp
-        
+
         # Add scenario info if present
         if hasattr(self, "warfare_scenario") and self.warfare_scenario:
             result["scenario"] = self.warfare_scenario
@@ -393,15 +391,15 @@ class Patient:
             result["event_id"] = self.casualty_event_id
         if hasattr(self, "is_mass_casualty") and self.is_mass_casualty:
             result["mass_casualty"] = True
-        
+
         # Add day of injury if present
         if self.day_of_injury:
             result["day"] = self.day_of_injury
-            
+
         # Add timeline events from medical simulation if present
-        if hasattr(self, 'timeline_events') and self.timeline_events:
+        if hasattr(self, "timeline_events") and self.timeline_events:
             result["events"] = self.timeline_events
-            
+
         return result
 
     def to_json(self) -> str:

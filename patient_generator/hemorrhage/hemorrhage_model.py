@@ -3,12 +3,12 @@ Hemorrhage model implementation based on SIMEDIS research.
 Maps injury types and body locations to bleeding rates.
 """
 
-import random
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+import random
+from typing import Dict, List, Optional
 
-from .body_regions import BodyRegion, BodyLocation, VesselType, get_body_location, get_affected_vessel_type
+from .body_regions import BodyLocation, BodyRegion, VesselType, get_affected_vessel_type, get_body_location
 
 
 class HemorrhageCategory(Enum):
@@ -36,7 +36,7 @@ class HemorrhageProfile:
 
 class HemorrhageModel:
     """Model for calculating hemorrhage parameters based on injury and location."""
-    
+
     # Table 1 parameters from research
     HEMORRHAGE_PARAMETERS = {
         HemorrhageCategory.SMALL_LIMB: {
@@ -76,7 +76,7 @@ class HemorrhageModel:
             "description": "No significant hemorrhage"
         }
     }
-    
+
     # Map SNOMED codes to hemorrhage risk and typical locations
     INJURY_HEMORRHAGE_MAP = {
         # Battle trauma conditions
@@ -125,7 +125,7 @@ class HemorrhageModel:
             "typical_locations": [BodyRegion.CHEST, BodyRegion.ABDOMEN, BodyRegion.PELVIS],
             "vessel_damage": "deep"
         },
-        
+
         # Non-battle injuries
         "37782003": {  # Fracture
             "hemorrhage_risk": "low",
@@ -143,7 +143,7 @@ class HemorrhageModel:
             "vessel_damage": "moderate"
         }
     }
-    
+
     @classmethod
     def calculate_hemorrhage_profile(
         cls,
@@ -170,21 +170,21 @@ class HemorrhageModel:
             "typical_locations": [BodyRegion.CHEST],
             "vessel_damage": "superficial"
         })
-        
+
         # Determine body region if not specified
         if body_region is None:
             typical_locations = injury_info.get("typical_locations", [BodyRegion.CHEST])
             body_region = random.choice(typical_locations)
-        
+
         # Get body location details
         body_location = get_body_location(body_region)
-        
+
         # Determine vessel type based on injury
         vessel_type = get_affected_vessel_type(
-            body_region, 
+            body_region,
             injury_info.get("vessel_damage", "moderate")
         )
-        
+
         # Determine hemorrhage category
         category = cls._determine_hemorrhage_category(
             injury_info["hemorrhage_risk"],
@@ -193,10 +193,10 @@ class HemorrhageModel:
             severity,
             multiple_injuries
         )
-        
+
         # Get parameters for this category
         params = cls.HEMORRHAGE_PARAMETERS[category]
-        
+
         # Calculate specific values within ranges
         if category == HemorrhageCategory.NO_HEMORRHAGE:
             alpha_0 = 0.0
@@ -204,19 +204,19 @@ class HemorrhageModel:
         else:
             # Use severity to position within range
             severity_factor = cls._get_severity_factor(severity)
-            
+
             alpha_range = params["alpha_0_range"]
             alpha_0 = alpha_range[0] + (alpha_range[1] - alpha_range[0]) * severity_factor
-            
+
             blood_range = params["blood_loss_ml_min"]
             blood_loss = blood_range[0] + (blood_range[1] - blood_range[0]) * severity_factor
-        
+
         # Calculate time to exsanguination (5000ml blood, 40% loss = 2000ml)
         if blood_loss > 0:
             time_to_exsanguination = 2000 / blood_loss  # minutes
         else:
-            time_to_exsanguination = float('inf')
-        
+            time_to_exsanguination = float("inf")
+
         return HemorrhageProfile(
             category=category,
             alpha_0=alpha_0,
@@ -227,7 +227,7 @@ class HemorrhageModel:
             blood_loss_ml_per_min=blood_loss,
             time_to_exsanguination_min=time_to_exsanguination
         )
-    
+
     @classmethod
     def _determine_hemorrhage_category(
         cls,
@@ -243,45 +243,41 @@ class HemorrhageModel:
         # No hemorrhage cases
         if hemorrhage_risk == "low" and severity in ["Mild to moderate", "Moderate"]:
             return HemorrhageCategory.NO_HEMORRHAGE
-        
+
         # Multiple injuries
         if multiple_injuries:
-            if severity == "Severe":
+            if severity == "Severe" or hemorrhage_risk in ["high", "critical"]:
                 return HemorrhageCategory.MULTIPLE_PENETRATING
-            elif hemorrhage_risk in ["high", "critical"]:
-                return HemorrhageCategory.MULTIPLE_PENETRATING
-        
+
         # Massive hemorrhage cases
         if vessel_type == VesselType.MAJOR_ARTERY and severity == "Severe":
             return HemorrhageCategory.MASSIVE_HEMORRHAGE
         if hemorrhage_risk == "critical" and severity in ["Severe", "Moderate to severe"]:
             return HemorrhageCategory.MASSIVE_HEMORRHAGE
-        
+
         # Major limb artery
         if vessel_type == VesselType.LIMB_ARTERY:
             if severity in ["Severe", "Moderate to severe"]:
                 return HemorrhageCategory.MAJOR_LIMB_ARTERY
-            else:
-                return HemorrhageCategory.SMALL_LIMB
-        
+            return HemorrhageCategory.SMALL_LIMB
+
         # Torso wounds
         if body_region in [BodyRegion.CHEST, BodyRegion.ABDOMEN, BodyRegion.PELVIS]:
             if vessel_type == VesselType.ORGAN or hemorrhage_risk == "high":
                 return HemorrhageCategory.TORSO_WOUND
-        
+
         # Small limb wounds (default for extremities)
-        if body_region in [BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM, 
+        if body_region in [BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM,
                           BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG]:
             return HemorrhageCategory.SMALL_LIMB
-        
+
         # Default based on risk
         if hemorrhage_risk == "high":
             return HemorrhageCategory.TORSO_WOUND
-        elif hemorrhage_risk == "moderate":
+        if hemorrhage_risk == "moderate":
             return HemorrhageCategory.SMALL_LIMB
-        else:
-            return HemorrhageCategory.NO_HEMORRHAGE
-    
+        return HemorrhageCategory.NO_HEMORRHAGE
+
     @staticmethod
     def _get_severity_factor(severity: str) -> float:
         """Convert severity string to 0-1 factor."""
@@ -292,7 +288,7 @@ class HemorrhageModel:
             "Severe": 1.0
         }
         return severity_map.get(severity, 0.5)
-    
+
     @classmethod
     def generate_multiple_hemorrhages(
         cls,
@@ -310,14 +306,14 @@ class HemorrhageModel:
             List of HemorrhageProfile objects
         """
         profiles = []
-        
+
         # If no body regions specified, distribute injuries
         if body_regions is None:
             body_regions = cls._distribute_injuries_to_regions(len(injuries))
-        
+
         for i, injury in enumerate(injuries):
             region = body_regions[i] if i < len(body_regions) else None
-            
+
             profile = cls.calculate_hemorrhage_profile(
                 injury_code=injury.get("code", "125670008"),  # Default war injury
                 body_region=region,
@@ -325,9 +321,9 @@ class HemorrhageModel:
                 multiple_injuries=len(injuries) > 1
             )
             profiles.append(profile)
-        
+
         return profiles
-    
+
     @staticmethod
     def _distribute_injuries_to_regions(num_injuries: int) -> List[BodyRegion]:
         """Realistically distribute injuries across body regions."""
@@ -339,8 +335,8 @@ class HemorrhageModel:
                 BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG,
                 BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM
             ])]
-        
-        elif num_injuries == 2:
+
+        if num_injuries == 2:
             # Often bilateral or adjacent regions
             patterns = [
                 [BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG],  # Bilateral lower
@@ -349,13 +345,12 @@ class HemorrhageModel:
                 [BodyRegion.CHEST, BodyRegion.LEFT_ARM],      # Mixed
             ]
             return random.choice(patterns)
-        
-        else:
-            # Multiple injuries - blast pattern
-            regions = [
-                BodyRegion.CHEST,
-                BodyRegion.ABDOMEN,
-                random.choice([BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG]),
-                random.choice([BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM])
-            ]
-            return regions[:num_injuries]
+
+        # Multiple injuries - blast pattern
+        regions = [
+            BodyRegion.CHEST,
+            BodyRegion.ABDOMEN,
+            random.choice([BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG]),
+            random.choice([BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM])
+        ]
+        return regions[:num_injuries]

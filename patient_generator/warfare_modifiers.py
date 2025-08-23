@@ -9,10 +9,11 @@ Author: Medical SME Agent + Probabilistic Math SME Agent
 Version: 1.0.0
 """
 
-from typing import Dict, List, Tuple, Optional, Any
-import random
-import numpy as np
 from dataclasses import dataclass
+import random
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass
@@ -38,16 +39,16 @@ class WarfareModifiers:
     - IED: Asymmetric injuries, lower extremity trauma
     - Conventional: Mixed small arms and indirect fire
     """
-    
+
     def __init__(self):
         """Initialize warfare patterns based on military medical data."""
         self.patterns = self._define_warfare_patterns()
         self.injury_correlations = self._define_injury_correlations()
         self.body_regions = self._define_body_regions()
-        
+
     def _define_warfare_patterns(self) -> Dict[str, WarfarePattern]:
         """Define distinct patterns for each warfare type."""
-        
+
         patterns = {
             "artillery": WarfarePattern(
                 name="Artillery/Indirect Fire",
@@ -74,7 +75,7 @@ class WarfareModifiers:
                     "structure_collapse": 0.15
                 }
             ),
-            
+
             "urban": WarfarePattern(
                 name="Urban Combat",
                 description="Close quarters combat with mixed threats",
@@ -100,7 +101,7 @@ class WarfareModifiers:
                     "civilian_mix": 0.30
                 }
             ),
-            
+
             "ied": WarfarePattern(
                 name="IED/Asymmetric",
                 description="Improvised explosive devices with under-vehicle focus",
@@ -126,7 +127,7 @@ class WarfareModifiers:
                     "delayed_evacuation": True
                 }
             ),
-            
+
             "conventional": WarfarePattern(
                 name="Conventional Warfare",
                 description="Traditional combined arms with mixed injury patterns",
@@ -152,7 +153,7 @@ class WarfareModifiers:
                     "standard_evacuation": True
                 }
             ),
-            
+
             "mixed": WarfarePattern(
                 name="Mixed/Hybrid",
                 description="Combination of conventional and asymmetric threats",
@@ -180,12 +181,12 @@ class WarfareModifiers:
                 }
             )
         }
-        
+
         return patterns
-    
+
     def _define_injury_correlations(self) -> Dict[str, List[str]]:
         """Define which injuries commonly occur together (polytrauma)."""
-        
+
         correlations = {
             # Blast polytrauma pattern
             "125596004": [  # Injury by explosive often with:
@@ -194,29 +195,29 @@ class WarfareModifiers:
                 "127294003",  # TBI
                 "267036007",  # Blast lung
             ],
-            
-            # IED polytrauma pattern  
+
+            # IED polytrauma pattern
             "125689001": [  # Traumatic amputation often with:
                 "125605004",  # Pelvic/spine fractures
                 "275272006",  # Abdominal injury
                 "68566005",   # Genitourinary injury
                 "7200002",    # Burns
             ],
-            
+
             # Penetrating trauma pattern
             "361220002": [  # Penetrating injury often with:
                 "275272006",  # Abdominal injury
                 "125605004",  # Fractures
                 "87991007",   # Hemothorax
             ],
-            
+
             # TBI pattern
             "127294003": [  # TBI often with:
                 "125605004",  # Skull fractures
                 "2055003",    # Facial lacerations
                 "409711008",  # Crush injuries
             ],
-            
+
             # GSW pattern
             "262574004": [  # Gunshot wound often with:
                 "361220002",  # Penetrating injury
@@ -224,12 +225,12 @@ class WarfareModifiers:
                 "275272006",  # Internal organ damage
             ]
         }
-        
+
         return correlations
-    
+
     def _define_body_regions(self) -> Dict[str, List[str]]:
         """Define body regions for injury localization."""
-        
+
         regions = {
             "head_neck": ["127294003", "2055003", "62315008"],
             "thorax": ["87991007", "267036007", "125596004"],
@@ -237,9 +238,9 @@ class WarfareModifiers:
             "extremities": ["125689001", "125605004", "2055003"],
             "multiple": ["125596004", "361220002", "409711008"]
         }
-        
+
         return regions
-    
+
     def get_injuries_for_scenario(
         self,
         scenario: str,
@@ -256,10 +257,10 @@ class WarfareModifiers:
             Tuple of (injury_codes, severity, metadata)
         """
         pattern = self.patterns.get(scenario, self.patterns["mixed"])
-        
+
         # Determine if polytrauma occurs
         is_polytrauma = random.random() < pattern.polytrauma_rate
-        
+
         # Select primary injury
         injuries = []
         if base_injuries:
@@ -270,7 +271,7 @@ class WarfareModifiers:
             probabilities = list(pattern.injury_distribution.values())
             primary_injury = np.random.choice(injury_codes, p=probabilities)
             injuries.append(primary_injury)
-        
+
         # Add correlated injuries for polytrauma
         if is_polytrauma and injuries:
             primary = injuries[0]
@@ -279,19 +280,19 @@ class WarfareModifiers:
                 num_additional = min(3, np.random.poisson(1.5))
                 correlated = self.injury_correlations[primary]
                 additional = random.sample(
-                    correlated, 
+                    correlated,
                     min(num_additional, len(correlated))
                 )
                 injuries.extend(additional)
-        
+
         # Calculate severity (1-10 scale)
         base_severity = random.randint(3, 8)
         if is_polytrauma:
             base_severity += 2
-        
+
         modified_severity = int(base_severity * pattern.severity_modifier)
         modified_severity = min(10, max(1, modified_severity))
-        
+
         # Build metadata
         metadata = {
             "warfare_type": scenario,
@@ -301,9 +302,9 @@ class WarfareModifiers:
             "mass_casualty": random.random() < pattern.mass_casualty_probability,
             "mortality_modifier": pattern.mortality_modifier
         }
-        
+
         return injuries, modified_severity, metadata
-    
+
     def get_scenario_modifiers(self, scenario: str) -> Dict[str, Any]:
         """
         Get modifiers for a specific warfare scenario.
@@ -315,7 +316,7 @@ class WarfareModifiers:
             Dictionary of modifiers for patient generation
         """
         pattern = self.patterns.get(scenario, self.patterns["mixed"])
-        
+
         return {
             "severity_modifier": pattern.severity_modifier,
             "mortality_modifier": pattern.mortality_modifier,
@@ -323,7 +324,7 @@ class WarfareModifiers:
             "polytrauma_rate": pattern.polytrauma_rate,
             "environmental_factors": pattern.environmental_factors
         }
-    
+
     def analyze_injury_pattern(self, injuries: List[str]) -> str:
         """
         Analyze a list of injuries to determine likely warfare type.
@@ -336,7 +337,7 @@ class WarfareModifiers:
         """
         if not injuries:
             return "mixed"
-        
+
         # Score each pattern
         scores = {}
         for scenario, pattern in self.patterns.items():
@@ -345,7 +346,7 @@ class WarfareModifiers:
                 if injury in pattern.injury_distribution:
                     score += pattern.injury_distribution[injury]
             scores[scenario] = score
-        
+
         # Return highest scoring scenario
         return max(scores, key=scores.get)
 
@@ -360,39 +361,39 @@ def create_warfare_modifiers() -> WarfareModifiers:
 def test_warfare_patterns():
     """Test warfare pattern generation."""
     modifiers = WarfareModifiers()
-    
+
     print("Testing Warfare Pattern Generation")
     print("=" * 60)
-    
+
     scenarios = ["artillery", "urban", "ied", "conventional", "mixed"]
-    
+
     for scenario in scenarios:
         print(f"\n{scenario.upper()} Warfare Pattern:")
         print("-" * 40)
-        
+
         # Generate 5 casualties
         for i in range(5):
             injuries, severity, metadata = modifiers.get_injuries_for_scenario(scenario)
-            
+
             print(f"Casualty {i+1}:")
             print(f"  Injuries: {len(injuries)} codes")
             print(f"  Severity: {severity}/10")
             print(f"  Polytrauma: {metadata['polytrauma']}")
             print(f"  Mass casualty: {metadata['mass_casualty']}")
-            
+
             if i == 0:  # Show first casualty details
                 print(f"  Injury codes: {injuries[:3]}...")  # First 3 codes
-    
+
     # Test pattern analysis
     print("\n" + "=" * 60)
     print("Testing Pattern Analysis:")
-    
+
     test_cases = [
         (["125596004", "361220002", "7200002"], "artillery"),  # Blast pattern
         (["262574004", "361220002"], "urban"),  # GSW pattern
         (["125689001", "125605004", "275272006"], "ied"),  # IED pattern
     ]
-    
+
     for injuries, expected in test_cases:
         detected = modifiers.analyze_injury_pattern(injuries)
         result = "✓" if detected == expected else "✗"

@@ -37,13 +37,13 @@ def test_condition_specific_treatments():
     assert "tourniquet" not in chest_treatments, "Tourniquet should NOT be available for chest wounds"
     assert "pressure_dressing" in chest_treatments
     assert "iv_fluids" in chest_treatments
-    
+
     # Abdominal injury - NO tourniquet!
     abdomen_treatments = tm.get_available_treatments("role2", "abdominal trauma")
     assert "tourniquet" not in abdomen_treatments
     assert "pressure_dressing" in abdomen_treatments
     assert "surgical_stabilization" in abdomen_treatments
-    
+
     # Head injury - very limited options
     head_treatments = tm.get_available_treatments("role1", "head trauma")
     assert "tourniquet" not in head_treatments

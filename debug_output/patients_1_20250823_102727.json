@@ -1,0 +1,111 @@
+{
+  "metadata": {
+    "patient_count": 1,
+    "generated_at": "20250823",
+    "generated_at_iso": "2025-08-23T10:27:27.386098",
+    "generator_version": "2.0.0"
+  },
+  "patients": [
+    {
+      "id": 0,
+      "nationality": "POL",
+      "gender": "male",
+      "injury_type": "Polytrauma",
+      "triage": "T1",
+      "status": "POI",
+      "front": "Poland",
+      "demographics": {
+        "family_name": "Jankowski",
+        "given_name": "Tomasz",
+        "gender": "male",
+        "birthdate": "1992-02-02",
+        "nationality": "POL",
+        "weight": 65.0,
+        "blood_type": "O"
+      },
+      "conditions": [
+        {
+          "code": "195662009",
+          "name": "Acute respiratory illness"
+        },
+        {
+          "code": "45170000",
+          "name": "Psychological stress"
+        }
+      ],
+      "severity": 8,
+      "additional_conditions": [
+        {
+          "code": "284551006",
+          "name": "Traumatic amputation of limb"
+        },
+        {
+          "code": "262574004",
+          "name": "Bullet wound"
+        }
+      ],
+      "treatments": [
+        {
+          "facility": "POI",
+          "date": "2025-06-01T21:58:53",
+          "treatments": [],
+          "observations": []
+        },
+        {
+          "facility": "POI",
+          "date": "2025-06-01T21:58:53",
+          "treatments": [
+            {
+              "code": "utility_model",
+              "display": "oxygen"
+            },
+            {
+              "code": "utility_model",
+              "display": "bronchodilator"
+            }
+          ],
+          "observations": [
+            {
+              "code": "8310-5",
+              "display": "Body temperature",
+              "value": 37.0,
+              "unit": "Cel"
+            },
+            {
+              "code": "8867-4",
+              "display": "Heart rate",
+              "value": 74,
+              "unit": "/min"
+            }
+          ]
+        }
+      ],
+      "timeline": [
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T21:58:53",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "arrival",
+          "facility": "POI",
+          "timestamp": "2025-06-01T21:58:53",
+          "hours_since_injury": 0.0
+        },
+        {
+          "event_type": "kia",
+          "facility": "POI",
+          "timestamp": "2025-06-01T22:48:47.464548",
+          "hours_since_injury": 0.8,
+          "kia_timing": "markov_chain_decision",
+          "facilities_visited": 1
+        }
+      ],
+      "injury_time": "2025-06-01T21:58:53",
+      "scenario": "drone",
+      "event_id": "IND_drone_0_21_58_1c173bb7",
+      "day": "Day 1"
+    }
+  ]
+}

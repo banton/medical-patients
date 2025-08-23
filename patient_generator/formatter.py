@@ -77,7 +77,7 @@ class OutputFormatter:
     def format_json(self, bundles, stream=None):
         """Format bundles as JSON with metadata, optionally writing to a stream for memory efficiency"""
         from datetime import datetime
-        
+
         # Create metadata wrapper
         metadata = {
             "metadata": {
@@ -88,13 +88,13 @@ class OutputFormatter:
             },
             "patients": bundles
         }
-        
+
         if stream:
             # Memory-efficient streaming for large datasets
-            stream.write('{\n')
+            stream.write("{\n")
             stream.write('  "metadata": ')
             json.dump(metadata["metadata"], stream, indent=2)
-            stream.write(',\n')
+            stream.write(",\n")
             stream.write('  "patients": [\n')
             for i, bundle in enumerate(bundles):
                 if i > 0:

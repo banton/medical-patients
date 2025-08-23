@@ -151,7 +151,13 @@
       "Bash(ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true ENABLE_TREATMENT_UTILITY_MODEL=true python3 run_generator.py --patients 100 --output output_test --formats json)",
       "Bash(time:*)",
       "Bash(cp:*)",
-      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients/src python3 -c \"from main import app; print(''API imports OK'')\")"
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients/src python3 -c \"from main import app; print(''API imports OK'')\")",
+      "Read(//private/tmp/**)",
+      "Read(//private/tmp/**)",
+      "Read(//private/tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(docker ps:*)",
+      "Bash(unzip:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

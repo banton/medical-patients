@@ -1,11 +1,11 @@
 """Hemorrhage modeling system for patient generator."""
 
+from .body_regions import BodyLocation, BodyRegion
 from .hemorrhage_model import HemorrhageModel, HemorrhageProfile
-from .body_regions import BodyRegion, BodyLocation
 
 __all__ = [
-    'HemorrhageModel',
-    'HemorrhageProfile', 
-    'BodyRegion',
-    'BodyLocation'
+    "BodyLocation",
+    "BodyRegion",
+    "HemorrhageModel",
+    "HemorrhageProfile"
 ]

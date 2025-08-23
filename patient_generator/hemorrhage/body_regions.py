@@ -1,8 +1,8 @@
 """Body region definitions for hemorrhage modeling."""
 
-from enum import Enum
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Optional
 
 
 class BodyRegion(Enum):
@@ -36,8 +36,8 @@ class BodyLocation:
     major_vessels: List[str]  # Named vessels in this area
     organs: List[str]  # Organs in this area
     tourniquetable: bool  # Can a tourniquet be applied here?
-    
-    
+
+
 # Anatomical mapping of body regions to structures
 BODY_REGION_ANATOMY: Dict[BodyRegion, Dict] = {
     BodyRegion.HEAD: {
@@ -115,7 +115,7 @@ def get_body_location(region: BodyRegion, specific_area: Optional[str] = None) -
         BodyLocation object with anatomical details
     """
     anatomy = BODY_REGION_ANATOMY.get(region, {})
-    
+
     return BodyLocation(
         region=region,
         specific_area=specific_area or region.value,
@@ -170,24 +170,24 @@ def get_affected_vessel_type(region: BodyRegion, injury_depth: str = "deep") -> 
     """
     if injury_depth == "superficial":
         return VesselType.CAPILLARY
-    
+
     # Deep injuries in critical areas
     if region in [BodyRegion.CHEST, BodyRegion.ABDOMEN, BodyRegion.PELVIS]:
         if injury_depth == "deep":
             return VesselType.MAJOR_ARTERY
         return VesselType.ORGAN
-    
+
     # Limb injuries
-    if region in [BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG, 
+    if region in [BodyRegion.LEFT_LEG, BodyRegion.RIGHT_LEG,
                   BodyRegion.LEFT_ARM, BodyRegion.RIGHT_ARM]:
         if injury_depth == "deep":
             return VesselType.LIMB_ARTERY
         return VesselType.SMALL_VESSEL
-    
+
     # Head and neck
     if region in [BodyRegion.HEAD, BodyRegion.NECK]:
         if injury_depth == "deep":
             return VesselType.MAJOR_ARTERY
         return VesselType.SMALL_VESSEL
-    
+
     return VesselType.SMALL_VESSEL

@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 try:
     from patient_generator.app import PatientGeneratorApp
     from patient_generator.config_manager import ConfigurationManager
-    from patient_generator.schemas_config import ConfigurationTemplateDB
     from patient_generator.nationality_data import NationalityDataProvider
+    from patient_generator.schemas_config import ConfigurationTemplateDB
 except ImportError:
     print("Error importing patient_generator package. Please make sure it's installed or in your Python path.")
     print("Try running: pip install -e .")
@@ -46,36 +46,35 @@ def create_config_from_args(args, config_data=None):
             created_at=datetime.now(),
             updated_at=datetime.now()
         )
-    else:
-        # From args directly
-        return ConfigurationTemplateDB(
-            id="cli-config",
-            name="CLI Configuration",
-            description="Configuration from command line",
-            total_patients=args.patients,
-            injury_distribution={
-                "Disease": 0.1,
-                "Non-Battle Injury": 0.2,
-                "Battle Injury": 0.7
-            },
-            front_configs=[],
-            facility_configs=[],
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
+    # From args directly
+    return ConfigurationTemplateDB(
+        id="cli-config",
+        name="CLI Configuration",
+        description="Configuration from command line",
+        total_patients=args.patients,
+        injury_distribution={
+            "Disease": 0.1,
+            "Non-Battle Injury": 0.2,
+            "Battle Injury": 0.7
+        },
+        front_configs=[],
+        facility_configs=[],
+        created_at=datetime.now(),
+        updated_at=datetime.now()
+    )
 
 
 class MockDatabase:
     """Mock database that returns our CLI configuration."""
     def __init__(self, config):
         self.config = config
-        
+
 
 class MockRepository:
     """Mock repository that returns our CLI configuration."""
     def __init__(self, db):
         self.config = db.config
-    
+
     def get_configuration(self, config_id):
         return self.config
 
@@ -128,19 +127,19 @@ def parse_arguments():
     parser.add_argument("--clean-output", action="store_true", help="Remove output directory before starting")
 
     parser.add_argument("--max-memory", type=int, help="Maximum memory usage in MB")
-    
+
     parser.add_argument(
         "--enable-medical-simulation",
         action="store_true",
         help="Enable enhanced medical simulation for realistic patient flow"
     )
-    
+
     parser.add_argument(
         "--medical-config",
         type=str,
         help="Path to medical simulation configuration file (JSON)"
     )
-    
+
     parser.add_argument(
         "--compare-performance",
         action="store_true",
@@ -179,13 +178,12 @@ def main():
         os.environ["PATIENT_GENERATOR_CLEANUP_TEMP"] = "0"
     if args.max_memory:
         os.environ["PATIENT_GENERATOR_MAX_MEMORY"] = str(args.max_memory)
-    
+
     # Medical simulation is now the default behavior
     os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
     if not args.enable_medical_simulation:
         # Only show message if explicitly disabled (which we don't support anymore)
-        pass
-        
+
         # Load medical config if provided
         if args.medical_config:
             try:
@@ -199,10 +197,10 @@ def main():
     # Print startup information
     print("Military Medical Exercise Patient Generator (Optimized Version)")
     print("==============================================================")
-    
+
     # Create configuration from arguments or loaded config
     config = create_config_from_args(args, config_data)
-    
+
     print(f"Generating {config.total_patients} patients...")
     print(f"Output directory: {output_dir}")
 
@@ -216,27 +214,27 @@ def main():
     output_formats = args.formats.split(",")
     use_compression = not args.no_compress
     use_encryption = not args.no_encrypt
-    
+
     print(f"Output formats: {', '.join(output_formats)}")
     print(f"Compression: {'Enabled' if use_compression else 'Disabled'}")
     print(f"Encryption: {'Enabled' if use_encryption else 'Disabled'}")
 
     # Create mock database with our config
     mock_db = MockDatabase(config)
-    
+
     # Create ConfigurationManager with mock database
     config_manager = ConfigurationManager(database_instance=mock_db)
-    
+
     # Monkey-patch the repository to return our config
     config_manager._repository = MockRepository(mock_db)
     config_manager._active_configuration = config
-    
+
     # Create nationality provider
     nationality_provider = NationalityDataProvider()
-    
+
     # Initialize and run the generator
     generator = PatientGeneratorApp(config_manager, nationality_provider)
-    
+
     # Override performance settings if provided
     if args.threads > 0:
         generator.num_workers = args.threads
@@ -285,27 +283,27 @@ def main():
     print(f"Time per patient:         {time_per_patient:.1f} ms")
     print(f"Worker threads:           {generator.num_workers}")
     print(f"Batch size:               {generator.batch_size}")
-    
+
     # Medical simulation metrics if enabled
     if args.enable_medical_simulation:
         print("\nMedical Simulation Metrics:")
         try:
             # Try to get metrics from the bridge if it exists
-            if hasattr(generator, 'flow_simulator') and hasattr(generator.flow_simulator, 'medical_bridge'):
+            if hasattr(generator, "flow_simulator") and hasattr(generator.flow_simulator, "medical_bridge"):
                 bridge_metrics = generator.flow_simulator.medical_bridge.metrics
-                avg_time = (bridge_metrics['total_time'] / bridge_metrics['total_enhanced'] * 1000 
-                           if bridge_metrics['total_enhanced'] > 0 else 0)
+                avg_time = (bridge_metrics["total_time"] / bridge_metrics["total_enhanced"] * 1000
+                           if bridge_metrics["total_enhanced"] > 0 else 0)
                 print(f"  - Patients enhanced:    {bridge_metrics['total_enhanced']}")
                 print(f"  - Avg enhancement time: {avg_time:.1f} ms")
                 print(f"  - Slowest patient:      {bridge_metrics['slowest_patient']*1000:.1f} ms")
-                
+
                 # Calculate overhead
                 base_time = time_per_patient - avg_time
                 overhead_pct = (avg_time / time_per_patient * 100) if time_per_patient > 0 else 0
                 print(f"  - Medical sim overhead: {overhead_pct:.1f}%")
         except:
             print("  - Metrics unavailable (may need ConfigurationManager fix)")
-    
+
     print("="*60)
 
     print(f"\nOutput files saved to {output_dir} directory.")

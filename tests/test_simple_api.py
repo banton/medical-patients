@@ -4,8 +4,8 @@ import json
 from pathlib import Path
 import time
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from src.main import app
 
