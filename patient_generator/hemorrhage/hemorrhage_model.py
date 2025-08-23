@@ -154,13 +154,13 @@ class HemorrhageModel:
     ) -> HemorrhageProfile:
         """
         Calculate hemorrhage profile for a given injury.
-        
+
         Args:
             injury_code: SNOMED code of the injury
             body_region: Specific body region affected (if None, will be randomly selected)
             severity: Injury severity ("Mild to moderate", "Moderate", "Moderate to severe", "Severe")
             multiple_injuries: Whether patient has multiple injuries
-            
+
         Returns:
             HemorrhageProfile with all parameters
         """
@@ -245,9 +245,8 @@ class HemorrhageModel:
             return HemorrhageCategory.NO_HEMORRHAGE
 
         # Multiple injuries
-        if multiple_injuries:
-            if severity == "Severe" or hemorrhage_risk in ["high", "critical"]:
-                return HemorrhageCategory.MULTIPLE_PENETRATING
+        if multiple_injuries and (severity == "Severe" or hemorrhage_risk in ["high", "critical"]):
+            return HemorrhageCategory.MULTIPLE_PENETRATING
 
         # Massive hemorrhage cases
         if vessel_type == VesselType.MAJOR_ARTERY and severity == "Severe":
@@ -297,11 +296,11 @@ class HemorrhageModel:
     ) -> List[HemorrhageProfile]:
         """
         Generate hemorrhage profiles for multiple injuries.
-        
+
         Args:
             injuries: List of injury dictionaries with 'code' and 'severity'
             body_regions: Optional list of affected body regions
-            
+
         Returns:
             List of HemorrhageProfile objects
         """

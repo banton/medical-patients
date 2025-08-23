@@ -32,7 +32,7 @@ class WarfarePattern:
 class WarfareModifiers:
     """
     Manages warfare-specific injury patterns and modifiers.
-    
+
     Key Features:
     - Artillery: Blast injuries, traumatic amputations, burns
     - Urban: GSW, building collapse, secondary blast
@@ -49,7 +49,7 @@ class WarfareModifiers:
     def _define_warfare_patterns(self) -> Dict[str, WarfarePattern]:
         """Define distinct patterns for each warfare type."""
 
-        patterns = {
+        return {
             "artillery": WarfarePattern(
                 name="Artillery/Indirect Fire",
                 description="Heavy indirect fire with blast injuries predominant",
@@ -182,12 +182,11 @@ class WarfareModifiers:
             )
         }
 
-        return patterns
 
     def _define_injury_correlations(self) -> Dict[str, List[str]]:
         """Define which injuries commonly occur together (polytrauma)."""
 
-        correlations = {
+        return {
             # Blast polytrauma pattern
             "125596004": [  # Injury by explosive often with:
                 "361220002",  # Penetrating injury (shrapnel)
@@ -226,12 +225,11 @@ class WarfareModifiers:
             ]
         }
 
-        return correlations
 
     def _define_body_regions(self) -> Dict[str, List[str]]:
         """Define body regions for injury localization."""
 
-        regions = {
+        return {
             "head_neck": ["127294003", "2055003", "62315008"],
             "thorax": ["87991007", "267036007", "125596004"],
             "abdomen": ["275272006", "68566005", "25374005"],
@@ -239,7 +237,6 @@ class WarfareModifiers:
             "multiple": ["125596004", "361220002", "409711008"]
         }
 
-        return regions
 
     def get_injuries_for_scenario(
         self,
@@ -248,11 +245,11 @@ class WarfareModifiers:
     ) -> Tuple[List[str], int, Dict[str, Any]]:
         """
         Generate injuries based on warfare scenario.
-        
+
         Args:
             scenario: Type of warfare (artillery, urban, ied, etc.)
             base_injuries: Optional predetermined injuries to modify
-            
+
         Returns:
             Tuple of (injury_codes, severity, metadata)
         """
@@ -308,10 +305,10 @@ class WarfareModifiers:
     def get_scenario_modifiers(self, scenario: str) -> Dict[str, Any]:
         """
         Get modifiers for a specific warfare scenario.
-        
+
         Args:
             scenario: Type of warfare
-            
+
         Returns:
             Dictionary of modifiers for patient generation
         """
@@ -328,10 +325,10 @@ class WarfareModifiers:
     def analyze_injury_pattern(self, injuries: List[str]) -> str:
         """
         Analyze a list of injuries to determine likely warfare type.
-        
+
         Args:
             injuries: List of SNOMED codes
-            
+
         Returns:
             Most likely warfare scenario
         """

@@ -20,10 +20,10 @@ class HemorrhageIntegration:
     def enhance_patient_with_hemorrhage(self, patient: Any) -> Dict:
         """
         Add hemorrhage profile to an existing patient based on their conditions.
-        
+
         Args:
             patient: Patient object with primary_conditions
-            
+
         Returns:
             Dictionary with hemorrhage data
         """
@@ -82,12 +82,12 @@ class HemorrhageIntegration:
     ) -> List[Dict]:
         """
         Calculate blood volume over time for a hemorrhage profile.
-        
+
         Args:
             hemorrhage_profile: The hemorrhage profile
             duration_minutes: How long to simulate
             tourniquet_time: When tourniquet is applied (minutes from injury)
-            
+
         Returns:
             Timeline of blood volume changes
         """
@@ -127,10 +127,10 @@ class HemorrhageIntegration:
     def get_treatment_priority(self, hemorrhage_data: Dict) -> str:
         """
         Determine treatment priority based on hemorrhage severity.
-        
+
         Args:
             hemorrhage_data: Hemorrhage data dictionary
-            
+
         Returns:
             Priority level: "T1", "T2", or "T3"
         """
@@ -176,10 +176,10 @@ class HemorrhageIntegration:
     def generate_hemorrhage_report(self, patient: Any) -> str:
         """
         Generate a clinical report of hemorrhage status.
-        
+
         Args:
             patient: Patient object
-            
+
         Returns:
             Text report
         """
@@ -262,7 +262,7 @@ def example_usage():
         )
 
         print("\nBlood Volume Timeline (first 30 minutes):")
-        for i, point in enumerate(timeline[::5]):  # Every 5 minutes
+        for _i, point in enumerate(timeline[::5]):  # Every 5 minutes
             print(f"  {point['minute']:2d} min: {point['blood_volume_percent']:.1f}% "
                   f"({point['status']}) - Loss rate: {point['blood_loss_rate']:.1f} ml/min")
 

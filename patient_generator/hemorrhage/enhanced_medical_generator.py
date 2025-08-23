@@ -31,12 +31,12 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
     ) -> Dict[str, Any]:
         """
         Generate a medical condition with hemorrhage profile.
-        
+
         Args:
             injury_type: Type of injury (Battle, Non-Battle, Disease)
             triage_category: Triage level (T1, T2, T3)
             include_body_location: Whether to include body location
-            
+
         Returns:
             Enhanced condition dictionary with hemorrhage data
         """
@@ -81,12 +81,12 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
     ) -> List[Dict[str, Any]]:
         """
         Generate multiple conditions with hemorrhage profiles.
-        
+
         Args:
             injury_type: Type of injury
             triage_category: Triage level
             count: Number of conditions to generate
-            
+
         Returns:
             List of enhanced condition dictionaries
         """
@@ -129,10 +129,10 @@ class EnhancedMedicalConditionGenerator(MedicalConditionGenerator):
     ) -> Dict[str, Any]:
         """
         Calculate combined hemorrhage effects from multiple conditions.
-        
+
         Args:
             conditions: List of conditions with hemorrhage data
-            
+
         Returns:
             Combined hemorrhage summary
         """

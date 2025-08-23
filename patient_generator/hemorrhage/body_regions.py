@@ -106,11 +106,11 @@ BODY_REGION_ANATOMY: Dict[BodyRegion, Dict] = {
 def get_body_location(region: BodyRegion, specific_area: Optional[str] = None) -> BodyLocation:
     """
     Create a BodyLocation object for a given region.
-    
+
     Args:
         region: The body region
         specific_area: Optional specific anatomical area
-        
+
     Returns:
         BodyLocation object with anatomical details
     """
@@ -128,10 +128,10 @@ def get_body_location(region: BodyRegion, specific_area: Optional[str] = None) -
 def get_hemorrhage_risk_regions(risk_level: str = "high") -> List[BodyRegion]:
     """
     Get body regions with a specific hemorrhage risk level.
-    
+
     Args:
         risk_level: "critical", "high", or "moderate"
-        
+
     Returns:
         List of body regions with that risk level
     """
@@ -146,10 +146,10 @@ def is_junctional_area(region: BodyRegion) -> bool:
     """
     Check if a body region is a junctional area (groin, shoulder, neck).
     These areas cannot be effectively controlled with standard tourniquets.
-    
+
     Args:
         region: The body region to check
-        
+
     Returns:
         True if junctional area
     """
@@ -160,11 +160,11 @@ def is_junctional_area(region: BodyRegion) -> bool:
 def get_affected_vessel_type(region: BodyRegion, injury_depth: str = "deep") -> VesselType:
     """
     Determine the likely vessel type affected based on region and injury depth.
-    
+
     Args:
         region: Body region injured
         injury_depth: "superficial", "moderate", or "deep"
-        
+
     Returns:
         Most likely vessel type affected
     """

@@ -593,7 +593,7 @@ class PatientFlowSimulator:
         """
         Simulate patient flow using Markov chain for probabilistic routing.
         MILESTONE 3.3: Replaces sequential flow with realistic probabilistic transitions.
-        
+
         Args:
             patient: Patient object to simulate flow for
         """

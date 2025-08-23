@@ -25,7 +25,7 @@ import numpy as np
 class FacilityMarkovChain:
     """
     Implements Markov chain-based facility routing for military medical evacuation.
-    
+
     Key Features:
     - Severity-based transition probabilities
     - Special condition routing (burns, TBI, amputations)
@@ -37,7 +37,7 @@ class FacilityMarkovChain:
     def __init__(self, config_path: Optional[str] = None):
         """
         Initialize the Facility Markov Chain.
-        
+
         Args:
             config_path: Path to transition_matrices.json config file
         """
@@ -65,9 +65,11 @@ class FacilityMarkovChain:
             with open(self.config_path) as f:
                 return json.load(f)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Transition matrices config not found: {self.config_path}")
+            msg = f"Transition matrices config not found: {self.config_path}"
+            raise FileNotFoundError(msg)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in transition matrices config: {e}")
+            msg = f"Invalid JSON in transition matrices config: {e}"
+            raise ValueError(msg)
 
     def _validate_transition_matrices(self):
         """Validate that transition matrices are stochastic (rows sum to 1)."""
@@ -85,8 +87,11 @@ class FacilityMarkovChain:
                 total = sum(probs)
 
                 if abs(total - 1.0) > 0.01:  # Allow small rounding errors
-                    raise ValueError(f"Transition probabilities for {facility} {triage_cat} "
-                                   f"sum to {total}, not 1.0")
+                    msg = (
+                        f"Transition probabilities for {facility} {triage_cat} "
+                                   f"sum to {total}, not 1.0"
+                    )
+                    raise ValueError(msg)
 
     def get_next_facility(
         self,
@@ -97,13 +102,13 @@ class FacilityMarkovChain:
     ) -> str:
         """
         Determine next facility using Markov chain transition probabilities.
-        
+
         Args:
             current_facility: Current facility (POI, Role1-4)
             triage_category: Patient triage category (T1-T4)
             patient_conditions: List of special conditions (burns, TBI, etc.)
             modifiers: Environmental modifiers (mass_casualty, golden_hour, etc.)
-            
+
         Returns:
             Next facility name or terminal state (KIA, RTD)
         """
@@ -113,7 +118,8 @@ class FacilityMarkovChain:
 
         # Get base transitions
         if current_facility not in self.base_transitions:
-            raise ValueError(f"Unknown facility: {current_facility}")
+            msg = f"Unknown facility: {current_facility}"
+            raise ValueError(msg)
 
         facility_transitions = self.base_transitions[current_facility]["transitions"]
 
@@ -149,9 +155,8 @@ class FacilityMarkovChain:
         facilities = list(normalized_probs.keys())
         probabilities = list(normalized_probs.values())
 
-        next_facility = np.random.choice(facilities, p=probabilities)
+        return np.random.choice(facilities, p=probabilities)
 
-        return next_facility
 
     def _apply_special_conditions(
         self,
@@ -163,12 +168,12 @@ class FacilityMarkovChain:
         Apply special condition routing rules (burns, TBI, amputations).
         Role1 is always the first stop from POI, but special conditions
         affect priority and speed of evacuation FROM Role1.
-        
+
         Args:
             base_probs: Base transition probabilities
             current_facility: Current facility
             conditions: List of special conditions
-            
+
         Returns:
             Adjusted transition probabilities
         """
@@ -232,12 +237,12 @@ class FacilityMarkovChain:
     ) -> Dict[str, float]:
         """
         Apply environmental and situational modifiers.
-        
+
         Args:
             base_probs: Base transition probabilities
             modifiers: Environmental modifiers
             triage_category: Patient triage category
-            
+
         Returns:
             Modified transition probabilities
         """
@@ -298,13 +303,13 @@ class FacilityMarkovChain:
     ) -> List[str]:
         """
         Generate complete patient path from POI to terminal state.
-        
+
         Args:
             triage_category: Patient triage category (T1-T4)
             patient_conditions: List of special conditions
             modifiers: Environmental modifiers
             max_steps: Maximum transitions to prevent infinite loops
-            
+
         Returns:
             List of facilities visited in order
         """
@@ -336,12 +341,12 @@ class FacilityMarkovChain:
     ) -> int:
         """
         Get evacuation time between facilities with realistic variance.
-        
+
         Args:
             from_facility: Origin facility
             to_facility: Destination facility
             transport_type: "ground" or "air"
-            
+
         Returns:
             Evacuation time in minutes
         """
@@ -361,16 +366,15 @@ class FacilityMarkovChain:
 
         if transport_type not in route_times:
             # Use first available transport type
-            transport_type = list(route_times.keys())[0]
+            transport_type = next(iter(route_times.keys()))
 
         time_params = route_times[transport_type]
         mean_time = time_params["mean"]
         std_time = time_params.get("std", mean_time * 0.2)
 
         # Generate time with normal distribution, ensure positive
-        evac_time = max(5, int(np.random.normal(mean_time, std_time)))
+        return max(5, int(np.random.normal(mean_time, std_time)))
 
-        return evac_time
 
     def assess_mortality(
         self,
@@ -380,12 +384,12 @@ class FacilityMarkovChain:
     ) -> bool:
         """
         Assess if patient dies at a mortality checkpoint.
-        
+
         Args:
             triage_category: Patient triage category
             checkpoint: Mortality checkpoint name
             cumulative_mortality: Previous cumulative mortality
-            
+
         Returns:
             True if patient dies, False if survives
         """
@@ -410,10 +414,10 @@ class FacilityMarkovChain:
     def validate_path(self, path: List[str]) -> Dict[str, Any]:
         """
         Validate that a generated path follows realistic patterns.
-        
+
         Args:
             path: List of facilities in order
-            
+
         Returns:
             Validation results with any warnings or errors
         """
@@ -451,10 +455,10 @@ class FacilityMarkovChain:
 def create_markov_chain(config_path: Optional[str] = None) -> FacilityMarkovChain:
     """
     Factory function to create Facility Markov Chain.
-    
+
     Args:
         config_path: Optional path to transition matrices config
-        
+
     Returns:
         Configured FacilityMarkovChain instance
     """

@@ -22,7 +22,7 @@ class MedicalSimulationBridge:
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         """
         Initialize the medical simulation bridge.
-        
+
         Args:
             config: Optional configuration for medical simulation
         """
@@ -50,10 +50,10 @@ class MedicalSimulationBridge:
     def enhance_patient(self, patient: Patient) -> Patient:
         """
         Enhance a single patient with medical simulation.
-        
+
         Args:
             patient: Patient from patient_generator
-            
+
         Returns:
             Enhanced patient with realistic medical timeline
         """
@@ -76,7 +76,7 @@ class MedicalSimulationBridge:
         severity = self._map_severity(patient.triage_category)
 
         # Initialize patient in medical simulation with proper injury category
-        sim_patient = self.orchestrator.initialize_patient(
+        self.orchestrator.initialize_patient(
             patient_id=sim_patient_id,
             injury_type=injury_category,  # Use category for health engine
             severity=severity,
@@ -100,10 +100,10 @@ class MedicalSimulationBridge:
     def _map_injury_category(self, injury: str) -> str:
         """
         Map patient injury to standard category for health engine.
-        
+
         Args:
             injury: Raw injury type from patient
-            
+
         Returns:
             Standard category: "Battle Injury", "Non-Battle Injury", or "Disease"
         """
@@ -131,10 +131,10 @@ class MedicalSimulationBridge:
     def _map_injury_type(self, injury: str) -> str:
         """
         Map patient_generator injury types to medical_simulation types.
-        
+
         Args:
             injury: Injury from patient_generator
-            
+
         Returns:
             Mapped injury type for medical simulation
         """
@@ -163,10 +163,10 @@ class MedicalSimulationBridge:
     def _map_severity(self, triage: str) -> str:
         """
         Map triage category to severity level expected by health engine.
-        
+
         Args:
             triage: Triage category (T1, T2, T3, T4, etc.)
-            
+
         Returns:
             Severity level matching injuries.json (Severe, Moderate to severe, etc.)
         """
@@ -185,7 +185,7 @@ class MedicalSimulationBridge:
     def _simulate_medical_flow(self, sim_patient_id: str, original_patient: Patient):
         """
         Run patient through medical simulation flow.
-        
+
         Args:
             sim_patient_id: Medical simulation patient ID
             original_patient: Original patient for context
@@ -229,11 +229,11 @@ class MedicalSimulationBridge:
     def _get_treatments_for_injury(self, injury: str, patient: Optional[Patient] = None) -> List[Dict[str, Any]]:
         """
         Get appropriate treatments based on injury type using utility model.
-        
+
         Args:
             injury: Injury type or SNOMED code
             patient: Optional patient for additional context
-            
+
         Returns:
             List of treatments to apply
         """
@@ -279,11 +279,11 @@ class MedicalSimulationBridge:
     def _get_treatments_utility_based(self, injury: str, patient: Patient) -> List[Dict[str, Any]]:
         """
         Get treatments using the utility-based model.
-        
+
         Args:
             injury: Injury type or SNOMED code
             patient: Patient object with condition details
-            
+
         Returns:
             List of treatments selected by utility model
         """
@@ -347,10 +347,10 @@ class MedicalSimulationBridge:
     def _map_injury_to_snomed(self, injury: str) -> str:
         """
         Map injury description to SNOMED code.
-        
+
         Args:
             injury: Injury description
-            
+
         Returns:
             SNOMED code or default
         """
@@ -379,7 +379,7 @@ class MedicalSimulationBridge:
     def _apply_simulation_results(self, patient: Patient, sim_patient_id: str):
         """
         Apply medical simulation results back to original patient.
-        
+
         Args:
             patient: Original patient to enhance
             sim_patient_id: Medical simulation patient ID
@@ -470,10 +470,10 @@ class MedicalSimulationBridge:
     def _map_facility_to_role(self, facility: str) -> str:
         """
         Map medical simulation facility to patient_generator role status.
-        
+
         Args:
             facility: Facility name from medical simulation
-            
+
         Returns:
             Role status for patient_generator
         """
@@ -489,7 +489,7 @@ class MedicalSimulationBridge:
     def get_simulation_metrics(self) -> Dict[str, Any]:
         """
         Get metrics from the medical simulation.
-        
+
         Returns:
             Dictionary of simulation metrics
         """

@@ -52,12 +52,12 @@ class PhaseMetrics:
 class PerformanceMonitor:
     """
     Ultra-simple performance monitor for patient generator.
-    
+
     Usage:
         monitor = PerformanceMonitor()
         with monitor.time_phase("patient_generation", patient_count=1000):
             # ... generate patients ...
-        
+
         monitor.report()  # Print CLI-friendly report
     """
 

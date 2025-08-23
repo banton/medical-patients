@@ -35,10 +35,10 @@ class TreatmentOption:
 class TreatmentUtilityModel:
     """
     Probabilistic treatment selection using multi-attribute utility scoring.
-    
+
     Implements the mathematical framework:
     U(t,i,p,f) = w₁·M(t,i) + w₂·Urgency(t,i,p) + w₃·E(t,i,p) + w₄·R(t,f) + w₅·C(t,f)
-    
+
     Where:
     - M(t,i): Medical appropriateness score
     - Urgency(t,i,p): Time-sensitive urgency factor
@@ -125,7 +125,7 @@ class TreatmentUtilityModel:
     ) -> float:
         """
         Calculate utility score for a treatment option.
-        
+
         Args:
             treatment: Treatment name
             injury_code: SNOMED code for injury
@@ -133,7 +133,7 @@ class TreatmentUtilityModel:
             facility: Current facility (POI, Role1, Role2, Role3)
             time_elapsed_minutes: Time since injury
             available_resources: Current resource availability
-            
+
         Returns:
             Utility score between 0 and 1
         """
@@ -262,7 +262,7 @@ class TreatmentUtilityModel:
     ) -> List[Dict[str, Any]]:
         """
         Select treatments using softmax probability distribution.
-        
+
         Args:
             injury_code: SNOMED code for injury
             severity: Injury severity
@@ -270,7 +270,7 @@ class TreatmentUtilityModel:
             time_elapsed_minutes: Time since injury
             available_resources: Available resources
             max_treatments: Maximum number of treatments to select
-            
+
         Returns:
             List of selected treatments with metadata
         """
@@ -348,7 +348,7 @@ class TreatmentUtilityModel:
     ) -> List[Dict[str, Any]]:
         """
         Select treatments using softmax probability distribution.
-        
+
         P(treatment) = exp(utility/τ) / Σ exp(utilities/τ)
         """
         if not treatment_utilities:
@@ -386,7 +386,7 @@ class TreatmentUtilityModel:
     ) -> List[str]:
         """
         Get recommended treatments for a SNOMED code at a facility.
-        
+
         Simple interface for basic treatment lookup.
         """
         protocol = self.protocols.get("treatment_appropriateness_matrix", {}).get(snomed_code, {})
@@ -407,7 +407,7 @@ class TreatmentUtilityModel:
     ) -> Tuple[bool, str]:
         """
         Validate if a treatment is appropriate for an injury at a facility.
-        
+
         Returns:
             Tuple of (is_valid, reason)
         """

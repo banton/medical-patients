@@ -25,7 +25,7 @@ import numpy as np
 class DiagnosticUncertaintyEngine:
     """
     Implements HMM-based diagnostic uncertainty with facility-specific accuracy rates.
-    
+
     Key Features:
     - Progressive diagnostic accuracy: 65% (POI) -> 98% (Role4)
     - Realistic confusion matrices for common misdiagnoses
@@ -36,7 +36,7 @@ class DiagnosticUncertaintyEngine:
     def __init__(self, config_path: Optional[str] = None):
         """
         Initialize the diagnostic uncertainty engine.
-        
+
         Args:
             config_path: Path to confusion_matrices.json config file
         """
@@ -62,18 +62,20 @@ class DiagnosticUncertaintyEngine:
             with open(self.config_path) as f:
                 return json.load(f)
         except FileNotFoundError:
-            raise FileNotFoundError(f"Confusion matrices config not found: {self.config_path}")
+            msg = f"Confusion matrices config not found: {self.config_path}"
+            raise FileNotFoundError(msg)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in confusion matrices config: {e}")
+            msg = f"Invalid JSON in confusion matrices config: {e}"
+            raise ValueError(msg)
 
     def get_diagnostic_accuracy(self, facility: str, modifiers: Optional[Dict[str, Any]] = None) -> float:
         """
         Calculate diagnostic accuracy for a facility with modifiers.
-        
+
         Args:
             facility: Military medical facility (POI, Role1, Role2, Role3, Role4)
             modifiers: Optional dict with severity, environmental factors, etc.
-            
+
         Returns:
             Diagnostic accuracy probability [0.0, 1.0]
         """
@@ -115,13 +117,13 @@ class DiagnosticUncertaintyEngine:
     ) -> Dict[str, Any]:
         """
         Perform probabilistic diagnosis with potential misdiagnosis.
-        
+
         Args:
             true_condition_code: Actual SNOMED code of condition
             facility: Current medical facility
             patient_id: Unique patient identifier
             modifiers: Environmental/patient factors affecting diagnosis
-            
+
         Returns:
             Dict with diagnosed_code, confidence, true_positive, misdiagnosis_type
         """
@@ -157,11 +159,11 @@ class DiagnosticUncertaintyEngine:
     def _select_misdiagnosis(self, true_condition_code: str, facility: str) -> str:
         """
         Select a misdiagnosis from the confusion matrix.
-        
+
         Args:
             true_condition_code: True SNOMED code
             facility: Current medical facility
-            
+
         Returns:
             SNOMED code of misdiagnosed condition
         """
@@ -190,10 +192,10 @@ class DiagnosticUncertaintyEngine:
     def _generic_misdiagnosis(self, true_condition_code: str) -> str:
         """
         Fallback generic misdiagnosis patterns.
-        
+
         Args:
             true_condition_code: True SNOMED code
-            
+
         Returns:
             Generic misdiagnosed SNOMED code
         """
@@ -216,13 +218,13 @@ class DiagnosticUncertaintyEngine:
     ) -> Dict[str, Any]:
         """
         Update diagnosis as patient progresses through facilities.
-        
+
         Args:
             patient_id: Unique patient identifier
             current_diagnosis: Current diagnosed condition code
             new_facility: New facility with better diagnostic capability
             additional_info: List of additional diagnostic information available
-            
+
         Returns:
             Updated diagnosis with improvement probability
         """
@@ -267,7 +269,7 @@ class DiagnosticUncertaintyEngine:
     def _update_hmm_state(self, patient_id: str):
         """
         Update Hidden Markov Model state for patient diagnostic progression.
-        
+
         Args:
             patient_id: Unique patient identifier
         """
@@ -287,10 +289,10 @@ class DiagnosticUncertaintyEngine:
     def get_diagnostic_confidence(self, patient_id: str) -> Dict[str, Any]:
         """
         Get current diagnostic confidence for a patient.
-        
+
         Args:
             patient_id: Unique patient identifier
-            
+
         Returns:
             Dict with confidence metrics and diagnostic history
         """
@@ -315,10 +317,10 @@ class DiagnosticUncertaintyEngine:
     def _calculate_improvement_trend(self, diagnostic_history: List[Dict[str, Any]]) -> Dict[str, float]:
         """
         Calculate diagnostic improvement trend from history.
-        
+
         Args:
             diagnostic_history: List of diagnostic events
-            
+
         Returns:
             Dict with trend metrics
         """
@@ -341,7 +343,7 @@ class DiagnosticUncertaintyEngine:
     def reset_patient_state(self, patient_id: str):
         """
         Reset diagnostic state for a patient (useful for new scenarios).
-        
+
         Args:
             patient_id: Unique patient identifier
         """
@@ -354,10 +356,10 @@ class DiagnosticUncertaintyEngine:
 def create_diagnostic_uncertainty_engine(config_path: Optional[str] = None) -> DiagnosticUncertaintyEngine:
     """
     Factory function to create diagnostic uncertainty engine.
-    
+
     Args:
         config_path: Optional path to confusion matrices config
-        
+
     Returns:
         Configured DiagnosticUncertaintyEngine instance
     """
@@ -367,10 +369,10 @@ def create_diagnostic_uncertainty_engine(config_path: Optional[str] = None) -> D
 def get_facility_diagnostic_accuracy(facility: str) -> float:
     """
     Quick lookup for facility diagnostic accuracy.
-    
+
     Args:
         facility: Military medical facility name
-        
+
     Returns:
         Base diagnostic accuracy for facility
     """
