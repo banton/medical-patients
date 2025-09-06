@@ -11,6 +11,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from medical_simulation.patient_flow_orchestrator import PatientFlowOrchestrator, PatientState
+from medical_simulation.treatment_protocols import TreatmentProtocolManager, FacilityLevel
 from patient_generator.patient import Patient
 from patient_generator.treatment_utility_model import TreatmentUtilityModel
 
@@ -40,6 +41,9 @@ class MedicalSimulationBridge:
         # Initialize treatment utility model independently (works with or without medical simulation)
         self.utility_model_enabled = os.environ.get("ENABLE_TREATMENT_UTILITY_MODEL", "true").lower() == "true"
         self.treatment_model = TreatmentUtilityModel() if self.utility_model_enabled else None
+        
+        # Initialize treatment protocol manager
+        self.protocol_manager = TreatmentProtocolManager()
 
         # Track conversions for batch operations
         self.patient_mapping = {}  # Maps patient_generator ID to medical_sim ID
@@ -205,14 +209,14 @@ class MedicalSimulationBridge:
         is_mass_casualty = getattr(original_patient, "is_mass_casualty", False)
 
         # REALISTIC WAIT FOR COMBAT MEDIC AT POI
-        # Individual casualty: minutes to ~1 hour
-        # Mass casualty: could be hours if medics are overwhelmed or casualties themselves
+        # Individual casualty: 5-30 minutes
+        # Mass casualty (10+ casualties): 30-90 minutes when medics are overwhelmed
         if is_mass_casualty:
-            # Mass casualty - medics overwhelmed, possibly casualties
-            medic_arrival_minutes = random.randint(60, 240)  # 1-4 hours
+            # Mass casualty - medics overwhelmed but still responding
+            medic_arrival_minutes = random.randint(30, 90)  # 30-90 minutes
         else:
             # Individual casualty - faster response
-            medic_arrival_minutes = random.randint(10, 60)  # 10-60 minutes
+            medic_arrival_minutes = random.randint(5, 30)  # 5-30 minutes
 
         # Simulate waiting for medic (patient deteriorates while waiting)
         self.orchestrator.simulate_deterioration(sim_patient_id, medic_arrival_minutes)
@@ -278,7 +282,9 @@ class MedicalSimulationBridge:
                         self.orchestrator.apply_treatment(sim_patient_id, treatments)
 
                     # Get REALISTIC treatment time at facility from JSON
-                    sim_patient = self.orchestrator.patients[sim_patient_id]
+                    sim_patient = self.orchestrator.patients.get(sim_patient_id)
+                    if not sim_patient or sim_patient.state == PatientState.DIED:
+                        continue  # Patient died, skip to next facility
                     current_facility = sim_patient.current_location
 
                     if current_facility in self.timing_config["evacuation_times"]:
@@ -320,7 +326,7 @@ class MedicalSimulationBridge:
 
     def _get_treatments_for_injury(self, injury: str, patient: Optional[Patient] = None) -> List[Dict[str, Any]]:
         """
-        Get appropriate treatments based on injury type using utility model.
+        Get appropriate treatments based on injury type using protocol manager.
 
         Args:
             injury: Injury type or SNOMED code
@@ -330,6 +336,57 @@ class MedicalSimulationBridge:
             List of treatments to apply
         """
         base_time = datetime.now()
+        
+        # Try protocol-based treatment first
+        if patient:
+            # Get SNOMED code
+            snomed_code = self._map_injury_to_snomed(injury)
+            
+            # Get current facility
+            facility_str = getattr(patient, "last_facility", "POI")
+            facility_mapping = {
+                "POI": FacilityLevel.POI,
+                "point_of_injury": FacilityLevel.POI,
+                "Role1": FacilityLevel.ROLE1,
+                "role1": FacilityLevel.ROLE1,
+                "Role2": FacilityLevel.ROLE2,
+                "role2": FacilityLevel.ROLE2,
+                "Role3": FacilityLevel.ROLE3,
+                "role3": FacilityLevel.ROLE3,
+                "Role4": FacilityLevel.ROLE4,
+                "role4": FacilityLevel.ROLE4,
+            }
+            facility_level = facility_mapping.get(facility_str, FacilityLevel.POI)
+            
+            # Get severity
+            severity = "moderate"
+            if hasattr(patient, "triage_category"):
+                triage_mapping = {
+                    "T1": "critical",
+                    "T2": "severe", 
+                    "T3": "moderate",
+                    "T4": "expectant"
+                }
+                severity = triage_mapping.get(patient.triage_category, "moderate")
+            
+            # Get protocol-based treatments
+            protocol_treatments = self.protocol_manager.get_appropriate_treatments(
+                snomed_code=snomed_code,
+                facility=facility_level,
+                severity=severity,
+                time_elapsed_minutes=30  # Default 30 minutes
+            )
+            
+            if protocol_treatments:
+                treatments = []
+                for treatment_name in protocol_treatments[:3]:  # Limit to 3 treatments
+                    treatments.append({
+                        "name": treatment_name,
+                        "applied_at": base_time,
+                        "protocol_based": True
+                    })
+                self.metrics["treatment_selections"] += len(treatments)
+                return treatments
 
         # Use utility model if available
         if self.treatment_model and self.utility_model_enabled and patient:
@@ -339,22 +396,22 @@ class MedicalSimulationBridge:
         treatment_protocols = {
             "gunshot": [
                 {"name": "tourniquet", "applied_at": base_time},
-                {"name": "hemostatic_dressing", "applied_at": base_time},
-                {"name": "morphine", "applied_at": base_time},
+                {"name": "hemostatic_gauze", "applied_at": base_time},
+                {"name": "pain_management", "applied_at": base_time},
             ],
             "blast": [
                 {"name": "pressure_bandage", "applied_at": base_time},
-                {"name": "splint", "applied_at": base_time},
+                {"name": "airway_positioning", "applied_at": base_time},
                 {"name": "iv_fluids", "applied_at": base_time},
             ],
             "burn": [
                 {"name": "burn_dressing", "applied_at": base_time},
-                {"name": "morphine", "applied_at": base_time},
+                {"name": "pain_management", "applied_at": base_time},
                 {"name": "iv_fluids", "applied_at": base_time},
             ],
             "shrapnel": [
                 {"name": "pressure_bandage", "applied_at": base_time},
-                {"name": "hemostatic_dressing", "applied_at": base_time},
+                {"name": "hemostatic_gauze", "applied_at": base_time},
             ],
         }
 
@@ -366,7 +423,7 @@ class MedicalSimulationBridge:
 
         # Default treatment
         self.metrics["fallback_used"] += 1
-        return [{"name": "basic_bandage", "applied_at": base_time}]
+        return [{"name": "pressure_bandage", "applied_at": base_time}]
 
     def _get_treatments_utility_based(self, injury: str, patient: Patient) -> List[Dict[str, Any]]:
         """

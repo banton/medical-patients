@@ -42,7 +42,7 @@ class DeteriorationCalculator:
         base_rate = severity_data.get("deterioration_rate", 5.0)
 
         # Check for hemorrhage multiplier
-        if injuries:
+        if injuries and isinstance(injuries, list):
             for injury in injuries:
                 if self._has_hemorrhage(injury):
                     multiplier = severity_data.get("hemorrhage_multiplier", 1.5)
