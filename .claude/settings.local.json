@@ -180,7 +180,8 @@
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 200 --output test_mortality --formats json)",
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output test_reduced_wait --formats json)",
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 100 --output test_fixes --formats json)",
-      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_treatment_protocols.py)"
+      "Bash(PYTHONPATH=/Users/banton/Sites/medical-patients python3 tests/test_treatment_protocols.py)",
+      "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true python3 run_generator.py --patients 1000 --output mortality_test_adjusted --formats json)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

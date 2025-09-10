@@ -78,12 +78,12 @@ class HealthScoreEngine:
             # More varied defaults based on triage/severity
             if isinstance(severity, int):
                 if severity >= 9:
-                    return random.randint(15, 30)  # Critical
+                    return random.randint(30, 50)  # Critical (was 15-30)
                 if severity >= 7:
-                    return random.randint(35, 50)  # Severe
+                    return random.randint(50, 65)  # Severe (was 35-50)
                 if severity >= 4:
-                    return random.randint(55, 70)  # Moderate
-                return random.randint(75, 90)  # Mild
+                    return random.randint(70, 85)  # Moderate (was 55-70)
+                return random.randint(85, 95)  # Mild (was 75-90)
             return 70
 
         severity_data = self.deterioration_model[mapped_injury].get(mapped_severity, {})

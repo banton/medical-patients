@@ -284,7 +284,7 @@ class MedicalSimulationBridge:
                     # Get REALISTIC treatment time at facility from JSON
                     sim_patient = self.orchestrator.patients.get(sim_patient_id)
                     if not sim_patient or sim_patient.state == PatientState.DIED:
-                        continue  # Patient died, skip to next facility
+                        return  # Patient died, stop processing
                     current_facility = sim_patient.current_location
 
                     if current_facility in self.timing_config["evacuation_times"]:
