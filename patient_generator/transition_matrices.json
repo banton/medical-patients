@@ -1,0 +1,300 @@
+{
+  "description": "Markov chain transition probabilities for military medical facility flow",
+  "version": "1.0.0",
+  "base_transitions": {
+    "POI": {
+      "description": "Point of Injury - initial patient location",
+      "transitions": {
+        "T1": {
+          "Role1": 0.85,
+          "Role2": 0.03,
+          "Role3": 0.02,
+          "KIA": 0.10,
+          "description": "Critical patients usually go to Role1, rare direct evac if in vehicle"
+        },
+        "T2": {
+          "Role1": 0.92,
+          "Role2": 0.02,
+          "Role3": 0.01,
+          "KIA": 0.05,
+          "description": "Urgent patients to Role1, rare direct evac if near Role2"
+        },
+        "T3": {
+          "Role1": 0.96,
+          "Role2": 0.01,
+          "Role3": 0.01,
+          "KIA": 0.02,
+          "description": "Delayed patients to Role1, rare direct evac"
+        },
+        "T4": {
+          "Role1": 0.97,
+          "Role2": 0.01,
+          "RTD": 0.01,
+          "KIA": 0.01,
+          "description": "Minimal patients to Role1, may RTD if very minor"
+        }
+      }
+    },
+    "Role1": {
+      "description": "Battalion Aid Station - triage, stabilization, collection point",
+      "transitions": {
+        "T1": {
+          "Role2": 0.75,
+          "Role3": 0.15,
+          "KIA": 0.08,
+          "RTD": 0.02,
+          "description": "Critical patients re-triaged, immediately evacuated by MEDEVAC"
+        },
+        "T2": {
+          "Role2": 0.50,
+          "Role3": 0.20,
+          "RTD": 0.25,
+          "KIA": 0.05,
+          "description": "Urgent patients re-triaged, evacuated based on resources"
+        },
+        "T3": {
+          "Role2": 0.20,
+          "Role3": 0.10,
+          "RTD": 0.68,
+          "KIA": 0.02,
+          "description": "Delayed patients re-triaged, often treated and RTD"
+        },
+        "T4": {
+          "Role2": 0.05,
+          "RTD": 0.94,
+          "KIA": 0.01,
+          "description": "Minimal patients re-triaged, usually RTD after treatment"
+        }
+      }
+    },
+    "Role2": {
+      "description": "Forward Surgical Team - damage control surgery",
+      "transitions": {
+        "T1": {
+          "Role3": 0.60,
+          "Role4": 0.20,
+          "KIA": 0.05,
+          "RTD": 0.15,
+          "description": "Critical patients need definitive care after surgery"
+        },
+        "T2": {
+          "Role3": 0.40,
+          "Role4": 0.20,
+          "RTD": 0.38,
+          "KIA": 0.02,
+          "description": "Urgent patients may RTD after surgical intervention"
+        },
+        "T3": {
+          "Role3": 0.20,
+          "Role4": 0.10,
+          "RTD": 0.69,
+          "KIA": 0.01,
+          "description": "Delayed patients often RTD after treatment"
+        },
+        "T4": {
+          "Role3": 0.02,
+          "RTD": 0.98,
+          "KIA": 0.00,
+          "description": "Minimal patients rarely need further evacuation"
+        }
+      }
+    },
+    "Role3": {
+      "description": "Combat Support Hospital - theater hospital care",
+      "transitions": {
+        "T1": {
+          "Role4": 0.70,
+          "RTD": 0.25,
+          "KIA": 0.05,
+          "description": "Critical patients often need definitive care out of theater"
+        },
+        "T2": {
+          "Role4": 0.40,
+          "RTD": 0.58,
+          "KIA": 0.02,
+          "description": "Urgent patients may RTD or need further care"
+        },
+        "T3": {
+          "Role4": 0.15,
+          "RTD": 0.84,
+          "KIA": 0.01,
+          "description": "Delayed patients usually RTD from Role3"
+        },
+        "T4": {
+          "Role4": 0.01,
+          "RTD": 0.99,
+          "KIA": 0.00,
+          "description": "Minimal patients almost always RTD"
+        }
+      }
+    },
+    "Role4": {
+      "description": "Definitive care facility - out of theater",
+      "transitions": {
+        "T1": {
+          "RTD": 0.95,
+          "KIA": 0.05,
+          "description": "Critical patients either recover or die at definitive care"
+        },
+        "T2": {
+          "RTD": 0.98,
+          "KIA": 0.02,
+          "description": "Urgent patients have good survival at Role4"
+        },
+        "T3": {
+          "RTD": 0.99,
+          "KIA": 0.01,
+          "description": "Delayed patients almost always RTD"
+        },
+        "T4": {
+          "RTD": 1.00,
+          "KIA": 0.00,
+          "description": "Minimal patients rarely die at Role4"
+        }
+      }
+    }
+  },
+  "modifiers": {
+    "mass_casualty": {
+      "description": "Modifiers during mass casualty events",
+      "kia_multiplier": 1.5,
+      "rtd_reduction": 0.8,
+      "bypass_increase": 1.3,
+      "comment": "Higher mortality, more bypassing of intermediate facilities"
+    },
+    "degraded_environment": {
+      "description": "Combat or austere conditions",
+      "kia_multiplier": 1.3,
+      "evacuation_delay": 1.5,
+      "diagnostic_accuracy_reduction": 0.85
+    },
+    "golden_hour": {
+      "description": "Time-based modifiers for critical patients",
+      "within_1hr": {
+        "survival_bonus": 0.20,
+        "comment": "20% better survival if treated within golden hour"
+      },
+      "beyond_1hr": {
+        "kia_multiplier": 1.4,
+        "comment": "40% higher mortality after golden hour"
+      }
+    },
+    "diagnostic_confidence": {
+      "description": "How diagnostic accuracy affects routing",
+      "high_confidence": {
+        "appropriate_routing": 0.95,
+        "comment": "Correct facility selection with good diagnosis"
+      },
+      "low_confidence": {
+        "conservative_routing": 0.70,
+        "comment": "More likely to send to higher facility when uncertain"
+      }
+    }
+  },
+  "special_conditions": {
+    "vehicle_evacuation": {
+      "description": "Casualty occurs inside or near armored vehicle",
+      "direct_evac_probability": 0.15,
+      "comment": "Tank/APC can bypass Role1 if already moving to rear"
+    },
+    "role1_unavailable": {
+      "description": "Role1 overrun, destroyed, or unreachable",
+      "direct_to_role2": 0.90,
+      "comment": "Emergency routing when Role1 is compromised"
+    },
+    "traumatic_amputation": {
+      "description": "Special routing for amputation cases",
+      "priority_evac_from_role1": 0.80,
+      "direct_to_role2": 0.70,
+      "comment": "Amputations get priority evacuation from Role1"
+    },
+    "burn_over_20_percent": {
+      "description": "Major burn routing",
+      "bypass_role1": 0.90,
+      "role3_or_higher": 0.85,
+      "comment": "Major burns need specialized burn care"
+    },
+    "tbi_severe": {
+      "description": "Severe traumatic brain injury",
+      "neurosurgery_capable": ["Role2", "Role3", "Role4"],
+      "bypass_non_capable": 0.95,
+      "comment": "TBI needs neurosurgical capability"
+    },
+    "psychological_only": {
+      "description": "Pure psychological casualties",
+      "role1_capable": 0.90,
+      "rtd_from_role1": 0.75,
+      "comment": "Psych cases often managed at Role1"
+    }
+  },
+  "evacuation_times": {
+    "description": "Typical evacuation times between facilities (minutes)",
+    "POI_to_Role1": {
+      "ground": {"mean": 30, "std": 15},
+      "air": {"mean": 15, "std": 5}
+    },
+    "POI_to_Role2": {
+      "ground": {"mean": 60, "std": 20},
+      "air": {"mean": 25, "std": 10}
+    },
+    "Role1_to_Role2": {
+      "ground": {"mean": 45, "std": 15},
+      "air": {"mean": 20, "std": 5}
+    },
+    "Role2_to_Role3": {
+      "ground": {"mean": 90, "std": 30},
+      "air": {"mean": 35, "std": 10}
+    },
+    "Role3_to_Role4": {
+      "air": {"mean": 360, "std": 60},
+      "comment": "Role4 evacuation typically by strategic air"
+    }
+  },
+  "mortality_checkpoints": {
+    "description": "Points where mortality is assessed",
+    "checkpoints": [
+      "POI",
+      "during_evacuation",
+      "arrival_at_facility",
+      "during_treatment",
+      "post_treatment"
+    ],
+    "base_mortality_rates": {
+      "T1": {
+        "POI": 0.05,
+        "during_evacuation": 0.03,
+        "during_treatment": 0.02,
+        "cumulative_cap": 0.15
+      },
+      "T2": {
+        "POI": 0.02,
+        "during_evacuation": 0.01,
+        "during_treatment": 0.01,
+        "cumulative_cap": 0.05
+      },
+      "T3": {
+        "POI": 0.01,
+        "during_evacuation": 0.005,
+        "during_treatment": 0.005,
+        "cumulative_cap": 0.02
+      },
+      "T4": {
+        "POI": 0.00,
+        "during_evacuation": 0.00,
+        "during_treatment": 0.00,
+        "cumulative_cap": 0.00
+      }
+    }
+  },
+  "validation_rules": {
+    "description": "Rules to ensure realistic patient flow",
+    "rules": [
+      "T1 patients should have >50% bypass of Role1",
+      "T4 patients should have >80% RTD from Role1",
+      "Overall mortality should be 5-15% for combat scenarios",
+      "Average facility visits should be 2-3 per patient",
+      "No patient should visit same facility twice",
+      "RTD should only occur after treatment (not from POI)"
+    ]
+  }
+}

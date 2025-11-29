@@ -54,7 +54,15 @@ class PatientGeneratorApp {
             'Generating convincing vital signs...',
             'Cross-referencing warfare-specific injury patterns...',
             'Applying night operations modifiers...',
-            'Synchronizing timeline viewer compatibility...'
+            'Synchronizing timeline viewer compatibility...',
+            'Applying treatment utility scoring algorithms...',
+            'Simulating diagnostic uncertainty patterns...',
+            'Routing patients through Markov chain model...',
+            'Calculating warfare-specific polytrauma rates...',
+            'Optimizing treatment protocols by facility...',
+            'Simulating progressive diagnosis refinement...',
+            'Applying military medical doctrine rules...',
+            'Generating realistic treatment timelines...'
         ];
 
         this.currentMessageIndex = 0;
@@ -117,6 +125,23 @@ class PatientGeneratorApp {
         // Also listen for accordion changes (when content is loaded)
         document.addEventListener('accordion:change', (e) => {
             this.updateConfigurationOverview();
+        });
+
+        // Medical simulation checkbox events
+        const medicalCheckboxes = [
+            'enable-treatment-utility',
+            'enable-diagnostic-uncertainty',
+            'enable-markov-chain',
+            'enable-warfare-modifiers'
+        ];
+
+        medicalCheckboxes.forEach((id) => {
+            const checkbox = document.getElementById(id);
+            if (checkbox) {
+                checkbox.addEventListener('change', () => {
+                    this.updateMedicalSimulationDisplay();
+                });
+            }
         });
 
         // Periodic update as fallback for real-time editing
@@ -336,9 +361,60 @@ class PatientGeneratorApp {
             if (warfareTypesEl) {
                 this.updateWarfareTypesDisplay(warfareTypesEl, scenario.warfare_types || {});
             }
+
+            // Update Medical Simulation Features
+            this.updateMedicalSimulationDisplay();
         } catch (error) {
             console.warn('Failed to update configuration overview:', error);
             this.setDefaultConfigurationOverview();
+        }
+    }
+
+    updateMedicalSimulationDisplay() {
+        const medSimEl = document.getElementById('medicalSimFeatures');
+        if (!medSimEl) return;
+
+        const features = [
+            {
+                id: 'enable-treatment-utility',
+                label: 'TUM',
+                title: 'Treatment Utility Model',
+                colorClass: 'bg-cyan-100 text-cyan-700'
+            },
+            {
+                id: 'enable-diagnostic-uncertainty',
+                label: 'DU',
+                title: 'Diagnostic Uncertainty',
+                colorClass: 'bg-purple-100 text-purple-700'
+            },
+            {
+                id: 'enable-markov-chain',
+                label: 'MCR',
+                title: 'Markov Chain Routing',
+                colorClass: 'bg-green-100 text-green-700'
+            },
+            {
+                id: 'enable-warfare-modifiers',
+                label: 'WM',
+                title: 'Warfare Modifiers',
+                colorClass: 'bg-red-100 text-red-700'
+            }
+        ];
+
+        const enabledFeatures = features.filter((f) => {
+            const checkbox = document.getElementById(f.id);
+            return checkbox && checkbox.checked;
+        });
+
+        if (enabledFeatures.length === 0) {
+            medSimEl.innerHTML = '<span class="text-slate-500 text-xs">None enabled</span>';
+        } else {
+            medSimEl.innerHTML = enabledFeatures
+                .map(
+                    (f) =>
+                        `<span class="${f.colorClass} px-2 py-1 rounded text-xs font-medium" title="${f.title}">${f.label}</span>`
+                )
+                .join('');
         }
     }
 
@@ -444,6 +520,8 @@ class PatientGeneratorApp {
 
             // Start generation
             // The API expects configuration at the root level
+            console.log('Sending configuration:', configuration);
+            console.log('Total patients in config:', configuration.total_patients);
             const response = await this.apiClient.generatePatients({
                 configuration,
                 output_formats: ['json', 'csv']
@@ -466,40 +544,83 @@ class PatientGeneratorApp {
     }
 
     buildConfiguration() {
-        const [frontsJson, temporalJson] = this.accordion.getAllContent();
+        const accordionContent = this.accordion.getAllContent();
+
+        // Medical Simulation Settings (index 2) returns empty string since it has no editor
+        // So we need to handle the indexing correctly:
+        // [0] = Battle Fronts, [1] = Scenario, [2] = empty (Medical Sim), [3] = Advanced
+        const frontsJson = accordionContent[0];
+        const scenarioJson = accordionContent[1];
+        const advancedJson = accordionContent[3]; // Skip index 2 (empty)
 
         const fronts = JSON.parse(frontsJson);
-        const temporal = JSON.parse(temporalJson);
+        const scenario = JSON.parse(scenarioJson);
 
-        // Check if scenario format is being used
-        if (temporal.warfare_types || temporal.environmental_conditions || temporal.special_events) {
-            // New scenario configuration format
-            return {
-                name: `Patient Generation ${new Date().toLocaleString()}`,
-                description: 'Generated from web interface with scenario patterns',
-                total_patients: temporal.total_patients || 1440,
-                days_of_fighting: temporal.days_of_fighting || 8,
-                base_date: temporal.base_date || '2025-06-01',
-                warfare_types: temporal.warfare_types || {},
-                intensity: temporal.intensity || 'medium',
-                tempo: temporal.tempo || 'sustained',
-                special_events: temporal.special_events || {},
-                environmental_conditions: temporal.environmental_conditions || {},
-                injury_mix: temporal.injury_mix || temporal.injury_distribution,
-                front_configs: fronts.front_configs,
-                facility_configs: this.generateFacilityConfigs(fronts.front_configs)
-            };
-        } else {
-            // Legacy configuration format (backward compatibility)
-            return {
-                name: `Patient Generation ${new Date().toLocaleString()}`,
-                description: 'Generated from web interface',
-                total_patients: temporal.total_patients || 1440,
-                injury_distribution: temporal.injury_distribution,
-                front_configs: fronts.front_configs,
-                facility_configs: this.generateFacilityConfigs(fronts.front_configs)
-            };
+        // Get warfare types from checkboxes
+        const warfareTypes = {
+            conventional: document.getElementById('warfare-conventional')?.checked ?? true,
+            artillery: document.getElementById('warfare-artillery')?.checked ?? true,
+            urban: document.getElementById('warfare-urban')?.checked ?? false,
+            guerrilla: document.getElementById('warfare-guerrilla')?.checked ?? false,
+            drone: document.getElementById('warfare-drone')?.checked ?? true,
+            naval: document.getElementById('warfare-naval')?.checked ?? false,
+            cbrn: document.getElementById('warfare-cbrn')?.checked ?? false,
+            peacekeeping: document.getElementById('warfare-peacekeeping')?.checked ?? false
+        };
+
+        // Get medical simulation settings from toggle switches
+        const medicalSimulationSettings = {
+            enable_treatment_utility: document.getElementById('enable-treatment-utility')?.checked ?? true,
+            enable_diagnostic_uncertainty: document.getElementById('enable-diagnostic-uncertainty')?.checked ?? true,
+            enable_markov_chain: document.getElementById('enable-markov-chain')?.checked ?? true,
+            enable_warfare_modifiers: document.getElementById('enable-warfare-modifiers')?.checked ?? true
+        };
+
+        // Parse advanced configuration if provided
+        let advancedConfig = {};
+        if (advancedJson && advancedJson.trim() !== '') {
+            try {
+                advancedConfig = JSON.parse(advancedJson);
+            } catch (e) {
+                console.warn('Invalid advanced configuration JSON, using defaults');
+            }
         }
+
+        // Extract scenario modifiers from advanced config if present
+        const scenarioModifiers = advancedConfig.scenario_modifiers || {};
+
+        // Build unified configuration
+        return {
+            name: `Patient Generation ${new Date().toLocaleString()}`,
+            description: 'Generated from web interface with medical simulation',
+            total_patients: scenario.total_patients || 1440,
+            days_of_fighting: scenario.days_of_fighting || 8,
+            base_date: scenario.base_date || '2025-06-01',
+            injury_mix: scenario.injury_mix ||
+                scenario.injury_distribution || {
+                    Disease: 0.52,
+                    'Non-Battle Injury': 0.33,
+                    'Battle Injury': 0.15
+                },
+            warfare_types: warfareTypes,
+            intensity: scenarioModifiers.intensity || 'high',
+            tempo: scenarioModifiers.tempo || 'sustained',
+            special_events: scenarioModifiers.special_events || {
+                major_offensive: false,
+                ambush: true,
+                mass_casualty: true
+            },
+            environmental_conditions: scenarioModifiers.environmental_conditions || {
+                night_operations: true,
+                extreme_weather: false,
+                mountainous_terrain: false,
+                urban_environment: false
+            },
+            front_configs: fronts.front_configs,
+            facility_configs: this.generateFacilityConfigs(fronts.front_configs),
+            medical_simulation: medicalSimulationSettings,
+            advanced_overrides: advancedConfig
+        };
     }
 
     generateFacilityConfigs(frontConfigs) {

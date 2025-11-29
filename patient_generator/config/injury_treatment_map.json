@@ -1,0 +1,216 @@
+{
+  "version": "1.0",
+  "description": "Medical protocol-based injury to treatment mappings",
+  
+  "injury_categories": {
+    "hemorrhage": {
+      "injury_codes": ["262574004", "125689001", "284551006", "361220002"],
+      "description": "Active bleeding injuries",
+      "treatment_protocol": {
+        "immediate": {
+          "primary": ["tourniquet", "pressure_bandage", "hemostatic_gauze"],
+          "selection_logic": "severity_based",
+          "probability_distribution": "beta(2, 1)"
+        },
+        "stabilization": {
+          "primary": ["iv_access", "blood_transfusion"],
+          "supportive": ["iv_fluids", "pain_management"],
+          "trigger_conditions": ["bp < 90", "hr > 120"]
+        },
+        "definitive": {
+          "primary": ["damage_control_surgery"],
+          "facility_required": "role2+"
+        }
+      }
+    },
+    
+    "airway_compromise": {
+      "injury_codes": ["19130008", "7200002"],
+      "description": "Airway threatening injuries",
+      "treatment_protocol": {
+        "immediate": {
+          "primary": ["airway_positioning", "surgical_airway"],
+          "selection_logic": "severity_escalation"
+        },
+        "stabilization": {
+          "primary": ["intubation"],
+          "supportive": ["oxygen_therapy"],
+          "facility_required": "role1+"
+        }
+      }
+    },
+    
+    "fractures": {
+      "injury_codes": ["37782003", "125603001"],
+      "description": "Bone fractures",
+      "treatment_protocol": {
+        "immediate": {
+          "primary": ["splinting", "pain_management"],
+          "selection_logic": "standard"
+        },
+        "stabilization": {
+          "primary": ["iv_fluids", "antibiotics"],
+          "conditional": {
+            "open_fracture": ["antibiotics", "irrigation"]
+          }
+        },
+        "definitive": {
+          "primary": ["orthopedic_surgery"],
+          "facility_required": "role3+"
+        }
+      }
+    },
+    
+    "burns": {
+      "injury_codes": ["7200002", "55566008", "48333001"],
+      "description": "Thermal injuries",
+      "treatment_protocol": {
+        "immediate": {
+          "primary": ["cooling", "airway_assessment"],
+          "bsa_dependent": {
+            ">20%": ["iv_access", "fluid_resuscitation"],
+            ">40%": ["intubation"]
+          }
+        },
+        "stabilization": {
+          "primary": ["fluid_calculation", "pain_management", "burn_dressing"],
+          "formula": "parkland"
+        },
+        "definitive": {
+          "primary": ["burn_surgery", "grafting"],
+          "facility_required": "role3+"
+        }
+      }
+    },
+    
+    "diseases": {
+      "injury_codes": ["62315008", "195662009", "68566005", "43878008"],
+      "description": "Non-trauma medical conditions",
+      "treatment_protocol": {
+        "immediate": {
+          "primary": ["supportive_care"],
+          "specific": {
+            "62315008": ["oral_rehydration", "loperamide"],
+            "195662009": ["oxygen", "bronchodilators"],
+            "68566005": ["antibiotics", "fluids"],
+            "43878008": ["antibiotics", "throat_spray"]
+          }
+        },
+        "stabilization": {
+          "primary": ["iv_fluids", "antibiotics"],
+          "selection_logic": "condition_specific"
+        }
+      }
+    },
+    
+    "psychological": {
+      "injury_codes": ["45170000", "73249009"],
+      "description": "Psychological/stress conditions",
+      "treatment_protocol": {
+        "immediate": {
+          "primary": ["buddy_care", "remove_from_stressor"],
+          "selection_logic": "available_resources"
+        },
+        "stabilization": {
+          "primary": ["rest", "psychological_first_aid"],
+          "facility_required": "role2+",
+          "note": "Limited resources in combat zones"
+        }
+      }
+    }
+  },
+  
+  "treatment_probability_modifiers": {
+    "triage_category": {
+      "T1": {
+        "treatment_speed": 2.0,
+        "resource_priority": 1.0,
+        "bypass_queue": true
+      },
+      "T2": {
+        "treatment_speed": 1.0,
+        "resource_priority": 0.5,
+        "bypass_queue": false
+      },
+      "T3": {
+        "treatment_speed": 0.5,
+        "resource_priority": 0.2,
+        "bypass_queue": false
+      }
+    },
+    
+    "mass_casualty": {
+      "resource_availability": 0.3,
+      "treatment_selection": "minimal_effective",
+      "triage_shift": "conservative"
+    },
+    
+    "time_factors": {
+      "golden_hour": {
+        "window_minutes": 60,
+        "effectiveness_bonus": 1.5,
+        "mortality_reduction": 0.3
+      },
+      "platinum_10": {
+        "window_minutes": 10,
+        "effectiveness_bonus": 2.0,
+        "applies_to": ["tourniquet", "airway"]
+      }
+    }
+  },
+  
+  "treatment_sequences": {
+    "massive_hemorrhage": [
+      {"step": 1, "treatment": "tourniquet", "duration": 2},
+      {"step": 2, "treatment": "iv_access", "duration": 5},
+      {"step": 3, "treatment": "blood_transfusion", "duration": 30},
+      {"step": 4, "treatment": "surgery", "duration": 120}
+    ],
+    
+    "airway_emergency": [
+      {"step": 1, "treatment": "airway_positioning", "duration": 1},
+      {"step": 2, "treatment": "intubation", "duration": 10, "fallback": "surgical_airway"}
+    ],
+    
+    "shock_protocol": [
+      {"step": 1, "treatment": "iv_access", "duration": 5},
+      {"step": 2, "treatment": "fluid_bolus", "duration": 15},
+      {"step": 3, "treatment": "vasopressors", "duration": 0, "continuous": true}
+    ]
+  },
+  
+  "contraindications": {
+    "tourniquet": {
+      "absolute": ["neck_injury", "torso_injury"],
+      "relative": ["prolonged_transport", "elderly"]
+    },
+    "morphine": {
+      "absolute": ["head_injury", "respiratory_depression"],
+      "relative": ["hypotension"]
+    },
+    "fluid_resuscitation": {
+      "absolute": [],
+      "relative": ["head_injury", "penetrating_torso"]
+    }
+  },
+  
+  "resource_consumption": {
+    "tourniquet": {
+      "units_consumed": 1,
+      "reusable": false,
+      "skill_required": "basic"
+    },
+    "blood_transfusion": {
+      "units_consumed": 2,
+      "reusable": false,
+      "skill_required": "intermediate",
+      "prerequisites": ["type_and_cross", "iv_access"]
+    },
+    "surgery": {
+      "units_consumed": 0,
+      "resources_blocked": ["operating_room", "surgeon", "anesthesia"],
+      "duration_minutes": 120,
+      "skill_required": "expert"
+    }
+  }
+}

@@ -32,11 +32,7 @@ class CacheService:
         """Initialize the Redis connection pool."""
         try:
             # Redis-py 5.0+ automatically handles SSL for rediss:// URLs
-            self._pool = redis.ConnectionPool.from_url(
-                self.redis_url,
-                decode_responses=True,
-                max_connections=50
-            )
+            self._pool = redis.ConnectionPool.from_url(self.redis_url, decode_responses=True, max_connections=50)
             # Test connection
             async with self._get_client() as client:
                 await client.ping()

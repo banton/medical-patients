@@ -186,7 +186,6 @@ class APIKey(Base):
         }
 
 
-
 # Demo key configuration - used by security module
 DEMO_API_KEY_CONFIG = {
     "key": "DEMO_MILMED_2025_50_PATIENTS",

@@ -191,7 +191,7 @@ class TestAPIKeyRepository:
     def test_list_keys_filtering(self, api_key_repo):
         """Test listing keys with filtering options."""
         # Create test keys
-        live_key = api_key_repo.create_api_key(name="Live Key", is_demo=False)
+        api_key_repo.create_api_key(name="Live Key", is_demo=False)
         demo_key = api_key_repo.create_api_key(name="Demo Key", is_demo=True)
         api_key_repo.deactivate_key(str(demo_key.id))
 

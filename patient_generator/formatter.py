@@ -75,18 +75,38 @@ class OutputFormatter:
         return temp_path
 
     def format_json(self, bundles, stream=None):
-        """Format bundles as JSON, optionally writing to a stream for memory efficiency"""
+        """Format bundles as JSON with metadata, optionally writing to a stream for memory efficiency"""
+        from datetime import datetime
+
+        # Create metadata wrapper
+        metadata = {
+            "metadata": {
+                "patient_count": len(bundles),
+                "generated_at": datetime.now().strftime("%Y%m%d"),  # ISO standard YYYYMMDD format
+                "generated_at_iso": datetime.now().isoformat(),  # Full ISO timestamp for precision
+                "generator_version": "2.0.0",
+            },
+            "patients": bundles,
+        }
+
         if stream:
             # Memory-efficient streaming for large datasets
-            stream.write("[\n")
+            stream.write("{\n")
+            stream.write('  "metadata": ')
+            json.dump(metadata["metadata"], stream, indent=2)
+            stream.write(",\n")
+            stream.write('  "patients": [\n')
             for i, bundle in enumerate(bundles):
                 if i > 0:
                     stream.write(",\n")
-                json.dump(bundle, stream)
-            stream.write("\n]")
+                # Indent each patient record properly
+                patient_json = json.dumps(bundle, indent=2)
+                indented_patient = "\n".join("    " + line for line in patient_json.split("\n"))
+                stream.write(indented_patient)
+            stream.write("\n  ]\n}")
             return None
         # Standard in-memory approach for smaller datasets
-        return json.dumps(bundles, indent=2)
+        return json.dumps(metadata, indent=2)
 
     def format_xml(self, bundles, stream=None):
         """Format bundles as XML, optionally using a stream for memory efficiency"""
@@ -277,23 +297,38 @@ class OutputFormatter:
                 with open(json_path, "w") as f:
                     self.format_json(bundles, stream=f)
             else:
-                # Standard output for complete dataset
+                # Standard output for complete dataset with timestamped filename
+                from datetime import datetime
+
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                patient_count = len(bundles)
+                # Keep both old and new filenames for compatibility
                 json_path = os.path.join(output_dir, "patients.json")
+                json_path_timestamped = os.path.join(output_dir, f"patients_{patient_count}_{timestamp}.json")
 
                 # Check if the dataset is large enough to warrant streaming
                 if len(bundles) > 1000:
+                    # Write to timestamped file
+                    with open(json_path_timestamped, "w") as f:
+                        self.format_json(bundles, stream=f)
+                    # Also write to standard file for backward compatibility
                     with open(json_path, "w") as f:
                         self.format_json(bundles, stream=f)
                 else:
                     # Small dataset, use in-memory processing
                     json_data = self.format_json(bundles)
                     if isinstance(json_data, str):
+                        # Write to timestamped file
+                        with open(json_path_timestamped, "w") as f:
+                            f.write(json_data)
+                        # Also write to standard file for backward compatibility
                         with open(json_path, "w") as f:
                             f.write(json_data)
                     else:
                         # This case should ideally not be reached if len(bundles) <= 1000
                         self.logger.warning("json_data was not a string for small dataset JSON processing.")
 
+            output_files.append(json_path_timestamped)  # Add timestamped file to output list
             output_files.append(json_path)
 
             # Compressed JSON

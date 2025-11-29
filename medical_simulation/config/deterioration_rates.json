@@ -1,0 +1,240 @@
+{
+  "version": "3.0",
+  "description": "Simplified health deterioration rates using single health score model",
+  "injury_deterioration_rates": {
+    "battle_trauma": {
+      "gsw": {
+        "base_rate": 25,
+        "variance": 5,
+        "initial_health": 60,
+        "description": "Gunshot wound - rapid deterioration"
+      },
+      "shrapnel": {
+        "base_rate": 15,
+        "variance": 3,
+        "initial_health": 70,
+        "description": "Shrapnel/fragment injury - moderate deterioration"
+      },
+      "blast": {
+        "base_rate": 30,
+        "variance": 6,
+        "initial_health": 55,
+        "description": "Blast injury - severe deterioration"
+      },
+      "penetrating": {
+        "base_rate": 28,
+        "variance": 5,
+        "initial_health": 58,
+        "description": "Penetrating trauma - rapid deterioration"
+      },
+      "burn": {
+        "base_rate": 20,
+        "variance": 4,
+        "initial_health": 65,
+        "description": "Burn injury - steady deterioration"
+      },
+      "tbi": {
+        "base_rate": 35,
+        "variance": 7,
+        "initial_health": 50,
+        "description": "Traumatic brain injury - severe deterioration"
+      },
+      "amputation": {
+        "base_rate": 40,
+        "variance": 8,
+        "initial_health": 45,
+        "description": "Traumatic amputation - critical deterioration"
+      },
+      "traumatic_shock": {
+        "base_rate": 45,
+        "variance": 10,
+        "initial_health": 40,
+        "description": "Traumatic shock - critical deterioration"
+      }
+    },
+    "non_battle_injury": {
+      "fracture": {
+        "base_rate": 5,
+        "variance": 2,
+        "initial_health": 85,
+        "description": "Fracture - slow deterioration"
+      },
+      "heat_injury": {
+        "base_rate": 10,
+        "variance": 3,
+        "initial_health": 75,
+        "description": "Heat exhaustion/stroke - moderate deterioration"
+      },
+      "sprain": {
+        "base_rate": 2,
+        "variance": 1,
+        "initial_health": 90,
+        "description": "Sprain/strain - minimal deterioration"
+      },
+      "vehicle_accident": {
+        "base_rate": 20,
+        "variance": 5,
+        "initial_health": 65,
+        "description": "Vehicle accident - variable deterioration"
+      },
+      "crush": {
+        "base_rate": 25,
+        "variance": 6,
+        "initial_health": 60,
+        "description": "Crush injury - rapid deterioration"
+      }
+    },
+    "disease": {
+      "respiratory": {
+        "base_rate": 8,
+        "variance": 2,
+        "initial_health": 80,
+        "description": "Respiratory illness - slow deterioration"
+      },
+      "gastroenteritis": {
+        "base_rate": 6,
+        "variance": 2,
+        "initial_health": 85,
+        "description": "GI illness - slow deterioration"
+      },
+      "infection": {
+        "base_rate": 12,
+        "variance": 3,
+        "initial_health": 75,
+        "description": "Infection - moderate deterioration"
+      },
+      "mental_health": {
+        "base_rate": 3,
+        "variance": 1,
+        "initial_health": 88,
+        "description": "Mental health crisis - minimal physical deterioration"
+      }
+    }
+  },
+  "triage_thresholds": {
+    "T3": {
+      "min_health": 70,
+      "description": "Walking wounded - minor injuries"
+    },
+    "T2": {
+      "min_health": 40,
+      "max_health": 70,
+      "description": "Delayed - urgent but not immediate"
+    },
+    "T1": {
+      "min_health": 10,
+      "max_health": 40,
+      "description": "Immediate - life-threatening"
+    },
+    "Expectant": {
+      "max_health": 10,
+      "description": "Expectant - unlikely to survive"
+    }
+  },
+  "deterioration_modifiers": {
+    "complications": {
+      "untreated_hemorrhage": {
+        "multiplier": 2.0,
+        "description": "Doubles deterioration rate"
+      },
+      "airway_compromise": {
+        "multiplier": 3.0,
+        "description": "Triples deterioration rate"
+      },
+      "shock": {
+        "multiplier": 2.5,
+        "description": "Significant acceleration"
+      },
+      "sepsis": {
+        "multiplier": 1.8,
+        "description": "Moderate acceleration"
+      },
+      "organ_failure": {
+        "multiplier": 2.2,
+        "description": "Severe acceleration"
+      },
+      "hypothermia": {
+        "multiplier": 1.5,
+        "description": "Moderate acceleration"
+      },
+      "dehydration": {
+        "multiplier": 1.3,
+        "description": "Mild acceleration"
+      }
+    },
+    "treatments": {
+      "tourniquet_applied": {
+        "multiplier": 0.5,
+        "description": "Halves deterioration rate"
+      },
+      "pressure_bandage": {
+        "multiplier": 0.7,
+        "description": "30% reduction"
+      },
+      "airway_secured": {
+        "multiplier": 0.4,
+        "description": "60% reduction"
+      },
+      "iv_fluids": {
+        "multiplier": 0.8,
+        "description": "20% reduction"
+      },
+      "antibiotics": {
+        "multiplier": 0.9,
+        "description": "10% reduction"
+      },
+      "surgery_completed": {
+        "multiplier": 0.3,
+        "description": "70% reduction"
+      },
+      "pain_management": {
+        "multiplier": 0.95,
+        "description": "5% reduction"
+      }
+    },
+    "environmental": {
+      "extreme_heat": {
+        "multiplier": 1.3,
+        "description": "30% acceleration"
+      },
+      "extreme_cold": {
+        "multiplier": 1.4,
+        "description": "40% acceleration"
+      },
+      "high_altitude": {
+        "multiplier": 1.2,
+        "description": "20% acceleration"
+      },
+      "contaminated_environment": {
+        "multiplier": 1.5,
+        "description": "50% acceleration"
+      },
+      "combat_stress": {
+        "multiplier": 1.1,
+        "description": "10% acceleration"
+      }
+    },
+    "time_factors": {
+      "golden_hour": {
+        "multiplier": 0.3,
+        "description": "Treatment within 1 hour - 70% reduction"
+      },
+      "within_3_hours": {
+        "multiplier": 0.5,
+        "description": "Treatment within 3 hours - 50% reduction"
+      },
+      "within_6_hours": {
+        "multiplier": 0.7,
+        "description": "Treatment within 6 hours - 30% reduction"
+      },
+      "delayed_over_6_hours": {
+        "multiplier": 1.5,
+        "description": "Delayed treatment - 50% acceleration"
+      },
+      "delayed_over_12_hours": {
+        "multiplier": 2.0,
+        "description": "Severely delayed - doubles deterioration"
+      }
+    }
+  }
+}

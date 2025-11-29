@@ -43,14 +43,28 @@ security = HTTPBearer()
     status_code=status.HTTP_201_CREATED,
     summary="Generate Patients",
     description="""
-    Start a new patient generation job with the specified configuration.
+    Start a new patient generation job with advanced medical simulation features.
 
-    You can either:
-    - Use an existing configuration by providing `configuration_id`
-    - Provide an inline configuration using the `configuration` field
+    ## Configuration Options:
+    - **configuration_id**: Use a saved configuration from the database
+    - **configuration**: Provide inline configuration with full control
 
-    The endpoint returns immediately with a job ID for tracking progress.
-    Use the job endpoints to monitor generation status and download results.
+    ## Key Configuration Fields:
+    - **total_patients**: Number of patients to generate (1-10000)
+    - **injury_mix**: Distribution of Disease, Non-Battle, and Battle injuries
+    - **warfare_types**: Active combat scenarios (conventional, artillery, urban, etc.)
+    - **medical_simulation**: Enable advanced features (TUM, diagnostic uncertainty, Markov routing)
+    - **advanced_overrides**: Fine-tune scenario intensity, tempo, and medical parameters
+
+    ## Scenario Modifiers (in advanced_overrides):
+    - **intensity**: Controls casualty severity (low/medium/high/extreme)
+    - **tempo**: Controls distribution pattern (sustained/escalating/surge/declining)
+    - **special_events**: Triggers mass casualty events
+    - **environmental_conditions**: Applies weather and terrain effects
+
+    The endpoint returns immediately with a job ID. Poll `/api/v1/jobs/{job_id}` for status.
+
+    See full documentation at `/docs` or `API_DOCUMENTATION.md` for detailed parameter explanations.
     """,
     response_description="Generation job created successfully",
 )
@@ -79,15 +93,19 @@ async def generate_patients(
             config_dict = request.configuration.copy()
 
         # Add generation parameters to config
-        config_dict.update(
-            {
-                "output_formats": request.output_formats,
-                "use_compression": request.use_compression,
-                "use_encryption": request.use_encryption,
-                "encryption_password": request.encryption_password,
-                "priority": request.priority,
-            }
-        )
+        update_dict = {
+            "output_formats": request.output_formats,
+            "use_compression": request.use_compression,
+            "use_encryption": request.use_encryption,
+            "encryption_password": request.encryption_password,
+            "priority": request.priority,
+        }
+
+        # Only add total_patients if it's provided as an override
+        if request.total_patients is not None:
+            update_dict["total_patients"] = request.total_patients
+
+        config_dict.update(update_dict)
 
         # Create job
         job = await job_service.create_job(config=config_dict)
@@ -173,6 +191,14 @@ async def _run_generation_task(
         # Handle temporal configuration if present
         # Check both root level and nested configuration object
         inner_config = config.get("configuration", config)
+
+        # Debug: Check what we actually have
+        print(f"🔍 DEBUG: type(inner_config) = {type(inner_config)}")
+        print(f"🔍 DEBUG: inner_config.get('total_patients') = {inner_config.get('total_patients')}")
+        print(f"🔍 DEBUG: 'total_patients' in inner_config = {'total_patients' in inner_config}")
+        if "total_patients" in inner_config:
+            print(f"🔍 DEBUG: inner_config['total_patients'] = {inner_config['total_patients']}")
+
         temporal_config_present = any(
             key in inner_config for key in ["warfare_types", "environmental_conditions", "special_events", "base_date"]
         )
@@ -180,6 +206,7 @@ async def _run_generation_task(
         print(f"🔍 TEMPORAL DEBUG: Root config keys: {list(config.keys())}")
         print(f"🔍 TEMPORAL DEBUG: Inner config keys: {list(inner_config.keys())}")
         print(f"🔍 TEMPORAL DEBUG: Detection result: {temporal_config_present}")
+        print(f"🔍 TOTAL PATIENTS DEBUG: inner_config.get('total_patients') = {inner_config.get('total_patients')}")
         if temporal_config_present:
             print(
                 f"🔍 TEMPORAL DEBUG: Found temporal keys: {[k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in inner_config]}"
@@ -254,7 +281,7 @@ async def _run_generation_task(
             config_create = ConfigurationTemplateCreate(
                 name=inner_config.get("name", "Generated Configuration"),
                 description=inner_config.get("description", "Auto-generated configuration"),
-                total_patients=inner_config.get("count", inner_config.get("total_patients", 10)),
+                total_patients=inner_config.get("total_patients", inner_config.get("count", 10)),
                 injury_distribution=injury_dist,
                 front_configs=inner_config.get("front_configs", []),
                 facility_configs=inner_config.get("facility_configs", []),
@@ -262,6 +289,18 @@ async def _run_generation_task(
 
             # Save to database
             config_template = config_repo.create_configuration(config_create)
+
+        # Override total_patients if provided in request
+        # Check both root level and inner_config for total_patients
+        override_total = inner_config.get("total_patients") or config.get("total_patients")
+        if override_total is not None:
+            # Create a copy of the config template with overridden total_patients
+            config_dict = (
+                config_template.dict() if hasattr(config_template, "dict") else config_template.__dict__.copy()
+            )
+            config_dict["total_patients"] = override_total
+            # Convert back to the same type as config_template
+            config_template = type(config_template)(**config_dict)
 
         # Create generation context
         generation_context = GenerationContext(

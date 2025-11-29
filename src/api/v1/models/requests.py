@@ -17,6 +17,10 @@ class GenerationRequest(BaseModel):
         None, description="Inline configuration object (alternative to configuration_id)"
     )
 
+    total_patients: Optional[int] = Field(
+        None, ge=1, le=10000, description="Override number of patients to generate (default: use configuration value)"
+    )
+
     output_formats: List[str] = Field(default=["json"], min_items=1, description="List of output formats to generate")
 
     use_compression: bool = Field(default=False, description="Whether to compress output files")

@@ -21,6 +21,10 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
       - REDIS_URL=redis://redis:6379/0
       - CACHE_TTL=${CACHE_TTL:-3600}
+      - ENABLE_MEDICAL_SIMULATION=true
+      - ENABLE_TREATMENT_UTILITY_MODEL=true
+      - ENABLE_MARKOV_CHAIN=true
+      - ENABLE_WARFARE_MODIFIERS=true
     depends_on:
       db:
         condition: service_healthy

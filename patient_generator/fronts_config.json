@@ -1,4 +1,10 @@
 {
+  "config_version": "1.0.0",
+  "config_type": "fronts",
+  "compatible_with": {
+    "injuries": ["1.0.0", "1.0.x"],
+    "patient_model": ["1.0.0+"]
+  },
   "fronts": [
     {
       "name": "Poland",
@@ -8,7 +14,87 @@
         { "nationality_code": "LTU", "percentage": 25.0 },
         { "nationality_code": "NLD", "percentage": 20.0 },
         { "nationality_code": "ESP", "percentage": 5.0 }
-      ]
+      ],
+      "medical_facilities": {
+        "role1": {
+          "count": 12,
+          "capacity_per_facility": 10,
+          "or_capacity": 0,
+          "surge_capacity_multiplier": 1.2
+        },
+        "role2": {
+          "count": 3,
+          "capacity_per_facility": 50,
+          "or_capacity": 2,
+          "beds_by_triage": {
+            "T1": 10,
+            "T2": 15,
+            "T3": 25
+          },
+          "surge_capacity_multiplier": 1.5
+        },
+        "csu": {
+          "count": 2,
+          "capacity_per_facility": 35,
+          "beds_by_triage": {
+            "T1": 5,
+            "T2": 10,
+            "T3": 20
+          },
+          "batch_evacuation_size": 20
+        },
+        "role3": {
+          "count": 1,
+          "capacity_per_facility": 200,
+          "or_capacity": 8,
+          "beds_by_triage": {
+            "T1": 40,
+            "T2": 60,
+            "T3": 100
+          },
+          "surge_capacity_multiplier": 1.3
+        },
+        "role4": {
+          "count": 1,
+          "capacity_per_facility": 9999,
+          "or_capacity": 999,
+          "beds_by_triage": {
+            "T1": 9999,
+            "T2": 9999,
+            "T3": 9999
+          },
+          "surge_capacity_multiplier": 1.0,
+          "note": "Role4 represents homeland hospitals - effectively infinite capacity"
+        }
+      },
+      "transport_assets": {
+        "ground_ambulances": 40,
+        "casevac_helicopters": 2,
+        "medical_buses": 5,
+        "ambulance_capacity": {
+          "litter": 2,
+          "walking": 4
+        },
+        "helicopter_capacity": {
+          "litter": 4,
+          "walking": 8
+        },
+        "bus_capacity": {
+          "walking": 30
+        }
+      },
+      "distances_km": {
+        "poi_to_role1": 5,
+        "role1_to_role2": 20,
+        "role2_to_csu": 5,
+        "role2_to_role3": 50,
+        "role3_to_role4": 200
+      },
+      "transport_speeds_kmh": {
+        "ground_ambulance": 60,
+        "helicopter": 150,
+        "medical_bus": 50
+      }
     },
     {
       "name": "Estonia",
@@ -16,7 +102,87 @@
       "nations": [
         { "nationality_code": "EST", "percentage": 50.0 },
         { "nationality_code": "GBR", "percentage": 50.0 }
-      ]
+      ],
+      "medical_facilities": {
+        "role1": {
+          "count": 6,
+          "capacity_per_facility": 10,
+          "or_capacity": 0,
+          "surge_capacity_multiplier": 1.2
+        },
+        "role2": {
+          "count": 2,
+          "capacity_per_facility": 40,
+          "or_capacity": 2,
+          "beds_by_triage": {
+            "T1": 8,
+            "T2": 12,
+            "T3": 20
+          },
+          "surge_capacity_multiplier": 1.5
+        },
+        "csu": {
+          "count": 1,
+          "capacity_per_facility": 30,
+          "beds_by_triage": {
+            "T1": 4,
+            "T2": 8,
+            "T3": 18
+          },
+          "batch_evacuation_size": 15
+        },
+        "role3": {
+          "count": 1,
+          "capacity_per_facility": 150,
+          "or_capacity": 6,
+          "beds_by_triage": {
+            "T1": 30,
+            "T2": 45,
+            "T3": 75
+          },
+          "surge_capacity_multiplier": 1.3
+        },
+        "role4": {
+          "count": 1,
+          "capacity_per_facility": 9999,
+          "or_capacity": 999,
+          "beds_by_triage": {
+            "T1": 9999,
+            "T2": 9999,
+            "T3": 9999
+          },
+          "surge_capacity_multiplier": 1.0,
+          "note": "Role4 represents homeland hospitals - effectively infinite capacity"
+        }
+      },
+      "transport_assets": {
+        "ground_ambulances": 20,
+        "casevac_helicopters": 1,
+        "medical_buses": 3,
+        "ambulance_capacity": {
+          "litter": 2,
+          "walking": 4
+        },
+        "helicopter_capacity": {
+          "litter": 4,
+          "walking": 8
+        },
+        "bus_capacity": {
+          "walking": 30
+        }
+      },
+      "distances_km": {
+        "poi_to_role1": 8,
+        "role1_to_role2": 25,
+        "role2_to_csu": 5,
+        "role2_to_role3": 60,
+        "role3_to_role4": 250
+      },
+      "transport_speeds_kmh": {
+        "ground_ambulance": 60,
+        "helicopter": 150,
+        "medical_bus": 50
+      }
     },
     {
       "name": "Finland",
@@ -24,7 +190,143 @@
       "nations": [
         { "nationality_code": "FIN", "percentage": 50.0 },
         { "nationality_code": "USA", "percentage": 50.0 }
-      ]
+      ],
+      "medical_facilities": {
+        "role1": {
+          "count": 3,
+          "capacity_per_facility": 10,
+          "or_capacity": 0,
+          "surge_capacity_multiplier": 1.2
+        },
+        "role2": {
+          "count": 1,
+          "capacity_per_facility": 30,
+          "or_capacity": 1,
+          "beds_by_triage": {
+            "T1": 6,
+            "T2": 9,
+            "T3": 15
+          },
+          "surge_capacity_multiplier": 1.5
+        },
+        "csu": {
+          "count": 1,
+          "capacity_per_facility": 20,
+          "beds_by_triage": {
+            "T1": 3,
+            "T2": 5,
+            "T3": 12
+          },
+          "batch_evacuation_size": 10
+        },
+        "role3": {
+          "count": 0,
+          "note": "Finland front uses Estonia Role3 for complex cases"
+        },
+        "role4": {
+          "count": 1,
+          "capacity_per_facility": 9999,
+          "or_capacity": 999,
+          "beds_by_triage": {
+            "T1": 9999,
+            "T2": 9999,
+            "T3": 9999
+          },
+          "surge_capacity_multiplier": 1.0,
+          "note": "Role4 represents homeland hospitals - effectively infinite capacity"
+        }
+      },
+      "transport_assets": {
+        "ground_ambulances": 10,
+        "casevac_helicopters": 1,
+        "medical_buses": 2,
+        "ambulance_capacity": {
+          "litter": 2,
+          "walking": 4
+        },
+        "helicopter_capacity": {
+          "litter": 4,
+          "walking": 8
+        },
+        "bus_capacity": {
+          "walking": 30
+        }
+      },
+      "distances_km": {
+        "poi_to_role1": 10,
+        "role1_to_role2": 30,
+        "role2_to_csu": 5,
+        "role2_to_role3": 300,
+        "role3_to_role4": 400,
+        "note": "Long distance to Role3 reflects using Estonia's facility"
+      },
+      "transport_speeds_kmh": {
+        "ground_ambulance": 60,
+        "helicopter": 150,
+        "medical_bus": 50
+      }
     }
-  ]
+  ],
+  
+  "treatment_capabilities": {
+    "poi": {
+      "available_treatments": ["tourniquet", "pressure_dressing", "buddy_aid"],
+      "treatment_effects": {
+        "tourniquet": {
+          "deterioration_modifier": 0.2,
+          "optimal_window_hours": 2,
+          "harmful_after_hours": 6
+        },
+        "pressure_dressing": {
+          "deterioration_modifier": 0.5
+        }
+      }
+    },
+    "role1": {
+      "available_treatments": ["tourniquet", "iv_fluids", "morphine", "basic_airway"],
+      "treatment_effects": {
+        "iv_fluids": {
+          "deterioration_modifier": 0.7,
+          "hemorrhage_modifier": 0.8
+        },
+        "morphine": {
+          "deterioration_modifier": 0.9
+        }
+      }
+    },
+    "role2": {
+      "available_treatments": ["all_role1", "antibiotics", "blood_transfusion", "damage_control_surgery"],
+      "treatment_effects": {
+        "antibiotics": {
+          "deterioration_modifier": 0.8,
+          "prevents_sepsis": true
+        },
+        "blood_transfusion": {
+          "hemorrhage_modifier": 0.3,
+          "units_available_per_facility": 20
+        },
+        "damage_control_surgery": {
+          "deterioration_modifier": 0.4,
+          "hemorrhage_modifier": 0.1,
+          "requires_or": true,
+          "duration_hours": 2
+        }
+      }
+    },
+    "role3": {
+      "available_treatments": ["all_role2", "definitive_surgery", "icu_care"],
+      "treatment_effects": {
+        "definitive_surgery": {
+          "deterioration_modifier": 0.1,
+          "hemorrhage_modifier": 0.0,
+          "requires_or": true,
+          "duration_hours": 4
+        },
+        "icu_care": {
+          "deterioration_modifier": 0.5,
+          "for_triage": ["T1"]
+        }
+      }
+    }
+  }
 }

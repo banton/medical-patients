@@ -6,8 +6,8 @@ These tests ensure that UI changes don't break the API contract.
 import time
 from typing import Any, Dict
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 
 from src.main import app
 
@@ -32,7 +32,7 @@ class TestUIAPIIntegration:
 
     def test_root_endpoint_redirects_to_ui(self):
         """Test that the root endpoint redirects to UI."""
-        response = client.get("/", allow_redirects=False)
+        response = client.get("/", follow_redirects=False)
         assert response.status_code == 307  # Redirect
         assert "/static/index.html" in response.headers.get("location", "")
 

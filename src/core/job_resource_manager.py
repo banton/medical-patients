@@ -132,7 +132,9 @@ class JobResourceManager:
                     job_info["start_cpu"].user + job_info["start_cpu"].system
                 )
                 if cpu_seconds > self.max_cpu_seconds:
-                    error_message = f"Job {job_id} exceeded CPU time limit: {cpu_seconds:.1f}s > {self.max_cpu_seconds}s"
+                    error_message = (
+                        f"Job {job_id} exceeded CPU time limit: {cpu_seconds:.1f}s > {self.max_cpu_seconds}s"
+                    )
                     raise ResourceLimitExceeded(error_message)
 
                 # Record metrics

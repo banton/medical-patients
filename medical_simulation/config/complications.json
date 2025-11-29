@@ -1,0 +1,230 @@
+{
+  "version": "2.0",
+  "complications": {
+    "hemorrhage": {
+      "display_name": "Hemorrhage/Active Bleeding",
+      "snomed_code": "50960005",
+      "severity_levels": {
+        "severe": {
+          "probability": 0.30,
+          "death_rate_per_hour": 0.25,
+          "deterioration_rate": 2.0,
+          "treatments_required": ["tourniquet", "blood_products", "surgery"],
+          "blood_units_required": 6
+        },
+        "moderate": {
+          "probability": 0.40,
+          "death_rate_per_hour": 0.10,
+          "deterioration_rate": 1.5,
+          "treatments_required": ["pressure_dressing", "blood_products"],
+          "blood_units_required": 3
+        },
+        "minor": {
+          "probability": 0.30,
+          "death_rate_per_hour": 0.02,
+          "deterioration_rate": 1.1,
+          "treatments_required": ["pressure_dressing"],
+          "blood_units_required": 0
+        }
+      }
+    },
+    "airway_compromise": {
+      "display_name": "Airway Compromise",
+      "snomed_code": "79688008",
+      "severity_levels": {
+        "complete": {
+          "probability": 0.20,
+          "death_rate_per_hour": 0.90,
+          "deterioration_rate": 5.0,
+          "treatments_required": ["intubation", "cricothyrotomy"],
+          "blood_units_required": 0
+        },
+        "partial": {
+          "probability": 0.80,
+          "death_rate_per_hour": 0.30,
+          "deterioration_rate": 2.5,
+          "treatments_required": ["positioning", "airway_adjunct", "intubation"],
+          "blood_units_required": 0
+        }
+      }
+    },
+    "organ_damage": {
+      "display_name": "Internal Organ Damage",
+      "snomed_code": "37723002",
+      "severity_levels": {
+        "critical": {
+          "probability": 0.25,
+          "death_rate_per_hour": 0.20,
+          "deterioration_rate": 1.8,
+          "treatments_required": ["surgery", "icu_care", "blood_products"],
+          "blood_units_required": 4
+        },
+        "significant": {
+          "probability": 0.75,
+          "death_rate_per_hour": 0.05,
+          "deterioration_rate": 1.3,
+          "treatments_required": ["surgery", "monitoring"],
+          "blood_units_required": 2
+        }
+      }
+    },
+    "infection": {
+      "display_name": "Infection/Sepsis Risk",
+      "snomed_code": "40733004",
+      "severity_levels": {
+        "septic": {
+          "probability": 0.15,
+          "death_rate_per_hour": 0.15,
+          "deterioration_rate": 1.6,
+          "treatments_required": ["antibiotics_iv", "icu_care", "vasopressors"],
+          "blood_units_required": 0
+        },
+        "localized": {
+          "probability": 0.85,
+          "death_rate_per_hour": 0.02,
+          "deterioration_rate": 1.2,
+          "treatments_required": ["antibiotics", "wound_care"],
+          "blood_units_required": 0
+        }
+      }
+    },
+    "tbi": {
+      "display_name": "Traumatic Brain Injury",
+      "snomed_code": "127295002",
+      "severity_levels": {
+        "severe": {
+          "probability": 0.30,
+          "death_rate_per_hour": 0.30,
+          "deterioration_rate": 2.0,
+          "treatments_required": ["neurosurgery", "icp_monitoring", "icu_care"],
+          "blood_units_required": 2
+        },
+        "moderate": {
+          "probability": 0.50,
+          "death_rate_per_hour": 0.10,
+          "deterioration_rate": 1.4,
+          "treatments_required": ["monitoring", "ct_scan", "neurological_care"],
+          "blood_units_required": 0
+        },
+        "mild": {
+          "probability": 0.20,
+          "death_rate_per_hour": 0.01,
+          "deterioration_rate": 1.0,
+          "treatments_required": ["observation", "pain_management"],
+          "blood_units_required": 0
+        }
+      }
+    },
+    "burns": {
+      "display_name": "Burn Complications",
+      "snomed_code": "48333001",
+      "severity_levels": {
+        "third_degree": {
+          "probability": 0.25,
+          "death_rate_per_hour": 0.15,
+          "deterioration_rate": 1.7,
+          "treatments_required": ["burn_surgery", "fluid_resuscitation", "icu_care"],
+          "blood_units_required": 2
+        },
+        "second_degree": {
+          "probability": 0.50,
+          "death_rate_per_hour": 0.05,
+          "deterioration_rate": 1.3,
+          "treatments_required": ["burn_dressing", "fluid_resuscitation", "pain_management"],
+          "blood_units_required": 0
+        },
+        "first_degree": {
+          "probability": 0.25,
+          "death_rate_per_hour": 0.00,
+          "deterioration_rate": 1.0,
+          "treatments_required": ["burn_dressing", "pain_management"],
+          "blood_units_required": 0
+        }
+      }
+    },
+    "shock": {
+      "display_name": "Shock (Various Types)",
+      "snomed_code": "27942005",
+      "severity_levels": {
+        "decompensated": {
+          "probability": 0.30,
+          "death_rate_per_hour": 0.40,
+          "deterioration_rate": 3.0,
+          "treatments_required": ["fluid_resuscitation", "blood_products", "vasopressors", "surgery"],
+          "blood_units_required": 8
+        },
+        "compensated": {
+          "probability": 0.70,
+          "death_rate_per_hour": 0.10,
+          "deterioration_rate": 1.5,
+          "treatments_required": ["fluid_resuscitation", "blood_products"],
+          "blood_units_required": 4
+        }
+      }
+    },
+    "compartment_syndrome": {
+      "display_name": "Compartment Syndrome",
+      "snomed_code": "394658000",
+      "severity_levels": {
+        "acute": {
+          "probability": 0.40,
+          "death_rate_per_hour": 0.05,
+          "deterioration_rate": 2.5,
+          "treatments_required": ["fasciotomy", "surgery"],
+          "blood_units_required": 2
+        },
+        "developing": {
+          "probability": 0.60,
+          "death_rate_per_hour": 0.01,
+          "deterioration_rate": 1.8,
+          "treatments_required": ["monitoring", "elevation", "pain_management"],
+          "blood_units_required": 0
+        }
+      }
+    }
+  },
+  "treatments": {
+    "tourniquet": {
+      "display_name": "Tourniquet Application",
+      "time_minutes": 2,
+      "skill_level": "combat_medic",
+      "resources_required": ["tourniquet_device"],
+      "effectiveness": 0.95
+    },
+    "pressure_dressing": {
+      "display_name": "Pressure Dressing",
+      "time_minutes": 5,
+      "skill_level": "basic",
+      "resources_required": ["bandages"],
+      "effectiveness": 0.70
+    },
+    "blood_products": {
+      "display_name": "Blood Transfusion",
+      "time_minutes": 30,
+      "skill_level": "nurse",
+      "resources_required": ["blood_units", "iv_access"],
+      "effectiveness": 0.85
+    },
+    "surgery": {
+      "display_name": "Surgical Intervention",
+      "time_minutes": 120,
+      "skill_level": "surgeon",
+      "resources_required": ["operating_room", "surgical_team"],
+      "effectiveness": 0.90
+    },
+    "intubation": {
+      "display_name": "Endotracheal Intubation",
+      "time_minutes": 10,
+      "skill_level": "physician",
+      "resources_required": ["intubation_kit", "ventilator"],
+      "effectiveness": 0.95
+    },
+    "antibiotics": {
+      "display_name": "Antibiotic Administration",
+      "time_minutes": 5,
+      "skill_level": "nurse",
+      "resources_required": ["antibiotics", "iv_access"],
+      "effectiveness": 0.80
+    }
+  }
+}

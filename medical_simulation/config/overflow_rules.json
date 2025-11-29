@@ -1,0 +1,211 @@
+{
+  "version": "3.0",
+  "description": "Overflow management and patient routing rules",
+  "overflow_triggers": {
+    "capacity_threshold": {
+      "role1": 0.85,
+      "role2": 0.80,
+      "role3": 0.90,
+      "csu": 0.90
+    },
+    "wait_time_exceeded": {
+      "T1": 2,
+      "T2": 6,
+      "T3": 12
+    },
+    "or_queue_length": {
+      "critical": 3,
+      "urgent": 6,
+      "routine": 10
+    }
+  },
+  "patient_selection_for_evacuation": {
+    "doctrine": "most_likely_to_survive_transport",
+    "rules": [
+      {
+        "condition": "wait_time_exceeded",
+        "selection": {
+          "T1": "stable_enough_for_transport",
+          "T2": "longest_waiting_stable",
+          "T3": "batch_evacuation"
+        }
+      },
+      {
+        "condition": "capacity_exceeded",
+        "selection": {
+          "T1": "cannot_evacuate_critical",
+          "T2": "most_stable_first",
+          "T3": "all_ambulatory"
+        }
+      },
+      {
+        "condition": "mass_casualty",
+        "selection": {
+          "T1": "salvageable_only",
+          "T2": "delayed_stable",
+          "T3": "immediate_evacuation"
+        }
+      }
+    ]
+  },
+  "triage_priority_management": {
+    "bumping_allowed": {
+      "role1": true,
+      "role2": true,
+      "role3": true,
+      "csu": false
+    },
+    "bumping_rules": {
+      "T1_can_bump_T3": true,
+      "T1_can_bump_T2": false,
+      "T2_can_bump_T3": true,
+      "holding_area_for_bumped": true
+    }
+  },
+  "bypass_decisions": {
+    "skip_role2_conditions": [
+      "role2_at_capacity",
+      "patient_needs_specialized_surgery",
+      "air_transport_available",
+      "role3_has_capacity"
+    ],
+    "direct_to_role3": {
+      "enabled": true,
+      "conditions": {
+        "patient_stable_for_longer_transport": true,
+        "role2_overwhelmed": true,
+        "role3_available": true
+      }
+    },
+    "direct_to_role4": {
+      "enabled": false,
+      "only_for": ["burn_centers", "neurosurgery", "reconstructive"]
+    }
+  },
+  "csu_routing_logic": {
+    "batch_evacuation": {
+      "enabled": true,
+      "minimum_batch": 4,
+      "maximum_wait_hours": 4,
+      "priority_override": ["T1_critical", "deteriorating_T2"]
+    },
+    "destination_selection": {
+      "primary": "nearest_available_appropriate_facility",
+      "secondary": "bypass_to_higher_role_if_full",
+      "tertiary": "hold_at_csu_until_capacity"
+    },
+    "load_balancing": {
+      "enabled": true,
+      "distribute_between_facilities": true,
+      "consider_nationality": true,
+      "max_transport_time_difference_hours": 2
+    }
+  },
+  "deterioration_during_overflow": {
+    "waiting_for_bed": {
+      "multiplier": 1.2,
+      "location": "emergency_department"
+    },
+    "waiting_for_transport": {
+      "multiplier": 1.5,
+      "location": "holding_area"
+    },
+    "in_overflow_area": {
+      "multiplier": 1.3,
+      "location": "hallway_or_tent"
+    },
+    "refused_at_facility": {
+      "multiplier": 2.0,
+      "location": "ambulance"
+    }
+  },
+  "death_categories": {
+    "died_waiting_for_bed": {
+      "track": true,
+      "preventable": "potentially"
+    },
+    "died_waiting_for_transport": {
+      "track": true,
+      "preventable": "potentially"
+    },
+    "died_in_transit_to_next_facility": {
+      "track": true,
+      "preventable": "sometimes"
+    },
+    "died_after_being_bumped": {
+      "track": true,
+      "preventable": "potentially"
+    },
+    "died_in_overflow_area": {
+      "track": true,
+      "preventable": "potentially"
+    },
+    "died_bypassing_full_facility": {
+      "track": true,
+      "preventable": "rarely"
+    }
+  },
+  "surge_capacity_activation": {
+    "triggers": [
+      "mass_casualty_declared",
+      "capacity_exceeded_80_percent",
+      "multiple_t1_arrivals"
+    ],
+    "actions": {
+      "activate_hallway_beds": true,
+      "setup_tent_facilities": true,
+      "cancel_elective_procedures": true,
+      "recall_off_duty_staff": true,
+      "accelerate_discharges": true
+    },
+    "limitations": {
+      "or_capacity_fixed": true,
+      "icu_capacity_limited": true,
+      "critical_care_staff_limited": true
+    }
+  },
+  "national_priorities": {
+    "national_first": {
+      "priority_order": ["own_nation", "close_allies", "coalition", "others"],
+      "exceptions": ["T1_override", "mass_casualty"]
+    },
+    "coalition": {
+      "priority_order": ["T1_regardless", "coalition_members", "partners"],
+      "exceptions": []
+    }
+  },
+  "transport_allocation": {
+    "ground_ambulance": {
+      "priority": ["T1", "T2", "T3"],
+      "batch_transport": false,
+      "max_wait_before_truck": 4
+    },
+    "casevac_helicopter": {
+      "priority": ["T1_critical", "T1_urgent"],
+      "weather_check": true,
+      "daylight_preferred": true
+    },
+    "transport_truck": {
+      "priority": ["T3_ambulatory", "T2_stable"],
+      "batch_transport": true,
+      "minimum_patients": 6
+    }
+  },
+  "overflow_metrics": {
+    "track": [
+      "patients_turned_away",
+      "patients_bypassed",
+      "died_waiting",
+      "died_in_transit",
+      "average_wait_time",
+      "capacity_exceedance_hours",
+      "successful_bypasses",
+      "failed_evacuations"
+    ],
+    "alert_thresholds": {
+      "died_waiting_rate": 0.05,
+      "capacity_exceeded_hours": 6,
+      "transport_queue_length": 10
+    }
+  }
+}

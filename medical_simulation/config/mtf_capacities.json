@@ -1,0 +1,257 @@
+{
+  "version": "3.0",
+  "description": "Medical Treatment Facility capacities and capabilities",
+  "facilities": {
+    "POI": {
+      "display_name": "Point of Injury",
+      "capabilities": {
+        "treatment": ["first_aid", "tourniquet", "pressure_bandage"],
+        "holding": false,
+        "surgery": false,
+        "evacuation_coordination": false
+      },
+      "capacity": {
+        "beds": 0,
+        "surge": 0,
+        "hold_time_hours": 0
+      }
+    },
+    "CSU_Forward": {
+      "display_name": "Casualty Staging Unit (Forward)",
+      "capabilities": {
+        "treatment": ["stabilization", "triage"],
+        "holding": true,
+        "surgery": false,
+        "evacuation_coordination": true
+      },
+      "capacity": {
+        "beds": {
+          "T1": 5,
+          "T2": 10,
+          "T3": 20
+        },
+        "surge": {
+          "T1": 2,
+          "T2": 5,
+          "T3_walking": 50,
+          "T3_sitting": 30
+        },
+        "hold_time_hours": {
+          "T1": 2,
+          "T2": 4,
+          "T3": 8
+        }
+      },
+      "overflow_rules": {
+        "threshold": 0.9,
+        "priority_bumping": false,
+        "evacuation_priority": ["T1", "T2", "T3"]
+      }
+    },
+    "Role1": {
+      "display_name": "Battalion Aid Station",
+      "capabilities": {
+        "treatment": ["advanced_first_aid", "iv_fluids", "antibiotics", "pain_management"],
+        "holding": true,
+        "surgery": false,
+        "evacuation_coordination": false
+      },
+      "capacity": {
+        "beds": {
+          "T1": 2,
+          "T2": 4,
+          "T3": 8
+        },
+        "surge": {
+          "T1": 1,
+          "T2": 2,
+          "T3_walking": 20,
+          "T3_sitting": 15
+        },
+        "hold_time_hours": {
+          "T1": 1,
+          "T2": 3,
+          "T3": 6
+        }
+      },
+      "overflow_rules": {
+        "threshold": 0.85,
+        "priority_bumping": true,
+        "evacuation_priority": ["T1", "T2", "T3"],
+        "bypass_if_full": false
+      }
+    },
+    "CSU_Role2": {
+      "display_name": "Casualty Staging Unit (Role 2)",
+      "capabilities": {
+        "treatment": ["stabilization", "blood_transfusion"],
+        "holding": true,
+        "surgery": false,
+        "evacuation_coordination": true
+      },
+      "capacity": {
+        "beds": {
+          "T1": 10,
+          "T2": 20,
+          "T3": 40
+        },
+        "surge": {
+          "T1": 5,
+          "T2": 10,
+          "T3_walking": 100,
+          "T3_sitting": 60
+        },
+        "hold_time_hours": {
+          "T1": 3,
+          "T2": 6,
+          "T3": 12
+        }
+      },
+      "overflow_rules": {
+        "threshold": 0.85,
+        "priority_bumping": false,
+        "evacuation_priority": ["T1", "T2", "T3"]
+      }
+    },
+    "Role2": {
+      "display_name": "Forward Surgical Team",
+      "capabilities": {
+        "treatment": ["damage_control_surgery", "blood_transfusion", "intubation", "chest_tube"],
+        "holding": true,
+        "surgery": true,
+        "evacuation_coordination": false
+      },
+      "capacity": {
+        "beds": {
+          "T1": 8,
+          "T2": 12,
+          "T3": 20
+        },
+        "or_slots": 2,
+        "or_turnover_hours": 2,
+        "surgery_duration": {
+          "damage_control": 1,
+          "emergency": 2,
+          "urgent": 3
+        },
+        "surge": {
+          "T1": 2,
+          "T2": 4,
+          "T3_walking": 40,
+          "T3_sitting": 30
+        },
+        "hold_time_hours": {
+          "T1": 4,
+          "T2": 8,
+          "T3": 12
+        }
+      },
+      "overflow_rules": {
+        "threshold": 0.8,
+        "priority_bumping": true,
+        "evacuation_priority": ["T1", "T2", "T3"],
+        "bypass_if_full": true,
+        "bypass_destination": "Role3"
+      }
+    },
+    "Role3": {
+      "display_name": "Combat Support Hospital",
+      "capabilities": {
+        "treatment": ["definitive_surgery", "icu_care", "specialized_surgery", "blood_bank"],
+        "holding": true,
+        "surgery": true,
+        "evacuation_coordination": true
+      },
+      "capacity": {
+        "beds": {
+          "T1": 30,
+          "T2": 50,
+          "T3": 100
+        },
+        "icu_beds": 10,
+        "or_slots": 6,
+        "or_turnover_hours": 1,
+        "surgery_duration": {
+          "damage_control": 1,
+          "emergency": 2,
+          "definitive": 4,
+          "specialized": 6
+        },
+        "surge": {
+          "T1": 10,
+          "T2": 20,
+          "T3_walking": 200,
+          "T3_sitting": 150
+        },
+        "hold_time_hours": {
+          "T1": 24,
+          "T2": 48,
+          "T3": 72
+        }
+      },
+      "overflow_rules": {
+        "threshold": 0.9,
+        "priority_bumping": true,
+        "evacuation_priority": ["T1", "T2", "T3"],
+        "bypass_if_full": false
+      }
+    },
+    "Role4": {
+      "display_name": "Definitive Care Hospital",
+      "capabilities": {
+        "treatment": ["all"],
+        "holding": true,
+        "surgery": true,
+        "evacuation_coordination": false,
+        "rehabilitation": true
+      },
+      "capacity": {
+        "beds": {
+          "T1": 100,
+          "T2": 200,
+          "T3": 500
+        },
+        "icu_beds": 50,
+        "or_slots": 20,
+        "or_turnover_hours": 1,
+        "surgery_duration": {
+          "all": "variable"
+        },
+        "surge": {
+          "unlimited": true
+        },
+        "hold_time_hours": {
+          "T1": 168,
+          "T2": 336,
+          "T3": 720
+        }
+      },
+      "overflow_rules": {
+        "threshold": 1.0,
+        "priority_bumping": false,
+        "evacuation_priority": [],
+        "terminal_facility": true
+      }
+    }
+  },
+  "mass_casualty_modifiers": {
+    "surge_activation_threshold": 0.8,
+    "surge_capacity_multiplier": 1.5,
+    "care_quality_degradation": 0.8,
+    "triage_time_reduction": 0.5,
+    "or_efficiency_reduction": 0.7
+  },
+  "evacuation_decision_factors": {
+    "wait_time_threshold_hours": {
+      "T1": 2,
+      "T2": 6,
+      "T3": 12
+    },
+    "survival_probability_threshold": 0.7,
+    "transport_risk_assessment": {
+      "T1": "high_risk_acceptable",
+      "T2": "moderate_risk_acceptable",
+      "T3": "low_risk_only"
+    }
+  }
+}

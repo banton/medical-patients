@@ -12,13 +12,35 @@ if TYPE_CHECKING:
 try:
     from .config_manager import ConfigurationManager
     from .evacuation_time_manager import EvacuationTimeManager
+    from .facility_markov_chain import FacilityMarkovChain
     from .patient import Patient
     from .temporal_generator import CasualtyEvent, TemporalPatternGenerator
+    from .warfare_modifiers import WarfareModifiers
+
+    MARKOV_CHAIN_AVAILABLE = True
+    WARFARE_MODIFIERS_AVAILABLE = True
 except ImportError:
-    from patient_generator.config_manager import ConfigurationManager
-    from patient_generator.evacuation_time_manager import EvacuationTimeManager
-    from patient_generator.patient import Patient
-    from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+    try:
+        from patient_generator.config_manager import ConfigurationManager
+        from patient_generator.evacuation_time_manager import EvacuationTimeManager
+        from patient_generator.facility_markov_chain import FacilityMarkovChain
+        from patient_generator.patient import Patient
+        from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+        from patient_generator.warfare_modifiers import WarfareModifiers
+
+        MARKOV_CHAIN_AVAILABLE = True
+        WARFARE_MODIFIERS_AVAILABLE = True
+    except ImportError:
+        # Fallback if Markov chain not available
+        from patient_generator.config_manager import ConfigurationManager
+        from patient_generator.evacuation_time_manager import EvacuationTimeManager
+        from patient_generator.patient import Patient
+        from patient_generator.temporal_generator import CasualtyEvent, TemporalPatternGenerator
+
+        MARKOV_CHAIN_AVAILABLE = False
+        WARFARE_MODIFIERS_AVAILABLE = False
+        FacilityMarkovChain = None
+        WarfareModifiers = None
 
 
 class PatientFlowSimulator:
@@ -35,6 +57,56 @@ class PatientFlowSimulator:
 
         # Initialize evacuation time manager for realistic timeline tracking
         self.evacuation_manager = EvacuationTimeManager()
+
+        # Optional medical simulation enhancement
+        self.use_medical_simulation = os.environ.get("ENABLE_MEDICAL_SIMULATION", "false").lower() == "true"
+        # We will instantiate MedicalSimulationBridge per patient to avoid shared state issues
+        # self.medical_bridge = None
+        if self.use_medical_simulation:
+            # Check if medical simulation module is available
+            import importlib.util
+
+            spec = importlib.util.find_spec(".medical_simulation_bridge", package="patient_generator")
+            if spec is not None:
+                print("Medical simulation enhancement enabled")
+            else:
+                print("Warning: Medical simulation bridge not available")
+                self.use_medical_simulation = False
+
+        # Treatment utility model (works independently of medical simulation)
+        self.use_treatment_utility = os.environ.get("ENABLE_TREATMENT_UTILITY_MODEL", "true").lower() == "true"
+        self.treatment_model = None
+        if self.use_treatment_utility:
+            try:
+                from .treatment_utility_model import TreatmentUtilityModel
+
+                self.treatment_model = TreatmentUtilityModel()
+                print("Treatment utility model enabled")
+            except ImportError as e:
+                print(f"Warning: Could not import treatment utility model: {e}")
+                self.use_treatment_utility = False
+
+        # Facility Markov Chain for probabilistic routing (MILESTONE 3)
+        self.use_markov_chain = os.environ.get("ENABLE_MARKOV_CHAIN", "true").lower() == "true"
+        self.markov_chain = None
+        if self.use_markov_chain and MARKOV_CHAIN_AVAILABLE:
+            try:
+                self.markov_chain = FacilityMarkovChain()
+                print("Facility Markov Chain enabled - probabilistic patient routing active")
+            except Exception as e:
+                print(f"Warning: Could not initialize Markov chain: {e}")
+                self.use_markov_chain = False
+
+        # Warfare modifiers for injury patterns (MILESTONE 4)
+        self.use_warfare_modifiers = os.environ.get("ENABLE_WARFARE_MODIFIERS", "true").lower() == "true"
+        self.warfare_modifiers = None
+        if self.use_warfare_modifiers and WARFARE_MODIFIERS_AVAILABLE:
+            try:
+                self.warfare_modifiers = WarfareModifiers()
+                print("Warfare modifiers enabled - distinct injury patterns active")
+            except Exception as e:
+                print(f"Warning: Could not initialize warfare modifiers: {e}")
+                self.use_warfare_modifiers = False
 
         # --- Load configurations from ConfigurationManager ---
         self.total_patients_to_generate = active_config.total_patients
@@ -79,6 +151,7 @@ class PatientFlowSimulator:
             "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
             "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
             "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            "Polytrauma": {"T1": 0.5, "T2": 0.35, "T3": 0.15},  # Polytrauma is usually severe
             # Uppercase variations
             "BATTLE_TRAUMA": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
             "NON_BATTLE_TRAUMA": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
@@ -343,14 +416,68 @@ class PatientFlowSimulator:
         actual_injury_time = self._get_date_for_day(patient.day_of_injury)
         patient.set_injury_timestamp(actual_injury_time)
 
+        # Assign body part based on injury type (MUST BE BEFORE add_treatment which triggers simulation)
+        patient.body_part = self._assign_body_part(patient.injury_type)
+
         patient.add_treatment(facility="POI", date=actual_injury_time)
         return patient
+
+    def _assign_body_part(self, injury_type: str) -> str:
+        """Assign a realistic body part based on injury type."""
+        injury_lower = injury_type.lower()
+
+        if "amputation" in injury_lower:
+            return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
+        if "brain" in injury_lower or "head" in injury_lower or "tbi" in injury_lower:
+            return "Head"
+        if "chest" in injury_lower or "lung" in injury_lower or "abdominal" in injury_lower:
+            return "Torso"
+        if "fracture" in injury_lower:
+            return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
+        if "burn" in injury_lower:
+            return random.choice(["Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"])
+        # Default weighted distribution for generic injuries
+        # Torso: 30%, Head: 15%, Arms: 25%, Legs: 30%
+        rand = random.random()
+        if rand < 0.30:
+            return "Torso"
+        if rand < 0.45:
+            return "Head"
+        if rand < 0.70:
+            return random.choice(["Left Arm", "Right Arm"])
+        return random.choice(["Left Leg", "Right Leg"])
 
     def _simulate_patient_flow_single(self, patient: Patient):
         """
         Enhanced patient flow simulation with detailed timeline tracking.
         Uses EvacuationTimeManager for realistic timing and KIA/RTD rules.
+        Optionally uses medical simulation for enhanced realism.
+        Now supports Markov chain for probabilistic routing (MILESTONE 3).
         """
+        # Use medical simulation enhancement if enabled
+        # Use medical simulation enhancement if enabled
+        if self.use_medical_simulation:
+            try:
+                from .medical_simulation_bridge import MedicalSimulationBridge
+
+                # Create a fresh bridge for this patient to ensure isolation
+                medical_bridge = MedicalSimulationBridge()
+
+                # Enhance patient with medical simulation
+                patient = medical_bridge.enhance_patient(patient)
+                # If medical simulation handled the flow, we're done
+                if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
+                    return
+            except Exception as e:
+                print(f"Error in medical simulation for patient {patient.id}: {e}")
+                # Fall through to standard simulation
+
+        # Use Markov chain if enabled, otherwise fall back to sequential flow
+        if self.use_markov_chain and self.markov_chain:
+            self._simulate_patient_flow_markov(patient)
+            return
+
+        # Otherwise, use original sequential simulation logic
         current_time = patient.injury_timestamp
 
         # Track current time through evacuation chain
@@ -508,6 +635,149 @@ class PatientFlowSimulator:
         }
         return default_rates.get(facility_name, 0.3)
 
+    def _simulate_patient_flow_markov(self, patient: Patient):
+        """
+        Simulate patient flow using Markov chain for probabilistic routing.
+        MILESTONE 3.3: Replaces sequential flow with realistic probabilistic transitions.
+
+        Args:
+            patient: Patient object to simulate flow for
+        """
+        current_time = patient.injury_timestamp
+        current_facility = "POI"
+
+        # Extract patient conditions for special routing
+        patient_conditions = []
+        if hasattr(patient, "primary_conditions") and patient.primary_conditions:
+            for condition in patient.primary_conditions:
+                if isinstance(condition, dict):
+                    condition_name = condition.get("display", condition.get("name", "")).lower()
+                    patient_conditions.append(condition_name)
+
+        # Build modifiers for Markov chain
+        modifiers = {}
+
+        # Check for mass casualty event
+        if hasattr(patient, "is_mass_casualty") and patient.is_mass_casualty:
+            modifiers["mass_casualty"] = True
+
+        # Track time since injury for golden hour
+        modifiers["time_since_injury"] = 0.0
+
+        # Check for degraded environment
+        if hasattr(patient, "environmental_conditions"):
+            if any("combat" in cond.lower() for cond in patient.environmental_conditions):
+                modifiers["degraded_environment"] = True
+
+        # Generate complete path using Markov chain
+        max_steps = 10
+        visited_facilities = []
+
+        for _step in range(max_steps):
+            # Record arrival at current facility
+            if current_facility not in ["KIA", "RTD"]:
+                visited_facilities.append(current_facility)
+
+                # Add treatment at this facility
+                patient.add_treatment(
+                    facility=current_facility,
+                    date=current_time,
+                    treatments=self._generate_treatments(patient, current_facility),
+                    observations=self._generate_observations(patient, current_facility),
+                )
+
+                # Add arrival event
+                patient.add_timeline_event("arrival", current_facility, current_time)
+
+            # Update time since injury
+            hours_since_injury = (current_time - patient.injury_timestamp).total_seconds() / 3600
+            modifiers["time_since_injury"] = hours_since_injury
+
+            # Get next facility from Markov chain
+            next_facility = self.markov_chain.get_next_facility(
+                current_facility, patient.triage_category, patient_conditions, modifiers
+            )
+
+            # Check if we've reached a terminal state
+            if next_facility in ["KIA", "RTD"]:
+                # Determine when the terminal event occurs
+                if current_facility == "POI":
+                    # Quick terminal event at POI
+                    terminal_time = current_time + datetime.timedelta(hours=random.uniform(0.1, 1.0))
+                else:
+                    # Terminal event during evacuation
+                    evac_hours = self.evacuation_manager.get_evacuation_time(current_facility, patient.triage_category)
+                    terminal_time = current_time + datetime.timedelta(hours=random.uniform(0, evac_hours))
+
+                # Set final status
+                if next_facility == "KIA":
+                    patient.set_final_status(
+                        "KIA",
+                        current_facility,
+                        terminal_time,
+                        kia_timing="markov_chain_decision",
+                        facilities_visited=len(visited_facilities),
+                    )
+                else:  # RTD
+                    patient.set_final_status(
+                        "RTD",
+                        current_facility,
+                        terminal_time,
+                        rtd_timing="markov_chain_decision",
+                        facilities_visited=len(visited_facilities),
+                    )
+                return
+
+            # Not terminal - prepare for evacuation/transit
+            if current_facility != "POI" or next_facility != current_facility:
+                # Get evacuation time at current facility
+                evac_hours = self.evacuation_manager.get_evacuation_time(current_facility, patient.triage_category)
+
+                # Add evacuation event
+                patient.add_timeline_event(
+                    "evacuation_start",
+                    current_facility,
+                    current_time,
+                    evacuation_duration_hours=evac_hours,
+                    triage_category=patient.triage_category,
+                    next_facility=next_facility,
+                )
+
+                # Update time after evacuation
+                current_time = current_time + datetime.timedelta(hours=evac_hours)
+
+                # Get transit time to next facility
+                transit_hours = (
+                    self.markov_chain.get_evacuation_time(current_facility, next_facility, "ground") / 60.0
+                )  # Convert minutes to hours
+
+                # Add transit event if moving to another facility
+                if next_facility != current_facility:
+                    patient.add_timeline_event(
+                        "transit_start",
+                        current_facility,
+                        current_time,
+                        from_facility=current_facility,
+                        to_facility=next_facility,
+                        transit_duration_hours=transit_hours,
+                        triage_category=patient.triage_category,
+                    )
+
+                    # Update time after transit
+                    current_time = current_time + datetime.timedelta(hours=transit_hours)
+
+            # Move to next facility
+            current_facility = next_facility
+
+        # If we exit the loop without reaching terminal state, set as Remains_Role4
+        patient.set_final_status(
+            "Remains_Role4",
+            current_facility,
+            current_time,
+            markov_chain_timeout=True,
+            facilities_visited=len(visited_facilities),
+        )
+
     def _determine_next_location(self, patient: Patient, current_facility_id: str) -> str:
         if current_facility_id in self._transition_probabilities:
             transitions = self._transition_probabilities[current_facility_id]
@@ -541,6 +811,60 @@ class PatientFlowSimulator:
             if facility_config:
                 facility_name_or_type = facility_config.get("name", facility_id)
 
+        # Use treatment utility model if available
+        if self.use_treatment_utility and self.treatment_model:
+            print(
+                f"DEBUG: Utility model check - enabled: {self.use_treatment_utility}, model exists: {self.treatment_model is not None}"
+            )
+            # Get SNOMED code from patient's primary condition(s)
+            snomed_code = None
+            print(
+                f"DEBUG: Patient attributes: primary_condition: {hasattr(patient, 'primary_condition')}, primary_conditions: {hasattr(patient, 'primary_conditions')}"
+            )
+            if hasattr(patient, "primary_condition") and isinstance(patient.primary_condition, dict):
+                snomed_code = patient.primary_condition.get("code")
+                print(f"DEBUG: Found primary_condition code: {snomed_code}")
+            elif hasattr(patient, "primary_conditions") and patient.primary_conditions:
+                # Get first condition's SNOMED code
+                first_condition = patient.primary_conditions[0]
+                if isinstance(first_condition, dict):
+                    snomed_code = first_condition.get("code")
+                    print(f"DEBUG: Found primary_conditions[0] code: {snomed_code}")
+                print(f"DEBUG: primary_conditions: {patient.primary_conditions}")
+            else:
+                print("DEBUG: No valid condition attributes found")
+
+            # Debug: Log what we found
+            if snomed_code:
+                print(f"DEBUG: Using utility model for SNOMED {snomed_code} at {facility_name_or_type}")
+
+            if snomed_code:
+                # Map triage to severity for utility model
+                severity_map = {"T1": "Severe", "T2": "Moderate to severe", "T3": "Moderate", "T4": "Mild to moderate"}
+                severity = severity_map.get(patient.triage_category, "Moderate")
+
+                # Use utility model to select treatments
+                selected_treatments = self.treatment_model.select_treatments(
+                    injury_code=snomed_code,
+                    severity=severity,
+                    facility=facility_name_or_type,
+                    time_elapsed_minutes=30,  # Simplified - could calculate from timeline
+                    available_resources={"supplies": 100},
+                    max_treatments=3,
+                )
+
+                # Convert to expected format
+                treatments = []
+                for treatment in selected_treatments:
+                    treatments.append(
+                        {
+                            "code": "utility_model",  # Placeholder code
+                            "display": treatment["name"],
+                        }
+                    )
+                return treatments
+
+        # Fallback to original logic if utility model not available or no SNOMED code
         treatments = []
         # Check if injury type is battle-related (handle all variations)
         injury_upper = patient.injury_type.upper() if patient.injury_type else ""
@@ -588,6 +912,49 @@ class PatientFlowSimulator:
         )
         # ... more observations
         return observations
+
+    def _get_injury_name(self, snomed_code: str) -> str:
+        """Map SNOMED code to injury name"""
+        # Convert numpy string if needed
+        code_str = str(snomed_code)
+
+        # Combat injury mappings
+        injury_names = {
+            # Battle trauma
+            "125670008": "War injury",
+            "262574004": "Bullet wound",
+            "125689001": "Shrapnel injury",
+            "125605004": "Traumatic shock",
+            "19130008": "Traumatic brain injury",
+            "125596004": "Injury by explosive",
+            "284551006": "Traumatic amputation of limb",
+            "361220002": "Penetrating injury",
+            "7200002": "Burn of skin",
+            "2055003": "Laceration of hand",
+            # Non-battle injuries
+            "37782003": "Fracture of bone",
+            "372963008": "Heat exhaustion",
+            "302914006": "Ankle sprain",
+            "55566008": "Burn injury",
+            "428794004": "Malnutrition",
+            "409711008": "Vehicle accident injury",
+            "275272006": "Crush injury",
+            "87991007": "Abdominal pain",
+            "23924001": "Tight chest",
+            "267036007": "Dyspnea",
+            # Diseases
+            "195662009": "Acute respiratory illness",
+            "43878008": "Streptococcal pharyngitis",
+            "25374005": "Gastroenteritis",
+            "16932000": "Nausea and vomiting",
+            "68566005": "Urinary tract infection",
+            "62315008": "Diarrhea",
+            "45170000": "Psychological stress",
+            "73249009": "Mental exhaustion",
+            "386661006": "Fever",
+            "9826008": "Conjunctivitis",
+        }
+        return injury_names.get(code_str, f"Injury {code_str}")
 
     def _select_weighted_item(self, weights_dict: Dict[str, float]):
         if not weights_dict:
@@ -653,10 +1020,15 @@ class PatientFlowSimulator:
         warfare_patterns_path = os.path.join(os.path.dirname(__file__), "warfare_patterns.json")
         temporal_gen = TemporalPatternGenerator(warfare_patterns_path)
 
+        # Use patient count from active configuration if available, otherwise use injuries.json default
+        # Use the updated total_patients_to_generate which may have been overridden
+        total_patients = self.total_patients_to_generate
+        print(f"🔧 Temporal generation using patient count: {total_patients}")
+
         # Generate casualty timeline
         casualty_timeline = temporal_gen.generate_timeline(
             days=injuries_config["days_of_fighting"],
-            total_patients=injuries_config["total_patients"],
+            total_patients=total_patients,  # Use the override from configuration
             active_warfare_types=injuries_config["warfare_types"],
             intensity=injuries_config["intensity"],
             tempo=injuries_config["tempo"],
@@ -747,13 +1119,44 @@ class PatientFlowSimulator:
         days_since_start = (injury_timestamp.date() - base_date.date()).days
         patient.day_of_injury = f"Day {days_since_start + 1}"
 
-        # Get warfare-specific injury distribution
-        injury_distribution = self._get_warfare_injury_distribution(warfare_type, base_injury_mix, warfare_patterns)
-        patient.injury_type = self._select_weighted_item(injury_distribution)
+        # Use warfare modifiers if available (MILESTONE 4)
+        if self.use_warfare_modifiers and self.warfare_modifiers:
+            # Get injuries using warfare modifiers
+            injury_codes, severity, metadata = self.warfare_modifiers.get_injuries_for_scenario(warfare_type)
+
+            # Store injuries as primary conditions
+            patient.primary_conditions = []
+            for code in injury_codes:
+                # Map SNOMED codes to condition objects (simplified for now)
+                patient.primary_conditions.append(
+                    {
+                        "code": code,
+                        "name": self._get_injury_name(code),  # Helper method to get name
+                    }
+                )
+
+            # Set severity based on warfare pattern
+            patient.severity = severity
+
+            # Set injury type based on metadata
+            if metadata.get("polytrauma"):
+                patient.injury_type = "Polytrauma"
+            else:
+                patient.injury_type = "Battle Injury" if "combat" in warfare_type else "Non-Battle Injury"
+
+            # Store metadata
+            patient.injury_metadata = metadata
+        else:
+            # Fallback to original method
+            injury_distribution = self._get_warfare_injury_distribution(warfare_type, base_injury_mix, warfare_patterns)
+            patient.injury_type = self._select_weighted_item(injury_distribution)
 
         # Get warfare-specific triage distribution
         triage_weights = self._get_warfare_triage_weights(warfare_type, patient.injury_type, warfare_patterns)
         patient.triage_category = self._select_weighted_item(triage_weights)
+
+        # Assign body part based on injury type
+        patient.body_part = self._assign_body_part(patient.injury_type)
 
         # Set demographics
         patient.gender = random.choice(["male", "female"])

@@ -1,0 +1,75 @@
+{
+  "version": "2.0",
+  "warfare_types": {
+    "conventional": {
+      "display_name": "Conventional Warfare",
+      "weight_multiplier": 1.0,
+      "injury_distribution": {
+        "gsw": 0.30,
+        "shrapnel": 0.25,
+        "blast": 0.20,
+        "burn": 0.05,
+        "fracture": 0.10,
+        "crush": 0.05,
+        "other": 0.05
+      },
+      "temporal_pattern": {
+        "type": "sustained_combat",
+        "peak_hours": [6, 7, 8, 9, 16, 17, 18, 19],
+        "peak_intensity": 2.5,
+        "base_intensity": 0.5,
+        "night_reduction": 0.3
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.3,
+        "cluster_size_range": [10, 30],
+        "individual_spacing_minutes": [5, 20]
+      },
+      "injury_category_modifier": {
+        "battle_trauma": 1.5,
+        "disease": 0.8,
+        "non_battle_injury": 0.9
+      },
+      "triage_distribution_override": {
+        "battle_trauma": {"T1": 0.35, "T2": 0.45, "T3": 0.20},
+        "non_battle_injury": {"T1": 0.15, "T2": 0.35, "T3": 0.50},
+        "disease": {"T1": 0.10, "T2": 0.30, "T3": 0.60}
+      }
+    },
+    "artillery": {
+      "display_name": "Artillery/Indirect Fire",
+      "weight_multiplier": 1.2,
+      "injury_distribution": {
+        "blast": 0.40,
+        "shrapnel": 0.45,
+        "burn": 0.05,
+        "crush": 0.05,
+        "tbi": 0.03,
+        "amputation": 0.02
+      },
+      "temporal_pattern": {
+        "type": "surge",
+        "surges_per_day": 3,
+        "surge_duration_hours": 2,
+        "surge_intensity": 5.0,
+        "between_surge_intensity": 0.1,
+        "preferred_hours": [5, 6, 11, 12, 17, 18, 22, 23]
+      },
+      "casualty_clustering": {
+        "mass_casualty_probability": 0.8,
+        "cluster_size_range": [15, 50],
+        "cluster_duration_minutes": [5, 15]
+      },
+      "injury_category_modifier": {
+        "battle_trauma": 2.5,
+        "disease": 0.3,
+        "non_battle_injury": 0.6
+      },
+      "triage_distribution_override": {
+        "battle_trauma": {"T1": 0.50, "T2": 0.35, "T3": 0.15},
+        "non_battle_injury": {"T1": 0.25, "T2": 0.45, "T3": 0.30},
+        "disease": {"T1": 0.10, "T2": 0.40, "T3": 0.50}
+      }
+    }
+  }
+}

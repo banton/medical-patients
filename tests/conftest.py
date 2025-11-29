@@ -10,10 +10,14 @@ import pytest
 
 def pytest_addoption(parser):
     """Add custom command line options"""
-    parser.addoption("--base-url", action="store", default="http://localhost:8000", help="Base URL for the API")
+    try:
+        parser.addoption("--base-url", action="store", default="http://localhost:8000", help="Base URL for the API")
+    except ValueError:
+        # Option already exists, skip adding it
+        pass
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def base_url(request):
     """Get base URL from command line option"""
     return request.config.getoption("--base-url")

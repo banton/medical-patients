@@ -1,0 +1,271 @@
+{
+  "config_version": "1.0.0",
+  "config_type": "treatment_protocols",
+  "description": "Medical treatment protocols mapped to SNOMED codes with utility scoring",
+  "compatible_with": {
+    "treatment_effects": ["3.0.x"],
+    "medical_simulation": ["1.0.0+"]
+  },
+  "injury_categories": {
+    "battle_trauma": {
+      "display": "Battle-related traumatic injuries",
+      "snomed_codes": ["125670008", "262574004", "125689001", "125605004", "19130008", "125596004", "284551006", "361220002", "7200002", "2055003"]
+    },
+    "non_battle_injury": {
+      "display": "Non-battle physical injuries",
+      "snomed_codes": ["37782003", "372963008", "302914006", "55566008", "428794004", "409711008", "275272006", "87991007", "23924001", "267036007"]
+    },
+    "disease": {
+      "display": "Medical and psychological conditions",
+      "snomed_codes": ["195662009", "43878008", "25374005", "16932000", "68566005", "62315008", "45170000", "73249009", "386661006", "9826008"]
+    }
+  },
+  "treatment_appropriateness_matrix": {
+    "125670008": {
+      "name": "War injury",
+      "category": "battle_trauma",
+      "primary_treatments": {
+        "POI": ["tourniquet", "pressure_dressing", "morphine_autoinjector"],
+        "Role1": ["hemostatic_gauze", "iv_fluids", "splint"],
+        "Role2": ["blood_transfusion", "damage_control_surgery"],
+        "Role3": ["definitive_surgery", "icu_care"]
+      },
+      "utility_scores": {
+        "tourniquet": 0.95,
+        "pressure_dressing": 0.85,
+        "morphine_autoinjector": 0.75,
+        "hemostatic_gauze": 0.90,
+        "iv_fluids": 0.80,
+        "blood_transfusion": 0.95,
+        "damage_control_surgery": 0.98
+      }
+    },
+    "262574004": {
+      "name": "Bullet wound",
+      "category": "battle_trauma",
+      "primary_treatments": {
+        "POI": ["tourniquet", "hemostatic_gauze", "pressure_dressing"],
+        "Role1": ["iv_fluids", "morphine", "chest_seal"],
+        "Role2": ["blood_transfusion", "damage_control_surgery", "chest_tube"],
+        "Role3": ["definitive_surgery", "vascular_repair", "icu_care"]
+      },
+      "utility_scores": {
+        "tourniquet": 0.98,
+        "hemostatic_gauze": 0.95,
+        "pressure_dressing": 0.80,
+        "chest_seal": 0.90,
+        "blood_transfusion": 0.95,
+        "damage_control_surgery": 0.99
+      }
+    },
+    "125689001": {
+      "name": "Shrapnel injury",
+      "category": "battle_trauma",
+      "primary_treatments": {
+        "POI": ["pressure_dressing", "hemostatic_gauze", "morphine_autoinjector"],
+        "Role1": ["wound_debridement", "iv_fluids", "antibiotics"],
+        "Role2": ["surgical_exploration", "fragment_removal"],
+        "Role3": ["reconstructive_surgery", "wound_vac"]
+      },
+      "utility_scores": {
+        "pressure_dressing": 0.85,
+        "hemostatic_gauze": 0.90,
+        "wound_debridement": 0.88,
+        "surgical_exploration": 0.92,
+        "fragment_removal": 0.95
+      }
+    },
+    "19130008": {
+      "name": "Traumatic brain injury",
+      "category": "battle_trauma",
+      "primary_treatments": {
+        "POI": ["cervical_collar", "oxygen", "basic_airway"],
+        "Role1": ["mannitol", "hypertonic_saline", "sedation"],
+        "Role2": ["icp_monitoring", "craniotomy_prep"],
+        "Role3": ["neurosurgery", "icu_care", "icp_management"]
+      },
+      "utility_scores": {
+        "cervical_collar": 0.85,
+        "oxygen": 0.90,
+        "mannitol": 0.88,
+        "icp_monitoring": 0.95,
+        "neurosurgery": 0.98
+      }
+    },
+    "284551006": {
+      "name": "Traumatic amputation",
+      "category": "battle_trauma",
+      "primary_treatments": {
+        "POI": ["tourniquet", "pressure_dressing", "morphine_autoinjector"],
+        "Role1": ["iv_fluids", "antibiotics", "stump_dressing"],
+        "Role2": ["blood_transfusion", "surgical_debridement", "revision"],
+        "Role3": ["definitive_amputation", "prosthetic_planning"]
+      },
+      "utility_scores": {
+        "tourniquet": 0.99,
+        "pressure_dressing": 0.75,
+        "blood_transfusion": 0.95,
+        "surgical_debridement": 0.92,
+        "definitive_amputation": 0.98
+      }
+    },
+    "7200002": {
+      "name": "Burn injury",
+      "category": "battle_trauma",
+      "primary_treatments": {
+        "POI": ["burn_dressing", "cooling", "morphine_autoinjector"],
+        "Role1": ["iv_fluids", "escharotomy_prep", "pain_management"],
+        "Role2": ["fluid_resuscitation", "burn_debridement", "wound_care"],
+        "Role3": ["skin_grafting", "burn_icu", "infection_control"]
+      },
+      "utility_scores": {
+        "burn_dressing": 0.85,
+        "cooling": 0.80,
+        "iv_fluids": 0.95,
+        "fluid_resuscitation": 0.98,
+        "skin_grafting": 0.90
+      }
+    },
+    "37782003": {
+      "name": "Fracture",
+      "category": "non_battle_injury",
+      "primary_treatments": {
+        "POI": ["splint", "ice_pack", "pain_relief"],
+        "Role1": ["casting", "traction", "x_ray"],
+        "Role2": ["surgical_fixation", "external_fixator"],
+        "Role3": ["orthopedic_surgery", "rehabilitation"]
+      },
+      "utility_scores": {
+        "splint": 0.90,
+        "ice_pack": 0.70,
+        "casting": 0.85,
+        "surgical_fixation": 0.95,
+        "orthopedic_surgery": 0.98
+      }
+    },
+    "372963008": {
+      "name": "Heat exhaustion",
+      "category": "non_battle_injury",
+      "primary_treatments": {
+        "POI": ["cooling", "oral_rehydration", "shade"],
+        "Role1": ["iv_fluids", "electrolyte_replacement", "monitoring"],
+        "Role2": ["active_cooling", "lab_monitoring"],
+        "Role3": ["icu_monitoring", "dialysis_standby"]
+      },
+      "utility_scores": {
+        "cooling": 0.95,
+        "oral_rehydration": 0.85,
+        "iv_fluids": 0.92,
+        "electrolyte_replacement": 0.88,
+        "active_cooling": 0.90
+      }
+    },
+    "62315008": {
+      "name": "Diarrhea",
+      "category": "disease",
+      "primary_treatments": {
+        "POI": ["oral_rehydration", "loperamide"],
+        "Role1": ["iv_fluids", "electrolyte_replacement", "stool_culture"],
+        "Role2": ["antibiotics", "lab_workup"],
+        "Role3": ["infectious_disease_consult", "isolation"]
+      },
+      "utility_scores": {
+        "oral_rehydration": 0.85,
+        "loperamide": 0.70,
+        "iv_fluids": 0.90,
+        "antibiotics": 0.75,
+        "electrolyte_replacement": 0.88
+      },
+      "contraindicated_treatments": ["basic_bandage", "tourniquet", "morphine"]
+    },
+    "45170000": {
+      "name": "Psychological stress",
+      "category": "disease",
+      "primary_treatments": {
+        "POI": ["psychological_first_aid", "buddy_support"],
+        "Role1": ["anxiolytic", "counseling", "sleep_aid"],
+        "Role2": ["psychiatric_evaluation", "ssri_initiation"],
+        "Role3": ["inpatient_psychiatry", "ptsd_treatment"]
+      },
+      "utility_scores": {
+        "psychological_first_aid": 0.85,
+        "buddy_support": 0.75,
+        "anxiolytic": 0.80,
+        "counseling": 0.90,
+        "psychiatric_evaluation": 0.95
+      },
+      "contraindicated_treatments": ["basic_bandage", "tourniquet", "surgery"]
+    },
+    "68566005": {
+      "name": "Urinary tract infection",
+      "category": "disease",
+      "primary_treatments": {
+        "POI": ["hydration", "pain_relief"],
+        "Role1": ["antibiotics", "urine_culture", "iv_fluids"],
+        "Role2": ["iv_antibiotics", "imaging"],
+        "Role3": ["urology_consult", "sepsis_workup"]
+      },
+      "utility_scores": {
+        "hydration": 0.75,
+        "antibiotics": 0.95,
+        "urine_culture": 0.85,
+        "iv_antibiotics": 0.92,
+        "urology_consult": 0.80
+      },
+      "contraindicated_treatments": ["basic_bandage", "tourniquet", "surgery"]
+    },
+    "195662009": {
+      "name": "Acute respiratory illness",
+      "category": "disease",
+      "primary_treatments": {
+        "POI": ["oxygen", "bronchodilator"],
+        "Role1": ["nebulizer", "steroids", "chest_xray"],
+        "Role2": ["iv_antibiotics", "bipap", "blood_gas"],
+        "Role3": ["intubation", "icu_care", "ventilator"]
+      },
+      "utility_scores": {
+        "oxygen": 0.95,
+        "bronchodilator": 0.85,
+        "nebulizer": 0.88,
+        "steroids": 0.82,
+        "intubation": 0.98
+      }
+    }
+  },
+  "urgency_parameters": {
+    "golden_hour_treatments": {
+      "tourniquet": {"max_minutes": 120, "decay_rate": 0.02},
+      "blood_transfusion": {"max_minutes": 60, "decay_rate": 0.03},
+      "damage_control_surgery": {"max_minutes": 180, "decay_rate": 0.015},
+      "airway_management": {"max_minutes": 10, "decay_rate": 0.1}
+    }
+  },
+  "facility_capabilities": {
+    "POI": {
+      "available_treatments": ["tourniquet", "pressure_dressing", "morphine_autoinjector", "buddy_aid", "basic_bandage", "psychological_first_aid", "oral_rehydration", "cooling", "splint"],
+      "max_treatment_time": 30,
+      "resource_limits": {"supplies": 20, "personnel": 2}
+    },
+    "Role1": {
+      "available_treatments": ["tourniquet", "pressure_dressing", "morphine", "iv_fluids", "antibiotics", "splint", "hemostatic_gauze", "chest_seal", "anxiolytic", "counseling"],
+      "max_treatment_time": 60,
+      "resource_limits": {"supplies": 50, "personnel": 5}
+    },
+    "Role2": {
+      "available_treatments": ["blood_transfusion", "damage_control_surgery", "chest_tube", "surgical_exploration", "iv_antibiotics", "bipap", "psychiatric_evaluation"],
+      "max_treatment_time": 180,
+      "resource_limits": {"supplies": 100, "personnel": 15, "blood_units": 20, "operating_rooms": 2}
+    },
+    "Role3": {
+      "available_treatments": ["definitive_surgery", "icu_care", "neurosurgery", "orthopedic_surgery", "skin_grafting", "dialysis", "ventilator", "all"],
+      "max_treatment_time": 480,
+      "resource_limits": {"supplies": 500, "personnel": 50, "blood_units": 100, "operating_rooms": 8}
+    }
+  },
+  "default_fallbacks": {
+    "POI": "pressure_dressing",
+    "Role1": "iv_fluids",
+    "Role2": "supportive_care",
+    "Role3": "comprehensive_assessment"
+  }
+}

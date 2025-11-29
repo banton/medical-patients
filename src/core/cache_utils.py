@@ -226,8 +226,10 @@ async def cache_job_status(job: Job) -> None:
             "phase_progress": job.progress_details.phase_progress,
             "total_patients": job.progress_details.total_patients,
             "processed_patients": job.progress_details.processed_patients,
-            "time_estimates": job.progress_details.time_estimates
-        } if job.progress_details else None
+            "time_estimates": job.progress_details.time_estimates,
+        }
+        if job.progress_details
+        else None,
     }
 
     try:
@@ -371,8 +373,8 @@ async def get_cache_stats() -> Dict[str, Any]:
             "ttls": {
                 "api_key_limits": API_KEY_LIMITS_TTL,
                 "configuration": CONFIGURATION_TTL,
-                "job_status": JOB_STATUS_TTL
-            }
+                "job_status": JOB_STATUS_TTL,
+            },
         }
     except Exception as e:
         logger.error(f"Failed to get cache stats: {e}")

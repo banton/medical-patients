@@ -79,11 +79,14 @@ class PatientGenerationPipeline:
         # Stage 1: Generate base patients
         patient_count = 0
         async for patient in self._generate_base_patients(context):
-            # Stage 2: Add demographics
-            patient = await self._add_demographics(patient, context)
-
-            # Stage 3: Add medical conditions
+            # Stage 2: Add medical conditions FIRST (needed for flow simulation)
             patient = await self._add_medical_conditions(patient, context)
+
+            # Stage 3: Run flow simulation with medical conditions available
+            await to_thread(self.flow_simulator._simulate_patient_flow_single, patient)
+
+            # Stage 4: Add demographics (can be done after flow simulation)
+            patient = await self._add_demographics(patient, context)
 
             # Yield for streaming processing
             patient_dict = patient.to_dict()
@@ -107,8 +110,10 @@ class PatientGenerationPipeline:
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
-        # This would initialize any necessary state in the generators
-        # For now, we'll use the existing synchronous initialization
+        # Update the flow simulator's patient count if it was overridden
+        if hasattr(self.flow_simulator, "total_patients_to_generate"):
+            self.flow_simulator.total_patients_to_generate = context.config.total_patients
+            print(f"🔧 Updated flow simulator patient count to: {context.config.total_patients}")
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate base patients - check for temporal vs legacy generation."""
@@ -146,8 +151,8 @@ class PatientGenerationPipeline:
         # The flow simulator already has access to the config via config_manager
         patient = await to_thread(self.flow_simulator._create_initial_patient, patient_id)
 
-        # CRITICAL: Run the enhanced flow simulation for evacuation timeline tracking
-        await to_thread(self.flow_simulator._simulate_patient_flow_single, patient)
+        # NOTE: Flow simulation moved to after medical conditions are set
+        # so that medical bridge has conditions to work with
 
         return patient
 
@@ -229,6 +234,14 @@ class AsyncPatientGenerationService:
         self.config_manager.load_configuration(config_id)
 
         # Initialize components with config manager
+        # Enable medical simulation for enhanced realistic patient data
+        import os
+
+        os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
+        os.environ["ENABLE_TREATMENT_UTILITY_MODEL"] = "true"
+        os.environ["ENABLE_MARKOV_CHAIN"] = "true"
+        os.environ["ENABLE_WARFARE_MODIFIERS"] = "true"
+
         # Use cached services' generators
         self.pipeline = PatientGenerationPipeline(
             flow_simulator=PatientFlowSimulator(self.config_manager),

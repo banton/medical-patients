@@ -148,29 +148,32 @@ class PatientGeneratorApp:
                 demographics = self.demographics_generator.generate_person(patient.nationality, patient.gender)
                 patient.set_demographics(demographics)
             elif phase == "medical":
-                multiple_conditions_chance = 0.0
-                if patient.triage_category == "T1":
-                    multiple_conditions_chance = 0.7
-                elif patient.triage_category == "T2":
-                    multiple_conditions_chance = 0.4
-                elif patient.triage_category == "T3":
-                    multiple_conditions_chance = 0.2
-                if patient.injury_type == "BATTLE_TRAUMA":
-                    multiple_conditions_chance += 0.2
+                # Only generate conditions if they don't already exist
+                # (warfare modifiers may have already set them)
+                if not patient.primary_conditions:
+                    multiple_conditions_chance = 0.0
+                    if patient.triage_category == "T1":
+                        multiple_conditions_chance = 0.7
+                    elif patient.triage_category == "T2":
+                        multiple_conditions_chance = 0.4
+                    elif patient.triage_category == "T3":
+                        multiple_conditions_chance = 0.2
+                    if patient.injury_type == "BATTLE_TRAUMA":
+                        multiple_conditions_chance += 0.2
 
-                if random.random() < multiple_conditions_chance:
-                    condition_count = random.randint(2, 3)
-                    primary_conditions = self.condition_generator.generate_multiple_conditions(
-                        patient.injury_type, patient.triage_category, condition_count
-                    )
-                    patient.primary_conditions = primary_conditions
-                    patient.primary_condition = primary_conditions[0] if primary_conditions else None
-                else:
-                    primary_condition = self.condition_generator.generate_condition(
-                        patient.injury_type, patient.triage_category
-                    )
-                    patient.primary_condition = primary_condition
-                    patient.primary_conditions = [primary_condition] if primary_condition else []
+                    if random.random() < multiple_conditions_chance:
+                        condition_count = random.randint(2, 3)
+                        primary_conditions = self.condition_generator.generate_multiple_conditions(
+                            patient.injury_type, patient.triage_category, condition_count
+                        )
+                        patient.primary_conditions = primary_conditions
+                        patient.primary_condition = primary_conditions[0] if primary_conditions else None
+                    else:
+                        primary_condition = self.condition_generator.generate_condition(
+                            patient.injury_type, patient.triage_category
+                        )
+                        patient.primary_condition = primary_condition
+                        patient.primary_conditions = [primary_condition] if primary_condition else []
 
                 additional_count = 0
                 if patient.triage_category == "T1":
@@ -192,6 +195,21 @@ class PatientGeneratorApp:
                 patient.allergies = (
                     self.condition_generator.generate_allergies(random.randint(0, 1)) if random.random() < 0.1 else []
                 )
+
+                # Regenerate treatments using utility model now that conditions are set
+                if (
+                    hasattr(self, "flow_simulator")
+                    and hasattr(self.flow_simulator, "treatment_model")
+                    and self.flow_simulator.treatment_model
+                ):
+                    # Update treatments in treatment history using utility model
+                    for treatment_entry in patient.treatment_history:
+                        if treatment_entry.get("treatments"):
+                            facility = treatment_entry.get("facility", "POI")
+                            # Get improved treatments using utility model
+                            improved_treatments = self.flow_simulator._generate_treatments(patient, facility)
+                            # Update the treatments
+                            treatment_entry["treatments"] = improved_treatments
         return patients
 
     # FHIR bundle creation disabled
