@@ -171,6 +171,16 @@ class DeathTracker:
         if initial_health < 20:
             return False
 
+        # Handle datetime objects - convert to minutes if possible
+        # If time_of_death is a datetime, we can't determine golden hour without injury time
+        # In this case, check if no treatments were given (conservative approach)
+        from datetime import datetime
+
+        if isinstance(time_of_death, datetime):
+            # Without injury time, we can't calculate elapsed minutes
+            # Fall back to simple check: no treatment = potentially preventable
+            return initial_health >= 20 and not treatments
+
         # Deaths after golden hour are generally not preventable
         if time_of_death > self.golden_hour_threshold:
             return False

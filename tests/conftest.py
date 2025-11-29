@@ -17,7 +17,7 @@ def pytest_addoption(parser):
         pass
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def base_url(request):
     """Get base URL from command line option"""
     return request.config.getoption("--base-url")

@@ -13,11 +13,6 @@ pytestmark = [pytest.mark.integration]
 class TestHealthEndpoints:
     """Test health check endpoints."""
 
-    @pytest.fixture()
-    def base_url(self):
-        """Base URL for tests."""
-        return "http://localhost:8000"
-
     def test_liveness_probe(self, client):
         """Test liveness probe endpoint."""
         response = client.get("/api/v1/health/live")

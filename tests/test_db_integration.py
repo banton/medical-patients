@@ -11,6 +11,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import pytest
 import redis
+
+# Skip entire module if testcontainers not installed
+pytest.importorskip("testcontainers")
+
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 

@@ -62,31 +62,34 @@ def test_treatment_application():
 
     new_health, new_deterioration, info = tm.apply_treatment("tourniquet", initial_health, initial_deterioration)
 
-    assert new_health == 35  # +5 health boost
-    assert new_deterioration == 5.0  # 25 * 0.2 = 5
+    # Tourniquet: health_boost=0, deterioration_modifier=0.3
+    assert new_health == 30  # No health boost (tourniquet slows bleeding, doesn't heal)
+    assert new_deterioration == 7.5  # 25 * 0.3 = 7.5
     assert info["name"] == "tourniquet"
     assert info["duration_hours"] == 2
 
     # Apply blood transfusion
     new_health2, new_deterioration2, info2 = tm.apply_treatment("blood_transfusion", new_health, new_deterioration)
 
-    assert new_health2 == 55  # +20 health boost
-    assert new_deterioration2 == 2.5  # 5 * 0.5 = 2.5
+    # Blood transfusion: health_boost=0, deterioration_modifier=0.4
+    assert new_health2 == 30  # No immediate health boost
+    assert new_deterioration2 == 3.0  # 7.5 * 0.4 = 3.0
 
 
 def test_stacked_treatments():
     """Test multiple treatments stack with diminishing returns"""
     tm = TreatmentModifiers()
 
-    # Single treatment
+    # Single treatment - tourniquet has deterioration_modifier=0.3
     single = tm.calculate_stacked_effects([{"name": "tourniquet"}])
-    assert abs(single - 0.2) < 0.01  # Tourniquet alone (with floating point tolerance)
+    assert abs(single - 0.3) < 0.01  # Tourniquet alone (with floating point tolerance)
 
-    # Two treatments
+    # Two treatments - diminishing returns apply
     double = tm.calculate_stacked_effects([{"name": "tourniquet"}, {"name": "iv_fluids"}])
-    # Second treatment at 80% effectiveness
-    # 0.2 * (1 - (1-0.7)*0.8) = 0.2 * 0.76 = 0.152
-    assert 0.15 < double < 0.16
+    # tourniquet: 0.3 (full effect)
+    # iv_fluids (modifier=0.6): effective_modifier = 1.0 - (1-0.6)*0.8 = 0.68
+    # combined = 0.3 * 0.68 ≈ 0.204
+    assert 0.19 < double < 0.22
 
     # Three treatments show further diminishing returns
     triple = tm.calculate_stacked_effects([{"name": "tourniquet"}, {"name": "iv_fluids"}, {"name": "morphine"}])

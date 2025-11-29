@@ -67,14 +67,14 @@ class TestPatientFlowOrchestrator:
         assert len(patient.treatments_received) == 1
 
     def test_apply_treatment_death(self):
-        """Test treatment failure leading to death."""
+        """Test patient death due to deterioration."""
         patient = self.orchestrator.initialize_patient("P005", "gunshot", "critical", "POI")
-        patient.current_health = 5  # Near death
 
-        # Apply treatment that won't save them
-        [{"name": "basic_bandage", "applied_at": datetime.now()}]
+        # Set health near death - T3 deteriorates at ~4.0/hour (0.067/min)
+        # At health 1, patient will die within first minute of deterioration
+        patient.current_health = 1
 
-        # First deteriorate heavily
+        # Deteriorate - should cause death
         self.orchestrator.simulate_deterioration("P005", 30)
 
         assert patient.state == PatientState.DIED
