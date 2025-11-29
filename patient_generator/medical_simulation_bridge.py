@@ -231,7 +231,7 @@ class MedicalSimulationBridge:
             return
 
         # Medic arrives and performs triage (may be incorrect)
-        triage_category, initial_facility = self.orchestrator.process_triage(sim_patient_id)
+        _triage_category, initial_facility = self.orchestrator.process_triage(sim_patient_id)
 
         # APPLY INITIAL FIELD TREATMENTS (Critical Fix)
         # Medic should apply treatments immediately upon arrival, before evacuation wait
