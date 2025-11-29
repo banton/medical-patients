@@ -272,7 +272,7 @@ class Patient:
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert patient to optimized JSON-serializable dictionary.
-        - Removes null values
+        - Removes null values and empty collections
         - Rounds floats to 1 decimal
         - Uses numeric severity scale
         - Eliminates redundancy
@@ -290,13 +290,40 @@ class Patient:
                 return round(value)  # Python's round() does proper mathematical rounding
             return value
 
+        def clean_value(v):
+            """Recursively clean null/empty values from nested structures"""
+            if isinstance(v, dict):
+                cleaned = {k: clean_value(val) for k, val in v.items() if val is not None and val not in ([], {})}
+                return cleaned if cleaned else None
+            if isinstance(v, list):
+                cleaned = [clean_value(item) for item in v if item is not None]
+                cleaned = [item for item in cleaned if item is not None and item not in ({}, [])]
+                return cleaned if cleaned else None
+            return v
+
+        def format_timestamp(dt):
+            """Format timestamp compactly: 2024-03-15T06:42:00Z (20 bytes vs 34)"""
+            if dt is None:
+                return None
+            if isinstance(dt, str):
+                # Already a string - try to compact it
+                return dt.replace(".000000", "").replace("+00:00", "Z")
+            if hasattr(dt, "replace"):
+                # Strip microseconds and format with Z for UTC
+                dt = dt.replace(microsecond=0)
+            if hasattr(dt, "isoformat"):
+                iso = dt.isoformat()
+                # Replace +00:00 with Z for UTC
+                return iso.replace("+00:00", "Z")
+            return str(dt)
+
         # Build optimized output
         result = {
             "id": self.id,
             "nationality": self.nationality,
             "gender": self.gender or (self.demographics.get("gender") if self.demographics else None),
             "injury_type": self.injury_type,
-            "triage": self.triage_category,  # Keep triage category (T1-T4)
+            "triage_category": self.triage_category,  # Keep full name for viewer compatibility
             "status": self.current_status,
             "front": self.front,
         }
@@ -366,21 +393,18 @@ class Patient:
                 for k, v in event.items():
                     if v is not None:
                         if isinstance(v, (datetime.datetime, datetime.date)) or hasattr(v, "isoformat"):
-                            clean_event[k] = v.isoformat()
+                            clean_event[k] = format_timestamp(v)
                         elif isinstance(v, float):
                             clean_event[k] = round_float(v)
                         else:
                             clean_event[k] = v
                 timeline.append(clean_event)
             if timeline:
-                result["timeline"] = timeline
+                result["movement_timeline"] = timeline  # Keep full name for viewer compatibility
 
-        # Add injury time if present
+        # Add injury time if present (compact format)
         if self.injury_timestamp:
-            if hasattr(self.injury_timestamp, "isoformat"):
-                result["injury_time"] = self.injury_timestamp.isoformat()
-            elif isinstance(self.injury_timestamp, str):
-                result["injury_time"] = self.injury_timestamp
+            result["injury_time"] = format_timestamp(self.injury_timestamp)
 
         # Add scenario info if present
         if hasattr(self, "warfare_scenario") and self.warfare_scenario:
@@ -394,21 +418,20 @@ class Patient:
         if self.day_of_injury:
             result["day"] = self.day_of_injury
 
-        # Add timeline events from medical simulation if present
-        if hasattr(self, "timeline_events") and self.timeline_events:
-            result["events"] = self.timeline_events
+        # NOTE: timeline_events removed - already included in movement_timeline (Phase 4 optimization)
 
         # Add body part if present
         if self.body_part:
             result["body_part"] = self.body_part
 
-        return result
+        # Apply recursive cleanup to remove any remaining null/empty values
+        return clean_value(result) or {}
 
     def to_json(self) -> str:
         """
-        Convert patient to JSON string.
+        Convert patient to JSON string (compact format).
         """
-        return json.dumps(self.to_dict(), indent=2)
+        return json.dumps(self.to_dict(), separators=(",", ":"))
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Patient":
