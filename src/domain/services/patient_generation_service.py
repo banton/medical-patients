@@ -313,10 +313,10 @@ class AsyncPatientGenerationService:
                     if format == "json":
                         # Handle JSON array formatting
                         if not first_patient:
-                            stream.write(",\n")
+                            stream.write(",")
 
-                        # Use patient_data from generator (already converted to dict)
-                        json.dump(patient_data, stream, indent=2)
+                        # Use patient_data from generator (compact JSON, no indentation)
+                        json.dump(patient_data, stream, separators=(",", ":"))
                     elif format == "xml":
                         # Use formatter for XML
                         await to_thread(formatter.format_xml, [patient_data], stream)

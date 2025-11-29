@@ -90,23 +90,19 @@ class OutputFormatter:
         }
 
         if stream:
-            # Memory-efficient streaming for large datasets
-            stream.write("{\n")
-            stream.write('  "metadata": ')
-            json.dump(metadata["metadata"], stream, indent=2)
-            stream.write(",\n")
-            stream.write('  "patients": [\n')
+            # Memory-efficient streaming for large datasets (compact JSON)
+            stream.write('{"metadata":')
+            json.dump(metadata["metadata"], stream, separators=(",", ":"))
+            stream.write(',"patients":[')
             for i, bundle in enumerate(bundles):
                 if i > 0:
-                    stream.write(",\n")
-                # Indent each patient record properly
-                patient_json = json.dumps(bundle, indent=2)
-                indented_patient = "\n".join("    " + line for line in patient_json.split("\n"))
-                stream.write(indented_patient)
-            stream.write("\n  ]\n}")
+                    stream.write(",")
+                # Compact JSON without indentation
+                json.dump(bundle, stream, separators=(",", ":"))
+            stream.write("]}")
             return None
-        # Standard in-memory approach for smaller datasets
-        return json.dumps(metadata, indent=2)
+        # Standard in-memory approach for smaller datasets (compact)
+        return json.dumps(metadata, separators=(",", ":"))
 
     def format_xml(self, bundles, stream=None):
         """Format bundles as XML, optionally using a stream for memory efficiency"""
