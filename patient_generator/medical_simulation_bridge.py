@@ -575,9 +575,9 @@ class MedicalSimulationBridge:
             # Define POI-only treatments (field emergency treatments)
             poi_only_treatments = {'tourniquet', 'pressure_bandage', 'hemostatic_agent', 'hemostatic_gauze'}
 
-            if protocol_treatments:
-                treatments = []
-                for treatment_name in protocol_treatments[:3]:  # Limit to 3 treatments
+            if treatments:
+                filtered_treatments = []
+                for treatment_name in treatments[:3]:  # Limit to 3 treatments
                     # Skip if already applied
                     if treatment_name in already_applied:
                         continue
@@ -586,15 +586,15 @@ class MedicalSimulationBridge:
                     if treatment_name in poi_only_treatments and facility_str not in ['POI', 'point_of_injury']:
                         continue
 
-                    treatments.append({
+                    filtered_treatments.append({
                         "name": treatment_name,
                         "applied_at": base_time,
                         "protocol_based": True
                     })
 
-                if treatments:  # Only return if we have new treatments
-                    self.metrics["treatment_selections"] += len(treatments)
-                    return treatments
+                if filtered_treatments:  # Only return if we have new treatments
+                    self.metrics["treatment_selections"] += len(filtered_treatments)
+                    return filtered_treatments
 
         # Use utility model if available
         if self.treatment_model and self.utility_model_enabled and patient:

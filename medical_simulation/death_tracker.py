@@ -61,38 +61,63 @@ class DeathTracker:
         Track a patient death with full details.
 
         Args:
-            patient_data: Dictionary containing:
-                - id: Patient identifier
-                - injury_type: Type of injury
-                - initial_health: Starting health score
-                - health_timeline: List of health states over time
+            patient_data: Dictionary containing either:
+                Format 1 (from orchestrator):
+                    - patient_id: Patient identifier
+                    - time_of_death: When death occurred (datetime or minutes)
+                    - location: Where death occurred
+                    - cause: Cause of death
+                    - injury_type: Type of injury
+                    - initial_health: Starting health score
+                    - final_health: Health at death
+                    - treatments: List of treatments received
+                Format 2 (legacy):
+                    - id: Patient identifier
+                    - injury_type: Type of injury
+                    - initial_health: Starting health score
+                    - health_timeline: List of health states over time
 
         Returns:
             Death record with category and analysis
         """
-        # Extract death information from timeline
-        timeline = patient_data.get("health_timeline", [])
-        if not timeline:
-            return {}
+        # Handle Format 1 (from orchestrator) - preferred format
+        if "patient_id" in patient_data or "time_of_death" in patient_data:
+            # Direct format from orchestrator
+            death_info = {
+                "time_of_death": patient_data.get("time_of_death", 0),
+                "location": patient_data.get("location", "Unknown"),
+                "health_at_death": patient_data.get("final_health", 0),
+                "injury_type": patient_data.get("injury_type", "Unknown"),
+            }
+            patient_id = patient_data.get("patient_id", patient_data.get("id", "Unknown"))
+            initial_health = patient_data.get("initial_health", 50)
+            treatments = patient_data.get("treatments", patient_data.get("treatments_applied", []))
+        else:
+            # Handle Format 2 (legacy with health_timeline)
+            timeline = patient_data.get("health_timeline", [])
+            if not timeline:
+                return {}
 
-        # Find death event (health = 0)
-        death_event = None
-        for event in timeline:
-            if event.get("health", 100) <= 0:
-                death_event = event
-                break
+            # Find death event (health = 0)
+            death_event = None
+            for event in timeline:
+                if event.get("health", 100) <= 0:
+                    death_event = event
+                    break
 
-        if not death_event:
-            # No death found in timeline
-            return {}
+            if not death_event:
+                # No death found in timeline
+                return {}
 
-        # Build death info for categorization
-        death_info = {
-            "time_of_death": death_event.get("time", 0),
-            "location": death_event.get("location", "Unknown"),
-            "health_at_death": death_event.get("health", 0),
-            "injury_type": patient_data.get("injury_type", "Unknown"),
-        }
+            death_info = {
+                "time_of_death": death_event.get("time", 0),
+                "location": death_event.get("location", "Unknown"),
+                "health_at_death": death_event.get("health", 0),
+                "injury_type": patient_data.get("injury_type", "Unknown"),
+            }
+            patient_id = patient_data.get("id", "Unknown")
+            initial_health = patient_data.get("initial_health", 50)
+            treatments = patient_data.get("treatments_applied", [])
 
         # Categorize the death
         category = self.categorize_death(death_info)
@@ -100,21 +125,22 @@ class DeathTracker:
         # Determine preventability
         preventability_info = {
             "time_of_death": death_info["time_of_death"],
-            "treatments_applied": patient_data.get("treatments_applied", []),
+            "treatments_applied": treatments,
             "location": death_info["location"],
-            "initial_health": patient_data.get("initial_health", 50),
+            "initial_health": initial_health,
         }
         preventable = self.determine_preventability(preventability_info)
 
         # Create death record
         death_record = {
-            "patient_id": patient_data.get("id", "Unknown"),
+            "patient_id": patient_id,
             "death_category": category,
             "time_of_death": death_info["time_of_death"],
             "location_of_death": death_info["location"],
             "preventable": preventable,
-            "injury_type": patient_data.get("injury_type", "Unknown"),
-            "initial_health": patient_data.get("initial_health", 50),
+            "injury_type": death_info["injury_type"],
+            "initial_health": initial_health,
+            "cause": patient_data.get("cause", "Unknown"),
         }
 
         # Store the record

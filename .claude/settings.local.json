@@ -6,7 +6,17 @@
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true ENABLE_MEDICAL_SIMULATION=true python3 run_generator.py --patients 1000 --output test_no_health_boosts --formats json)",
       "Bash(python3:*)",
       "Bash(ENABLE_TREATMENT_UTILITY_MODEL=true ENABLE_MARKOV_CHAIN=true ENABLE_WARFARE_MODIFIERS=true ENABLE_MEDICAL_SIMULATION=true python3 run_generator.py --patients 1000 --output test_treatment_fixes --formats json)",
-      "mcp__dementia__memory_update"
+      "mcp__dementia__memory_update",
+      "Bash(gh pr:*)",
+      "Bash(gh run list:*)",
+      "Bash(cat:*)",
+      "Bash(gh run view:*)",
+      "Bash(make lint:*)",
+      "mcp__filesystem__read_multiple_files",
+      "Bash(python -m pytest tests/test_patient_flow_orchestrator.py -v --tb=short)",
+      "mcp__filesystem__directory_tree",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": [],

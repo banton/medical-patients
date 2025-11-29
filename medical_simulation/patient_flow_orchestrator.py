@@ -65,6 +65,7 @@ class Patient:
     treatments_received: List[Dict] = None
     timeline: List[Dict] = None
     died_at: Optional[datetime] = None
+    discharged_at: Optional[datetime] = None
 
     # Diagnostic uncertainty fields
     true_condition: Optional[str] = None  # True SNOMED condition code
@@ -631,7 +632,19 @@ class PatientFlowOrchestrator:
             )
 
             return True
-        # Facility full, find overflow
+        # Facility full, find overflow (with retry limit to prevent infinite loops)
+        max_overflow_attempts = 3
+        overflow_attempts = getattr(patient, "_overflow_attempts", 0)
+
+        if overflow_attempts >= max_overflow_attempts:
+            # Too many overflow attempts, cannot place patient
+            patient.timeline.append({
+                "timestamp": self.simulation_time,
+                "event": "overflow_limit_reached",
+                "attempted_destination": patient.destination,
+            })
+            return False
+
         routing_result = self.overflow_router.route_patient(
             patient_id,
             patient.triage_category,
@@ -640,6 +653,7 @@ class PatientFlowOrchestrator:
         new_destination = routing_result.get("routed_to")
         if new_destination:
             patient.destination = new_destination
+            patient._overflow_attempts = overflow_attempts + 1
             self.metrics["facility_overflow_events"] += 1
             return self.transport_patient(patient_id, new_destination) is not None
         return False
