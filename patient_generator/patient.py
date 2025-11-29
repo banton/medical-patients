@@ -293,11 +293,11 @@ class Patient:
         def clean_value(v):
             """Recursively clean null/empty values from nested structures"""
             if isinstance(v, dict):
-                cleaned = {k: clean_value(val) for k, val in v.items() if val is not None and val != [] and val != {}}
+                cleaned = {k: clean_value(val) for k, val in v.items() if val is not None and val not in ([], {})}
                 return cleaned if cleaned else None
-            elif isinstance(v, list):
+            if isinstance(v, list):
                 cleaned = [clean_value(item) for item in v if item is not None]
-                cleaned = [item for item in cleaned if item is not None and item != {} and item != []]
+                cleaned = [item for item in cleaned if item is not None and item not in ({}, [])]
                 return cleaned if cleaned else None
             return v
 
