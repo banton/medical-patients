@@ -5,6 +5,44 @@ All notable changes to the Military Medical Exercise Patient Generator will be d
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-11-29
+
+### Added
+- **Enhanced Medical Simulation System (PR #19)**
+  - Realistic treatment protocol system with SNOMED CT procedure mappings
+  - Body part tracking for injuries (Head, Torso, Left/Right Arm, Left/Right Leg)
+  - Health score engine with deterioration and improvement mechanics
+  - Treatment effectiveness modeling by facility level (POI → Role 4)
+  - Markov chain health state transitions for realistic patient outcomes
+
+- **Treatment Protocol Features**
+  - Facility-specific treatment capabilities (basic → advanced care)
+  - Treatment success rates based on facility level and patient condition
+  - SNOMED CT coded procedures for interoperability
+  - Health impact tracking (health_before/health_after for each treatment)
+
+- **Patient Flow Enhancements**
+  - Triage category assignment (T1-T3) based on health scores
+  - Transport type selection (ground/air ambulance) based on urgency
+  - Facility capacity management with overflow routing
+  - Evacuation time modeling between facilities
+
+- **Mortality and Outcomes**
+  - Realistic mortality rates (~20-35% depending on scenario intensity)
+  - DOW (Died of Wounds) status tracking
+  - RTD (Returned to Duty) outcome modeling
+  - Death event recording with cause (deterioration, KIA, etc.)
+
+### Changed
+- Patient timeline now includes detailed treatment events with health tracking
+- Facility progression includes treatment application at each level
+- Output JSON schema extended with `body_part`, `treatments`, and enhanced `timeline`
+
+### Fixed
+- Timeline events now properly record deaths before continuing simulation
+- Health scores properly bounded (0-100 range)
+- Triage reassignment based on health changes during transport
+
 ## [1.1.0] - 2025-06-19
 
 ### Added

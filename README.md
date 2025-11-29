@@ -54,11 +54,31 @@ This application generates simulated patient data for military medical exercises
 - **Database Schema Management**: Alembic migrations for robust schema versioning
 - **Background Job Processing**: Async patient generation with real-time progress tracking and job management
 
+- **Enhanced Medical Simulation** (v1.2.0): Realistic patient care modeling with:
+    - **Treatment Protocol System**: SNOMED CT coded procedures applied at each facility level
+    - **Body Part Tracking**: Injury localization (Head, Torso, Left/Right Arm, Left/Right Leg)
+    - **Health Score Engine**: Deterioration and improvement mechanics with Markov chain transitions
+    - **Facility-Specific Care**: Treatment capabilities scale from basic (POI) to advanced (Role 4)
+    - **Realistic Outcomes**: DOW (Died of Wounds), RTD (Returned to Duty), and continued care tracking
+    - **Treatment Effectiveness**: Health impact tracking (before/after) for each intervention
+
 ## Architecture
 
 The application features a clean, domain-driven architecture with clear separation of concerns. The codebase has been recently refactored (May 2024) to improve scalability, maintainability, and developer experience.
 
-### Recent Architecture Improvements (June 2025)
+### Recent Architecture Improvements
+
+#### November 2025 (v1.2.0)
+
+**✅ Enhanced Medical Simulation**: Comprehensive patient care modeling with treatment protocols, health tracking, and realistic outcomes.
+
+**✅ Treatment Protocol System**: SNOMED CT coded procedures with facility-specific capabilities and effectiveness modeling.
+
+**✅ Body Part Tracking**: Injury localization system supporting 6 anatomical regions for realistic trauma modeling.
+
+**✅ Health Score Engine**: Markov chain-based health transitions with deterioration, improvement, and treatment effects.
+
+#### June 2025 (v1.1.0)
 
 **✅ API Standardization**: Complete v1 API standardization with consistent request/response models, comprehensive validation, and proper error handling.
 
