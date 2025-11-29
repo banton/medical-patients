@@ -60,12 +60,12 @@ class PatientFlowSimulator:
 
         # Optional medical simulation enhancement
         self.use_medical_simulation = os.environ.get("ENABLE_MEDICAL_SIMULATION", "false").lower() == "true"
-        self.medical_bridge = None
+        # We will instantiate MedicalSimulationBridge per patient to avoid shared state issues
+        # self.medical_bridge = None
         if self.use_medical_simulation:
+            # Just check if we can import it
             try:
                 from .medical_simulation_bridge import MedicalSimulationBridge
-
-                self.medical_bridge = MedicalSimulationBridge()
                 print("Medical simulation enhancement enabled")
             except ImportError as e:
                 print(f"Warning: Could not import medical simulation bridge: {e}")
@@ -149,6 +149,7 @@ class PatientFlowSimulator:
             "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
             "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
             "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+            "Polytrauma": {"T1": 0.5, "T2": 0.35, "T3": 0.15},  # Polytrauma is usually severe
             # Uppercase variations
             "BATTLE_TRAUMA": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
             "NON_BATTLE_TRAUMA": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
@@ -413,8 +414,38 @@ class PatientFlowSimulator:
         actual_injury_time = self._get_date_for_day(patient.day_of_injury)
         patient.set_injury_timestamp(actual_injury_time)
 
+        # Assign body part based on injury type (MUST BE BEFORE add_treatment which triggers simulation)
+        patient.body_part = self._assign_body_part(patient.injury_type)
+
         patient.add_treatment(facility="POI", date=actual_injury_time)
         return patient
+
+    def _assign_body_part(self, injury_type: str) -> str:
+        """Assign a realistic body part based on injury type."""
+        injury_lower = injury_type.lower()
+        
+        if "amputation" in injury_lower:
+            return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
+        elif "brain" in injury_lower or "head" in injury_lower or "tbi" in injury_lower:
+            return "Head"
+        elif "chest" in injury_lower or "lung" in injury_lower or "abdominal" in injury_lower:
+            return "Torso"
+        elif "fracture" in injury_lower:
+            return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
+        elif "burn" in injury_lower:
+            return random.choice(["Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"])
+        else:
+            # Default weighted distribution for generic injuries
+            # Torso: 30%, Head: 15%, Arms: 25%, Legs: 30%
+            rand = random.random()
+            if rand < 0.30:
+                return "Torso"
+            elif rand < 0.45:
+                return "Head"
+            elif rand < 0.70:
+                return random.choice(["Left Arm", "Right Arm"])
+            else:
+                return random.choice(["Left Leg", "Right Leg"])
 
     def _simulate_patient_flow_single(self, patient: Patient):
         """
@@ -424,12 +455,21 @@ class PatientFlowSimulator:
         Now supports Markov chain for probabilistic routing (MILESTONE 3).
         """
         # Use medical simulation enhancement if enabled
-        if self.use_medical_simulation and self.medical_bridge:
-            # Enhance patient with medical simulation
-            patient = self.medical_bridge.enhance_patient(patient)
-            # If medical simulation handled the flow, we're done
-            if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
-                return
+        # Use medical simulation enhancement if enabled
+        if self.use_medical_simulation:
+            try:
+                from .medical_simulation_bridge import MedicalSimulationBridge
+                # Create a fresh bridge for this patient to ensure isolation
+                medical_bridge = MedicalSimulationBridge()
+                
+                # Enhance patient with medical simulation
+                patient = medical_bridge.enhance_patient(patient)
+                # If medical simulation handled the flow, we're done
+                if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
+                    return
+            except Exception as e:
+                print(f"Error in medical simulation for patient {patient.id}: {e}")
+                # Fall through to standard simulation
 
         # Use Markov chain if enabled, otherwise fall back to sequential flow
         if self.use_markov_chain and self.markov_chain:
@@ -874,26 +914,46 @@ class PatientFlowSimulator:
 
     def _get_injury_name(self, snomed_code: str) -> str:
         """Map SNOMED code to injury name"""
-        # Common injury mappings
+        # Convert numpy string if needed
+        code_str = str(snomed_code)
+        
+        # Combat injury mappings
         injury_names = {
+            # Battle trauma
+            "125670008": "War injury",
+            "262574004": "Bullet wound",
+            "125689001": "Shrapnel injury", 
+            "125605004": "Traumatic shock",
+            "19130008": "Traumatic brain injury",
             "125596004": "Injury by explosive",
+            "284551006": "Traumatic amputation of limb",
             "361220002": "Penetrating injury",
             "7200002": "Burn of skin",
-            "125689001": "Traumatic amputation",
-            "127294003": "Traumatic brain injury",
-            "275272006": "Injury of abdomen",
-            "125605004": "Fracture of bone",
-            "267036007": "Dyspnea",
-            "262574004": "Gunshot wound",
             "2055003": "Laceration of hand",
-            "409711008": "Crush injury",
-            "68566005": "Urinary tract injury",
-            "87991007": "Hemothorax",
-            "16932000": "Nausea and vomiting",
+            # Non-battle injuries
+            "37782003": "Fracture of bone",
+            "372963008": "Heat exhaustion",
+            "302914006": "Ankle sprain",
+            "55566008": "Burn injury",
+            "428794004": "Malnutrition",
+            "409711008": "Vehicle accident injury",
+            "275272006": "Crush injury",
+            "87991007": "Abdominal pain",
+            "23924001": "Tight chest",
+            "267036007": "Dyspnea",
+            # Diseases
+            "195662009": "Acute respiratory illness",
+            "43878008": "Streptococcal pharyngitis",
             "25374005": "Gastroenteritis",
+            "16932000": "Nausea and vomiting",
+            "68566005": "Urinary tract infection",
             "62315008": "Diarrhea",
+            "45170000": "Psychological stress",
+            "73249009": "Mental exhaustion",
+            "386661006": "Fever",
+            "9826008": "Conjunctivitis",
         }
-        return injury_names.get(str(snomed_code), f"Injury {snomed_code}")
+        return injury_names.get(code_str, f"Injury {code_str}")
 
     def _select_weighted_item(self, weights_dict: Dict[str, float]):
         if not weights_dict:
@@ -1093,6 +1153,9 @@ class PatientFlowSimulator:
         # Get warfare-specific triage distribution
         triage_weights = self._get_warfare_triage_weights(warfare_type, patient.injury_type, warfare_patterns)
         patient.triage_category = self._select_weighted_item(triage_weights)
+        
+        # Assign body part based on injury type
+        patient.body_part = self._assign_body_part(patient.injury_type)
 
         # Set demographics
         patient.gender = random.choice(["male", "female"])

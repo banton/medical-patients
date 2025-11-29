@@ -23,7 +23,7 @@ class FacilityCapacityManager:
         # Default military medical facility capacities
         self.facilities = {
             "Role1": {
-                "capacity": 20,
+                "capacity": 50,
                 "occupied": 0,
                 "patients": [],
                 "queue": deque(),
@@ -31,6 +31,13 @@ class FacilityCapacityManager:
             },
             "Role2": {"capacity": 60, "occupied": 0, "patients": [], "queue": deque(), "overflow_threshold": 0.85},
             "Role3": {"capacity": 200, "occupied": 0, "patients": [], "queue": deque(), "overflow_threshold": 0.9},
+            "Role4": {
+                "capacity": 9999,  # Effectively infinite - homeland hospitals
+                "occupied": 0,
+                "patients": [],
+                "queue": deque(),
+                "overflow_threshold": 1.0,  # Never triggers overflow
+            },
             "CSU": {
                 "capacity": 50,
                 "occupied": 0,
@@ -242,11 +249,12 @@ class FacilityCapacityManager:
 
     def get_overflow_recommendation(self, facility: str) -> Dict[str, str]:
         """Get recommended overflow facilities"""
-        # Standard overflow cascade
+        # Standard overflow cascade - always forward in care chain
         overflow_routes = {
             "Role1": ["CSU", "Role2"],
             "Role2": ["Role3"],
-            "Role3": [],  # No overflow from Role3
+            "Role3": ["Role4"],  # Role3 can overflow to Role4
+            "Role4": [],  # No overflow from Role4 (homeland hospitals)
             "CSU": ["Role2", "Role3"],
         }
 

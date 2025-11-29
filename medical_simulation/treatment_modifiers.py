@@ -22,21 +22,21 @@ class TreatmentModifiers:
         return {
             # Immediate interventions (Role 1 / POI)
             "tourniquet": {
-                "health_boost": 15,
+                "health_boost": 0,
                 "deterioration_modifier": 0.3,  # Reduces bleeding by 80%
                 "duration_hours": 2,  # Needs replacement/adjustment
                 "facility_required": "any",
                 "time_to_apply_minutes": 1,
             },
             "pressure_dressing": {
-                "health_boost": 10,
+                "health_boost": 0,
                 "deterioration_modifier": 0.4,
                 "duration_hours": 4,
                 "facility_required": "any",
                 "time_to_apply_minutes": 2,
             },
             "hemostatic_agent": {
-                "health_boost": 12,
+                "health_boost": 0,
                 "deterioration_modifier": 0.35,
                 "duration_hours": 6,
                 "facility_required": "any",
@@ -44,21 +44,21 @@ class TreatmentModifiers:
             },
             # Basic medical care (Role 1+)
             "iv_fluids": {
-                "health_boost": 20,
+                "health_boost": 0,
                 "deterioration_modifier": 0.6,
                 "duration_hours": 8,
                 "facility_required": "role1",
                 "time_to_apply_minutes": 5,
             },
             "morphine": {
-                "health_boost": 5,  # Pain relief, not healing
+                "health_boost": 0,  # Pain relief, not healing
                 "deterioration_modifier": 0.9,  # Slight benefit from reduced stress
                 "duration_hours": 4,
                 "facility_required": "role1",
                 "time_to_apply_minutes": 2,
             },
             "antibiotics": {
-                "health_boost": 8,
+                "health_boost": 0,
                 "deterioration_modifier": 0.8,
                 "duration_hours": 24,
                 "facility_required": "role1",
@@ -66,21 +66,21 @@ class TreatmentModifiers:
             },
             # Advanced interventions (Role 2+)
             "blood_transfusion": {
-                "health_boost": 30,
+                "health_boost": 0,
                 "deterioration_modifier": 0.4,
                 "duration_hours": 12,
                 "facility_required": "role2",
                 "time_to_apply_minutes": 15,
             },
             "chest_tube": {
-                "health_boost": 25,
+                "health_boost": 0,
                 "deterioration_modifier": 0.3,
                 "duration_hours": 48,
                 "facility_required": "role2",
                 "time_to_apply_minutes": 10,
             },
             "surgical_stabilization": {
-                "health_boost": 35,
+                "health_boost": 0,
                 "deterioration_modifier": 0.2,
                 "duration_hours": 72,
                 "facility_required": "role2",
@@ -88,14 +88,14 @@ class TreatmentModifiers:
             },
             # Definitive care (Role 3)
             "major_surgery": {
-                "health_boost": 45,
+                "health_boost": 0,
                 "deterioration_modifier": 0.1,
                 "duration_hours": 168,  # 1 week
                 "facility_required": "role3",
                 "time_to_apply_minutes": 120,
             },
             "organ_repair": {
-                "health_boost": 40,
+                "health_boost": 0,
                 "deterioration_modifier": 0.15,
                 "duration_hours": 168,
                 "facility_required": "role3",

@@ -386,7 +386,8 @@ class TreatmentProtocolManager:
         snomed_code: str, 
         facility: FacilityLevel,
         severity: str = "moderate",
-        time_elapsed_minutes: int = 0
+        time_elapsed_minutes: int = 0,
+        body_part: Optional[str] = None
     ) -> List[str]:
         """
         Get appropriate treatments for an injury at a specific facility.
@@ -396,6 +397,7 @@ class TreatmentProtocolManager:
             facility: Current medical facility level
             severity: Injury severity (affects treatment selection)
             time_elapsed_minutes: Time since injury occurred
+            body_part: Anatomical location of injury (optional)
             
         Returns:
             List of appropriate treatment names
@@ -403,7 +405,7 @@ class TreatmentProtocolManager:
         protocol = self.get_protocol(snomed_code)
         if not protocol:
             # Fallback to generic trauma protocol
-            return self._get_generic_treatments(facility, severity)
+            return self._get_generic_treatments(facility, severity, body_part)
         
         treatments = []
         
@@ -418,6 +420,10 @@ class TreatmentProtocolManager:
         # Filter out contraindicated treatments
         treatments = [t for t in treatments if t not in protocol.contraindicated_treatments]
         
+        # Filter based on body part constraints
+        if body_part:
+            treatments = [t for t in treatments if self._validate_treatment_for_body_part(t, body_part)]
+        
         # Prioritize based on critical time window
         if time_elapsed_minutes <= protocol.critical_time_window_minutes:
             # Within critical window - prioritize life-saving interventions
@@ -425,7 +431,39 @@ class TreatmentProtocolManager:
         
         return treatments
     
-    def _get_generic_treatments(self, facility: FacilityLevel, severity: str) -> List[str]:
+    def _validate_treatment_for_body_part(self, treatment: str, body_part: str) -> bool:
+        """Validate if treatment is appropriate for the body part."""
+        # Define constraints mapping treatment -> allowed body parts
+        # If treatment not in list, it's allowed everywhere
+        constraints = {
+            "tourniquet": ["arm", "leg", "extremity"],
+            "chest_seal": ["torso", "chest", "back"],
+            "needle_decompression": ["torso", "chest"],
+            "chest_tube": ["torso", "chest"],
+            "cervical_collar": ["head", "neck"],
+            "craniotomy": ["head"],
+            "icp_monitoring": ["head"],
+            "intubation": ["head", "neck"],  # Airway access
+            "surgical_airway": ["neck"],
+            "splint": ["arm", "leg", "extremity"],
+            "casting": ["arm", "leg", "extremity"],
+        }
+        
+        # Normalize inputs
+        treatment_lower = treatment.lower()
+        body_part_lower = body_part.lower()
+        
+        # Check specific constraints
+        for constrained_treatment, allowed_parts in constraints.items():
+            if constrained_treatment in treatment_lower:
+                # Check if body part matches any allowed part
+                is_allowed = any(part in body_part_lower for part in allowed_parts)
+                if not is_allowed:
+                    return False
+        
+        return True
+
+    def _get_generic_treatments(self, facility: FacilityLevel, severity: str, body_part: Optional[str] = None) -> List[str]:
         """Get generic treatments when specific protocol not found."""
         generic = {
             FacilityLevel.POI: ["pressure_bandage", "airway_positioning"],
@@ -440,7 +478,12 @@ class TreatmentProtocolManager:
         # Add more treatments for severe cases
         if severity in ["severe", "critical"]:
             if facility == FacilityLevel.POI:
-                treatments.append("tourniquet")
+                # Only add tourniquet if appropriate for body part
+                if body_part and self._validate_treatment_for_body_part("tourniquet", body_part):
+                    treatments.append("tourniquet")
+                elif not body_part:
+                    # If no body part known, assume it might be needed but warn/risk
+                    treatments.append("tourniquet")
             elif facility in [FacilityLevel.ROLE2, FacilityLevel.ROLE3]:
                 treatments.append("intubation")
         

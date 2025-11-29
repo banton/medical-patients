@@ -59,6 +59,7 @@ class Patient:
     triage_category: str
     state: PatientState
     current_location: str
+    body_part: Optional[str] = None  # Anatomical location of injury
     destination: Optional[str] = None
     transport_id: Optional[str] = None
     treatments_received: List[Dict] = None
@@ -136,6 +137,8 @@ class PatientFlowOrchestrator:
         severity: str,
         location: str = "POI",
         true_condition_code: Optional[str] = None,
+        triage_override: Optional[str] = None,
+        body_part: Optional[str] = None,
     ) -> Patient:
         """
         Initialize a new patient entering the medical system.
@@ -154,8 +157,13 @@ class PatientFlowOrchestrator:
         initial_health = self.health_engine.get_initial_health(injury_type, severity)
 
         # Determine triage category
-        triage_result = self.triage_mapper.calculate_triage_category(initial_health, severity)
-        triage_category = triage_result[0]  # Get category from tuple
+        if triage_override:
+            # Use the provided triage category from warfare generation
+            triage_category = triage_override
+        else:
+            # Calculate triage based on health if not provided
+            triage_result = self.triage_mapper.calculate_triage_category(initial_health, severity)
+            triage_category = triage_result[0]  # Get category from tuple
 
         # Create patient
         patient = Patient(
@@ -190,6 +198,10 @@ class PatientFlowOrchestrator:
                 "triage": triage_category,
             }
         )
+    
+        # Set body_part if provided
+        if body_part:
+            patient.body_part = body_part
 
         return patient
 
@@ -420,17 +432,40 @@ class PatientFlowOrchestrator:
             msg = f"Patient {patient_id} not found"
             raise ValueError(msg)
 
-        # Don't deteriorate if dead
-        if patient.state == PatientState.DIED:
-            return 0
+        # Don't deteriorate if dead or discharged (RTD)
+        if patient.state in [PatientState.DIED, PatientState.DISCHARGED]:
+            return patient.current_health if patient.state == PatientState.DISCHARGED else 0
 
         # Calculate deterioration based on original severity
         base_deterioration = self.deterioration_calc.calculate_base_deterioration(
             patient.injury_type,
             patient.severity,  # Use stored severity, not recalculated
         )
+        
+        # Apply triage-based deterioration multiplier (T1 patients deteriorate faster)
+        base_deterioration = self.deterioration_calc.apply_triage_multiplier(
+            base_deterioration,
+            patient.triage_category
+        )
+        
+        # Apply treatment-based deterioration modifiers
+        # Get the best (lowest) deterioration modifier from all treatments
+        treatment_deterioration_modifier = 1.0
+        if patient.treatments_received:
+            for treatment in patient.treatments_received:
+                treatment_name = treatment.get("name") or treatment.get("treatment")
+                if treatment_name and treatment_name in self.treatment_mods.treatments:
+                    treatment_def = self.treatment_mods.treatments[treatment_name]
+                    modifier = treatment_def.get("deterioration_modifier", 1.0)
+                    # Use the best (lowest) modifier
+                    treatment_deterioration_modifier = min(treatment_deterioration_modifier, modifier)
+        
+        # Apply the treatment modifier to base deterioration
+        # E.g., tourniquet reduces deterioration by 70% (modifier = 0.3)
+        effective_deterioration = base_deterioration * treatment_deterioration_modifier
+        
         # Convert from per hour to per minute and scale by time
-        deterioration_per_minute = base_deterioration / 60.0
+        deterioration_per_minute = effective_deterioration / 60.0
         deterioration = deterioration_per_minute * time_minutes
 
         # Update health
@@ -439,6 +474,59 @@ class PatientFlowOrchestrator:
         # Check for death
         if patient.current_health <= 0:
             self.handle_patient_death(patient_id, "deterioration")
+        # Check for RTD (Return to Duty) - only fully recovered patients
+        # RTD requires medical assessment at Role1 or higher (not at POI)
+        elif patient.current_health >= 100:  # Must be fully healthy (100 health)
+            # Only discharge after medical assessment at treatment facility
+            if patient.current_location in ["Role1", "Role2", "Role3", "Role4"]:
+                # Additional check: has patient been treated/assessed?
+                if patient.treatments_received:  # Only if received some treatment/assessment
+                    self.handle_patient_discharge(patient_id, "recovered")
+
+        return patient.current_health
+
+    def simulate_recovery(self, patient_id: str, time_minutes: int, recovery_rate_per_hour: float = 5.0) -> int:
+        """
+        Simulate patient recovery at advanced medical facilities.
+        
+        This models active treatment and healing at Role2+ facilities where patients
+        receive definitive care and should improve rather than deteriorate.
+        
+        Args:
+            patient_id: Patient identifier
+            time_minutes: Time elapsed in minutes
+            recovery_rate_per_hour: Health gain per hour (default 5.0 for Role3)
+                                   Typical values:
+                                   - Role2: 2.0 (emergency surgery, stabilization)
+                                   - Role3: 5.0 (full surgical capabilities, ICU)
+                                   - Role4: 8.0 (hospital care, rehabilitation)
+        
+        Returns:
+            Updated health score
+        """
+        patient = self.patients.get(patient_id)
+        if not patient:
+            msg = f"Patient {patient_id} not found"
+            raise ValueError(msg)
+
+        # Don't recover if dead or already discharged
+        if patient.state in [PatientState.DIED, PatientState.DISCHARGED]:
+            return patient.current_health if patient.state == PatientState.DISCHARGED else 0
+
+        # Calculate recovery
+        recovery_per_minute = recovery_rate_per_hour / 60.0
+        recovery = recovery_per_minute * time_minutes
+
+        # Apply recovery (capped at 100)
+        old_health = patient.current_health
+        patient.current_health = min(100, patient.current_health + recovery)
+
+        # Check for RTD (Return to Duty) eligibility
+        # DISABLED: Automatic RTD during recovery can cause state conflicts in treatment loop
+        # RTD should be handled by the facility transfer logic in MedicalSimulationBridge
+        # if patient.current_health >= 90 and patient.current_location in ["Role1", "Role2", "Role3", "Role4"]:
+        #     if patient.treatments_received:
+        #         self.handle_patient_discharge(patient_id, "recovered")
 
         return patient.current_health
 
@@ -544,10 +632,17 @@ class PatientFlowOrchestrator:
 
             return True
         # Facility full, find overflow
-        new_destination = self.overflow_router.route_patient(patient.triage_category, patient.destination)
-        patient.destination = new_destination
-        self.metrics["facility_overflow_events"] += 1
-        return self.transport_patient(patient_id, new_destination) is not None
+        routing_result = self.overflow_router.route_patient(
+            patient_id,
+            patient.triage_category,
+            "urgent" if patient.triage_category == "T1" else "routine"
+        )
+        new_destination = routing_result.get("routed_to")
+        if new_destination:
+            patient.destination = new_destination
+            self.metrics["facility_overflow_events"] += 1
+            return self.transport_patient(patient_id, new_destination) is not None
+        return False
 
     def evacuate_to_csu(self, patient_ids: List[str]) -> bool:
         """
@@ -636,6 +731,41 @@ class PatientFlowOrchestrator:
         if patient.current_location in ["Role1", "Role2", "Role3", "CSU"]:
             self.facility_manager.discharge_patient(patient_id, patient.current_location)
 
+    def handle_patient_discharge(self, patient_id: str, reason: str):
+        """
+        Handle patient discharge (Return to Duty) and update tracking.
+
+        Args:
+            patient_id: Patient identifier
+            reason: Reason for discharge (e.g., "recovered")
+        """
+        patient = self.patients.get(patient_id)
+        if not patient or patient.state == PatientState.DIED:
+            return
+
+        # Update patient state
+        patient.state = PatientState.DISCHARGED
+        patient.discharged_at = self.simulation_time
+        
+        patient.timeline.append(
+            {
+                "timestamp": self.simulation_time,
+                "event": "discharged_rtd",
+                "reason": reason,
+                "location": patient.current_location,
+                "final_health": patient.current_health
+            }
+        )
+
+        # Update metrics
+        if "patients_discharged" not in self.metrics:
+            self.metrics["patients_discharged"] = 0
+        self.metrics["patients_discharged"] += 1
+
+        # Free up facility bed if applicable
+        if patient.current_location in ["Role1", "Role2", "Role3", "CSU"]:
+            self.facility_manager.discharge_patient(patient_id, patient.current_location)
+
     def get_system_status(self) -> Dict[str, Any]:
         """
         Get comprehensive system status.
@@ -677,7 +807,8 @@ class PatientFlowOrchestrator:
         self.simulation_time += timedelta(minutes=minutes)
 
         # Process deterioration for all non-dead patients
-        for patient in self.patients.values():
+        # Use list() to create a copy to avoid RuntimeError during iteration
+        for patient in list(self.patients.values()):
             if patient.state not in [PatientState.DIED, PatientState.EVACUATED]:
                 self.simulate_deterioration(patient.id, minutes)
 

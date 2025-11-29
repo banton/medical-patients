@@ -23,10 +23,11 @@ class TransportScheduler:
 
     def __init__(self):
         """Initialize transport resources"""
-        # Vehicle fleet
-        self.ground_ambulances = 4
-        self.air_ambulances = 1
-        self.buses = 2  # For batch transport
+        # Vehicle fleet - Realistic for military medical exercise
+        # Each front would have multiple ambulances
+        self.ground_ambulances = 40  # Was 4 - unrealistic for 200 patients
+        self.air_ambulances = 4      # Was 1 - need more for critical cases
+        self.buses = 6               # Was 2 - for batch transport
 
         # Available vehicles
         self.available_ground = self.ground_ambulances

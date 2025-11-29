@@ -92,13 +92,15 @@ class HealthScoreEngine:
         if condition and "specific_conditions" in severity_data:
             specific = severity_data["specific_conditions"].get(condition, {})
             if "initial_health" in specific:
-                return specific["initial_health"]
+                base_health = specific["initial_health"]
+                # Add small variance even for specific conditions
+                return max(0, min(100, base_health + random.randint(-2, 2)))
 
-        # Use base initial health
+        # Use base initial health from config
         base_health = severity_data.get("initial_health", 70)
 
         # Add variance for realism
-        variance = severity_data.get("variance", 2)
+        variance = severity_data.get("variance", 5)
         health = base_health + random.randint(-variance, variance)
 
         # Ensure bounds

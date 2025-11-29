@@ -22,10 +22,12 @@ class OverflowRouter:
         self.capacity_manager = capacity_manager
 
         # Triage to facility preference mapping
+        # Note: Higher role numbers = more advanced care
+        # Patient flow: POI → Role1 → Role2 → Role3 → Role4
         self.triage_preferences = {
-            "T1": ["Role2", "Role3"],  # Urgent - need surgery
-            "T2": ["Role1", "CSU", "Role2"],  # Delayed - can wait
-            "T3": ["Role1", "CSU"],  # Routine - minor injuries
+            "T1": ["Role2", "Role3", "Role4"],  # Critical - need surgery
+            "T2": ["Role1", "CSU", "Role2", "Role3"],  # Urgent - progressive care
+            "T3": ["Role1", "CSU", "Role2"],  # Delayed - basic to intermediate care
             "Expectant": ["Role1"],  # Comfort care
         }
 
@@ -52,7 +54,7 @@ class OverflowRouter:
         Returns:
             Facility name or None if all full
         """
-        preferences = self.triage_preferences.get(triage, ["Role1", "CSU", "Role2"])
+        preferences = self.triage_preferences.get(triage, ["Role1", "CSU", "Role2", "Role3"])
 
         for facility in preferences:
             if self.capacity_manager.get_available_beds(facility) > 0:
@@ -61,8 +63,8 @@ class OverflowRouter:
                 if queue_length < 5:  # Acceptable queue
                     return facility
 
-        # If all preferred facilities full, find any available
-        for facility in ["Role1", "CSU", "Role2", "Role3"]:
+        # If all preferred facilities full, find any available (in forward order only)
+        for facility in ["Role1", "CSU", "Role2", "Role3", "Role4"]:
             if self.capacity_manager.get_available_beds(facility) > 0:
                 return facility
 
@@ -105,7 +107,7 @@ class OverflowRouter:
             max_transport = constraints.get("max_transport_time")
 
         # Get preferred facilities for triage
-        preferences = self.triage_preferences.get(triage, ["Role1", "CSU", "Role2"])
+        preferences = self.triage_preferences.get(triage, ["Role1", "CSU", "Role2", "Role3"])
 
         # Try primary preference
         primary = preferences[0] if preferences else "Role1"
@@ -126,11 +128,11 @@ class OverflowRouter:
         # Primary full, try overflow routing
         self.routing_metrics["overflow_events"] += 1
 
-        # Load balance across available facilities
+        # Load balance across available facilities (forward progression only)
         best_facility = None
         min_utilization = 1.0
 
-        for facility in ["Role1", "CSU", "Role2", "Role3"]:
+        for facility in ["Role1", "CSU", "Role2", "Role3", "Role4"]:
             status = self.capacity_manager.get_facility_status(facility)
 
             # Skip if full or high queue
@@ -249,10 +251,11 @@ class OverflowRouter:
         ]
 
         if any(inj in injury_type.lower() for inj in surgical_injuries):
-            return ["Role2", "Role3", "Role1"]
+            # Surgical cases need Role2+ (never go backward to Role1)
+            return ["Role2", "Role3", "Role4"]
 
         # Use standard triage preferences
-        return self.triage_preferences.get(triage, ["Role1", "CSU", "Role2"])
+        return self.triage_preferences.get(triage, ["Role1", "CSU", "Role2", "Role3"])
 
     def get_routing_metrics(self) -> Dict[str, Any]:
         """Get routing metrics and statistics"""
