@@ -188,12 +188,12 @@ class TriageMapper:
             category = patient.get("triage_category", "T3")
             cat_priority = self.categories[category]["priority"]
 
-            # Within category, prioritize by health (lower = more urgent)
+            # Within category, prioritize by health (lower health = more urgent)
             health = patient.get("health_score", 50)
-            health_priority = 100 - health
 
             # Combined score (category is primary, health is secondary)
-            patient["priority_score"] = cat_priority * 1000 + health_priority
+            # Lower priority_score = higher priority, so use health directly
+            patient["priority_score"] = cat_priority * 1000 + health
 
         # Sort by priority score (lower = higher priority)
         return sorted(patients, key=lambda x: x["priority_score"])

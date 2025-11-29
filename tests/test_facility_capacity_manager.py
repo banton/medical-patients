@@ -20,7 +20,7 @@ class TestFacilityCapacityManager:
         manager = FacilityCapacityManager()
 
         # Check typical capacities based on military medical doctrine
-        assert manager.get_capacity("Role1") == 20  # Battalion Aid Station
+        assert manager.get_capacity("Role1") == 50  # Battalion Aid Station
         assert manager.get_capacity("Role2") == 60  # Forward Surgical Team
         assert manager.get_capacity("Role3") == 200  # Combat Support Hospital
         assert manager.get_capacity("CSU") == 50  # Casualty Staging Unit
@@ -34,19 +34,19 @@ class TestFacilityCapacityManager:
         assert result["success"] is True
         assert result["facility"] == "Role1"
         assert manager.get_occupancy("Role1") == 1
-        assert manager.get_available_beds("Role1") == 19
+        assert manager.get_available_beds("Role1") == 49
 
     def test_facility_full_rejection(self):
         """Test that full facilities reject new patients"""
         manager = FacilityCapacityManager()
 
-        # Fill Role1 to capacity
-        for i in range(20):
+        # Fill Role1 to capacity (50 beds)
+        for i in range(50):
             result = manager.admit_patient(f"US-{i:03d}", "Role1")
             assert result["success"] is True
 
         # Try to admit one more patient
-        result = manager.admit_patient("US-021", "Role1")
+        result = manager.admit_patient("US-051", "Role1")
         assert result["success"] is False
         assert result["reason"] == "facility_full"
         assert manager.get_queue_length("Role1") == 1
@@ -62,7 +62,7 @@ class TestFacilityCapacityManager:
         result = manager.discharge_patient("US-001", "Role1")
         assert result["success"] is True
         assert manager.get_occupancy("Role1") == 0
-        assert manager.get_available_beds("Role1") == 20
+        assert manager.get_available_beds("Role1") == 50
 
     def test_transfer_patient(self):
         """Test transferring patient between facilities"""
@@ -81,26 +81,26 @@ class TestFacilityCapacityManager:
         """Test queue management when facility is full"""
         manager = FacilityCapacityManager()
 
-        # Fill Role1
-        for i in range(20):
+        # Fill Role1 (50 beds)
+        for i in range(50):
             manager.admit_patient(f"US-{i:03d}", "Role1")
 
         # Add patients to queue
-        manager.admit_patient("US-020", "Role1")
-        manager.admit_patient("US-021", "Role1")
+        manager.admit_patient("US-050", "Role1")
+        manager.admit_patient("US-051", "Role1")
 
         assert manager.get_queue_length("Role1") == 2
         queue = manager.get_queue("Role1")
-        assert queue[0] == "US-020"
-        assert queue[1] == "US-021"
+        assert queue[0] == "US-050"
+        assert queue[1] == "US-051"
 
         # Discharge one patient
         manager.discharge_patient("US-001", "Role1")
 
         # Process queue - first queued patient should be admitted
         processed = manager.process_queue("Role1")
-        assert processed == ["US-020"]
-        assert manager.get_occupancy("Role1") == 20
+        assert processed == ["US-050"]
+        assert manager.get_occupancy("Role1") == 50
         assert manager.get_queue_length("Role1") == 1
 
     def test_get_facility_status(self):
@@ -113,10 +113,10 @@ class TestFacilityCapacityManager:
         manager.admit_patient("US-003", "Role2")
 
         status = manager.get_facility_status("Role1")
-        assert status["capacity"] == 20
+        assert status["capacity"] == 50
         assert status["occupied"] == 2
-        assert status["available"] == 18
-        assert status["utilization"] == 0.1  # 10% utilized
+        assert status["available"] == 48
+        assert status["utilization"] == 0.04  # 4% utilized (2/50)
         assert status["queue_length"] == 0
 
     def test_get_system_overview(self):
@@ -130,10 +130,11 @@ class TestFacilityCapacityManager:
             manager.admit_patient(f"US-R2-{i:03d}", "Role2")
 
         overview = manager.get_system_overview()
-        assert overview["total_capacity"] == 330  # 20+60+200+50
+        # Total: Role1(50) + Role2(60) + Role3(200) + Role4(9999) + CSU(50) = 10359
+        assert overview["total_capacity"] == 10359
         assert overview["total_occupied"] == 15
-        assert overview["total_available"] == 315
-        assert overview["system_utilization"] < 0.05  # Less than 5%
+        assert overview["total_available"] == 10344
+        assert overview["system_utilization"] < 0.01  # Less than 1%
 
         # Check facility breakdowns
         assert "facilities" in overview
@@ -144,19 +145,19 @@ class TestFacilityCapacityManager:
         """Test priority admission for critical patients"""
         manager = FacilityCapacityManager()
 
-        # Fill Role1
-        for i in range(20):
+        # Fill Role1 (50 beds)
+        for i in range(50):
             manager.admit_patient(f"US-{i:03d}", "Role1")
 
         # Add regular patient to queue
-        manager.admit_patient("US-020", "Role1", priority="routine")
+        manager.admit_patient("US-050", "Role1", priority="routine")
 
         # Add critical patient - should go to front of queue
-        manager.admit_patient("US-021", "Role1", priority="urgent")
+        manager.admit_patient("US-051", "Role1", priority="urgent")
 
         queue = manager.get_queue("Role1")
-        assert queue[0] == "US-021"  # Urgent patient first
-        assert queue[1] == "US-020"  # Routine patient second
+        assert queue[0] == "US-051"  # Urgent patient first
+        assert queue[1] == "US-050"  # Routine patient second
 
     def test_csu_batch_operations(self):
         """Test CSU-specific batch operations"""
@@ -184,8 +185,8 @@ class TestFacilityCapacityManager:
         """Test overflow trigger thresholds"""
         manager = FacilityCapacityManager()
 
-        # Fill Role1 to 80% (16/20 beds)
-        for i in range(16):
+        # Fill Role1 to 80% (40/50 beds)
+        for i in range(40):
             manager.admit_patient(f"US-{i:03d}", "Role1")
 
         # Check overflow status

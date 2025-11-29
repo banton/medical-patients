@@ -7,19 +7,19 @@ def test_initial_health_scores():
     """Test initial health score assignment"""
     engine = HealthScoreEngine()
 
-    # Test different severities
+    # Test different severities (values from injuries.json config)
     severe = engine.get_initial_health("Battle Injury", "Severe")
-    assert 20 <= severe <= 30, f"Severe battle injury should be 20-30, got {severe}"
+    assert 60 <= severe <= 80, f"Severe battle injury should be 60-80 (70±10), got {severe}"
 
     moderate = engine.get_initial_health("Battle Injury", "Moderate")
-    assert 57 <= moderate <= 63, f"Moderate should be around 60, got {moderate}"
+    assert 75 <= moderate <= 85, f"Moderate should be 75-85 (80±5), got {moderate}"
 
     mild = engine.get_initial_health("Battle Injury", "Mild to moderate")
-    assert 73 <= mild <= 77, f"Mild should be around 75, got {mild}"
+    assert 85 <= mild <= 95, f"Mild should be 85-95 (90±5), got {mild}"
 
-    # Disease should have higher initial health
+    # Disease severe (from config: 60±5)
     disease = engine.get_initial_health("Disease", "Severe")
-    assert 48 <= disease <= 52, f"Severe disease should be around 50, got {disease}"
+    assert 55 <= disease <= 65, f"Severe disease should be 55-65 (60±5), got {disease}"
 
 
 def test_deterioration_without_treatment():

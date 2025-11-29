@@ -16,7 +16,12 @@
       "Bash(python -m pytest tests/test_patient_flow_orchestrator.py -v --tb=short)",
       "mcp__filesystem__directory_tree",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff format:*)",
+      "Bash(git push:*)",
+      "Bash(docker compose:*)",
+      "Bash(DATABASE_URL=postgresql://medgen_user:medgen_password@localhost:5432/medgen_db REDIS_URL=redis://localhost:6379/0 python3 -m pytest:*)"
     ],
     "deny": [],
     "ask": [],

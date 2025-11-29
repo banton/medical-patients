@@ -259,7 +259,7 @@ class MedicalSimulationBridge:
             return
 
         # Process triage again after wait (condition may have changed)
-        triage_category, initial_facility = self.orchestrator.process_triage(sim_patient_id)
+        _triage_category, initial_facility = self.orchestrator.process_triage(sim_patient_id)
 
         # Transport to initial facility
         if initial_facility:
