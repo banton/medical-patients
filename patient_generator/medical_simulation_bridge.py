@@ -11,7 +11,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from medical_simulation.patient_flow_orchestrator import PatientFlowOrchestrator, PatientState
-from medical_simulation.treatment_protocols import TreatmentProtocolManager, FacilityLevel
+from medical_simulation.treatment_protocols import FacilityLevel, TreatmentProtocolManager
 from patient_generator.patient import Patient
 from patient_generator.treatment_utility_model import TreatmentUtilityModel
 
@@ -41,7 +41,7 @@ class MedicalSimulationBridge:
         # Initialize treatment utility model independently (works with or without medical simulation)
         self.utility_model_enabled = os.environ.get("ENABLE_TREATMENT_UTILITY_MODEL", "true").lower() == "true"
         self.treatment_model = TreatmentUtilityModel() if self.utility_model_enabled else None
-        
+
         # Initialize treatment protocol manager
         self.protocol_manager = TreatmentProtocolManager()
 
@@ -94,7 +94,7 @@ class MedicalSimulationBridge:
             severity=severity,
             location="POI",
             triage_override=patient.triage_category,  # Preserve original triage
-            body_part=getattr(patient, "body_part", None), # Pass body_part if available
+            body_part=getattr(patient, "body_part", None),  # Pass body_part if available
         )
 
         # Run through medical simulation flow
@@ -242,7 +242,7 @@ class MedicalSimulationBridge:
         if initial_treatments:
             # Filter for POI-appropriate treatments if needed, but _get_treatments_for_injury handles this
             self.orchestrator.apply_treatment(sim_patient_id, initial_treatments)
-            
+
         # Get REALISTIC evacuation wait time from JSON (hours, not minutes!)
         evac_times = self.timing_config["evacuation_times"]["POI"]
         triage_key = sim_patient.triage_category if sim_patient.triage_category in evac_times else "T2"
@@ -284,7 +284,7 @@ class MedicalSimulationBridge:
 
                 # Complete transport
                 arrived = self.orchestrator.complete_transport(sim_patient_id)
-                
+
                 # Debug: Log transport outcome
                 if not arrived:
                     sim_patient = self.orchestrator.patients.get(sim_patient_id)
@@ -293,11 +293,11 @@ class MedicalSimulationBridge:
                         if not sim_patient.transport_id:
                             print(f"DEBUG: Patient {sim_patient_id} has no transport_id after transport_patient call")
 
-                # Check patient state after transport completion  
+                # Check patient state after transport completion
                 sim_patient = self.orchestrator.patients.get(sim_patient_id)
                 if sim_patient and sim_patient.state in [PatientState.DIED, PatientState.DISCHARGED]:
                     return  # Patient died or discharged (RTD) during transport
-                
+
                 if not arrived and sim_patient:
                     # Transport failed but patient alive - likely facility full
                     # Apply basic treatment at POI while waiting
@@ -307,24 +307,24 @@ class MedicalSimulationBridge:
                     treatments = self._get_treatments_for_injury(patient_injury, original_patient)
                     if treatments:
                         self.orchestrator.apply_treatment(sim_patient_id, treatments)
-                    
+
                     # Mark patient as still at POI but treated
                     sim_patient.current_location = "POI"
                     return  # End processing for this patient
-                
+
                 if arrived:
                     # Start care chain progression loop - continue until patient reaches Role4 or dies
                     max_transfers = 4  # Safety limit to prevent infinite loops
                     transfer_count = 0
                     stay_count = 0
-                    
+
                     while transfer_count < max_transfers:
                         sim_patient = self.orchestrator.patients.get(sim_patient_id)
                         if not sim_patient or sim_patient.state in [PatientState.DIED, PatientState.DISCHARGED]:
                             return  # Patient died or discharged (RTD), stop processing
-                        
+
                         current_facility = sim_patient.current_location
-                        
+
                         # Apply treatments at current facility
                         patient_injury = getattr(original_patient, "injury", None) or getattr(
                             original_patient, "injury_type", "unknown"
@@ -334,7 +334,7 @@ class MedicalSimulationBridge:
                         treatments = self._get_treatments_for_injury(patient_injury, original_patient)
                         if treatments:
                             self.orchestrator.apply_treatment(sim_patient_id, treatments)
-                        
+
                         # Get treatment time at this facility
                         if current_facility in self.timing_config["evacuation_times"]:
                             facility_times = self.timing_config["evacuation_times"][current_facility]
@@ -346,70 +346,73 @@ class MedicalSimulationBridge:
                             )
                         else:
                             treatment_hours = 6  # Default 6 hours if not specified
-                        
+
                         treatment_minutes = int(treatment_hours * 60)
-                        
+
                         # FACILITY-SPECIFIC BEHAVIOR
                         # Different facilities have different care models
-                        
+
                         if current_facility == "POI":
                             # Point of Injury: Full deterioration, no recovery
                             # This shouldn't happen in this loop (POI handled earlier)
                             self.orchestrator.simulate_deterioration(sim_patient_id, treatment_minutes)
-                            
+
                         elif current_facility == "Role1":
                             # Battalion Aid Station: Stabilization only
                             # Reduced deterioration through active treatment
                             # Apply treatments in cycles to maintain stabilization
                             hours_per_cycle = 2
                             total_cycles = int(treatment_hours / hours_per_cycle)
-                            
-                            for cycle_num in range(total_cycles):
+
+                            for _cycle_num in range(total_cycles):
                                 # Check patient state
                                 sim_patient = self.orchestrator.patients.get(sim_patient_id)
                                 if not sim_patient or sim_patient.state in [PatientState.DIED, PatientState.DISCHARGED]:
                                     break
-                                
+
                                 # Deteriorate for this cycle
                                 self.orchestrator.simulate_deterioration(sim_patient_id, hours_per_cycle * 60)
-                                
+
                                 # Reapply treatments if critical
                                 sim_patient = self.orchestrator.patients.get(sim_patient_id)
                                 if sim_patient and sim_patient.current_health < 50 and treatments:
                                     self.orchestrator.apply_treatment(sim_patient_id, treatments)
-                            
+
                         elif current_facility == "Role2":
                             # Forward Surgical Team: Emergency surgery + stabilization
                             # Minimal deterioration + modest recovery
                             # Split time: 60% active treatment (recovery), 40% waiting (slow deterioration)
                             treatment_time = int(treatment_minutes * 0.6)
                             wait_time = treatment_minutes - treatment_time
-                            
+
                             # Active treatment period: recovery
-                            self.orchestrator.simulate_recovery(sim_patient_id, treatment_time, recovery_rate_per_hour=3.0)
-                            
+                            self.orchestrator.simulate_recovery(
+                                sim_patient_id, treatment_time, recovery_rate_per_hour=3.0
+                            )
+
                             # Waiting period: slow deterioration
                             self.orchestrator.simulate_deterioration(sim_patient_id, wait_time)
-                            
+
                         elif current_facility in ["Role3", "Role4"]:
                             # Combat Support Hospital / Homeland Hospital: Full care + recovery
                             # Pure recovery, no deterioration
                             recovery_rate = 5.0 if current_facility == "Role3" else 8.0
-                            self.orchestrator.simulate_recovery(sim_patient_id, treatment_minutes, recovery_rate_per_hour=recovery_rate)
-                        
+                            self.orchestrator.simulate_recovery(
+                                sim_patient_id, treatment_minutes, recovery_rate_per_hour=recovery_rate
+                            )
+
                         # After treatment at current facility, check if needs further evacuation
                         sim_patient = self.orchestrator.patients.get(sim_patient_id)
                         if not sim_patient or sim_patient.state in [PatientState.DIED, PatientState.DISCHARGED]:
                             return  # Patient died or discharged (RTD), stop processing
-                        
+
                         # Stop if already at Role4
                         if current_facility == "Role4":
                             break
-                        
+
                         # Determine if patient needs higher level care based on health and triage
-                        needs_higher_care = False
                         next_facility = None
-                        
+
                         # T1 patients: Move through chain with lower thresholds
                         if sim_patient.triage_category == "T1":
                             if current_facility == "Role1" and sim_patient.current_health >= 5:
@@ -418,7 +421,7 @@ class MedicalSimulationBridge:
                                 next_facility = "Role3"
                             elif current_facility == "Role3" and sim_patient.current_health >= 15:
                                 next_facility = "Role4"
-                        
+
                         # T2 patients: Move with moderate thresholds
                         elif sim_patient.triage_category == "T2":
                             if current_facility == "Role1" and sim_patient.current_health >= 15:
@@ -427,24 +430,26 @@ class MedicalSimulationBridge:
                                 next_facility = "Role3"
                             elif current_facility == "Role3" and sim_patient.current_health >= 25:
                                 next_facility = "Role4"
-                        
+
                         # T3 patients: Move if stable
                         elif sim_patient.triage_category == "T3":
                             if current_facility == "Role1" and sim_patient.current_health >= 20:
                                 next_facility = "Role2"
-                        
+
                         # Execute transfer if needed
                         if next_facility and next_facility != current_facility:
                             # Transport to next facility
                             transport_id = self.orchestrator.transport_patient(sim_patient_id, next_facility)
-                            
+
                             if transport_id:
                                 # Get REALISTIC transit time from JSON
                                 transit_key = f"{current_facility}_to_{next_facility}"
                                 if transit_key in self.timing_config["transit_times"]:
                                     transit_times = self.timing_config["transit_times"][transit_key]
                                     triage_key = (
-                                        sim_patient.triage_category if sim_patient.triage_category in transit_times else "T2"
+                                        sim_patient.triage_category
+                                        if sim_patient.triage_category in transit_times
+                                        else "T2"
                                     )
                                     transit_hours = random.uniform(
                                         transit_times[triage_key]["min_hours"], transit_times[triage_key]["max_hours"]
@@ -459,7 +464,7 @@ class MedicalSimulationBridge:
 
                                 # Complete transport
                                 arrived = self.orchestrator.complete_transport(sim_patient_id)
-                                
+
                                 if arrived:
                                     transfer_count += 1
                                     stay_count = 0  # Reset stay count on transfer
@@ -473,7 +478,7 @@ class MedicalSimulationBridge:
                             # No further evacuation needed or possible, or staying at same facility
                             # Increment stay count
                             stay_count += 1
-                            
+
                             # If we've stayed too long or are at Role4, stop
                             if stay_count > 3:
                                 # Check if critical - if so, they die (DOW)
@@ -483,21 +488,20 @@ class MedicalSimulationBridge:
                                     sim_patient.death_location = current_facility
                                     # Record death in orchestrator if possible, or just let the state update handle it
                                     # The bridge updates status based on state at the end
-                                
+
                                 # Check if recovered - if so, RTD
                                 elif sim_patient.current_health >= 90:
                                     self.orchestrator.handle_patient_discharge(sim_patient_id, "recovered")
-                                
+
                                 break
-                            
+
                             if current_facility == "Role4":
                                 # At Role4, if healthy enough, discharge
                                 if sim_patient.current_health >= 90:
                                     self.orchestrator.handle_patient_discharge(sim_patient_id, "recovered")
                                 break
-                            
+
                             # Otherwise, continue loop to simulate another period at this facility
-                            pass
 
     def _get_treatments_for_injury(self, injury: str, patient: Optional[Patient] = None) -> List[Dict[str, Any]]:
         """
@@ -516,15 +520,15 @@ class MedicalSimulationBridge:
         # Get sim_patient to check already applied treatments
         sim_patient = None
         already_applied = set()
-        if patient and hasattr(patient, 'id'):
+        if patient and hasattr(patient, "id"):
             sim_patient_id = f"sim_{patient.id}"
-            sim_patient = self.orchestrator.patients.get(sim_patient_id) if hasattr(self, 'orchestrator') else None
+            sim_patient = self.orchestrator.patients.get(sim_patient_id) if hasattr(self, "orchestrator") else None
 
             # Track what's already been applied
-            if sim_patient and hasattr(sim_patient, 'treatments_received'):
+            if sim_patient and hasattr(sim_patient, "treatments_received"):
                 for treatment in sim_patient.treatments_received:
                     if isinstance(treatment, dict):
-                        treatment_name = treatment.get('name', treatment.get('treatment'))
+                        treatment_name = treatment.get("name", treatment.get("treatment"))
                         if treatment_name:
                             already_applied.add(treatment_name)
 
@@ -532,7 +536,7 @@ class MedicalSimulationBridge:
         if patient:
             # Get SNOMED code
             snomed_code = self._map_injury_to_snomed(injury)
-            
+
             # Get current facility
             facility_str = getattr(patient, "last_facility", "POI")
             facility_mapping = {
@@ -548,32 +552,27 @@ class MedicalSimulationBridge:
                 "role4": FacilityLevel.ROLE4,
             }
             facility_level = facility_mapping.get(facility_str, FacilityLevel.POI)
-            
+
             # Get severity
             severity = "moderate"
             if hasattr(patient, "triage_category"):
-                triage_mapping = {
-                    "T1": "critical",
-                    "T2": "severe", 
-                    "T3": "moderate",
-                    "T4": "expectant"
-                }
+                triage_mapping = {"T1": "critical", "T2": "severe", "T3": "moderate", "T4": "expectant"}
                 severity = triage_mapping.get(patient.triage_category, "moderate")
-            
+
             # Get treatments from protocol manager
             # Pass body_part if available
             body_part = getattr(patient, "body_part", None)
-            
+
             treatments = self.protocol_manager.get_appropriate_treatments(
                 snomed_code=snomed_code,
                 facility=facility_level,
-                severity="severe",  # Default to severe for now
+                severity=severity,  # Use triage-derived severity
                 time_elapsed_minutes=0,  # Could be calculated
-                body_part=body_part
+                body_part=body_part,
             )
 
             # Define POI-only treatments (field emergency treatments)
-            poi_only_treatments = {'tourniquet', 'pressure_bandage', 'hemostatic_agent', 'hemostatic_gauze'}
+            poi_only_treatments = {"tourniquet", "pressure_bandage", "hemostatic_agent", "hemostatic_gauze"}
 
             if treatments:
                 filtered_treatments = []
@@ -583,14 +582,12 @@ class MedicalSimulationBridge:
                         continue
 
                     # Skip POI-only treatments at medical facilities
-                    if treatment_name in poi_only_treatments and facility_str not in ['POI', 'point_of_injury']:
+                    if treatment_name in poi_only_treatments and facility_str not in ["POI", "point_of_injury"]:
                         continue
 
-                    filtered_treatments.append({
-                        "name": treatment_name,
-                        "applied_at": base_time,
-                        "protocol_based": True
-                    })
+                    filtered_treatments.append(
+                        {"name": treatment_name, "applied_at": base_time, "protocol_based": True}
+                    )
 
                 if filtered_treatments:  # Only return if we have new treatments
                     self.metrics["treatment_selections"] += len(filtered_treatments)
@@ -629,7 +626,7 @@ class MedicalSimulationBridge:
                 # Filter out already applied treatments
                 filtered_treatments = []
                 for treatment in potential_treatments:
-                    if treatment['name'] not in already_applied:
+                    if treatment["name"] not in already_applied:
                         filtered_treatments.append(treatment)
 
                 if filtered_treatments:
@@ -833,7 +830,7 @@ class MedicalSimulationBridge:
             patient.movement_timeline.extend(enhanced_events)
         else:
             patient.movement_timeline = enhanced_events
-        
+
         # Also set timeline_events for backward compatibility
         patient.timeline_events = enhanced_events
 
@@ -850,9 +847,9 @@ class MedicalSimulationBridge:
                 }
                 for t in sim_patient.treatments_received
             ]
-            
+
         # Transfer body_part from simulation patient to original patient
-        if hasattr(sim_patient, 'body_part') and sim_patient.body_part:
+        if hasattr(sim_patient, "body_part") and sim_patient.body_part:
             patient.body_part = sim_patient.body_part
 
     def _map_facility_to_role(self, facility: str) -> str:

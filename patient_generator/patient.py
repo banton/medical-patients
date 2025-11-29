@@ -55,7 +55,7 @@ class Patient:
         self.transport_events: List[Dict[str, Any]] = []  # Transport history with durations
         self.overflow_count: int = 0  # Times redirected due to capacity
         self.total_wait_time: Optional[float] = None  # Hours spent waiting (CSU, queues)
-        
+
         # Anatomical injury tracking
         self.body_part: Optional[str] = None  # Body location of injury (e.g., "Left Arm", "Torso")
 
@@ -397,7 +397,7 @@ class Patient:
         # Add timeline events from medical simulation if present
         if hasattr(self, "timeline_events") and self.timeline_events:
             result["events"] = self.timeline_events
-            
+
         # Add body part if present
         if self.body_part:
             result["body_part"] = self.body_part

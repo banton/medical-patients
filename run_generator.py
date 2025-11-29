@@ -290,7 +290,7 @@ def main():
                 time_per_patient - avg_time
                 overhead_pct = (avg_time / time_per_patient * 100) if time_per_patient > 0 else 0
                 print(f"  - Medical sim overhead: {overhead_pct:.1f}%")
-        except:
+        except Exception:
             print("  - Metrics unavailable (may need ConfigurationManager fix)")
 
     print("=" * 60)

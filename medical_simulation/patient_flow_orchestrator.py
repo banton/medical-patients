@@ -199,7 +199,7 @@ class PatientFlowOrchestrator:
                 "triage": triage_category,
             }
         )
-    
+
         # Set body_part if provided
         if body_part:
             patient.body_part = body_part
@@ -275,9 +275,7 @@ class PatientFlowOrchestrator:
 
         # Update diagnostic progression in engine
         if current_diagnosis_code:
-            self.diagnostic_engine.update_diagnosis_with_progression(
-                patient_id, current_diagnosis_code, new_facility
-            )
+            self.diagnostic_engine.update_diagnosis_with_progression(patient_id, current_diagnosis_code, new_facility)
 
             # Perform new diagnosis at the better facility
             modifiers = {
@@ -442,13 +440,12 @@ class PatientFlowOrchestrator:
             patient.injury_type,
             patient.severity,  # Use stored severity, not recalculated
         )
-        
+
         # Apply triage-based deterioration multiplier (T1 patients deteriorate faster)
         base_deterioration = self.deterioration_calc.apply_triage_multiplier(
-            base_deterioration,
-            patient.triage_category
+            base_deterioration, patient.triage_category
         )
-        
+
         # Apply treatment-based deterioration modifiers
         # Get the best (lowest) deterioration modifier from all treatments
         treatment_deterioration_modifier = 1.0
@@ -460,11 +457,11 @@ class PatientFlowOrchestrator:
                     modifier = treatment_def.get("deterioration_modifier", 1.0)
                     # Use the best (lowest) modifier
                     treatment_deterioration_modifier = min(treatment_deterioration_modifier, modifier)
-        
+
         # Apply the treatment modifier to base deterioration
         # E.g., tourniquet reduces deterioration by 70% (modifier = 0.3)
         effective_deterioration = base_deterioration * treatment_deterioration_modifier
-        
+
         # Convert from per hour to per minute and scale by time
         deterioration_per_minute = effective_deterioration / 60.0
         deterioration = deterioration_per_minute * time_minutes
@@ -489,10 +486,10 @@ class PatientFlowOrchestrator:
     def simulate_recovery(self, patient_id: str, time_minutes: int, recovery_rate_per_hour: float = 5.0) -> int:
         """
         Simulate patient recovery at advanced medical facilities.
-        
+
         This models active treatment and healing at Role2+ facilities where patients
         receive definitive care and should improve rather than deteriorate.
-        
+
         Args:
             patient_id: Patient identifier
             time_minutes: Time elapsed in minutes
@@ -501,7 +498,7 @@ class PatientFlowOrchestrator:
                                    - Role2: 2.0 (emergency surgery, stabilization)
                                    - Role3: 5.0 (full surgical capabilities, ICU)
                                    - Role4: 8.0 (hospital care, rehabilitation)
-        
+
         Returns:
             Updated health score
         """
@@ -519,7 +516,6 @@ class PatientFlowOrchestrator:
         recovery = recovery_per_minute * time_minutes
 
         # Apply recovery (capped at 100)
-        old_health = patient.current_health
         patient.current_health = min(100, patient.current_health + recovery)
 
         # Check for RTD (Return to Duty) eligibility
@@ -638,17 +634,17 @@ class PatientFlowOrchestrator:
 
         if overflow_attempts >= max_overflow_attempts:
             # Too many overflow attempts, cannot place patient
-            patient.timeline.append({
-                "timestamp": self.simulation_time,
-                "event": "overflow_limit_reached",
-                "attempted_destination": patient.destination,
-            })
+            patient.timeline.append(
+                {
+                    "timestamp": self.simulation_time,
+                    "event": "overflow_limit_reached",
+                    "attempted_destination": patient.destination,
+                }
+            )
             return False
 
         routing_result = self.overflow_router.route_patient(
-            patient_id,
-            patient.triage_category,
-            "urgent" if patient.triage_category == "T1" else "routine"
+            patient_id, patient.triage_category, "urgent" if patient.triage_category == "T1" else "routine"
         )
         new_destination = routing_result.get("routed_to")
         if new_destination:
@@ -760,14 +756,14 @@ class PatientFlowOrchestrator:
         # Update patient state
         patient.state = PatientState.DISCHARGED
         patient.discharged_at = self.simulation_time
-        
+
         patient.timeline.append(
             {
                 "timestamp": self.simulation_time,
                 "event": "discharged_rtd",
                 "reason": reason,
                 "location": patient.current_location,
-                "final_health": patient.current_health
+                "final_health": patient.current_health,
             }
         )
 

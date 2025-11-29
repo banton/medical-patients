@@ -14,7 +14,7 @@ pytestmark = [
 ]
 
 
-@pytest.fixture
+@pytest.fixture()
 def validated_base_url(base_url):
     """Validate base URL and skip if not available."""
     if not base_url or base_url == "None" or not base_url.startswith("http"):
@@ -130,7 +130,9 @@ class TestSmoke:
         timeout = 30  # 30 seconds for smoke test
 
         while time.time() - start_time < timeout:
-            status_response = requests.get(f"{validated_base_url}/api/v1/jobs/{job_id}", headers=api_headers, timeout=10)
+            status_response = requests.get(
+                f"{validated_base_url}/api/v1/jobs/{job_id}", headers=api_headers, timeout=10
+            )
             assert status_response.status_code == 200
 
             status = status_response.json()

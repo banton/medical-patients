@@ -19,7 +19,7 @@ class DeteriorationCalculator:
             self.config = json.load(f)
         self.deterioration_model = self.config.get("deterioration_model", {})
         self.environmental_modifiers = self.config.get("environmental_modifiers", {})
-        
+
         # Triage-based deterioration multipliers (more realistic for critical patients)
         self.triage_multipliers = {
             "T1": 1.2,  # Critical patients deteriorate 1.2x as fast (was 1.5)
@@ -94,15 +94,15 @@ class DeteriorationCalculator:
                 modified_rate *= multiplier
 
         return modified_rate
-    
+
     def apply_triage_multiplier(self, base_rate: float, triage_category: str) -> float:
         """
         Apply triage-based deterioration multiplier.
-        
+
         Args:
             base_rate: Base deterioration rate
             triage_category: Patient's triage category (T1-T4)
-            
+
         Returns:
             Modified deterioration rate based on triage severity
         """

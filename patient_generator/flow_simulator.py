@@ -63,12 +63,14 @@ class PatientFlowSimulator:
         # We will instantiate MedicalSimulationBridge per patient to avoid shared state issues
         # self.medical_bridge = None
         if self.use_medical_simulation:
-            # Just check if we can import it
-            try:
-                from .medical_simulation_bridge import MedicalSimulationBridge
+            # Check if medical simulation module is available
+            import importlib.util
+
+            spec = importlib.util.find_spec(".medical_simulation_bridge", package="patient_generator")
+            if spec is not None:
                 print("Medical simulation enhancement enabled")
-            except ImportError as e:
-                print(f"Warning: Could not import medical simulation bridge: {e}")
+            else:
+                print("Warning: Medical simulation bridge not available")
                 self.use_medical_simulation = False
 
         # Treatment utility model (works independently of medical simulation)
@@ -423,29 +425,27 @@ class PatientFlowSimulator:
     def _assign_body_part(self, injury_type: str) -> str:
         """Assign a realistic body part based on injury type."""
         injury_lower = injury_type.lower()
-        
+
         if "amputation" in injury_lower:
             return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
-        elif "brain" in injury_lower or "head" in injury_lower or "tbi" in injury_lower:
+        if "brain" in injury_lower or "head" in injury_lower or "tbi" in injury_lower:
             return "Head"
-        elif "chest" in injury_lower or "lung" in injury_lower or "abdominal" in injury_lower:
+        if "chest" in injury_lower or "lung" in injury_lower or "abdominal" in injury_lower:
             return "Torso"
-        elif "fracture" in injury_lower:
+        if "fracture" in injury_lower:
             return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
-        elif "burn" in injury_lower:
+        if "burn" in injury_lower:
             return random.choice(["Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"])
-        else:
-            # Default weighted distribution for generic injuries
-            # Torso: 30%, Head: 15%, Arms: 25%, Legs: 30%
-            rand = random.random()
-            if rand < 0.30:
-                return "Torso"
-            elif rand < 0.45:
-                return "Head"
-            elif rand < 0.70:
-                return random.choice(["Left Arm", "Right Arm"])
-            else:
-                return random.choice(["Left Leg", "Right Leg"])
+        # Default weighted distribution for generic injuries
+        # Torso: 30%, Head: 15%, Arms: 25%, Legs: 30%
+        rand = random.random()
+        if rand < 0.30:
+            return "Torso"
+        if rand < 0.45:
+            return "Head"
+        if rand < 0.70:
+            return random.choice(["Left Arm", "Right Arm"])
+        return random.choice(["Left Leg", "Right Leg"])
 
     def _simulate_patient_flow_single(self, patient: Patient):
         """
@@ -459,9 +459,10 @@ class PatientFlowSimulator:
         if self.use_medical_simulation:
             try:
                 from .medical_simulation_bridge import MedicalSimulationBridge
+
                 # Create a fresh bridge for this patient to ensure isolation
                 medical_bridge = MedicalSimulationBridge()
-                
+
                 # Enhance patient with medical simulation
                 patient = medical_bridge.enhance_patient(patient)
                 # If medical simulation handled the flow, we're done
@@ -916,13 +917,13 @@ class PatientFlowSimulator:
         """Map SNOMED code to injury name"""
         # Convert numpy string if needed
         code_str = str(snomed_code)
-        
+
         # Combat injury mappings
         injury_names = {
             # Battle trauma
             "125670008": "War injury",
             "262574004": "Bullet wound",
-            "125689001": "Shrapnel injury", 
+            "125689001": "Shrapnel injury",
             "125605004": "Traumatic shock",
             "19130008": "Traumatic brain injury",
             "125596004": "Injury by explosive",
@@ -1153,7 +1154,7 @@ class PatientFlowSimulator:
         # Get warfare-specific triage distribution
         triage_weights = self._get_warfare_triage_weights(warfare_type, patient.injury_type, warfare_patterns)
         patient.triage_category = self._select_weighted_item(triage_weights)
-        
+
         # Assign body part based on injury type
         patient.body_part = self._assign_body_part(patient.injury_type)
 
