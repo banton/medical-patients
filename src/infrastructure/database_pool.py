@@ -179,12 +179,15 @@ class EnhancedConnectionPool:
         """Create the underlying connection pool."""
         try:
             # Create pool with custom connection factory
+            # Note: statement_timeout is NOT set via options because NeonDB's
+            # connection pooler doesn't support startup parameters.
+            # Instead, we set it per-connection after checkout.
             pool = psycopg2.pool.ThreadedConnectionPool(
                 self.minconn,
                 self.maxconn,
                 self.dsn,
                 connect_timeout=10,
-                options=f"-c statement_timeout={self.query_timeout} -c application_name={self.application_name}",
+                application_name=self.application_name,
             )
 
             # Initialize minimum connections
@@ -260,6 +263,11 @@ class EnhancedConnectionPool:
                 conn = self._pool.getconn()
                 self._connection_timestamps[id(conn)] = time.time()
                 self.metrics.record_connection_created()
+
+            # Set statement_timeout per-connection (NeonDB pooler doesn't support it as startup param)
+            if self.query_timeout:
+                with conn.cursor() as cur:
+                    cur.execute(f"SET statement_timeout = {self.query_timeout}")
 
             yield conn
 
