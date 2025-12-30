@@ -515,7 +515,11 @@ class MedicalSimulationBridge:
         Returns:
             List of treatments to apply
         """
-        base_time = datetime.now()
+        # Use patient's injury_timestamp as base time for simulation, fall back to now()
+        if patient and hasattr(patient, "injury_timestamp") and patient.injury_timestamp:
+            base_time = patient.injury_timestamp if isinstance(patient.injury_timestamp, datetime) else datetime.fromisoformat(str(patient.injury_timestamp))
+        else:
+            base_time = datetime.now()
 
         # Get sim_patient to check already applied treatments
         sim_patient = None
@@ -822,6 +826,31 @@ class MedicalSimulationBridge:
                 # Generic structure for unknown events
                 enhanced_event = clean_event
                 enhanced_event["event_type"] = event_type
+
+            # Compute hours_since_injury from timestamp and patient's injury_timestamp
+            # Note: Medical simulation uses real-world timestamps, so we compute relative hours
+            if enhanced_event.get("timestamp") and hasattr(patient, "injury_timestamp") and patient.injury_timestamp:
+                try:
+                    event_time = datetime.fromisoformat(enhanced_event["timestamp"])
+                    injury_time = patient.injury_timestamp if isinstance(patient.injury_timestamp, datetime) else datetime.fromisoformat(str(patient.injury_timestamp))
+                    hours_since = (event_time - injury_time).total_seconds() / 3600
+
+                    # If computed hours is unreasonable (> 240 = 10 days), assign based on event index
+                    # This handles the case where simulation uses real-world timestamps
+                    if hours_since > 240 or hours_since < 0:
+                        # Assign incremental hours based on event position (0.5h per event)
+                        event_idx = len(enhanced_events)
+                        hours_since = 0.5 + (event_idx * 0.5)
+
+                    enhanced_event["hours_since_injury"] = round(hours_since, 2)
+                except (ValueError, TypeError):
+                    # If timestamp parsing fails, assign based on event index
+                    event_idx = len(enhanced_events)
+                    enhanced_event["hours_since_injury"] = round(0.5 + (event_idx * 0.5), 2)
+
+            # Add facility field for timeline viewer compatibility
+            if "location" in enhanced_event and "facility" not in enhanced_event:
+                enhanced_event["facility"] = enhanced_event["location"]
 
             enhanced_events.append(enhanced_event)
 

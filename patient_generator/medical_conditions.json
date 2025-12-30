@@ -1,0 +1,98 @@
+{
+  "_comment": "Medical Patients Generator - SNOMED CT Medical Conditions",
+  "_description": "Configurable medical conditions, allergies, medications, and severity modifiers. All codes are SNOMED CT codes.",
+
+  "battle_trauma_conditions": [
+    {"code": "125670008", "display": "War injury"},
+    {"code": "262574004", "display": "Bullet wound"},
+    {"code": "125689001", "display": "Shrapnel injury"},
+    {"code": "125605004", "display": "Traumatic shock"},
+    {"code": "19130008", "display": "Traumatic brain injury"},
+    {"code": "125596004", "display": "Injury by explosive"},
+    {"code": "284551006", "display": "Traumatic amputation of limb"},
+    {"code": "361220002", "display": "Penetrating injury"},
+    {"code": "7200002", "display": "Burn of skin"},
+    {"code": "2055003", "display": "Laceration of hand"}
+  ],
+
+  "non_battle_injuries": [
+    {"code": "37782003", "display": "Fracture of bone"},
+    {"code": "372963008", "display": "Heat exhaustion"},
+    {"code": "302914006", "display": "Ankle sprain"},
+    {"code": "55566008", "display": "Burn injury"},
+    {"code": "428794004", "display": "Malnutrition"},
+    {"code": "409711008", "display": "Vehicle accident injury"},
+    {"code": "275272006", "display": "Crush injury"},
+    {"code": "87991007", "display": "Abdominal pain"},
+    {"code": "23924001", "display": "Tight chest"},
+    {"code": "267036007", "display": "Dyspnea"}
+  ],
+
+  "disease_conditions": [
+    {"code": "195662009", "display": "Acute respiratory illness"},
+    {"code": "43878008", "display": "Streptococcal pharyngitis"},
+    {"code": "25374005", "display": "Gastroenteritis"},
+    {"code": "16932000", "display": "Nausea and vomiting"},
+    {"code": "68566005", "display": "Urinary tract infection"},
+    {"code": "62315008", "display": "Diarrhea"},
+    {"code": "45170000", "display": "Psychological stress"},
+    {"code": "73249009", "display": "Mental exhaustion"},
+    {"code": "386661006", "display": "Fever"},
+    {"code": "9826008", "display": "Conjunctivitis"}
+  ],
+
+  "severity_modifiers": [
+    {"code": "371923003", "display": "Mild to moderate"},
+    {"code": "371924009", "display": "Moderate"},
+    {"code": "371925005", "display": "Moderate to severe"},
+    {"code": "24484000", "display": "Severe"}
+  ],
+
+  "related_conditions": {
+    "_comment": "Conditions that may accompany primary conditions (by primary condition code)",
+    "19130008": [
+      {"code": "62106007", "display": "Concussion with loss of consciousness", "probability": 0.7},
+      {"code": "309557009", "display": "Intracranial hemorrhage", "probability": 0.4}
+    ],
+    "262574004": [
+      {"code": "20376005", "display": "Hemorrhage", "probability": 0.6},
+      {"code": "125640002", "display": "Traumatic rupture of organ", "probability": 0.3}
+    ]
+  },
+
+  "allergies": [
+    {"code": "300916003", "display": "Allergy to penicillin"},
+    {"code": "294000004", "display": "Allergy to morphine"},
+    {"code": "294617006", "display": "Allergy to tetracycline"},
+    {"code": "417532002", "display": "Allergy to aspirin"},
+    {"code": "420126008", "display": "Allergy to peanuts"},
+    {"code": "425525006", "display": "Allergy to shellfish"},
+    {"code": "91934008", "display": "Allergy to animal dander"},
+    {"code": "418689008", "display": "Allergy to grass pollen"},
+    {"code": "300438000", "display": "Allergy to mushrooms"},
+    {"code": "300913005", "display": "Allergy to latex"}
+  ],
+
+  "medications": [
+    {"code": "372767008", "display": "Morphine"},
+    {"code": "387517004", "display": "Paracetamol"},
+    {"code": "372522002", "display": "Ibuprofen"},
+    {"code": "374957002", "display": "Amoxicillin"},
+    {"code": "370167007", "display": "Diazepam"},
+    {"code": "373337001", "display": "Ciprofloxacin"},
+    {"code": "372756003", "display": "Metronidazole"},
+    {"code": "385057009", "display": "Prednisolone"},
+    {"code": "374352003", "display": "Acyclovir"},
+    {"code": "387160009", "display": "Progesterone"}
+  ],
+
+  "condition_medication_map": {
+    "_comment": "Maps condition codes to appropriate medication codes",
+    "262574004": ["372767008", "387517004"],
+    "19130008": ["372767008", "370167007"],
+    "125605004": ["372767008"],
+    "195662009": ["387517004", "372522002"],
+    "43878008": ["374957002"],
+    "68566005": ["373337001"]
+  }
+}

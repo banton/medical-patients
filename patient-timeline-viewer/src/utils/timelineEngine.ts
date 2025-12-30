@@ -6,7 +6,9 @@ export function getPatientLocationAtTime(patient: Patient, currentTime: Date): P
   }
 
   // Convert current time to hours since injury for comparison
-  const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
+  // Support both injury_timestamp and injury_time fields (generator uses injury_time)
+  const injuryTimeStr = patient.injury_timestamp || (patient as any).injury_time;
+  const injuryTime = injuryTimeStr ? new Date(injuryTimeStr) : new Date('2024-01-01T00:00:00Z');
   const currentHours = (currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
 
   // Check if injury has happened yet - if not, patient doesn't exist yet
@@ -148,8 +150,9 @@ export function getTimelineExtent(patients: Patient[]): { start: Date; end: Date
   let latestTime = new Date(0);
 
   patients.forEach(patient => {
-    // Find injury timestamp
-    const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
+    // Find injury timestamp - support both injury_timestamp and injury_time fields
+    const injuryTimeStr = patient.injury_timestamp || (patient as any).injury_time;
+    const injuryTime = injuryTimeStr ? new Date(injuryTimeStr) : new Date('2024-01-01T00:00:00Z');
     
     if (injuryTime < earliestTime) {
       earliestTime = injuryTime;

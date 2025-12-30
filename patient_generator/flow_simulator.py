@@ -1,10 +1,13 @@
 import concurrent.futures
 import datetime
 import json
+import logging
 import multiprocessing
 import os
 import random
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from patient_generator.schemas_config import FrontDefinition
@@ -68,9 +71,9 @@ class PatientFlowSimulator:
 
             spec = importlib.util.find_spec(".medical_simulation_bridge", package="patient_generator")
             if spec is not None:
-                print("Medical simulation enhancement enabled")
+                logger.info("Medical simulation enhancement enabled")
             else:
-                print("Warning: Medical simulation bridge not available")
+                logger.warning("Medical simulation bridge not available")
                 self.use_medical_simulation = False
 
         # Treatment utility model (works independently of medical simulation)
@@ -81,9 +84,9 @@ class PatientFlowSimulator:
                 from .treatment_utility_model import TreatmentUtilityModel
 
                 self.treatment_model = TreatmentUtilityModel()
-                print("Treatment utility model enabled")
+                logger.info("Treatment utility model enabled")
             except ImportError as e:
-                print(f"Warning: Could not import treatment utility model: {e}")
+                logger.warning("Could not import treatment utility model: %s", e)
                 self.use_treatment_utility = False
 
         # Facility Markov Chain for probabilistic routing (MILESTONE 3)
@@ -92,9 +95,9 @@ class PatientFlowSimulator:
         if self.use_markov_chain and MARKOV_CHAIN_AVAILABLE:
             try:
                 self.markov_chain = FacilityMarkovChain()
-                print("Facility Markov Chain enabled - probabilistic patient routing active")
+                logger.info("Facility Markov Chain enabled - probabilistic patient routing active")
             except Exception as e:
-                print(f"Warning: Could not initialize Markov chain: {e}")
+                logger.warning("Could not initialize Markov chain: %s", e)
                 self.use_markov_chain = False
 
         # Warfare modifiers for injury patterns (MILESTONE 4)
@@ -103,9 +106,9 @@ class PatientFlowSimulator:
         if self.use_warfare_modifiers and WARFARE_MODIFIERS_AVAILABLE:
             try:
                 self.warfare_modifiers = WarfareModifiers()
-                print("Warfare modifiers enabled - distinct injury patterns active")
+                logger.info("Warfare modifiers enabled - distinct injury patterns active")
             except Exception as e:
-                print(f"Warning: Could not initialize warfare modifiers: {e}")
+                logger.warning("Could not initialize warfare modifiers: %s", e)
                 self.use_warfare_modifiers = False
 
         # --- Load configurations from ConfigurationManager ---
@@ -139,25 +142,35 @@ class PatientFlowSimulator:
         self.facility_configs_ordered: List[Dict[str, Any]] = self.config_manager.get_facility_configs() or []
         self._transition_probabilities: Dict[str, Dict[str, float]] = self._build_transition_matrix()
 
-        # --- Other parameters (some might become configurable later) ---
-        self.day_distribution = {  # TODO: Make this configurable
-            "Day 1": 0.20,
-            "Day 2": 0.40,
-            "Day 4": 0.30,
-            "Day 8": 0.10,
-        }
-        self._triage_weights = {  # TODO: Make this configurable
-            # Support all variations of injury type names
+        # --- Load simulation parameters from config ---
+        sim_params = self._load_simulation_parameters()
+
+        # Filter out _comment fields from nested dicts
+        raw_day_dist = sim_params.get("day_distribution", {
+            "Day 1": 0.20, "Day 2": 0.40, "Day 4": 0.30, "Day 8": 0.10
+        })
+        self.day_distribution = {k: v for k, v in raw_day_dist.items() if not k.startswith("_")}
+
+        # Load triage weights with uppercase aliases (filter out _comment fields)
+        raw_triage = sim_params.get("triage_weights", {
             "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
             "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
             "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
-            "Polytrauma": {"T1": 0.5, "T2": 0.35, "T3": 0.15},  # Polytrauma is usually severe
-            # Uppercase variations
-            "BATTLE_TRAUMA": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
-            "NON_BATTLE_TRAUMA": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
-            "NON_BATTLE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
-            "DISEASE": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
-        }
+            "Polytrauma": {"T1": 0.5, "T2": 0.35, "T3": 0.15},
+        })
+        base_triage = {k: v for k, v in raw_triage.items() if not k.startswith("_")}
+        # Add uppercase aliases for compatibility
+        self._triage_weights = {**base_triage}
+        if "Battle Injury" in base_triage:
+            self._triage_weights["BATTLE_TRAUMA"] = base_triage["Battle Injury"]
+        if "Non-Battle Injury" in base_triage:
+            self._triage_weights["NON_BATTLE_TRAUMA"] = base_triage["Non-Battle Injury"]
+            self._triage_weights["NON_BATTLE"] = base_triage["Non-Battle Injury"]
+        if "Disease" in base_triage:
+            self._triage_weights["DISEASE"] = base_triage["Disease"]
+
+        # Store other simulation parameters for use elsewhere
+        self._sim_params = sim_params
         # Load base date from injuries.json for temporal scenarios
         try:
             injuries_config = self._load_injuries_config()
@@ -165,12 +178,16 @@ class PatientFlowSimulator:
         except Exception:
             self._base_date_str = active_config.created_at.strftime("%Y-%m-%d")
 
-        # Parallelization settings
-        self.batch_size = 100
+        # Parallelization settings from simulation_parameters.json
+        parallel_config = self._sim_params.get("parallelization", {})
+        self.batch_size = parallel_config.get("batch_size_default", 100)
         try:
-            self.num_workers = max(2, min(multiprocessing.cpu_count(), 8))
-            if self.total_patients_to_generate > 5000:
-                self.batch_size = 250
+            max_workers = parallel_config.get("max_workers", 8)
+            min_workers = parallel_config.get("min_workers", 2)
+            self.num_workers = max(min_workers, min(multiprocessing.cpu_count(), max_workers))
+            large_threshold = parallel_config.get("large_generation_threshold", 5000)
+            if self.total_patients_to_generate > large_threshold:
+                self.batch_size = parallel_config.get("batch_size_large", 250)
         except Exception:
             self.num_workers = 4
 
@@ -185,8 +202,9 @@ class PatientFlowSimulator:
         if isinstance(poi_kia_rate_val, (int, float)):
             poi_kia_rate = float(poi_kia_rate_val)
         else:
-            print(
-                f"Warning: poi_kia_rate from config is not a number: {poi_kia_rate_val}. Defaulting to {poi_kia_rate}."
+            logger.warning(
+                "poi_kia_rate from config is not a number: %s. Defaulting to %s",
+                poi_kia_rate_val, poi_kia_rate
             )
 
         matrix["POI"] = {"KIA": poi_kia_rate}  # This now assigns Dict[str, float]
@@ -226,11 +244,9 @@ class PatientFlowSimulator:
                 rtd_rate = float(rtd_val_from_dict)
 
             except KeyError as e:
-                print(f"Critical Error: Missing rate key {e} in facility data for {facility_id}. Using default rates.")
+                logger.error("Missing rate key %s in facility data for %s. Using default rates.", e, facility_id)
             except ValueError as e:
-                print(
-                    f"Critical Error: Rate value issue for facility {facility_id}. Data: {facility_data}. Error: {e}. Using default rates."
-                )
+                logger.error("Rate value issue for facility %s: %s. Using default rates.", facility_id, e)
 
             # Pydantic validator on FacilityConfig should ensure kia_rate + rtd_rate <= 1.0
             # and that they are between 0.0 and 1.0. These are now post-retrieval/defaulting.
@@ -246,8 +262,9 @@ class PatientFlowSimulator:
             remaining_prob = 1.0 - kia_rate - rtd_rate
             # Clamping for safety, though ideally not needed if Pydantic validation is effective
             if remaining_prob < -1e-9:  # Using small tolerance for float issues
-                print(
-                    f"Warning: Negative remaining_prob ({remaining_prob}) for {facility_id} after KIA/RTD. Clamping to 0."
+                logger.warning(
+                    "Negative remaining_prob (%s) for %s after KIA/RTD. Clamping to 0.",
+                    remaining_prob, facility_id
                 )
                 remaining_prob = 0.0
             elif remaining_prob > 1.0:  # Should also not happen
@@ -276,11 +293,14 @@ class PatientFlowSimulator:
 
             # Check if new format (has warfare_types)
             if "warfare_types" in injuries_config:
-                print(f"Using temporal generation with base_date: {injuries_config.get('base_date', 'NOT_FOUND')}")
+                logger.info(
+                    "Using temporal generation with base_date: %s",
+                    injuries_config.get("base_date", "NOT_FOUND")
+                )
                 return self.generate_temporal_casualties()
-            print("No warfare_types found, using legacy generation")
+            logger.debug("No warfare_types found, using legacy generation")
         except Exception as e:
-            print(f"Error loading injuries config: {e}")
+            logger.warning("Error loading injuries config: %s", e)
 
         # Fall back to original method
         total_casualties = self.total_patients_to_generate
@@ -407,7 +427,7 @@ class PatientFlowSimulator:
             triage_weights = self._triage_weights[patient.injury_type]
         else:
             # Default triage weights if injury type not found
-            print(f"Warning: Unknown injury type '{patient.injury_type}'. Using default triage weights.")
+            logger.warning("Unknown injury type '%s'. Using default triage weights.", patient.injury_type)
             triage_weights = {"T1": 0.3, "T2": 0.4, "T3": 0.3}
 
         patient.triage_category = self._select_weighted_item(triage_weights)
@@ -436,16 +456,24 @@ class PatientFlowSimulator:
             return random.choice(["Left Leg", "Right Leg", "Left Arm", "Right Arm"])
         if "burn" in injury_lower:
             return random.choice(["Head", "Torso", "Left Arm", "Right Arm", "Left Leg", "Right Leg"])
-        # Default weighted distribution for generic injuries
-        # Torso: 30%, Head: 15%, Arms: 25%, Legs: 30%
+
+        # Use configurable body part distribution for generic injuries
+        raw_body_part_dist = self._sim_params.get("poi_settings", {}).get("body_part_distribution", {
+            "Torso": 0.30, "Head": 0.15, "Left Arm": 0.125, "Right Arm": 0.125,
+            "Left Leg": 0.15, "Right Leg": 0.15
+        })
+        # Filter out _comment fields
+        body_part_dist = {k: v for k, v in raw_body_part_dist.items() if not k.startswith("_")}
+
         rand = random.random()
-        if rand < 0.30:
-            return "Torso"
-        if rand < 0.45:
-            return "Head"
-        if rand < 0.70:
-            return random.choice(["Left Arm", "Right Arm"])
-        return random.choice(["Left Leg", "Right Leg"])
+        cumulative = 0.0
+        for body_part, weight in body_part_dist.items():
+            cumulative += weight
+            if rand < cumulative:
+                return body_part
+
+        # Fallback if distribution doesn't sum to 1.0
+        return random.choice(list(body_part_dist.keys()))
 
     def _simulate_patient_flow_single(self, patient: Patient):
         """
@@ -469,7 +497,7 @@ class PatientFlowSimulator:
                 if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
                     return
             except Exception as e:
-                print(f"Error in medical simulation for patient {patient.id}: {e}")
+                logger.error("Error in medical simulation for patient %s: %s", patient.id, e)
                 # Fall through to standard simulation
 
         # Use Markov chain if enabled, otherwise fall back to sequential flow
@@ -613,9 +641,20 @@ class PatientFlowSimulator:
             if facility_name in facility_id or facility_name.replace("Role", "R") in facility_id:
                 return facility_config.get("kia_rate", 0.1)
 
-        # Default rates by facility type if not found in config
-        default_rates = {"POI": 0.15, "Role1": 0.08, "Role2": 0.06, "Role3": 0.04, "Role4": 0.02}
-        return default_rates.get(facility_name, 0.1)
+        # Use configurable default rates from simulation_parameters.json
+        facility_defaults = self._sim_params.get("facility_defaults", {})
+        poi_settings = self._sim_params.get("poi_settings", {})
+
+        if facility_name == "POI":
+            return poi_settings.get("default_kia_rate", 0.20)
+
+        facility_config = facility_defaults.get(facility_name, {})
+        if isinstance(facility_config, dict):
+            return facility_config.get("kia_rate", 0.1)
+
+        # Fallback defaults if not in config
+        fallback_rates = {"POI": 0.20, "Role1": 0.08, "Role2": 0.06, "Role3": 0.04, "Role4": 0.02}
+        return fallback_rates.get(facility_name, 0.1)
 
     def _get_facility_rtd_rate(self, facility_name: str) -> float:
         """Get base RTD rate for facility (before triage modifier)"""
@@ -625,15 +664,22 @@ class PatientFlowSimulator:
             if facility_name in facility_id or facility_name.replace("Role", "R") in facility_id:
                 return facility_config.get("rtd_rate", 0.3)
 
-        # Default rates by facility type if not found in config
-        default_rates = {
+        # Use configurable default rates from simulation_parameters.json
+        facility_defaults = self._sim_params.get("facility_defaults", {})
+
+        facility_config = facility_defaults.get(facility_name, {})
+        if isinstance(facility_config, dict):
+            return facility_config.get("rtd_rate", 0.3)
+
+        # Fallback defaults if not in config
+        fallback_rates = {
             "POI": 0.2,
             "Role1": 0.25,
             "Role2": 0.35,
-            "Role3": 0.4,
-            "Role4": 0.6,  # Higher RTD rate at final facility
+            "Role3": 0.45,
+            "Role4": 0.70,  # Higher RTD rate at final facility
         }
-        return default_rates.get(facility_name, 0.3)
+        return fallback_rates.get(facility_name, 0.3)
 
     def _simulate_patient_flow_markov(self, patient: Patient):
         """
@@ -793,9 +839,7 @@ class PatientFlowSimulator:
 
         # Fallback: if no transitions defined (should not happen for POI or configured facilities)
         # or if at a terminal state already (though loop condition should prevent this call)
-        print(
-            f"Warning: No transitions defined for {current_facility_id} or invalid state. Patient status: {patient.current_status}"
-        )
+        logger.warning("No transitions defined for %s. Patient status: %s", current_facility_id, patient.current_status)
         return "UNKNOWN_STATE"  # Or current_facility_id to signify no change / error
 
     def _generate_treatments(self, patient: Patient, facility_id: str):
@@ -813,30 +857,18 @@ class PatientFlowSimulator:
 
         # Use treatment utility model if available
         if self.use_treatment_utility and self.treatment_model:
-            print(
-                f"DEBUG: Utility model check - enabled: {self.use_treatment_utility}, model exists: {self.treatment_model is not None}"
-            )
             # Get SNOMED code from patient's primary condition(s)
             snomed_code = None
-            print(
-                f"DEBUG: Patient attributes: primary_condition: {hasattr(patient, 'primary_condition')}, primary_conditions: {hasattr(patient, 'primary_conditions')}"
-            )
             if hasattr(patient, "primary_condition") and isinstance(patient.primary_condition, dict):
                 snomed_code = patient.primary_condition.get("code")
-                print(f"DEBUG: Found primary_condition code: {snomed_code}")
             elif hasattr(patient, "primary_conditions") and patient.primary_conditions:
                 # Get first condition's SNOMED code
                 first_condition = patient.primary_conditions[0]
                 if isinstance(first_condition, dict):
                     snomed_code = first_condition.get("code")
-                    print(f"DEBUG: Found primary_conditions[0] code: {snomed_code}")
-                print(f"DEBUG: primary_conditions: {patient.primary_conditions}")
-            else:
-                print("DEBUG: No valid condition attributes found")
 
-            # Debug: Log what we found
             if snomed_code:
-                print(f"DEBUG: Using utility model for SNOMED {snomed_code} at {facility_name_or_type}")
+                logger.debug("Using utility model for SNOMED %s at %s", snomed_code, facility_name_or_type)
 
             if snomed_code:
                 # Map triage to severity for utility model
@@ -1023,7 +1055,7 @@ class PatientFlowSimulator:
         # Use patient count from active configuration if available, otherwise use injuries.json default
         # Use the updated total_patients_to_generate which may have been overridden
         total_patients = self.total_patients_to_generate
-        print(f"🔧 Temporal generation using patient count: {total_patients}")
+        logger.info("Temporal generation using patient count: %d", total_patients)
 
         # Generate casualty timeline
         casualty_timeline = temporal_gen.generate_timeline(
@@ -1038,13 +1070,14 @@ class PatientFlowSimulator:
         )
 
         # Generate patients based on timeline
-        print(f"Generated {len(casualty_timeline)} casualty events")
-        print(f"First 3 events: {[(e.timestamp.isoformat(), e.patient_count) for e in casualty_timeline[:3]]}")
+        logger.debug("Generated %d casualty events", len(casualty_timeline))
         patients = self._generate_patients_from_timeline(casualty_timeline, injuries_config["injury_mix"])
-        print(f"Generated {len(patients)} patients from timeline")
+        logger.info("Generated %d patients from timeline", len(patients))
         if patients:
-            print(f"First patient injury time: {patients[0].injury_timestamp}")
-            print(f"Last patient injury time: {patients[-1].injury_timestamp}")
+            logger.debug(
+                "Patient timeline: first=%s, last=%s",
+                patients[0].injury_timestamp, patients[-1].injury_timestamp
+            )
 
         # Simulate flow for each patient
         if len(patients) >= 500 and self.num_workers > 1:
@@ -1061,6 +1094,25 @@ class PatientFlowSimulator:
 
         with open(injuries_path) as f:
             return json.load(f)
+
+    def _load_simulation_parameters(self) -> Dict[str, Any]:
+        """Load simulation_parameters.json configuration.
+
+        Returns configurable simulation parameters like triage weights,
+        day distribution, and facility defaults.
+        """
+        params_path = os.path.join(os.path.dirname(__file__), "simulation_parameters.json")
+        try:
+            with open(params_path) as f:
+                params = json.load(f)
+                # Filter out comment fields
+                return {k: v for k, v in params.items() if not k.startswith("_")}
+        except FileNotFoundError:
+            logger.warning("simulation_parameters.json not found, using defaults")
+            return {}
+        except json.JSONDecodeError as e:
+            logger.error("Invalid JSON in simulation_parameters.json: %s", e)
+            return {}
 
     def _generate_patients_from_timeline(
         self, timeline: List[CasualtyEvent], base_injury_mix: Dict[str, float]

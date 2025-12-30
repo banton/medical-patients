@@ -26,14 +26,24 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onLoad, isLoading = 
       const text = await file.text();
       const data = JSON.parse(text);
 
-      // Validate that it's an array
-      if (!Array.isArray(data)) {
-        setError('File must contain an array of patients');
+      // Handle both formats: direct array or {metadata, patients} structure
+      let patientsArray: any[];
+      if (Array.isArray(data)) {
+        patientsArray = data;
+      } else if (data.patients && Array.isArray(data.patients)) {
+        // Generator output format: {"metadata": {...}, "patients": [...]}
+        patientsArray = data.patients;
+        console.log(`Loaded ${patientsArray.length} patients from generator output format`);
+        if (data.metadata) {
+          console.log('Metadata:', data.metadata);
+        }
+      } else {
+        setError('File must contain an array of patients or a {patients: [...]} structure');
         return;
       }
 
       // Handle both direct patient objects and wrapped format
-      const extractedPatients = data.map((item: any) => {
+      const extractedPatients = patientsArray.map((item: any) => {
         // Check if this is a wrapped format (has 'patient' key)
         if (item.patient) {
           return item.patient;
@@ -51,7 +61,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onLoad, isLoading = 
 
         // Extract nationality from demographics if needed
         const nationality = patient.nationality || patient.demographics?.nationality;
-        
+
         // Extract triage from timeline events if not at top level
         let triage = patient.triage_category;
         if (!triage && patient.movement_timeline && Array.isArray(patient.movement_timeline)) {
@@ -59,12 +69,29 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onLoad, isLoading = 
           triage = triageEvent?.triage_category;
         }
 
+        // Map status field to final_status if needed (generator uses different field names)
+        let finalStatus = patient.final_status;
+        if (!finalStatus && patient.status) {
+          // Map generator status values to timeline viewer expected values
+          const statusMap: Record<string, string> = {
+            'KIA': 'KIA',
+            'DOW': 'KIA',  // Died of Wounds = KIA
+            'RTD': 'RTD',
+            'Role4': 'Remains_Role4',
+            'Remains_Role4': 'Remains_Role4',
+            'Role3': 'Remains_Role4',  // Patients still at Role3 count as remaining
+            'Role2': 'Remains_Role4',
+            'Role1': 'Remains_Role4',
+          };
+          finalStatus = statusMap[patient.status] || 'Remains_Role4';
+        }
+
         const checks = {
           hasId: patient.id !== undefined && patient.id !== null,
           idType: typeof patient.id === 'string' || typeof patient.id === 'number',
           hasNationality: typeof nationality === 'string',
           hasTriage: ['T1', 'T2', 'T3'].includes(triage),
-          hasFinalStatus: ['KIA', 'RTD', 'Remains_Role4'].includes(patient.final_status),
+          hasFinalStatus: ['KIA', 'RTD', 'Remains_Role4'].includes(finalStatus),
           hasTimeline: Array.isArray(patient.movement_timeline)
         };
 
@@ -84,6 +111,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onLoad, isLoading = 
         if (isValid) {
           patient.nationality = nationality;
           patient.triage_category = triage;
+          patient.final_status = finalStatus;
           patient.gender = patient.gender || patient.demographics?.gender;
         }
 
@@ -92,7 +120,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onLoad, isLoading = 
 
       if (validPatients.length === 0) {
         // Provide detailed error information
-        const sampleItem = data[0];
+        const sampleItem = patientsArray[0];
         const samplePatient = extractedPatients[0];
         const detailedError = `No valid patients found. Sample structure:
 
@@ -109,8 +137,8 @@ Expected: id (string/number), nationality (string), triage_category (T1/T2/T3), 
         return;
       }
 
-      if (validPatients.length !== data.length) {
-        console.warn(`Warning: ${data.length - validPatients.length} invalid patients filtered out`);
+      if (validPatients.length !== patientsArray.length) {
+        console.warn(`Warning: ${patientsArray.length - validPatients.length} invalid patients filtered out`);
       }
 
       onLoad(validPatients as Patient[]);

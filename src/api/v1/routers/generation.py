@@ -4,6 +4,7 @@ Replaces the old /api/generate endpoint with /api/v1/generation/.
 """
 
 import json
+import logging
 import os
 from pathlib import Path
 import shutil
@@ -23,6 +24,8 @@ from src.core.security_enhanced import verify_api_key
 from src.domain.models.job import JobStatus
 from src.domain.services.job_service import JobService
 from src.domain.services.patient_generation_service import AsyncPatientGenerationService, GenerationContext
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/generation",
@@ -192,25 +195,18 @@ async def _run_generation_task(
         # Check both root level and nested configuration object
         inner_config = config.get("configuration", config)
 
-        # Debug: Check what we actually have
-        print(f"🔍 DEBUG: type(inner_config) = {type(inner_config)}")
-        print(f"🔍 DEBUG: inner_config.get('total_patients') = {inner_config.get('total_patients')}")
-        print(f"🔍 DEBUG: 'total_patients' in inner_config = {'total_patients' in inner_config}")
-        if "total_patients" in inner_config:
-            print(f"🔍 DEBUG: inner_config['total_patients'] = {inner_config['total_patients']}")
+        # Log configuration details for debugging
+        logger.debug("Config type: %s", type(inner_config).__name__)
+        logger.debug("total_patients value: %s", inner_config.get("total_patients"))
 
         temporal_config_present = any(
             key in inner_config for key in ["warfare_types", "environmental_conditions", "special_events", "base_date"]
         )
 
-        print(f"🔍 TEMPORAL DEBUG: Root config keys: {list(config.keys())}")
-        print(f"🔍 TEMPORAL DEBUG: Inner config keys: {list(inner_config.keys())}")
-        print(f"🔍 TEMPORAL DEBUG: Detection result: {temporal_config_present}")
-        print(f"🔍 TOTAL PATIENTS DEBUG: inner_config.get('total_patients') = {inner_config.get('total_patients')}")
+        logger.debug("Temporal config detected: %s", temporal_config_present)
         if temporal_config_present:
-            print(
-                f"🔍 TEMPORAL DEBUG: Found temporal keys: {[k for k in ['warfare_types', 'environmental_conditions', 'special_events', 'base_date'] if k in inner_config]}"
-            )
+            temporal_keys = [k for k in ["warfare_types", "environmental_conditions", "special_events", "base_date"] if k in inner_config]
+            logger.debug("Found temporal keys: %s", temporal_keys)
 
         if temporal_config_present:
             # Write temporal configuration to injuries.json for flow simulator
@@ -257,9 +253,8 @@ async def _run_generation_task(
             with open(injuries_path, "w") as f:
                 json.dump(temporal_injuries_config, f, indent=2)
 
-            print("✅ Temporal configuration written to injuries.json")
-            print(f"   Warfare types: {[k for k, v in temporal_injuries_config['warfare_types'].items() if v]}")
-            print(f"   Base date: {temporal_injuries_config['base_date']}")
+            active_warfare = [k for k, v in temporal_injuries_config["warfare_types"].items() if v]
+            logger.info("Temporal config written - warfare: %s, base_date: %s", active_warfare, temporal_injuries_config["base_date"])
 
         # Handle configuration source
         db_instance = Database.get_instance()
@@ -328,7 +323,7 @@ async def _run_generation_task(
             try:
                 config_repo.delete_configuration(config_template.id)
             except Exception as e:
-                print(f"Warning: Could not clean up temporary configuration {config_template.id}: {e}")
+                logger.warning("Could not clean up temporary configuration %s: %s", config_template.id, e)
 
         # Restore original injuries.json if we modified it
         if temporal_config_present:
@@ -339,9 +334,9 @@ async def _run_generation_task(
 
             if os.path.exists(backup_path):
                 shutil.move(backup_path, injuries_path)
-                print("✅ Restored original injuries.json")
+                logger.debug("Restored original injuries.json")
             else:
-                print("⚠️  No backup found to restore injuries.json")
+                logger.warning("No backup found to restore injuries.json")
 
         # Update job with results
         await job_service.set_job_results(
@@ -367,14 +362,14 @@ async def _run_generation_task(
 
                 if os.path.exists(backup_path):
                     shutil.move(backup_path, injuries_path)
-                    print("✅ Restored original injuries.json after failure")
+                    logger.debug("Restored original injuries.json after failure")
             except Exception as cleanup_error:
-                print(f"⚠️  Failed to restore injuries.json: {cleanup_error}")
+                logger.error("Failed to restore injuries.json: %s", cleanup_error)
 
         # Mark job as failed
         await job_service.update_job_status(job_id, JobStatus.FAILED, error=str(e))
-        print(f"Generation task failed for job {job_id}: {e}")
-        traceback.print_exc()
+        logger.error("Generation task failed for job %s: %s", job_id, e)
+        logger.debug("Traceback: %s", traceback.format_exc())
 
 
 @router.post(

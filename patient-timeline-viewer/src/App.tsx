@@ -4,6 +4,7 @@ import { Patient, PlaybackState, FacilityName } from './types/patient.types';
 import { FileUploader } from './components/FileUploader';
 import { FacilityColumn } from './components/FacilityColumn';
 import { TimelineControls } from './components/TimelineControls';
+import { FilterBar, FilterState, filterPatients, initialFilterState } from './components/FilterBar';
 import { getTimelineExtent } from './utils/timelineEngine';
 import './index.css';
 
@@ -19,6 +20,12 @@ function App() {
     endTime: new Date('2024-01-01T24:00:00Z'),
     isLooping: false
   });
+  const [filters, setFilters] = useState<FilterState>(initialFilterState);
+
+  // Filter patients based on current filter state
+  const filteredPatients = useMemo(() => {
+    return filterPatients(patients, filters, playbackState.currentTime);
+  }, [patients, filters, playbackState.currentTime]);
 
   // Update timeline extent when patients change
   useEffect(() => {
@@ -114,11 +121,17 @@ function App() {
     console.log(`Loaded ${loadedPatients.length} patients`);
   };
 
+  const handleClearFilters = () => {
+    setFilters(initialFilterState);
+  };
+
   // Calculate statistics and cumulative KIA/RTD counts
   const statistics = useMemo(() => {
     if (patients.length === 0) return null;
 
     const totalPatients = patients.length;
+    const filteredCount = filteredPatients.length;
+
     const finalStatuses = patients.reduce((acc, patient) => {
       acc[patient.final_status] = (acc[patient.final_status] || 0) + 1;
       return acc;
@@ -129,20 +142,24 @@ function App() {
       return acc;
     }, {} as Record<string, number>);
 
-    // Calculate current status counts (how many have reached each status by current time)
+    // Calculate current status counts for filtered patients
     const currentStatuses = { KIA: 0, RTD: 0, Active: 0 };
-    
-    patients.forEach(patient => {
+
+    filteredPatients.forEach(patient => {
       if (patient.movement_timeline) {
-        const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
+        const injuryTime = patient.injury_timestamp
+          ? new Date(patient.injury_timestamp)
+          : new Date('2024-01-01T00:00:00Z');
         const currentHours = (playbackState.currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
-        
+
         // Only count patients whose injury has occurred
         if (currentHours >= 0) {
-          const eventsSoFar = patient.movement_timeline.filter(event => event.hours_since_injury <= currentHours);
+          const eventsSoFar = patient.movement_timeline.filter(
+            event => event.hours_since_injury <= currentHours
+          );
           const kiaEvent = eventsSoFar.find(event => event.event_type === 'kia');
           const rtdEvent = eventsSoFar.find(event => event.event_type === 'rtd');
-          
+
           if (kiaEvent) {
             currentStatuses.KIA++;
           } else if (rtdEvent) {
@@ -156,15 +173,16 @@ function App() {
 
     return {
       total: totalPatients,
+      filtered: filteredCount,
       finalStatuses,
       triageCounts,
       currentStatuses
     };
-  }, [patients, playbackState.currentTime]);
+  }, [patients, filteredPatients, playbackState.currentTime]);
 
   // Calculate cumulative KIA/RTD counts up to current time for each facility
   const cumulativeCounts = useMemo(() => {
-    if (patients.length === 0) return {};
+    if (filteredPatients.length === 0) return {};
 
     const counts: Record<FacilityName, { kia: number; rtd: number }> = {
       POI: { kia: 0, rtd: 0 },
@@ -174,7 +192,7 @@ function App() {
       Role4: { kia: 0, rtd: 0 }
     };
 
-    patients.forEach(patient => {
+    filteredPatients.forEach(patient => {
       // Check if patient has ever been KIA or RTD up to this point in time
       if (patient.movement_timeline) {
         const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
@@ -213,7 +231,7 @@ function App() {
     });
 
     return counts;
-  }, [patients, playbackState.currentTime]);
+  }, [filteredPatients, playbackState.currentTime]);
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
@@ -261,14 +279,14 @@ function App() {
                 <div className="w-full px-4 flex items-center justify-between">
                   <div className="flex items-center space-x-4 text-sm">
                     <span className="font-medium">
-                      Total: {statistics.currentStatuses.Active + statistics.currentStatuses.KIA + statistics.currentStatuses.RTD}/{statistics.total}
+                      Showing: {statistics.filtered}/{statistics.total}
                     </span>
                     <div className="flex space-x-2">
                       <span className="text-red-600">
-                        KIA: {statistics.currentStatuses.KIA}/{statistics.finalStatuses.KIA || 0}
+                        KIA: {statistics.currentStatuses.KIA}
                       </span>
                       <span className="text-green-600">
-                        RTD: {statistics.currentStatuses.RTD}/{statistics.finalStatuses.RTD || 0}
+                        RTD: {statistics.currentStatuses.RTD}
                       </span>
                       <span className="text-blue-600">
                         Active: {statistics.currentStatuses.Active}
@@ -290,6 +308,14 @@ function App() {
               </div>
             )}
 
+            {/* Filter bar */}
+            <FilterBar
+              patients={patients}
+              filters={filters}
+              onFilterChange={setFilters}
+              onClearFilters={handleClearFilters}
+            />
+
             {/* Facility columns */}
             <div className="flex-1 grid grid-cols-5 gap-2 p-2 overflow-hidden">
               <AnimatePresence>
@@ -297,7 +323,7 @@ function App() {
                   <FacilityColumn
                     key={facility}
                     name={facility}
-                    patients={patients}
+                    patients={filteredPatients}
                     currentTime={playbackState.currentTime}
                     cumulativeCounts={(cumulativeCounts as any)[facility] || { kia: 0, rtd: 0 }}
                     className="h-full"
