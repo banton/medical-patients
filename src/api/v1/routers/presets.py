@@ -278,7 +278,7 @@ async def list_categories() -> Dict[str, Any]:
 
         # Count presets per category
         presets_data = data.get("presets", {})
-        category_counts = {}
+        category_counts: dict[str, int] = {}
         for preset in presets_data.values():
             cat = preset.get("category", "unknown")
             category_counts[cat] = category_counts.get(cat, 0) + 1
