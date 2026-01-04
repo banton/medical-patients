@@ -175,6 +175,10 @@ async def liveness_probe():
     Simple liveness check for load balancers.
 
     Returns 200 if the service is alive.
+
+    NOTE: This endpoint intentionally does NOT query the database.
+    This allows serverless PostgreSQL (Neon) to auto-suspend when idle.
+    Use /ready for database connectivity checks.
     """
     return {"status": "alive"}
 

@@ -38,6 +38,7 @@ from src.core.error_handlers import (
     validation_exception_handler,
 )
 from src.domain.repositories.api_key_repository import APIKeyRepository
+from src.infrastructure.database_pool import close_pool
 
 # Get settings
 settings = get_settings()
@@ -84,6 +85,13 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down application...")
+
+    # Close database connection pool
+    try:
+        close_pool()
+        logger.info("Database connection pool closed")
+    except Exception as e:
+        logger.error(f"Error closing database pool: {e}")
 
     # Close cache connection
     if settings.CACHE_ENABLED:

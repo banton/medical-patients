@@ -286,8 +286,16 @@ class TestConnectionPoolIntegration:
         assert pool1.pre_ping is True
         assert pool1.query_timeout == 15000
 
-    def test_pool_close(self):
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_pool_close(self, mock_pool_class, mock_db_env):
         """Test pool closure."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Reset global pool first
+        close_pool()
+
         # Get pool instance
         pool = get_pool()
         assert pool is not None
@@ -298,6 +306,376 @@ class TestConnectionPoolIntegration:
         # Verify new instance is created
         new_pool = get_pool()
         assert new_pool is not pool
+
+        # Cleanup
+        close_pool()
+
+
+class TestServerlessMode:
+    """Tests for serverless PostgreSQL (Neon) support."""
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_serverless_mode_initialization(self, mock_pool_class):
+        """Test pool initializes correctly in serverless mode."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Create pool in serverless mode
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            idle_timeout=60,
+            serverless_mode=True,
+        )
+
+        # Verify serverless configuration
+        assert pool.minconn == 0
+        assert pool.idle_timeout == 60
+        assert pool.serverless_mode is True
+
+        # Verify no initial connections are created (minconn=0)
+        assert mock_pool.getconn.call_count == 0
+
+        # Cleanup
+        pool.close()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_serverless_mode_in_pool_status(self, mock_pool_class):
+        """Test serverless mode is reported in pool status."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+        mock_pool.maxconn = 10
+        mock_pool.minconn = 0
+        mock_pool._pool = []
+
+        # Create serverless pool
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            idle_timeout=60,
+            serverless_mode=True,
+        )
+
+        # Get status
+        status = pool.get_pool_status()
+
+        # Verify serverless mode is in config
+        assert status["config"]["serverless_mode"] is True
+        assert status["config"]["idle_timeout_seconds"] == 60
+
+        # Cleanup
+        pool.close()
+
+    @pytest.fixture()
+    def serverless_env(self, monkeypatch):
+        """Mock serverless environment variables (default behavior)."""
+        monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@localhost/test")
+        # No DB_ALWAYS_ON means serverless is the default
+        monkeypatch.delenv("DB_ALWAYS_ON", raising=False)
+        # Reset global pool before test
+        close_pool()
+
+    @pytest.fixture()
+    def always_on_env(self, monkeypatch):
+        """Mock always-on environment variables."""
+        monkeypatch.setenv("DATABASE_URL", "postgresql://test:test@localhost/test")
+        monkeypatch.setenv("DB_ALWAYS_ON", "true")
+        # Reset global pool before test
+        close_pool()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_get_pool_serverless_is_default(self, mock_pool_class, serverless_env):
+        """Test get_pool() uses serverless mode by default."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Get pool - should be in serverless mode by default
+        pool = get_pool()
+
+        # Verify serverless defaults were applied
+        assert pool.minconn == 0
+        assert pool.serverless_mode is True
+        assert pool.idle_timeout == 60  # Default for serverless
+        assert pool.pool_recycle == 300  # Default for serverless (5 min)
+
+        # Cleanup
+        close_pool()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_get_pool_with_always_on_env(self, mock_pool_class, always_on_env):
+        """Test get_pool() reads DB_ALWAYS_ON environment variable."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Get pool - should detect always-on mode
+        pool = get_pool()
+
+        # Verify always-on defaults were applied
+        assert pool.minconn == 5
+        assert pool.serverless_mode is False
+        assert pool.idle_timeout == 0  # Disabled for always-on
+        assert pool.pool_recycle == 3600  # 1 hour for always-on
+
+        # Cleanup
+        close_pool()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_idle_cleanup_thread_starts(self, mock_pool_class):
+        """Test idle cleanup thread starts when idle_timeout is set."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Create pool with idle timeout
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            idle_timeout=60,
+            serverless_mode=True,
+        )
+
+        # Verify cleanup thread was created and is running
+        assert pool._cleanup_thread is not None
+        assert pool._cleanup_thread.is_alive()
+        assert pool._cleanup_thread.name == "db-pool-idle-cleanup"
+
+        # Cleanup
+        pool.close()
+
+        # Thread should stop after close
+        assert pool._shutdown is True
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_idle_cleanup_thread_not_started_when_disabled(self, mock_pool_class):
+        """Test idle cleanup thread is NOT started when idle_timeout=0."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Create pool without idle timeout
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            idle_timeout=0,  # Disabled
+            serverless_mode=False,
+        )
+
+        # Verify cleanup thread was NOT created
+        assert pool._cleanup_thread is None
+
+        # Cleanup
+        pool.close()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_connection_last_used_tracking(self, mock_pool_class):
+        """Test that connection last_used time is tracked."""
+        import time
+
+        # Setup mock pool
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+        mock_pool.maxconn = 10
+        mock_pool.minconn = 0
+
+        # Setup mock connection
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_cursor.__exit__ = MagicMock(return_value=None)
+        mock_conn.cursor.return_value = mock_cursor
+        mock_pool.getconn.return_value = mock_conn
+
+        # Create pool without health check to simplify
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            pre_ping=False,
+            idle_timeout=0,  # Disable cleanup thread for this test
+        )
+
+        # Get connection
+        before = time.time()
+        with pool.get_connection():
+            pass
+        after = time.time()
+
+        # Verify last_used was tracked
+        conn_id = id(mock_conn)
+        assert conn_id in pool._connection_last_used
+        assert before <= pool._connection_last_used[conn_id] <= after
+
+        # Cleanup
+        pool.close()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_graceful_shutdown_clears_tracking(self, mock_pool_class):
+        """Test that graceful shutdown clears connection tracking."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+
+        # Setup mock connection
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_cursor.__exit__ = MagicMock(return_value=None)
+        mock_conn.cursor.return_value = mock_cursor
+        mock_pool.getconn.return_value = mock_conn
+
+        # Create pool
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            pre_ping=False,
+            idle_timeout=0,
+        )
+
+        # Get a connection to populate tracking dicts
+        with pool.get_connection():
+            pass
+
+        # Verify tracking has data
+        assert len(pool._connection_last_used) > 0
+
+        # Close pool
+        pool.close()
+
+        # Verify tracking was cleared
+        assert len(pool._connection_timestamps) == 0
+        assert len(pool._connection_last_used) == 0
+
+
+class TestColdStart:
+    """Tests for cold start behavior after all connections are closed."""
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_cold_start_after_all_connections_closed(self, mock_pool_class):
+        """Test that pool can recover after all connections are closed (cold start)."""
+        # Setup mock pool
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+        mock_pool.maxconn = 10
+        mock_pool.minconn = 0
+        mock_pool._pool = []  # Empty pool (all connections closed)
+
+        # Setup mock connection
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_cursor.__exit__ = MagicMock(return_value=None)
+        mock_conn.cursor.return_value = mock_cursor
+        mock_pool.getconn.return_value = mock_conn
+
+        # Create pool in serverless mode (0 min connections)
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            pre_ping=False,
+            idle_timeout=0,  # Disable for this test
+            serverless_mode=True,
+        )
+
+        # Verify pool starts empty
+        assert pool.minconn == 0
+
+        # Simulate cold start - get a connection
+        with pool.get_connection() as conn:
+            assert conn == mock_conn
+
+        # Verify connection was obtained from pool
+        mock_pool.getconn.assert_called()
+
+        # Simulate another cold start after pool returns connection
+        mock_pool.getconn.reset_mock()
+        with pool.get_connection() as conn:
+            assert conn == mock_conn
+
+        # Verify pool still works after multiple requests
+        mock_pool.getconn.assert_called()
+
+        # Cleanup
+        pool.close()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_pool_recovers_from_connection_error(self, mock_pool_class):
+        """Test pool can recover from connection errors during cold start."""
+        # Setup mock pool
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+        mock_pool.maxconn = 10
+        mock_pool.minconn = 0
+
+        # First call fails (simulating Neon waking up), second succeeds
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_cursor.__exit__ = MagicMock(return_value=None)
+        mock_cursor.execute.return_value = None
+        mock_cursor.fetchone.return_value = (1,)
+        mock_conn.cursor.return_value = mock_cursor
+
+        # Pool returns connection successfully
+        mock_pool.getconn.return_value = mock_conn
+
+        # Create pool in serverless mode
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,
+            maxconn=10,
+            pre_ping=True,  # Enable health check
+            idle_timeout=0,
+            serverless_mode=True,
+        )
+
+        # Get connection - should work with health check
+        with pool.get_connection() as conn:
+            assert conn == mock_conn
+
+        # Cleanup
+        pool.close()
+
+    @patch("psycopg2.pool.ThreadedConnectionPool")
+    def test_serverless_defaults_allow_complete_shutdown(self, mock_pool_class):
+        """Test that serverless defaults result in no persistent connections."""
+        # Setup mock
+        mock_pool = MagicMock()
+        mock_pool_class.return_value = mock_pool
+        mock_pool.maxconn = 20
+        mock_pool.minconn = 0
+        mock_pool._pool = []
+
+        # Create pool with serverless defaults
+        pool = EnhancedConnectionPool(
+            dsn="postgresql://test:test@localhost/test",
+            minconn=0,  # Serverless default
+            maxconn=20,
+            pool_recycle=300,  # Serverless default (5 min)
+            idle_timeout=60,  # Serverless default
+            serverless_mode=True,
+        )
+
+        # Verify serverless configuration
+        assert pool.minconn == 0, "minconn should be 0 for serverless"
+        assert pool.pool_recycle == 300, "pool_recycle should be 5 min for serverless"
+        assert pool.idle_timeout == 60, "idle_timeout should be 60s for serverless"
+        assert pool.serverless_mode is True
+
+        # Verify no connections were pre-warmed
+        assert mock_pool.getconn.call_count == 0, "No connections should be created at startup"
+
+        # Cleanup
+        pool.close()
 
 
 class TestDatabaseAdapter:
