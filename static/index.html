@@ -623,9 +623,15 @@
         <script src="js/components/accordion.js"></script>
         <script src="js/app.js"></script>
 
-        <!-- Development Tests (banner.test.js must be loaded first) -->
-        <script src="js/tests/banner.test.js"></script>
-        <script src="js/tests/accordion.test.js"></script>
-        <script src="js/tests/api.test.js"></script>
+        <!-- Development Tests (only in non-production) -->
+        <script>
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                ['js/tests/banner.test.js', 'js/tests/accordion.test.js', 'js/tests/api.test.js'].forEach(function(src) {
+                    var s = document.createElement('script');
+                    s.src = src;
+                    document.body.appendChild(s);
+                });
+            }
+        </script>
     </body>
 </html>

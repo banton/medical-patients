@@ -190,7 +190,7 @@ class ApiClient {
                     if (job.status === 'completed') {
                         resolve(job);
                     } else if (job.status === 'failed') {
-                        reject(new ApiError(500, 'Job Failed', job.error_message || 'Job processing failed'));
+                        reject(new ApiError(500, 'Job Failed', job.error || 'Job processing failed'));
                     } else {
                         // Job still running, continue polling
                         setTimeout(poll, pollInterval);

@@ -9,7 +9,7 @@ This document serves as Claude Code's persistent memory across sessions. Read th
 **Purpose**: Generate simulated patient data with configurable parameters
 **Stack**: FastAPI backend, Vanilla JS frontend
 **Architecture**: Clean architecture with domain/infrastructure/api separation
-**Database**: PostgreSQL
+**Database**: PostgreSQL (Neon Serverless - Scale Tier)
 **Deployment**: Traditional VPS and local use
 
 ## 📋 Session Protocol
@@ -187,6 +187,41 @@ Current task context, work in progress, temporary notes
 - No personal data generated
 - No compliance requirements (HIPAA/GDPR)
 - Local/VPS deployment only
+
+## 🗄️ Database Configuration (Neon Scale Tier)
+
+### Neon Agent Plan Benefits (January 2026)
+- **Tier**: Scale (via Agent Plan partnership)
+- **Auto-suspend**: 60 seconds minimum (maximum cost savings)
+- **Cold-start**: ~500ms-1s wake time
+- **Cost model**: Pay only for active compute time
+
+### Neon Console Settings
+Configure in [Neon Console](https://console.neon.tech) → Project → Settings → Compute:
+- **Suspend compute after inactivity**: 60 seconds
+
+### Application Settings (config.py)
+Already optimized for Neon serverless mode:
+```python
+DB_IDLE_TIMEOUT=60      # Close idle connections (matches Neon suspend)
+DB_POOL_MIN=0           # Zero min connections (allows full suspend)
+DB_POOL_RECYCLE=300     # 5-minute connection recycle
+DB_POOL_PRE_PING=true   # Validate connections on checkout
+```
+
+### Health Checks (Neon-Aware)
+- `/api/v1/health/live` - Does NOT hit database (allows Neon to sleep)
+- `/api/v1/health/ready` - Hits database (wakes Neon if suspended)
+- `/api/v1/health/database` - Full pool status and metrics
+
+### Environment Variables
+```bash
+# Default: Serverless mode (Neon optimized)
+DB_ALWAYS_ON=false
+
+# Override for always-on mode (disables serverless optimizations)
+DB_ALWAYS_ON=true
+```
 
 ## 🎓 Quick Commands
 
