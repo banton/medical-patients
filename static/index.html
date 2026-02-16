@@ -626,7 +626,7 @@
         <!-- Development Tests (only in non-production) -->
         <script>
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                ['js/tests/banner.test.js', 'js/tests/accordion.test.js', 'js/tests/api.test.js'].forEach(function(src) {
+                ['js/tests/banner.test.js', 'js/tests/accordion.test.js', 'js/tests/api.test.js'].forEach(function (src) {
                     var s = document.createElement('script');
                     s.src = src;
                     document.body.appendChild(s);
