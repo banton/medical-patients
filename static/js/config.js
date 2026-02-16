@@ -56,7 +56,7 @@ class Config {
             return 'local';
         } else if (hostname.includes('staging') || hostname.includes('z9rms')) {
             return 'staging';
-        } else if (hostname === 'milmed.tech') {
+        } else if (hostname === 'milmed.tech' || hostname === 'patients.milmed.tech') {
             return 'production';
         } else {
             console.warn(`Unknown hostname: ${hostname}, defaulting to local config`);

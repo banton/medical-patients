@@ -160,7 +160,7 @@ def _job_to_response(job) -> JobResponse:
         progress=getattr(job, "progress", 0),
         config=job.config if hasattr(job, "config") else {},
         completed_at=job.completed_at,
-        error=job.error_message if hasattr(job, "error_message") else None,
+        error=job.error if hasattr(job, "error") else None,
         output_files=job.result_files if hasattr(job, "result_files") else [],
         progress_details=progress_details,
         summary=job.summary if hasattr(job, "summary") else None,

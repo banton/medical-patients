@@ -328,6 +328,14 @@ class Patient:
             "front": self.front,
         }
 
+        # Add final_status for timeline viewer compatibility
+        status_to_final = {
+            "KIA": "KIA",
+            "DOW": "KIA",
+            "RTD": "RTD",
+        }
+        result["final_status"] = status_to_final.get(self.current_status, "Remains_Role4")
+
         # Add demographics (skip nulls)
         if self.demographics:
             demo = {}
