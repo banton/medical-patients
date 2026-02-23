@@ -486,9 +486,14 @@ class PatientFlowSimulator:
         """
         # Use medical simulation enhancement if enabled
         if self.use_medical_simulation:
-            # Skip if already simulated (temporal patients are simulated in generate_temporal_casualties)
-            if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
+            # Skip if bridge already attempted for this patient (temporal patients are
+            # simulated in generate_temporal_casualties before the service pipeline runs).
+            # Using a flag rather than checking len(timeline_events) because the bridge
+            # may legitimately produce an empty event list for some patients, which would
+            # cause the length-based guard to fail and trigger a second simulation.
+            if getattr(patient, "_bridge_attempted", False):
                 return
+            patient._bridge_attempted = True
             try:
                 from .medical_simulation_bridge import MedicalSimulationBridge
 
@@ -497,9 +502,8 @@ class PatientFlowSimulator:
 
                 # Enhance patient with medical simulation
                 patient = medical_bridge.enhance_patient(patient)
-                # If medical simulation handled the flow, we're done
-                if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
-                    return
+                # Medical simulation handled the flow
+                return
             except Exception as e:
                 logger.error("Error in medical simulation for patient %s: %s", patient.id, e)
                 # Fall through to standard simulation

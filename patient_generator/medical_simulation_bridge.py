@@ -850,18 +850,12 @@ class MedicalSimulationBridge:
                 # Unknown type — skip
                 continue
 
-            # Compute scenario-relative hours_since_injury
-            hours_since = 0.5 + (event_idx * 1.5)  # fallback: 1.5h spacing
-            if injury_time and event.get("timestamp"):
-                try:
-                    raw_ts = event["timestamp"]
-                    event_time = raw_ts if isinstance(raw_ts, datetime) else datetime.fromisoformat(str(raw_ts))
-                    computed = (event_time - injury_time).total_seconds() / 3600
-                    if 0 <= computed <= 240:
-                        hours_since = computed
-                    # else keep fallback
-                except (ValueError, TypeError):
-                    pass
+            # Use medically realistic spacing (0.5h, 2.0h, 3.5h, …).
+            # We intentionally ignore the simulation's internal wall-clock timestamps
+            # because the bridge runs synchronously and produces timestamps that are
+            # offset from the patient's scenario injury_time by wall-clock elapsed time,
+            # leading to all events clustering at the same unrealistic hour offset.
+            hours_since = 0.5 + (event_idx * 1.5)
 
             # Build scenario-time timestamp from injury_time + hours_since
             if injury_time:
