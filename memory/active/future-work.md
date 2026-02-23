@@ -126,7 +126,13 @@ Total: ~4 weeks for complete production readiness
 
 ## Technical Debt Items
 
-1. **Test Coverage Improvements**
+1. **Ubuntu 24.04 Full Integration Tests Fix** (Priority: Medium)
+   - Investigation needed for failure in GitHub Actions
+   - Full Integration Tests fail while individual tests pass
+   - Likely environment-specific issue in comprehensive test suite
+   - PR #10 merged with this known issue for follow-up
+
+2. **Test Coverage Improvements**
    - Increase coverage to 90%+
    - Add performance regression tests
    - Implement chaos engineering tests

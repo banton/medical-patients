@@ -1,0 +1,57 @@
+{
+  "_comment": "Medical Patients Generator - Simulation Parameters",
+  "_description": "Configurable parameters for patient flow simulation. Edit these values to customize the simulation behavior.",
+
+  "triage_weights": {
+    "_comment": "Probability distribution for triage categories (T1=Immediate, T2=Delayed, T3=Minimal) by injury type. Values must sum to 1.0",
+    "Battle Injury": {"T1": 0.4, "T2": 0.4, "T3": 0.2},
+    "Non-Battle Injury": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+    "Disease": {"T1": 0.2, "T2": 0.3, "T3": 0.5},
+    "Polytrauma": {"T1": 0.5, "T2": 0.35, "T3": 0.15}
+  },
+
+  "day_distribution": {
+    "_comment": "Probability distribution of casualties across battle days. Values must sum to 1.0",
+    "Day 1": 0.20,
+    "Day 2": 0.40,
+    "Day 4": 0.30,
+    "Day 8": 0.10
+  },
+
+  "poi_settings": {
+    "_comment": "Point of Injury (POI) settings",
+    "default_kia_rate": 0.20,
+    "body_part_distribution": {
+      "_comment": "Probability of injury to each body part. Values must sum to 1.0",
+      "Torso": 0.30,
+      "Head": 0.15,
+      "Left Arm": 0.125,
+      "Right Arm": 0.125,
+      "Left Leg": 0.15,
+      "Right Leg": 0.15
+    }
+  },
+
+  "facility_defaults": {
+    "_comment": "Default rates if not specified in facility configuration",
+    "Role1": {"kia_rate": 0.08, "rtd_rate": 0.25},
+    "Role2": {"kia_rate": 0.06, "rtd_rate": 0.35},
+    "Role3": {"kia_rate": 0.04, "rtd_rate": 0.45},
+    "Role4": {"kia_rate": 0.02, "rtd_rate": 0.70}
+  },
+
+  "transit_modifiers": {
+    "_comment": "Modifiers applied during patient transit between facilities",
+    "kia_rate_multiplier": 0.3,
+    "condition_deterioration_per_hour": 0.05
+  },
+
+  "parallelization": {
+    "_comment": "Settings for parallel patient generation",
+    "batch_size_default": 100,
+    "batch_size_large": 250,
+    "large_generation_threshold": 5000,
+    "max_workers": 8,
+    "min_workers": 2
+  }
+}

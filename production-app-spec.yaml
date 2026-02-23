@@ -1,0 +1,109 @@
+name: medical-patients
+region: nyc
+
+services:
+  - name: api
+    github:
+      repo: banton/medical-patients
+      branch: main
+      deploy_on_push: true
+    build_command: pip install -r requirements.txt
+    run_command: |
+      if [ ! -z "$DATABASE_URL" ]; then
+        alembic upgrade head
+      fi
+      python -m uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    source_dir: /
+    environment_slug: python
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+    http_port: 8080
+    health_check:
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+      http_path: /api/v1/health
+    envs:
+      - key: ENVIRONMENT
+        value: production
+        scope: RUN_AND_BUILD_TIME
+      - key: DATABASE_URL
+        value: ${medical-patients-db.DATABASE_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: REDIS_URL
+        value: ${REDIS_URL}
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+      - key: CACHE_ENABLED
+        value: "true"
+        scope: RUN_AND_BUILD_TIME
+      - key: DEBUG
+        value: "false"
+        scope: RUN_AND_BUILD_TIME
+      - key: CORS_ORIGINS
+        value: "https://milmed.tech,https://www.milmed.tech"
+        scope: RUN_AND_BUILD_TIME
+      - key: API_KEY
+        value: ${API_KEY}
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+
+
+static_sites:
+  - name: frontend
+    github:
+      repo: banton/medical-patients
+      branch: main
+      deploy_on_push: true
+    source_dir: /static
+    
+
+databases:
+  - name: medical-patients-db
+    cluster_name: app-7a761f5d-a598-4efc-9f1a-cd756365d498
+    engine: PG
+    version: "17"
+    production: true
+    size: db-s-1vcpu-1gb
+    num_nodes: 1
+
+domains:
+  - domain: milmed.tech
+    type: PRIMARY
+  - domain: www.milmed.tech
+    type: ALIAS
+
+ingress:
+  rules:
+    # API routes on milmed.tech
+    - match:
+        path:
+          prefix: /api
+      component:
+        name: api
+        preserve_path_prefix: true
+    
+    # Docs on milmed.tech
+    - match:
+        path:
+          prefix: /docs
+      component:
+        name: api
+        preserve_path_prefix: true
+    
+    # OpenAPI spec
+    - match:
+        path:
+          prefix: /openapi.json
+      component:
+        name: api
+        preserve_path_prefix: true
+    
+    # Frontend on milmed.tech root
+    - match:
+        path:
+          prefix: /
+      component:
+        name: frontend

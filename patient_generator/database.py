@@ -1,6 +1,7 @@
 # patient_generator/database.py
 import datetime
 import json
+import logging
 import os
 import threading
 from typing import Any, Dict, List, Literal, Optional, Union, overload
@@ -12,6 +13,8 @@ import psycopg2.pool
 
 # Import Pydantic models for configuration
 from .schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB
+
+logger = logging.getLogger(__name__)
 
 
 class Database:
@@ -38,34 +41,33 @@ class Database:
             db_url = os.environ.get("DATABASE_URL")
             if not db_url:
                 # Fallback for local development if DATABASE_URL is not set
-                # Ensure these match your local setup if not using Docker env vars for local dev
-                print("DATABASE_URL not set, attempting fallback to default local connection string.")
+                logger.warning("DATABASE_URL not set, using default local connection string")
                 db_url = "postgresql://medgen_user:medgen_password@localhost:5432/medgen_db"
 
             Database._pool = psycopg2.pool.SimpleConnectionPool(1, 20, dsn=db_url)
             conn = self.get_connection()
             if conn:
-                print("Database connection pool initialized successfully.")
+                logger.info("Database connection pool initialized")
                 self.release_connection(conn)
             else:
-                print("Failed to initialize database connection pool.")
+                logger.error("Failed to initialize database connection pool")
                 Database._pool = None  # Ensure pool is None if init fails
         except (Exception, psycopg2.Error) as error:
-            print(f"Error while connecting to PostgreSQL or initializing pool: {error}")
+            logger.error("Error connecting to PostgreSQL: %s", error)
             Database._pool = None  # Ensure pool is None if init fails
 
     def get_connection(self) -> Optional[psycopg2.extensions.connection]:
         if self._pool is None:  # More direct check
-            print("Connection pool is not initialized. Attempting to re-initialize.")
+            logger.warning("Connection pool not initialized, attempting re-initialization")
             # Try to re-initialize.
             self.__init__()
             if self._pool is None:  # Check again after attempt
-                print("Re-initialization of connection pool failed.")
+                logger.error("Re-initialization of connection pool failed")
                 return None
         try:
             return self._pool.getconn()
         except Exception as e:
-            print(f"Error getting connection from pool: {e}")
+            logger.error("Error getting connection from pool: %s", e)
             return None
 
     def release_connection(self, conn: Optional[psycopg2.extensions.connection]):
@@ -73,7 +75,7 @@ class Database:
             try:
                 self._pool.putconn(conn)
             except Exception as e:
-                print(f"Error releasing connection to pool: {e}")
+                logger.error("Error releasing connection to pool: %s", e)
 
     @overload
     def _execute_query(
@@ -137,12 +139,12 @@ class Database:
                     return cur.fetchall()
                 return None
         except (Exception, psycopg2.Error) as error:
-            print(f"Database Error: {error}")
+            logger.error("Database error: %s", error)
             if conn and commit:  # Check if conn is not None before trying to rollback
                 try:
                     conn.rollback()
                 except Exception as rb_error:
-                    print(f"Rollback failed: {rb_error}")
+                    logger.error("Rollback failed: %s", rb_error)
             raise
         finally:
             if conn:
@@ -276,9 +278,9 @@ class Database:
         if self._pool:
             try:
                 self._pool.closeall()
-                print("Database connection pool closed.")
+                logger.info("Database connection pool closed")
             except Exception as e:
-                print(f"Error closing connection pool: {e}")
+                logger.error("Error closing connection pool: %s", e)
             Database._pool = None
             Database._instance = None
 
@@ -303,7 +305,7 @@ class ConfigurationRepository:
                         data[field] = json.loads(data[field])
                     except json.JSONDecodeError:
                         # Handle cases where string is not valid JSON, or field is not JSONB in DB
-                        print(f"Warning: Could not decode JSON for field {field} in config ID {data.get('id')}")
+                        logger.warning("Could not decode JSON for field %s in config ID %s", field, data.get("id"))
                         # Assign default based on Pydantic model or expected structure
                         data[field] = [] if field in ["front_configs", "facility_configs"] else {}
                 elif data[field] is None:  # Handle if JSONB field is NULL

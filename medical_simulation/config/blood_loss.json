@@ -1,0 +1,201 @@
+{
+  "version": "3.0",
+  "description": "Simplified blood loss and hemorrhage tracking system",
+  "hemorrhage_profiles": {
+    "minor": {
+      "display_name": "Minor Hemorrhage",
+      "blood_loss_rate": 5,
+      "variance": 1,
+      "controllable": true,
+      "tourniquet_effectiveness": 0.95,
+      "pressure_effectiveness": 0.80,
+      "description": "Small vessel bleeding, easily controlled"
+    },
+    "moderate": {
+      "display_name": "Moderate Hemorrhage",
+      "blood_loss_rate": 15,
+      "variance": 3,
+      "controllable": true,
+      "tourniquet_effectiveness": 0.85,
+      "pressure_effectiveness": 0.60,
+      "description": "Significant bleeding, requires intervention"
+    },
+    "severe": {
+      "display_name": "Severe Hemorrhage",
+      "blood_loss_rate": 30,
+      "variance": 5,
+      "controllable": false,
+      "surgical_requirement": true,
+      "tourniquet_effectiveness": 0.50,
+      "pressure_effectiveness": 0.30,
+      "description": "Major vessel bleeding, surgical intervention needed"
+    },
+    "catastrophic": {
+      "display_name": "Catastrophic Hemorrhage",
+      "blood_loss_rate": 60,
+      "variance": 10,
+      "controllable": false,
+      "immediate_surgery_required": true,
+      "tourniquet_effectiveness": 0.20,
+      "pressure_effectiveness": 0.10,
+      "description": "Life-threatening bleeding, immediate surgery required"
+    }
+  },
+  "blood_volume_thresholds": {
+    "normal": {
+      "min": 90,
+      "max": 100,
+      "description": "Normal blood volume"
+    },
+    "mild_loss": {
+      "min": 75,
+      "max": 90,
+      "description": "Class I hemorrhage - compensated"
+    },
+    "moderate_loss": {
+      "min": 60,
+      "max": 75,
+      "description": "Class II hemorrhage - needs transfusion"
+    },
+    "severe_loss": {
+      "min": 40,
+      "max": 60,
+      "description": "Class III hemorrhage - critical"
+    },
+    "critical_loss": {
+      "min": 30,
+      "max": 40,
+      "description": "Class IV hemorrhage - immediate death risk"
+    },
+    "death": {
+      "max": 30,
+      "description": "Fatal blood loss"
+    }
+  },
+  "transfusion_effects": {
+    "packed_red_cells": {
+      "units_per_treatment": 2,
+      "volume_restored_per_unit": 10,
+      "time_minutes": 30,
+      "max_units_per_hour": 4
+    },
+    "whole_blood": {
+      "units_per_treatment": 1,
+      "volume_restored_per_unit": 15,
+      "time_minutes": 45,
+      "max_units_per_hour": 2
+    },
+    "plasma": {
+      "units_per_treatment": 2,
+      "volume_restored_per_unit": 5,
+      "time_minutes": 20,
+      "max_units_per_hour": 6
+    },
+    "massive_transfusion": {
+      "units_total": 10,
+      "volume_restored_total": 80,
+      "time_minutes": 120,
+      "requires_surgery": true
+    }
+  },
+  "injury_hemorrhage_mapping": {
+    "gsw": {
+      "probabilities": {
+        "none": 0.10,
+        "minor": 0.20,
+        "moderate": 0.40,
+        "severe": 0.20,
+        "catastrophic": 0.10
+      }
+    },
+    "shrapnel": {
+      "probabilities": {
+        "none": 0.20,
+        "minor": 0.40,
+        "moderate": 0.30,
+        "severe": 0.10,
+        "catastrophic": 0.00
+      }
+    },
+    "blast": {
+      "probabilities": {
+        "none": 0.05,
+        "minor": 0.15,
+        "moderate": 0.30,
+        "severe": 0.35,
+        "catastrophic": 0.15
+      }
+    },
+    "penetrating": {
+      "probabilities": {
+        "none": 0.05,
+        "minor": 0.15,
+        "moderate": 0.35,
+        "severe": 0.30,
+        "catastrophic": 0.15
+      }
+    },
+    "amputation": {
+      "probabilities": {
+        "none": 0.00,
+        "minor": 0.05,
+        "moderate": 0.15,
+        "severe": 0.40,
+        "catastrophic": 0.40
+      }
+    },
+    "fracture": {
+      "probabilities": {
+        "none": 0.60,
+        "minor": 0.30,
+        "moderate": 0.10,
+        "severe": 0.00,
+        "catastrophic": 0.00
+      }
+    },
+    "vehicle_accident": {
+      "probabilities": {
+        "none": 0.30,
+        "minor": 0.30,
+        "moderate": 0.25,
+        "severe": 0.10,
+        "catastrophic": 0.05
+      }
+    },
+    "crush": {
+      "probabilities": {
+        "none": 0.10,
+        "minor": 0.20,
+        "moderate": 0.35,
+        "severe": 0.25,
+        "catastrophic": 0.10
+      }
+    }
+  },
+  "hemorrhage_control_timeline": {
+    "tourniquet": {
+      "application_minutes": 2,
+      "effectiveness_immediate": 0.90,
+      "effectiveness_delayed": 0.70,
+      "complications_after_hours": 2
+    },
+    "pressure_dressing": {
+      "application_minutes": 5,
+      "effectiveness_immediate": 0.70,
+      "effectiveness_delayed": 0.50,
+      "reapplication_needed": true
+    },
+    "hemostatic_agent": {
+      "application_minutes": 3,
+      "effectiveness_immediate": 0.80,
+      "effectiveness_delayed": 0.60,
+      "combined_with_pressure": true
+    },
+    "surgical_control": {
+      "time_minutes": 30,
+      "effectiveness": 0.95,
+      "requires_or": true,
+      "definitive": true
+    }
+  }
+}

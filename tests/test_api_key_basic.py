@@ -91,16 +91,16 @@ class TestAPIKeyModel:
         """Test daily counter reset detection."""
         api_key = APIKey(key="reset", name="Reset Test")
 
-        # Fresh key needs reset (no last_reset_at)
-        assert api_key.needs_daily_reset() is True
-
-        # Set reset to today
-        api_key.last_reset_at = datetime.utcnow()
+        # Fresh key doesn't need reset (initialized with current timestamp)
         assert api_key.needs_daily_reset() is False
 
         # Set reset to yesterday
         api_key.last_reset_at = datetime.utcnow() - timedelta(days=1)
         assert api_key.needs_daily_reset() is True
+
+        # Set reset to today
+        api_key.last_reset_at = datetime.utcnow()
+        assert api_key.needs_daily_reset() is False
 
     def test_demo_key_configuration(self):
         """Test demo key configuration constants."""

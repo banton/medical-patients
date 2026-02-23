@@ -11,7 +11,8 @@ from typing import Any, Dict, List, Optional
 import zipfile
 
 from config import get_settings
-from src.core.exceptions import StorageError
+from src.core.cache_utils import cache_job_status
+from src.core.exceptions import InvalidOperationError, StorageError
 from src.domain.models.job import Job, JobProgressDetails, JobStatus
 from src.domain.repositories.job_repository import JobRepositoryInterface
 
@@ -28,15 +29,20 @@ class JobService:
         return await self.repository.create(config)
 
     async def get_job(self, job_id: str) -> Job:
-        """Get a job by ID."""
-        return await self.repository.get(job_id)
+        """Get a job by ID, checking cache first."""
+        job = await self.repository.get(job_id)
+
+        # Cache the job status for future requests
+        await cache_job_status(job)
+
+        return job
 
     async def list_jobs(self) -> List[Job]:
         """List all jobs."""
         return await self.repository.list_all()
 
     async def update_job_status(self, job_id: str, status: JobStatus, error: Optional[str] = None) -> None:
-        """Update job status."""
+        """Update job status and cache."""
         job = await self.repository.get(job_id)
         job.status = status
 
@@ -48,10 +54,13 @@ class JobService:
 
         await self.repository.update(job)
 
+        # Update cache with new status
+        await cache_job_status(job)
+
     async def update_job_progress(
         self, job_id: str, progress: int, progress_details: Optional[JobProgressDetails] = None
     ) -> None:
-        """Update job progress."""
+        """Update job progress and cache."""
         job = await self.repository.get(job_id)
         job.progress = progress
 
@@ -59,6 +68,9 @@ class JobService:
             job.progress_details = progress_details
 
         await self.repository.update(job)
+
+        # Update cache with new progress
+        await cache_job_status(job)
 
     async def set_job_results(
         self, job_id: str, output_directory: str, result_files: List[str], summary: Optional[Dict[str, Any]] = None
@@ -105,8 +117,6 @@ class JobService:
 
         # Only allow cancellation of pending or running jobs
         if job.status in [JobStatus.COMPLETED, JobStatus.FAILED, JobStatus.CANCELLED]:
-            from src.core.exceptions import InvalidOperationError
-
             error_msg = f"Cannot cancel job {job_id} with status {job.status.value}"
             raise InvalidOperationError(error_msg)
 

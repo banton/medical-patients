@@ -8,11 +8,13 @@ from contextlib import suppress
 import gc
 from typing import Any, Dict, List, Optional
 
+from src.api.v1.routers.generation import _run_generation_task
 from src.core.exceptions import ResourceLimitExceeded
 from src.core.job_resource_manager import get_resource_manager
 from src.core.metrics import get_metrics_collector
 from src.domain.models.job import JobProgressDetails, JobStatus
 from src.domain.services.job_service import JobService
+from src.domain.services.patient_generation_service import AsyncPatientGenerationService
 
 
 class JobWorker:
@@ -139,9 +141,6 @@ class JobWorker:
         Args:
             job: Job to execute
         """
-        from src.api.v1.routers.generation import _run_generation_task
-        from src.domain.services.patient_generation_service import AsyncPatientGenerationService
-
         job_id = job.job_id
         config = job.config
 
@@ -196,8 +195,6 @@ class JobWorker:
                 batch_config["count"] = current_batch_size
 
             # Generate batch
-            from src.domain.services.patient_generation_service import AsyncPatientGenerationService
-
             generation_service = AsyncPatientGenerationService()
 
             # Create temporary job for batch

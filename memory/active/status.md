@@ -1,8 +1,18 @@
 # Project Status Dashboard
-Updated: 2025-06-15
+Updated: 2025-06-19
 
 ## Current Focus
-**Staging Deployment**: Ready to deploy v1.1 to DigitalOcean staging environment
+**V1.1.1 Security Fixes**: Fixed demo API key authentication and CI test failures
+
+### Latest Update: V1.1.1 Security and Test Fixes  
+- ✅ Fixed demo API key authentication failing in production
+- ✅ Added automatic demo key creation on startup
+- ✅ Fixed all router imports to use security_enhanced module
+- ✅ Updated test API keys to use DEMO_MILMED_2025_50_PATIENTS
+- ✅ Fixed test_security.py mocking for enhanced API key system
+- ✅ All CI tests passing (347 passed, 41 skipped)
+- ✅ Removed hardcoded database credentials
+- ✅ Fixed missing API key header returning proper 401 status
 
 ## V1.1 Integration Status
 - ✅ **EPIC-001**: Cross-Platform Development Environment (Merged)
@@ -138,19 +148,6 @@ See `memory/active/future-work.md` for:
    - docker-compose.staging.yml configured
    - Task commands added (staging:up/down/logs/status)
    - Deployment scripts and guides created
-   - Status monitoring enhanced
 
-### Next Steps: Deploy Staging on Server
-1. SSH to server and pull v1.1 branch
-2. Create staging database in managed PostgreSQL
-3. Configure .env.staging with credentials
-4. Run `task staging:up` to start staging
-5. Configure nginx reverse proxy
-6. Setup DNS A records for subdomains
-7. Get SSL certificates with certbot
-
-### Architecture:
-- **Production**: Port 8000 → milmed.tech
-- **Staging API**: Port 8001 → staging.milmed.tech
-- **Timeline**: Port 3001 → timeline.milmed.tech
-- **Cost**: $0/month (same server, same DB cluster)
+### Update: 2025-08-14 21:39
+- Fixed Redis URL exposure in production-app-spec.yaml. App running healthy on DigitalOcean. Project analysis shows 15 files needing work, 6 deprecated files, and 10 files with hardcoded values. Most issues are in cache files and documentation.

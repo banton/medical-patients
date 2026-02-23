@@ -50,15 +50,35 @@ This application generates simulated patient data for military medical exercises
     - Temporal metadata including casualty event IDs, mass casualty classification, and environmental conditions
 - **Multiple Output Formats**: JSON and CSV formats with compressed ZIP archives
 - **Data Security Options**: AES-256-GCM encryption with unique salts per encryption operation
-- **Dockerized Development Environment**: Complete Docker Compose setup with PostgreSQL and Redis support
+- **Dockerized Development Environment**: Complete Docker Compose setup with PostgreSQL and Redis support (optional managed Redis for production)
 - **Database Schema Management**: Alembic migrations for robust schema versioning
 - **Background Job Processing**: Async patient generation with real-time progress tracking and job management
+
+- **Enhanced Medical Simulation** (v1.2.0): Realistic patient care modeling with:
+    - **Treatment Protocol System**: SNOMED CT coded procedures applied at each facility level
+    - **Body Part Tracking**: Injury localization (Head, Torso, Left/Right Arm, Left/Right Leg)
+    - **Health Score Engine**: Deterioration and improvement mechanics with Markov chain transitions
+    - **Facility-Specific Care**: Treatment capabilities scale from basic (POI) to advanced (Role 4)
+    - **Realistic Outcomes**: DOW (Died of Wounds), RTD (Returned to Duty), and continued care tracking
+    - **Treatment Effectiveness**: Health impact tracking (before/after) for each intervention
 
 ## Architecture
 
 The application features a clean, domain-driven architecture with clear separation of concerns. The codebase has been recently refactored (May 2024) to improve scalability, maintainability, and developer experience.
 
-### Recent Architecture Improvements (June 2025)
+### Recent Architecture Improvements
+
+#### November 2025 (v1.2.0)
+
+**✅ Enhanced Medical Simulation**: Comprehensive patient care modeling with treatment protocols, health tracking, and realistic outcomes.
+
+**✅ Treatment Protocol System**: SNOMED CT coded procedures with facility-specific capabilities and effectiveness modeling.
+
+**✅ Body Part Tracking**: Injury localization system supporting 6 anatomical regions for realistic trauma modeling.
+
+**✅ Health Score Engine**: Markov chain-based health transitions with deterioration, improvement, and treatment effects.
+
+#### June 2025 (v1.1.0)
 
 **✅ API Standardization**: Complete v1 API standardization with consistent request/response models, comprehensive validation, and proper error handling.
 
@@ -137,13 +157,15 @@ The application features a clean, domain-driven architecture with clear separati
 7. **Python SDK** (`patient_generator_sdk.py`):
    - Client library for programmatic API interaction
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
 ## Getting Started
 
-The application uses [Task](https://taskfile.dev/) for cross-platform development workflows, providing a consistent experience across Windows, macOS, and Linux.
+The application uses [Task](https://taskfile.dev/) for cross-platform development workflows, providing a consistent experience across macOS and Linux.
 
 ### Prerequisites
+
+**Supported Operating Systems**: Linux (Ubuntu 22.04+, Debian 11+, RHEL 8+) and macOS (11.0+)
 
 -   [Git](https://git-scm.com/downloads) - Version control
 -   [Docker Desktop](https://www.docker.com/products/docker-desktop/) - Container runtime (or Docker Engine + Docker Compose)
@@ -153,92 +175,74 @@ The application uses [Task](https://taskfile.dev/) for cross-platform developmen
 
 ### Quick Start
 
-1.  **Clone the repository**:
-    ```bash
-    git clone <repository_url>
-    cd medical-patients
-    ```
-
-2.  **Install Task** (if not already installed):
-    ```bash
-    # macOS
-    brew install go-task
-    
-    # Linux
-    sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
-    
-    # Windows (PowerShell)
-    irm https://get.scoop.sh | iex
-    scoop install task
-    ```
-
-3.  **Run the setup wizard** (first time only):
-    ```bash
-    task init       # Guided setup that checks prerequisites and configures environment
-    ```
-    
-    **For Ubuntu 24.04 LTS users**: Due to PEP 668 (externally-managed-environment), use the dedicated setup script:
-    ```bash
-    chmod +x scripts/setup-ubuntu-24.sh
-    ./scripts/setup-ubuntu-24.sh
-    ```
-
-4.  **Start development environment**:
-    ```bash
-    task dev        # Starts database, runs migrations, and starts app with live reload
-    ```
-    
-    **Ubuntu 24.04 users**: Always activate the virtual environment first:
-    ```bash
-    source .venv/bin/activate
-    # or use the helper script: ./activate.sh
-    task dev
-    ```
-    
-    Note: The `task init` command will check all prerequisites, create necessary files, pull Docker images, and set up your development environment. After initial setup, just use `task dev` to start working.
-
-5.  **Access the application**:
-    *   Main Application: `http://localhost:8000`
-    *   API Documentation: `http://localhost:8000/docs`
-    *   Alternative API Docs: `http://localhost:8000/redoc`
-
-6.  **Start the timeline viewer** (optional):
-    ```bash
-    task timeline    # Starts React timeline viewer in development mode
-    ```
-    *   Timeline Viewer: `http://localhost:5174`
-
-### Development Commands
+The easiest way to get started:
 
 ```bash
-# Setup & Core Commands
-task init           # First-time setup wizard (checks prerequisites, configures environment)
-task dev            # Start development environment (runs migrations + hot reload)
-task start          # Start all services in Docker (runs migrations automatically)
-task stop           # Stop all background services
-task status         # Show service status and logs
-task test           # Run all tests
-task clean          # Clean up Docker resources
+# 1. Clone the repository
+git clone https://github.com/banton/medical-patients.git
+cd medical-patients
 
-# Database Commands
-task db-migrate     # Run database migrations
-task db-reset       # Reset database (WARNING: destroys all data)
+# 2. Install Task (if needed)
+# macOS: brew install go-task
+# Linux: curl -sL https://taskfile.dev/install.sh | sh -s -- -b /usr/local/bin
 
-# Timeline Viewer Commands
-task timeline       # Start timeline viewer (foreground)
-task timeline-start # Start timeline viewer in background
-task timeline-stop  # Stop background timeline viewer
-task timeline-status# Check timeline viewer status
+# 3. Run setup (creates .env, starts database)
+task init
 
-# Staging Commands (for deployment testing)
-task staging:up     # Start staging environment on port 8001
-task staging:down   # Stop staging environment
-task staging:logs   # View staging logs
-task staging:status # Check staging environment status
+# 4. Start development server
+task dev
 
-# Utility Commands
-task --list         # Show all available commands
+# 5. Open http://localhost:8000
 ```
+
+That's it! The application is now running.
+
+### Alternative: Docker-Only Setup
+
+If you prefer everything in Docker:
+
+```bash
+task init       # Setup environment
+task start      # Run everything in Docker
+task logs       # View logs
+```
+
+### Advanced Setup Options
+
+For Ubuntu 24.04 or if you need Python virtual environments:
+```bash
+task init:full  # Full setup with OS detection and Python environment
+```
+
+**Note**: Ubuntu 24.04 users may need to activate the virtual environment first:
+```bash
+source .venv/bin/activate
+task dev
+```
+
+### Common Commands
+
+```bash
+# Essential Commands
+task            # Show available commands
+task init       # First-time setup
+task dev        # Start development server
+task stop       # Stop all services
+task test       # Run tests
+
+# Additional Commands  
+task status     # Check service health
+task logs       # View application logs
+task timeline   # Open timeline viewer (optional)
+task clean      # Reset everything
+
+# Advanced Commands
+task db-reset   # Reset database (destroys data!)
+task init:full  # Full setup with Python environment
+task help:staging # Learn about staging deployment
+```
+
+💡 **Tip**: Most developers only need `task init` and `task dev`. Everything else is optional.
 
 ### Manual Setup (Advanced)
 
@@ -250,7 +254,7 @@ docker compose up -d db redis
 
 # 2. Install Python dependencies
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate
 pip install -r requirements.txt
 
 # 3. Run database migrations
@@ -260,38 +264,24 @@ alembic upgrade head
 uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Ubuntu 24.04 LTS Specific Instructions
+### Platform-Specific Notes
 
-Ubuntu 24.04 LTS enforces PEP 668 (externally-managed-environment) which requires using virtual environments for Python packages. Here's how to handle common issues:
+#### Ubuntu 24.04 LTS
+Ubuntu 24.04 enforces PEP 668 which requires virtual environments. The `task init:full` command handles this automatically. If you need manual setup:
 
-#### Missing Alembic or Other Python Packages
+```bash
+sudo apt-get update
+sudo apt-get install -y python3-venv python3-dev libpq-dev build-essential
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-If you encounter "command not found" errors for Alembic or other Python tools:
+#### Common Issues
 
-1. **Always use a virtual environment**:
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. **For missing system dependencies**:
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y python3-dev libpq-dev build-essential
-   ```
-
-3. **Use the dedicated Ubuntu setup script**:
-   ```bash
-   chmod +x scripts/setup-ubuntu-24.sh
-   ./scripts/setup-ubuntu-24.sh
-   ```
-
-#### Common Troubleshooting
-
-- **"error: externally-managed-environment"**: Always use a virtual environment on Ubuntu 24.04
+- **"externally-managed-environment" error**: Use `task init:full` or create a virtual environment manually
 - **psycopg2 installation fails**: Install `libpq-dev` with `sudo apt-get install libpq-dev`
-- **Permission denied errors**: Ensure your user is in the docker group: `sudo usermod -aG docker $USER`
+- **Permission denied errors**: Add user to docker group: `sudo usermod -aG docker $USER` (then logout/login)
 - **Port already in use**: Check with `sudo lsof -i :8000` and stop conflicting services
 
 ## Production Deployment
@@ -319,9 +309,26 @@ docker run -d \
 - `API_KEY`: Primary API authentication key
 - `SECRET_KEY`: Application secret for session management
 - `REDIS_URL`: Redis connection (optional, for caching)
+  - Development: `redis://localhost:6379/0`
+  - Production (managed): `rediss://default:password@cluster.db.ondigitalocean.com:25061/0`
 - `ENVIRONMENT`: Set to "production" for production deployments
 
-For advanced deployment configurations including Traefik integration and multi-container setups, see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md).
+For advanced deployment configurations, refer to the docker-compose files in the repository.
+
+### Redis Configuration
+
+The application supports both self-hosted and managed Redis services:
+
+**Development (Docker Compose)**:
+- Uses local Redis container
+- No additional configuration needed
+- Automatically started with `task dev`
+
+**Production (Managed Redis)**:
+- Supports DigitalOcean Managed Redis or similar services
+- Use `rediss://` protocol for SSL/TLS connections
+- Configure via `REDIS_URL` environment variable
+- See `docs/redis-migration.md` for migration guide
 
 ### Testing
 
@@ -586,14 +593,11 @@ military-patient-generator/
 └── package.json                        # Frontend dependencies
 ```
 
-For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
 ## React Timeline Viewer
 
 The React Timeline Viewer is a standalone visualization tool that provides interactive playback of patient movement through medical evacuation facilities. It's designed to help analyze patient flow patterns and evacuation timing.
-
-### Live Demo
-The Timeline Viewer is available at: **[https://viewer.milmed.tech](https://viewer.milmed.tech)**
 
 ### Features
 
@@ -684,27 +688,44 @@ This generator creates data compliant with:
 
 For detailed progress tracking, see the memory system documentation in the `memory/` directory.
 
-## Deployment
+## Deployment Options
 
-### Main Application
-The main patient generator application can be deployed on:
-- Traditional VPS with Docker
-- DigitalOcean App Platform
-- Any Docker-compatible hosting service
+### Local Development (Recommended for Most Users)
 
-See [Production Deployment](#production-deployment) section for details.
-
-### Timeline Viewer Deployment
-The Timeline Viewer is deployed separately at [viewer.milmed.tech](https://viewer.milmed.tech):
+The primary deployment method is local development using Docker:
 
 ```bash
-# Deploy to DigitalOcean App Platform
-./scripts/deploy-timeline-viewer.sh
-
-# Or use GitHub Actions (automatic on push to main)
+task dev  # Starts the application on http://localhost:8000
 ```
 
-For detailed deployment instructions, see [docs/timeline-viewer-deployment.md](docs/timeline-viewer-deployment.md).
+This is sufficient for:
+- Testing the patient generator
+- Developing new features
+- Running medical exercises
+- Integration testing
+
+### Production Deployment
+
+For hosting the application on a server:
+
+1. **Traditional VPS**: Deploy using Docker Compose on any Linux server
+2. **DigitalOcean App Platform**: Use the provided `staging-app-spec.yaml`
+3. **Kubernetes**: Deploy containers using the Docker images
+
+### Staging Environment (Optional)
+
+Staging deployment is **only needed** if you're planning to:
+- Test production deployment configurations
+- Validate server-specific settings
+- Run load testing before production
+
+To use staging:
+1. Create `.env.staging` with production-like settings
+2. Run `task staging:up` to start on port 8001
+3. Test your deployment configuration
+4. Use `task staging:down` when finished
+
+**Note**: Most users don't need staging. The `task dev` command provides a complete development environment.
 
 ## Contributing
 

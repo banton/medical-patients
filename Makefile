@@ -279,7 +279,7 @@ watch:
 generate-test:
 	@echo "Generating test patients..."
 	curl -X POST http://localhost:8000/api/v1/generation/ \
-		-H "X-API-Key: your_secret_api_key_here" \
+		-H "X-API-Key: DEMO_MILMED_2025_50_PATIENTS" \
 		-H "Content-Type: application/json" \
 		-d '{"configuration": {"count": 10}, "output_formats": ["json"], "use_compression": false}'
 
@@ -337,7 +337,7 @@ check-env:
 	@test -f .env && echo "✓ .env file exists" || echo "✗ .env file not found (using defaults)"
 	@echo ""
 	@echo "Database URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db"
-	@echo "API Key: your_secret_api_key_here"
+	@echo "API Key: DEMO_MILMED_2025_50_PATIENTS"
 
 # Verify Redis integration
 verify-redis:

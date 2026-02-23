@@ -4,7 +4,10 @@ Part of EPIC-003: Production Scalability Improvements - Phase 3
 """
 
 import asyncio
+import gc
 import json
+from pathlib import Path
+import tempfile
 from typing import AsyncIterator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -15,7 +18,7 @@ from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.schemas_config import ConfigurationTemplateCreate
 from src.api.v1.dependencies.services import get_patient_generation_service
 from src.api.v1.models.responses import StreamingPatientResponse
-from src.core.security import verify_api_key
+from src.core.security_enhanced import verify_api_key
 from src.domain.services.patient_generation_service import (
     AsyncPatientGenerationService,
     GenerationContext,
@@ -69,9 +72,6 @@ async def generate_patients_stream(
         config_template.total_patients = patient_count
 
     # Create generation context
-    from pathlib import Path
-    import tempfile
-
     output_dir = Path(tempfile.gettempdir()) / "medical_patients" / f"stream_{config_id}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -113,8 +113,6 @@ async def generate_patients_stream(
 
             # Force garbage collection every batch_size patients
             if patients_generated % batch_size == 0:
-                import gc
-
                 gc.collect()
 
                 # Small delay to prevent overwhelming the system
@@ -154,14 +152,10 @@ async def generate_patients_stream(
                     "schema": StreamingPatientResponse.schema(),
                     "example": {
                         "patients": [
-                            {
-                                "patient_id": "NATO-BEL-12345",
-                                "name": "John Doe",
-                                "injury_type": "Battle Injury"
-                            }
+                            {"patient_id": "NATO-BEL-12345", "name": "John Doe", "injury_type": "Battle Injury"}
                         ],
-                        "total_patients": 100
-                    }
+                        "total_patients": 100,
+                    },
                 }
             },
         }
@@ -253,14 +247,10 @@ async def stream_patients(
                     "schema": StreamingPatientResponse.schema(),
                     "example": {
                         "patients": [
-                            {
-                                "patient_id": "NATO-BEL-12345",
-                                "name": "John Doe",
-                                "injury_type": "Battle Injury"
-                            }
+                            {"patient_id": "NATO-BEL-12345", "name": "John Doe", "injury_type": "Battle Injury"}
                         ],
-                        "total_patients": 100
-                    }
+                        "total_patients": 100,
+                    },
                 }
             },
         }

@@ -95,8 +95,12 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 # Use placeholder based on previous segment
                 if i > 0:
                     prev_segment = segments[i - 1]
-                    if prev_segment in ["jobs", "configurations", "downloads"]:
-                        normalized_segments.append(f":{prev_segment[:-1]}_id")
+                    if prev_segment == "jobs":
+                        normalized_segments.append(":job_id")
+                    elif prev_segment == "configurations":
+                        normalized_segments.append(":configuration_id")
+                    elif prev_segment == "downloads":
+                        normalized_segments.append(":download_id")
                     else:
                         normalized_segments.append(":id")
                 else:
@@ -126,6 +130,10 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
         # Check if it's a job ID format (e.g., job_123456)
         if segment.startswith("job_") and segment[4:].replace("_", "").isdigit():
+            return True
+
+        # Check if it's a file ID format (e.g., file_123)
+        if segment.startswith("file_") and segment[5:].replace("_", "").isdigit():
             return True
 
         # Check for generic ID pattern (contains letters, numbers, and hyphens)

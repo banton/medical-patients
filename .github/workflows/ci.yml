@@ -184,7 +184,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
           REDIS_URL: redis://localhost:6379/0
-          API_KEY: your_secret_api_key_here
+          API_KEY: DEMO_MILMED_2025_50_PATIENTS
         run: |
           PYTHONPATH=. python src/main.py &
           sleep 10
@@ -203,7 +203,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://medgen_user:medgen_password@localhost:5432/medgen_db
           REDIS_URL: redis://localhost:6379/0
-          API_KEY: your_secret_api_key_here
+          API_KEY: DEMO_MILMED_2025_50_PATIENTS
         run: |
           ./run_tests.sh integration
 

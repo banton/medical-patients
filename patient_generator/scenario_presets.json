@@ -1,0 +1,326 @@
+{
+  "_comment": "Medical Patients Generator - Scenario Presets",
+  "_description": "Pre-configured scenarios for common military exercise types. Each preset provides a complete configuration for quick exercise setup.",
+
+  "presets": {
+    "nato_article_5": {
+      "name": "NATO Article 5 - Baltic Defense",
+      "description": "High-intensity conventional warfare scenario in Baltic region. 8-day operation with multiple NATO nations defending against conventional forces.",
+      "category": "conventional_warfare",
+      "difficulty": "high",
+      "total_patients": 2500,
+      "fronts": [
+        {
+          "name": "Northern Front",
+          "nationality_distribution": [
+            {"nationality_code": "EST", "percentage": 35},
+            {"nationality_code": "FIN", "percentage": 30},
+            {"nationality_code": "SWE", "percentage": 20},
+            {"nationality_code": "USA", "percentage": 15}
+          ],
+          "casualty_rate": 0.45
+        },
+        {
+          "name": "Central Front",
+          "nationality_distribution": [
+            {"nationality_code": "POL", "percentage": 40},
+            {"nationality_code": "DEU", "percentage": 25},
+            {"nationality_code": "USA", "percentage": 20},
+            {"nationality_code": "GBR", "percentage": 15}
+          ],
+          "casualty_rate": 0.35
+        },
+        {
+          "name": "Southern Front",
+          "nationality_distribution": [
+            {"nationality_code": "LVA", "percentage": 30},
+            {"nationality_code": "LTU", "percentage": 30},
+            {"nationality_code": "POL", "percentage": 25},
+            {"nationality_code": "CAN", "percentage": 15}
+          ],
+          "casualty_rate": 0.20
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.55,
+        "Non-Battle Injury": 0.25,
+        "Disease": 0.20
+      },
+      "warfare_type": "conventional",
+      "duration_days": 8
+    },
+
+    "peacekeeping": {
+      "name": "UN Peacekeeping Mission",
+      "description": "Low-intensity peacekeeping operation with focus on disease and non-battle injuries. Multinational force in tropical environment.",
+      "category": "peacekeeping",
+      "difficulty": "low",
+      "total_patients": 500,
+      "fronts": [
+        {
+          "name": "Main Operating Base",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 20},
+            {"nationality_code": "GBR", "percentage": 15},
+            {"nationality_code": "FRA", "percentage": 15},
+            {"nationality_code": "ITA", "percentage": 15},
+            {"nationality_code": "ESP", "percentage": 10},
+            {"nationality_code": "DEU", "percentage": 10},
+            {"nationality_code": "CAN", "percentage": 15}
+          ],
+          "casualty_rate": 0.60
+        },
+        {
+          "name": "Forward Operating Base",
+          "nationality_distribution": [
+            {"nationality_code": "NOR", "percentage": 25},
+            {"nationality_code": "DNK", "percentage": 25},
+            {"nationality_code": "NLD", "percentage": 25},
+            {"nationality_code": "BEL", "percentage": 25}
+          ],
+          "casualty_rate": 0.40
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.10,
+        "Non-Battle Injury": 0.35,
+        "Disease": 0.55
+      },
+      "warfare_type": "conventional",
+      "duration_days": 30
+    },
+
+    "urban_assault": {
+      "name": "Urban Assault Operation",
+      "description": "High-intensity urban warfare with drone threats and building clearance operations. Expect high T1 casualties and complex injuries.",
+      "category": "urban_warfare",
+      "difficulty": "extreme",
+      "total_patients": 3000,
+      "fronts": [
+        {
+          "name": "City Center",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 50},
+            {"nationality_code": "GBR", "percentage": 30},
+            {"nationality_code": "AUS", "percentage": 20}
+          ],
+          "casualty_rate": 0.50
+        },
+        {
+          "name": "Industrial Zone",
+          "nationality_distribution": [
+            {"nationality_code": "FRA", "percentage": 40},
+            {"nationality_code": "DEU", "percentage": 35},
+            {"nationality_code": "ITA", "percentage": 25}
+          ],
+          "casualty_rate": 0.30
+        },
+        {
+          "name": "Harbor District",
+          "nationality_distribution": [
+            {"nationality_code": "NLD", "percentage": 35},
+            {"nationality_code": "NOR", "percentage": 35},
+            {"nationality_code": "DNK", "percentage": 30}
+          ],
+          "casualty_rate": 0.20
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.70,
+        "Non-Battle Injury": 0.20,
+        "Disease": 0.10
+      },
+      "warfare_type": "urban",
+      "duration_days": 5
+    },
+
+    "cbrn_incident": {
+      "name": "CBRN Incident Response",
+      "description": "Chemical/biological incident with mass casualties. High proportion of T1 patients requiring immediate decontamination and treatment.",
+      "category": "cbrn",
+      "difficulty": "extreme",
+      "total_patients": 1500,
+      "fronts": [
+        {
+          "name": "Primary Impact Zone",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 60},
+            {"nationality_code": "GBR", "percentage": 25},
+            {"nationality_code": "CAN", "percentage": 15}
+          ],
+          "casualty_rate": 0.70
+        },
+        {
+          "name": "Secondary Exposure Zone",
+          "nationality_distribution": [
+            {"nationality_code": "DEU", "percentage": 40},
+            {"nationality_code": "FRA", "percentage": 35},
+            {"nationality_code": "NLD", "percentage": 25}
+          ],
+          "casualty_rate": 0.30
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.05,
+        "Non-Battle Injury": 0.15,
+        "Disease": 0.80
+      },
+      "warfare_type": "cbrn",
+      "duration_days": 3,
+      "triage_override": {
+        "Disease": {"T1": 0.50, "T2": 0.35, "T3": 0.15}
+      }
+    },
+
+    "training_exercise": {
+      "name": "Training Exercise - Small Scale",
+      "description": "Small-scale training exercise for medical unit validation. Limited casualties over 2 days for focused training scenarios.",
+      "category": "training",
+      "difficulty": "low",
+      "total_patients": 100,
+      "fronts": [
+        {
+          "name": "Training Area Alpha",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 100}
+          ],
+          "casualty_rate": 1.0
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.40,
+        "Non-Battle Injury": 0.35,
+        "Disease": 0.25
+      },
+      "warfare_type": "conventional",
+      "duration_days": 2
+    },
+
+    "mass_casualty": {
+      "name": "Mass Casualty Event",
+      "description": "Single-day mass casualty event simulating large-scale attack or accident. Surge capacity stress test for medical facilities.",
+      "category": "mass_casualty",
+      "difficulty": "extreme",
+      "total_patients": 800,
+      "fronts": [
+        {
+          "name": "Incident Site",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 40},
+            {"nationality_code": "GBR", "percentage": 30},
+            {"nationality_code": "DEU", "percentage": 20},
+            {"nationality_code": "FRA", "percentage": 10}
+          ],
+          "casualty_rate": 1.0
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.60,
+        "Non-Battle Injury": 0.30,
+        "Disease": 0.10
+      },
+      "warfare_type": "conventional",
+      "duration_days": 1,
+      "triage_override": {
+        "Battle Injury": {"T1": 0.50, "T2": 0.35, "T3": 0.15}
+      }
+    },
+
+    "arctic_operation": {
+      "name": "Arctic Winter Operation",
+      "description": "Cold weather operations with high non-battle injury and cold-weather disease rates. Nordic nations focus.",
+      "category": "cold_weather",
+      "difficulty": "high",
+      "total_patients": 1200,
+      "fronts": [
+        {
+          "name": "Arctic Forward Base",
+          "nationality_distribution": [
+            {"nationality_code": "NOR", "percentage": 35},
+            {"nationality_code": "FIN", "percentage": 30},
+            {"nationality_code": "SWE", "percentage": 20},
+            {"nationality_code": "USA", "percentage": 15}
+          ],
+          "casualty_rate": 0.55
+        },
+        {
+          "name": "Mountain Sector",
+          "nationality_distribution": [
+            {"nationality_code": "CAN", "percentage": 40},
+            {"nationality_code": "GBR", "percentage": 30},
+            {"nationality_code": "USA", "percentage": 30}
+          ],
+          "casualty_rate": 0.45
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.30,
+        "Non-Battle Injury": 0.45,
+        "Disease": 0.25
+      },
+      "warfare_type": "conventional",
+      "duration_days": 14
+    },
+
+    "maritime_operation": {
+      "name": "Maritime/Amphibious Operation",
+      "description": "Naval and amphibious assault scenario with shipboard casualties and beach landing injuries.",
+      "category": "maritime",
+      "difficulty": "high",
+      "total_patients": 1800,
+      "fronts": [
+        {
+          "name": "Naval Task Force",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 45},
+            {"nationality_code": "GBR", "percentage": 30},
+            {"nationality_code": "FRA", "percentage": 25}
+          ],
+          "casualty_rate": 0.35
+        },
+        {
+          "name": "Beach Landing Zone",
+          "nationality_distribution": [
+            {"nationality_code": "USA", "percentage": 50},
+            {"nationality_code": "AUS", "percentage": 25},
+            {"nationality_code": "NLD", "percentage": 25}
+          ],
+          "casualty_rate": 0.45
+        },
+        {
+          "name": "Inland Objective",
+          "nationality_distribution": [
+            {"nationality_code": "GBR", "percentage": 40},
+            {"nationality_code": "CAN", "percentage": 35},
+            {"nationality_code": "NZL", "percentage": 25}
+          ],
+          "casualty_rate": 0.20
+        }
+      ],
+      "injury_distribution": {
+        "Battle Injury": 0.55,
+        "Non-Battle Injury": 0.30,
+        "Disease": 0.15
+      },
+      "warfare_type": "amphibious",
+      "duration_days": 6
+    }
+  },
+
+  "categories": {
+    "conventional_warfare": {"name": "Conventional Warfare", "icon": "military"},
+    "urban_warfare": {"name": "Urban Operations", "icon": "building"},
+    "peacekeeping": {"name": "Peacekeeping", "icon": "peace"},
+    "cbrn": {"name": "CBRN", "icon": "hazard"},
+    "training": {"name": "Training Exercise", "icon": "training"},
+    "mass_casualty": {"name": "Mass Casualty", "icon": "emergency"},
+    "cold_weather": {"name": "Cold Weather", "icon": "snow"},
+    "maritime": {"name": "Maritime/Amphibious", "icon": "ship"}
+  },
+
+  "difficulty_levels": {
+    "low": {"name": "Low Intensity", "color": "green"},
+    "high": {"name": "High Intensity", "color": "orange"},
+    "extreme": {"name": "Extreme", "color": "red"}
+  }
+}

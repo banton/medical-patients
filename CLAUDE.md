@@ -9,28 +9,27 @@ This document serves as Claude Code's persistent memory across sessions. Read th
 **Purpose**: Generate simulated patient data with configurable parameters
 **Stack**: FastAPI backend, Vanilla JS frontend
 **Architecture**: Clean architecture with domain/infrastructure/api separation
-**Database**: PostgreSQL
+**Database**: PostgreSQL (Neon Serverless - Scale Tier)
 **Deployment**: Traditional VPS and local use
 
 ## 📋 Session Protocol
 
 ### Start of Session
 1. Read this CLAUDE.md file completely
-2. Load optimized memory: `cat memory/active/status.md memory/active/context.md`
-3. Reference specific files from `memory/reference/` as needed
+2. Use `wake_up` command to load memory context
+3. Check `project_status` for current state
 4. Ask: "What are we working on today?"
 
 ### During Session
-1. Use `./memory/update.sh "summary"` after significant changes
-2. Apply "Fix Don't Skip" policy - solve and document all issues
-3. Reference `memory/reference/` for patterns and architecture
-4. Keep active tasks updated in memory/active/status.md
+1. Use `memory_update` to track progress/insights/errors
+2. Use `lock_context` to save important information
+3. Apply "Fix Don't Skip" policy - solve and document all issues
+4. Reference locked contexts with `recall_context` as needed
 
 ### End of Session
-1. Run `./memory/update.sh "Session summary"`
-2. Update current focus in memory/active/status.md
-3. Archive old information if needed
-4. Commit all memory updates
+1. Use `memory_update` with session summary
+2. Lock any important contexts for future sessions
+3. Commit all code changes
 
 ## 🏗️ Project Structure
 
@@ -189,6 +188,41 @@ Current task context, work in progress, temporary notes
 - No compliance requirements (HIPAA/GDPR)
 - Local/VPS deployment only
 
+## 🗄️ Database Configuration (Neon Scale Tier)
+
+### Neon Agent Plan Benefits (January 2026)
+- **Tier**: Scale (via Agent Plan partnership)
+- **Auto-suspend**: 60 seconds minimum (maximum cost savings)
+- **Cold-start**: ~500ms-1s wake time
+- **Cost model**: Pay only for active compute time
+
+### Neon Console Settings
+Configure in [Neon Console](https://console.neon.tech) → Project → Settings → Compute:
+- **Suspend compute after inactivity**: 60 seconds
+
+### Application Settings (config.py)
+Already optimized for Neon serverless mode:
+```python
+DB_IDLE_TIMEOUT=60      # Close idle connections (matches Neon suspend)
+DB_POOL_MIN=0           # Zero min connections (allows full suspend)
+DB_POOL_RECYCLE=300     # 5-minute connection recycle
+DB_POOL_PRE_PING=true   # Validate connections on checkout
+```
+
+### Health Checks (Neon-Aware)
+- `/api/v1/health/live` - Does NOT hit database (allows Neon to sleep)
+- `/api/v1/health/ready` - Hits database (wakes Neon if suspended)
+- `/api/v1/health/database` - Full pool status and metrics
+
+### Environment Variables
+```bash
+# Default: Serverless mode (Neon optimized)
+DB_ALWAYS_ON=false
+
+# Override for always-on mode (disables serverless optimizations)
+DB_ALWAYS_ON=true
+```
+
 ## 🎓 Quick Commands
 
 ### Development
@@ -287,100 +321,57 @@ memory/fixes/
 - **Production Deployment**: Ready for immediate use with comprehensive documentation
 
 ```
-## 🧠 Intelligent Memory Management System
+## 🧠 MCP Memory Management System
 
 ### Overview
-This project uses an intelligent memory management system designed to maximize information density while staying within a 10,000 token context budget. The system automatically extracts, consolidates, and compresses project knowledge.
+This project uses an MCP-based intelligent memory system that provides context awareness, semantic tagging, and persistent memory across sessions.
 
-### Memory Architecture
+### Memory Commands
+
+| Command | Purpose |
+|---------|----------|
+| `wake_up` | Start session and load context |
+| `memory_update` | Record progress, insights, errors |
+| `lock_context` | Save important information permanently |
+| `recall_context` | Retrieve saved contexts |
+| `list_topics` | Show all locked contexts |
+| `project_update` | Scan and tag project files |
+| `project_status` | View project intelligence |
+| `search_by_tags` | Find files by semantic tags |
+| `memory_status` | Check memory system status |
+
+### Categories for memory_update:
+- **progress**: Track task completion
+- **decision**: Record architectural choices
+- **error**: Document issues and fixes
+- **insight**: Capture important discoveries
+- **todo**: Track future work items
+- **question**: Note unresolved questions
+
+### File Organization
 
 ```
 memory/
-├── active/                 # Current work (3,000 tokens max)
-│   ├── status.md          # Task dashboard and recent updates
-│   └── context.md         # Working file references
-├── reference/             # Stable knowledge (5,000 tokens max)
-│   ├── architecture.md    # System design decisions
-│   ├── patterns.md        # Reusable code patterns
-│   ├── features.md        # Feature specifications
-│   └── decisions.md       # Architectural decisions log
-└── archive/               # Historical data (compressed)
-    └── YYYY-MM-DD.tar.gz # Dated archives
+├── active/           # Current work documentation
+├── reference/        # Stable architecture docs
+├── implementations/  # Completed features
+├── fixes/           # Bug fixes and solutions
+├── patterns/        # Reusable patterns
+└── epics/           # Feature epics
 ```
-
-### Token Budget Management
-
-| Category | Budget | Purpose | Update Frequency |
-|----------|--------|---------|------------------|
-| Active | 3,000 | Current tasks, immediate context | Every session |
-| Reference | 5,000 | Stable patterns, architecture | Weekly |
-| Buffer | 2,000 | Session updates, new information | As needed |
-| **Total** | **10,000** | **Complete working context** | - |
-
-### Usage Protocol
-
-#### Starting a Session
-```bash
-# Always start here
-cat memory/active/status.md
-cat memory/active/context.md
-```
-
-#### During Development
-```bash
-# Update after significant changes
-./memory/update.sh "Brief description of changes"
-```
-
-#### Weekly Maintenance
-```bash
-./memory/weekly-maintenance.sh
-```
-
-### Information Priority
-
-1. **Always Preserve**: Current tasks, active bugs, recent fixes
-2. **Compress**: Completed work, old investigations, verbose docs
-3. **Archive**: Anything older than 7 days
 
 ### Best Practices
 
 ✅ **DO**:
-- Use tables and lists (3:1 compression vs prose)
-- Reference file paths instead of copying code
-- Keep summaries to one line
-- Run compression checks regularly
-- Update status after each session
+- Lock important contexts for future reference
+- Use semantic tags when updating project
+- Track all significant changes with memory_update
+- Query files by tags for efficient navigation
 
 ❌ **DON'T**:
-- Store full code implementations
-- Keep investigation narratives
-- Use decorative formatting or emojis
-- Duplicate information
-- Let files grow beyond token budgets
+- Rely on file-based memory scripts
+- Forget to wake_up at session start
+- Skip locking important discoveries
 
-### Maintenance Commands
-
-```bash
-# Check token usage
-find memory/active -name "*.md" -exec wc -w {} + | awk '{print "Tokens: " int($1 * 1.3)}'
-
-# Update memory
-./memory/update.sh "What changed"
-
-# Weekly cleanup
-./memory/weekly-maintenance.sh
-
-# Force compression
-./memory/compress.sh
-```
-
-### Integration with AI Assistants
-
-1. Load only `memory/active/` at session start
-2. Request specific `memory/reference/` files as needed
-3. Never load archives unless investigating history
-4. Update memory before ending session
-
-This system maintains high information density while respecting token limits, ensuring efficient AI collaboration.
+This system provides intelligent, persistent memory management for efficient AI collaboration.
 EOF < /dev/null

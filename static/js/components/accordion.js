@@ -89,7 +89,8 @@ class AccordionComponent {
         // Set up JSON validators for each section
         this.validators.set(0, this.validateBattleFronts.bind(this));
         this.validators.set(1, this.validateInjuries.bind(this));
-        this.validators.set(2, this.validateEvacuationTimes.bind(this));
+        this.validators.set(2, this.validateMedicalSimulation.bind(this)); // Medical Simulation Settings
+        this.validators.set(3, this.validateAdvancedConfig.bind(this)); // Advanced Configuration
     }
 
     handleKeyDown(e, index) {
@@ -196,6 +197,31 @@ class AccordionComponent {
         const item = this.items[index];
         const validator = this.validators.get(index);
 
+        // Special handling for Medical Simulation Settings (index 2) - no editor, uses checkboxes
+        // and Advanced Configuration (index 3) - optional section with default valid state
+        if (index === 2 || index === 3) {
+            if (!validator) {
+                return;
+            }
+
+            // For Advanced Config, use editor content if available, otherwise empty string
+            let content = '';
+            if (index === 3 && item.editor) {
+                content = item.editor.value.trim();
+            }
+
+            const result = validator(content);
+            this.updateValidationUI(index, result);
+            item.isValid = result.valid;
+            // Emit validation event
+            this.container.dispatchEvent(
+                new CustomEvent('accordion:validate', {
+                    detail: { index, result, item }
+                })
+            );
+            return;
+        }
+
         if (!item.editor || !validator) {
             return;
         }
@@ -227,8 +253,10 @@ class AccordionComponent {
             item.status.textContent = '✗';
         }
 
-        // Update editor styling
-        item.editor.classList.toggle('accordion__editor--invalid', !result.valid);
+        // Update editor styling (only if editor exists)
+        if (item.editor) {
+            item.editor.classList.toggle('accordion__editor--invalid', !result.valid);
+        }
 
         // Update validation message
         if (item.validation) {
@@ -331,11 +359,11 @@ class AccordionComponent {
         try {
             const config = JSON.parse(content);
 
-            // Check if this is temporal or legacy format
-            const isTemporal = config.warfare_types || config.environmental_conditions || config.special_events;
+            // Check if this is simplified scenario format (injury_mix) or legacy format (injury_distribution)
+            const hasInjuryMix = config.injury_mix && typeof config.injury_mix === 'object';
 
-            if (isTemporal) {
-                // Validate temporal configuration
+            if (hasInjuryMix || config.base_date || config.days_of_fighting) {
+                // Validate scenario configuration
                 if (!config.total_patients || typeof config.total_patients !== 'number' || config.total_patients < 1) {
                     return { valid: false, message: 'total_patients must be a positive number' };
                 }
@@ -379,7 +407,7 @@ class AccordionComponent {
                     }
                 }
 
-                return { valid: true, message: 'Temporal scenario configuration is valid' };
+                return { valid: true, message: 'Scenario configuration is valid' };
             }
 
             // Legacy format validation
@@ -410,105 +438,82 @@ class AccordionComponent {
         }
     }
 
-    validateEvacuationTimes(content) {
-        if (!content) {
-            return { valid: false, message: 'Evacuation timing configuration is required' };
+    validateMedicalSimulation(_content) {
+        // Medical Simulation Settings don't need JSON validation - they use checkboxes
+        // This section is always valid
+        return { valid: true, message: 'Medical simulation settings configured' };
+    }
+
+    validateAdvancedConfig(content) {
+        // Advanced configuration is optional - empty is valid
+        if (!content || content.trim() === '') {
+            return { valid: true, message: 'Using default medical simulation parameters' };
         }
 
         try {
             const config = JSON.parse(content);
 
-            // Required top-level sections
-            const requiredSections = ['evacuation_times', 'transit_times', 'kia_rate_modifiers', 'rtd_rate_modifiers'];
-            const missingSections = requiredSections.filter((section) => !config[section]);
-            if (missingSections.length > 0) {
-                return { valid: false, message: `Missing required sections: ${missingSections.join(', ')}` };
-            }
-
-            // Required facilities and triage categories
-            const requiredFacilities = ['POI', 'Role1', 'Role2', 'Role3', 'Role4'];
-            const requiredTriageCategories = ['T1', 'T2', 'T3'];
-            const requiredTransitRoutes = ['POI_to_Role1', 'Role1_to_Role2', 'Role2_to_Role3', 'Role3_to_Role4'];
-
-            // Validate evacuation_times structure
-            for (const facility of requiredFacilities) {
-                if (!config.evacuation_times[facility]) {
-                    return { valid: false, message: `Missing evacuation times for facility: ${facility}` };
-                }
-
-                for (const triage of requiredTriageCategories) {
-                    const timeConfig = config.evacuation_times[facility][triage];
-                    if (
-                        !timeConfig ||
-                        typeof timeConfig.min_hours !== 'number' ||
-                        typeof timeConfig.max_hours !== 'number'
-                    ) {
-                        return { valid: false, message: `Invalid time configuration for ${facility} ${triage}` };
+            // Validate treatment effectiveness if provided
+            if (config.treatment_effectiveness) {
+                for (const [treatment, value] of Object.entries(config.treatment_effectiveness)) {
+                    if (treatment === 'description') {
+                        continue;
                     }
-
-                    if (timeConfig.min_hours < 0 || timeConfig.max_hours < 0) {
-                        return { valid: false, message: `Times must be positive for ${facility} ${triage}` };
-                    }
-
-                    if (timeConfig.min_hours > timeConfig.max_hours) {
-                        return { valid: false, message: `Min time must be ≤ max time for ${facility} ${triage}` };
+                    if (typeof value !== 'number' || value < 0 || value > 1) {
+                        return {
+                            valid: false,
+                            message: `Invalid treatment effectiveness for ${treatment} (must be 0.0-1.0)`
+                        };
                     }
                 }
             }
 
-            // Validate transit_times structure
-            for (const route of requiredTransitRoutes) {
-                if (!config.transit_times[route]) {
-                    return { valid: false, message: `Missing transit times for route: ${route}` };
-                }
-
-                for (const triage of requiredTriageCategories) {
-                    const timeConfig = config.transit_times[route][triage];
-                    if (
-                        !timeConfig ||
-                        typeof timeConfig.min_hours !== 'number' ||
-                        typeof timeConfig.max_hours !== 'number'
-                    ) {
-                        return { valid: false, message: `Invalid transit time configuration for ${route} ${triage}` };
+            // Validate diagnostic accuracy if provided
+            if (config.diagnostic_accuracy) {
+                for (const [facility, value] of Object.entries(config.diagnostic_accuracy)) {
+                    if (facility === 'description') {
+                        continue;
                     }
-
-                    if (timeConfig.min_hours < 0 || timeConfig.max_hours < 0) {
-                        return { valid: false, message: `Transit times must be positive for ${route} ${triage}` };
-                    }
-
-                    if (timeConfig.min_hours > timeConfig.max_hours) {
-                        return { valid: false, message: `Min transit time must be ≤ max time for ${route} ${triage}` };
+                    if (typeof value !== 'number' || value < 0 || value > 1) {
+                        return {
+                            valid: false,
+                            message: `Invalid diagnostic accuracy for ${facility} (must be 0.0-1.0)`
+                        };
                     }
                 }
             }
 
-            // Validate rate modifiers
-            for (const triage of requiredTriageCategories) {
-                if (typeof config.kia_rate_modifiers[triage] !== 'number' || config.kia_rate_modifiers[triage] < 0) {
-                    return {
-                        valid: false,
-                        message: `Invalid KIA rate modifier for ${triage} (must be positive number)`
-                    };
-                }
-
-                if (typeof config.rtd_rate_modifiers[triage] !== 'number' || config.rtd_rate_modifiers[triage] < 0) {
-                    return {
-                        valid: false,
-                        message: `Invalid RTD rate modifier for ${triage} (must be positive number)`
-                    };
+            // Validate markov overrides if provided
+            if (config.markov_overrides) {
+                for (const [transition, value] of Object.entries(config.markov_overrides)) {
+                    if (transition === 'description') {
+                        continue;
+                    }
+                    if (value !== null && (typeof value !== 'number' || value < 0 || value > 1)) {
+                        return {
+                            valid: false,
+                            message: `Invalid markov override for ${transition} (must be null or 0.0-1.0)`
+                        };
+                    }
                 }
             }
 
-            // Calculate total configured routes and timing ranges
-            const totalRoutes = requiredTransitRoutes.length;
-            const totalFacilities = requiredFacilities.length;
-            const totalConfigurations =
-                totalRoutes * requiredTriageCategories.length + totalFacilities * requiredTriageCategories.length;
+            // Validate polytrauma rates if provided
+            if (config.polytrauma_rates) {
+                for (const [warfareType, value] of Object.entries(config.polytrauma_rates)) {
+                    if (warfareType === 'description') {
+                        continue;
+                    }
+                    if (typeof value !== 'number' || value < 0 || value > 1) {
+                        return {
+                            valid: false,
+                            message: `Invalid polytrauma rate for ${warfareType} (must be 0.0-1.0)`
+                        };
+                    }
+                }
+            }
 
-            return {
-                valid: true,
-                message: `Valid evacuation configuration: ${totalFacilities} facilities, ${totalRoutes} routes, ${totalConfigurations} timing configurations`
-            };
+            return { valid: true, message: 'Advanced configuration is valid' };
         } catch (e) {
             return { valid: false, message: `JSON syntax error: ${e.message}` };
         }

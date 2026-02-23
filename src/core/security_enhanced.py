@@ -11,17 +11,49 @@ import os
 from typing import Any, Dict, Optional
 
 from fastapi import Depends, Header, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session as SQLAlchemySession, sessionmaker
 
-from src.api.v1.dependencies.database import get_database
+from src.core.cache_utils import cache_api_key_limits
 from src.domain.models.api_key import DEMO_API_KEY_CONFIG, APIKey
 from src.domain.repositories.api_key_repository import APIKeyRepository
 
 # Legacy single API key support (backward compatibility)
-LEGACY_API_KEY = os.getenv("API_KEY", "your-api-key-here")
+LEGACY_API_KEY = os.getenv("API_KEY", "CHANGE_ME_IN_PRODUCTION_DO_NOT_USE_DEFAULT")
 
 # Public demo key - hardcoded for easy access
 DEMO_API_KEY: str = str(DEMO_API_KEY_CONFIG["key"])
+
+# Create SQLAlchemy session factory
+# Note: This should ideally come from a centralized config, but for backward compatibility
+# we need to handle cases where the module is imported before environment is fully set up
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    try:
+        engine = create_engine(DATABASE_URL.replace("+asyncpg", ""))
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    except Exception:
+        # Handle cases where database URL is invalid or engine creation fails
+        SessionLocal = None
+else:
+    # This will only be used if DATABASE_URL is not set at module import time
+    # The actual database operations will fail with a proper error message
+    SessionLocal = None
+
+
+def get_sqlalchemy_session():
+    """Get SQLAlchemy session for API key operations."""
+    if SessionLocal is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Database not configured. Service temporarily unavailable.",
+            headers={"X-Error-Type": "database_configuration"},
+        )
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 @dataclass
@@ -175,8 +207,8 @@ def create_demo_api_key() -> APIKey:
     )
 
 
-async def verify_api_key(
-    api_key: str = Header(..., alias="X-API-Key"), db: Session = Depends(get_database)
+async def verify_api_key_context(
+    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
 ) -> APIKeyContext:
     """
     Enhanced API key verification with context and legacy support.
@@ -191,44 +223,93 @@ async def verify_api_key(
     Raises:
         HTTPException: If key is invalid, expired, or inactive
     """
-    repo = APIKeyRepository(db)
+    # Check if API key is provided
+    if not api_key:
+        raise HTTPException(
+            status_code=401, detail="Missing API Key", headers={"X-Key-Status": "missing", "WWW-Authenticate": "ApiKey"}
+        )
+
+    # Try to get cached limits first
+    # TODO: Implement cached limits usage in future optimization
+    # cached_limits = await get_cached_api_key_limits(api_key)
+
+    try:
+        repo = APIKeyRepository(db)
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail="Database service temporarily unavailable",
+            headers={"X-Error-Type": "database_error"},
+        )
 
     # Check for demo key first (most common case)
     if api_key == DEMO_API_KEY:
-        # For demo key, try to get from database or create virtual
-        demo_key = repo.get_by_key(DEMO_API_KEY)
-        if not demo_key:
-            # Create virtual demo key for immediate use
-            # In production, this should be pre-created in the database
-            demo_key = create_demo_api_key()
+        try:
+            # For demo key, try to get from database or create virtual
+            demo_key = repo.get_by_key(DEMO_API_KEY)
+            if not demo_key:
+                # Create virtual demo key for immediate use
+                # In production, this should be pre-created in the database
+                demo_key = create_demo_api_key()
 
-        context = APIKeyContext(api_key=demo_key, is_demo=True, is_legacy=False)
+            context = APIKeyContext(api_key=demo_key, is_demo=True, is_legacy=False)
 
-        # Check if demo key is usable
-        context.check_usability()
-        return context
+            # Check if demo key is usable
+            context.check_usability()
+
+            # Cache the limits for future requests
+            await cache_api_key_limits(api_key, context.get_limits_info())
+
+            return context
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=500, detail="Error processing demo API key", headers={"X-Error-Type": "demo_key_error"}
+            )
 
     # Check for legacy API key (backward compatibility)
     if api_key == LEGACY_API_KEY:
         legacy_key = create_legacy_api_key()
-        return APIKeyContext(api_key=legacy_key, is_demo=False, is_legacy=True)
+        context = APIKeyContext(api_key=legacy_key, is_demo=False, is_legacy=True)
+
+        # Cache the limits for future requests
+        await cache_api_key_limits(api_key, context.get_limits_info())
+
+        return context
 
     # Look up key in database
-    key_record = repo.get_active_key(api_key)
-    if not key_record:
-        raise HTTPException(status_code=401, detail="Invalid or inactive API key", headers={"X-Key-Status": "invalid"})
+    try:
+        key_record = repo.get_active_key(api_key)
+        if not key_record:
+            raise HTTPException(
+                status_code=401, detail="Invalid or inactive API key", headers={"X-Key-Status": "invalid"}
+            )
 
-    # Create context with database key
-    context = APIKeyContext(api_key=key_record, is_demo=key_record.is_demo, is_legacy=False)
+        # Create context with database key
+        context = APIKeyContext(api_key=key_record, is_demo=key_record.is_demo, is_legacy=False)
 
-    # Verify key is usable
-    context.check_usability()
+        # Verify key is usable
+        context.check_usability()
 
-    return context
+        # Cache the limits for future requests
+        await cache_api_key_limits(api_key, context.get_limits_info())
+
+        return context
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail="Database lookup failed. Service temporarily unavailable.",
+            headers={"X-Error-Type": "database_lookup_error"},
+        )
 
 
 async def verify_api_key_optional(
-    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: Session = Depends(get_database)
+    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
 ) -> Optional[APIKeyContext]:
     """
     Optional API key verification for endpoints that support both authenticated and unauthenticated access.
@@ -244,7 +325,7 @@ async def verify_api_key_optional(
         return None
 
     try:
-        return await verify_api_key(api_key, db)
+        return await verify_api_key_context(api_key, db)
     except HTTPException:
         # For optional verification, invalid keys are treated as no key
         return None
@@ -276,7 +357,7 @@ async def verify_api_key_legacy(api_key: str = Header(..., alias="X-API-Key")) -
     if api_key and len(api_key) > 10:
         return api_key
 
-    raise HTTPException(status_code=401, detail="Invalid API key")
+    raise HTTPException(status_code=401, detail="Invalid API key", headers={"X-Key-Status": "invalid"})
 
 
 def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
@@ -297,3 +378,24 @@ def get_api_key_info(context: APIKeyContext) -> Dict[str, Any]:
         "limits": context.get_limits_info(),
         "last_used": context.api_key.last_used_at.isoformat() if context.api_key.last_used_at else None,
     }
+
+
+# Backward compatibility: Provide the old verify_api_key signature
+# that returns a string instead of APIKeyContext
+async def verify_api_key(
+    api_key: Optional[str] = Header(None, alias="X-API-Key"), db: SQLAlchemySession = Depends(get_sqlalchemy_session)
+) -> str:
+    """
+    Backward-compatible API key verification that returns a string.
+
+    This wrapper maintains compatibility with existing code that expects
+    verify_api_key to return a string instead of APIKeyContext.
+    """
+    # Call the enhanced function that returns context
+    context = await verify_api_key_context(api_key, db)
+    # Return the API key string for backward compatibility
+    return context.api_key.key
+
+
+# Export the enhanced version for new code that needs the full context
+verify_api_key_enhanced = verify_api_key_context

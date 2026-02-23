@@ -1,6 +1,13 @@
 """
 Enhanced database connection pool with monitoring and optimization.
 Part of EPIC-003: Production Scalability Improvements
+
+Serverless PostgreSQL (Neon) optimizations are ON by default:
+- Zero minimum connections (DB_POOL_MIN=0) - allows database to sleep
+- Idle connection timeout (DB_IDLE_TIMEOUT=60) - closes unused connections
+- Graceful shutdown
+
+Set DB_ALWAYS_ON=true to disable serverless optimizations and keep connections warm.
 """
 
 from contextlib import contextmanager
@@ -127,6 +134,8 @@ class EnhancedConnectionPool:
     - Automatic retry on connection failure
     - Comprehensive metrics collection
     - Query timeout enforcement
+    - Idle connection timeout (for serverless PostgreSQL like Neon)
+    - Graceful shutdown support
     """
 
     def __init__(
@@ -139,19 +148,23 @@ class EnhancedConnectionPool:
         pre_ping: bool = True,
         query_timeout: int = 30000,  # milliseconds
         application_name: str = "medical_patients_generator",
+        idle_timeout: int = 0,  # seconds, 0 = disabled
+        serverless_mode: bool = False,
     ):
         """
         Initialize enhanced connection pool.
 
         Args:
             dsn: Database connection string
-            minconn: Minimum number of connections
+            minconn: Minimum number of connections (0 for serverless)
             maxconn: Maximum number of connections
             pool_timeout: Timeout for getting connection from pool
             pool_recycle: Recycle connections after this many seconds
             pre_ping: Test connections before use
             query_timeout: Query timeout in milliseconds
             application_name: Application name for PostgreSQL
+            idle_timeout: Close connections idle for this many seconds (0 = disabled)
+            serverless_mode: Enable serverless-friendly behavior (Neon auto-suspend)
         """
         self.dsn = dsn
         self.minconn = minconn
@@ -161,44 +174,121 @@ class EnhancedConnectionPool:
         self.pre_ping = pre_ping
         self.query_timeout = query_timeout
         self.application_name = application_name
+        self.idle_timeout = idle_timeout
+        self.serverless_mode = serverless_mode
 
         self.metrics = ConnectionPoolMetrics()
         self._lock = threading.Lock()
         self._connection_timestamps: Dict[int, float] = {}
+        self._connection_last_used: Dict[int, float] = {}
+        self._shutdown = False
 
         # Initialize the pool
         self._pool = self._create_pool()
 
+        # Start idle connection cleanup thread if idle_timeout is set
+        self._cleanup_thread: Optional[threading.Thread] = None
+        if self.idle_timeout > 0:
+            self._start_idle_cleanup_thread()
+
+        mode_str = " (serverless mode)" if serverless_mode else ""
+        idle_str = f", idle_timeout={idle_timeout}s" if idle_timeout > 0 else ""
         logger.info(
-            f"Enhanced connection pool initialized: "
+            f"Enhanced connection pool initialized{mode_str}: "
             f"minconn={minconn}, maxconn={maxconn}, "
-            f"recycle={pool_recycle}s, timeout={pool_timeout}s"
+            f"recycle={pool_recycle}s, timeout={pool_timeout}s{idle_str}"
         )
 
     def _create_pool(self) -> psycopg2.pool.ThreadedConnectionPool:
         """Create the underlying connection pool."""
         try:
             # Create pool with custom connection factory
+            # Note: statement_timeout is NOT set via options because NeonDB's
+            # connection pooler doesn't support startup parameters.
+            # Instead, we set it per-connection after checkout.
             pool = psycopg2.pool.ThreadedConnectionPool(
                 self.minconn,
                 self.maxconn,
                 self.dsn,
                 connect_timeout=10,
-                options=f"-c statement_timeout={self.query_timeout} -c application_name={self.application_name}",
+                application_name=self.application_name,
             )
 
-            # Initialize minimum connections
-            for _ in range(self.minconn):
-                conn = pool.getconn()
-                self._connection_timestamps[id(conn)] = time.time()
-                self.metrics.record_connection_created()
-                pool.putconn(conn)
+            # Only pre-warm connections if minconn > 0 (not in serverless mode)
+            if self.minconn > 0:
+                for _ in range(self.minconn):
+                    conn = pool.getconn()
+                    self._connection_timestamps[id(conn)] = time.time()
+                    self._connection_last_used[id(conn)] = time.time()
+                    self.metrics.record_connection_created()
+                    pool.putconn(conn)
 
             return pool
 
         except Exception as e:
             logger.error(f"Failed to create connection pool: {e}")
             raise
+
+    def _start_idle_cleanup_thread(self):
+        """Start background thread to close idle connections."""
+        def cleanup_idle_connections():
+            logger.info(f"Idle connection cleanup thread started (timeout={self.idle_timeout}s)")
+            while not self._shutdown:
+                try:
+                    # Check every idle_timeout/2 seconds (or minimum 10 seconds)
+                    check_interval = max(10, self.idle_timeout // 2)
+                    time.sleep(check_interval)
+
+                    if self._shutdown:
+                        break
+
+                    self._close_idle_connections()
+                except Exception as e:
+                    logger.error(f"Error in idle cleanup thread: {e}")
+
+            logger.info("Idle connection cleanup thread stopped")
+
+        self._cleanup_thread = threading.Thread(
+            target=cleanup_idle_connections,
+            daemon=True,
+            name="db-pool-idle-cleanup"
+        )
+        self._cleanup_thread.start()
+
+    def _close_idle_connections(self):
+        """Close connections that have been idle too long."""
+        if not self.idle_timeout or self._shutdown:
+            return
+
+        current_time = time.time()
+        connections_closed = 0
+
+        with self._lock:
+            # Get list of connection ids that are idle too long
+            # Note: We can only close connections that are in the pool (not checked out)
+            if hasattr(self._pool, "_pool"):
+                pool_connections = list(self._pool._pool) if self._pool._pool else []
+
+                for conn in pool_connections:
+                    conn_id = id(conn)
+                    last_used = self._connection_last_used.get(conn_id, current_time)
+                    idle_time = current_time - last_used
+
+                    if idle_time > self.idle_timeout:
+                        try:
+                            # Remove from pool and close
+                            self._pool._pool.remove(conn)
+                            conn.close()
+                            self._connection_timestamps.pop(conn_id, None)
+                            self._connection_last_used.pop(conn_id, None)
+                            self.metrics.record_connection_closed()
+                            connections_closed += 1
+                            logger.debug(f"Closed idle connection {conn_id} (idle {idle_time:.1f}s)")
+                        except Exception as e:
+                            logger.warning(f"Error closing idle connection: {e}")
+
+        if connections_closed > 0:
+            logger.info(f"Closed {connections_closed} idle connection(s) to allow database sleep")
 
     def _is_connection_expired(self, conn: connection) -> bool:
         """Check if connection should be recycled."""
@@ -261,6 +351,11 @@ class EnhancedConnectionPool:
                 self._connection_timestamps[id(conn)] = time.time()
                 self.metrics.record_connection_created()
 
+            # Set statement_timeout per-connection (NeonDB pooler doesn't support it as startup param)
+            if self.query_timeout:
+                with conn.cursor() as cur:
+                    cur.execute(f"SET statement_timeout = {self.query_timeout}")
+
             yield conn
 
         except psycopg2.pool.PoolError as e:
@@ -277,6 +372,8 @@ class EnhancedConnectionPool:
         finally:
             if conn:
                 try:
+                    # Track last used time for idle connection cleanup
+                    self._connection_last_used[id(conn)] = time.time()
                     # Return connection to pool
                     self._pool.putconn(conn)
                     self.metrics.record_checkin()
@@ -332,13 +429,26 @@ class EnhancedConnectionPool:
                     "timeout_seconds": self.pool_timeout,
                     "query_timeout_ms": self.query_timeout,
                     "pre_ping": self.pre_ping,
+                    "idle_timeout_seconds": self.idle_timeout,
+                    "serverless_mode": self.serverless_mode,
                 },
             }
 
     def close(self):
-        """Close all connections in the pool."""
+        """Close all connections in the pool and stop cleanup thread."""
+        self._shutdown = True
+
+        # Stop the idle cleanup thread if running
+        if self._cleanup_thread and self._cleanup_thread.is_alive():
+            logger.info("Stopping idle connection cleanup thread...")
+            # Thread will exit on next iteration due to _shutdown flag
+            self._cleanup_thread.join(timeout=5)
+
+        # Close all connections in the pool
         if self._pool:
             self._pool.closeall()
+            self._connection_timestamps.clear()
+            self._connection_last_used.clear()
             logger.info("Connection pool closed")
 
 
@@ -355,15 +465,32 @@ def get_pool() -> EnhancedConnectionPool:
         with _pool_lock:
             if _pool_instance is None:
                 # Get configuration from environment
-                dsn = os.getenv("DATABASE_URL", "postgresql://medgen_user:medgen_password@localhost:5432/medgen_db")
+                dsn = os.getenv("DATABASE_URL")
+                if not dsn:
+                    error_msg = (
+                        "DATABASE_URL environment variable is required. "
+                        "For local development, set it in your .env file or docker-compose.yml"
+                    )
+                    raise ValueError(error_msg)
 
-                # Pool configuration from environment with defaults
-                minconn = int(os.getenv("DB_POOL_MIN", "5"))
+                # Serverless mode is ON by default; DB_ALWAYS_ON disables it
+                always_on = os.getenv("DB_ALWAYS_ON", "false").lower() in ("true", "1", "yes")
+                serverless_mode = not always_on
+
+                # Pool configuration - serverless defaults unless DB_ALWAYS_ON is set
+                # Serverless: 0 min connections, short recycle, idle timeout enabled
+                # Always-on: 5 min connections, long recycle, no idle timeout
+                default_minconn = "5" if always_on else "0"
+                default_recycle = "3600" if always_on else "300"  # 1 hour vs 5 min
+                default_idle_timeout = "0" if always_on else "60"  # disabled vs 60s
+
+                minconn = int(os.getenv("DB_POOL_MIN", default_minconn))
                 maxconn = int(os.getenv("DB_POOL_MAX", "20"))
                 pool_timeout = float(os.getenv("DB_POOL_TIMEOUT", "30"))
-                pool_recycle = int(os.getenv("DB_POOL_RECYCLE", "3600"))
+                pool_recycle = int(os.getenv("DB_POOL_RECYCLE", default_recycle))
                 pre_ping = os.getenv("DB_POOL_PRE_PING", "true").lower() == "true"
                 query_timeout = int(os.getenv("DB_QUERY_TIMEOUT", "30000"))
+                idle_timeout = int(os.getenv("DB_IDLE_TIMEOUT", default_idle_timeout))
 
                 _pool_instance = EnhancedConnectionPool(
                     dsn=dsn,
@@ -373,6 +500,8 @@ def get_pool() -> EnhancedConnectionPool:
                     pool_recycle=pool_recycle,
                     pre_ping=pre_ping,
                     query_timeout=query_timeout,
+                    idle_timeout=idle_timeout,
+                    serverless_mode=serverless_mode,
                 )
 
     return _pool_instance

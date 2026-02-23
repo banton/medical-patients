@@ -16,11 +16,15 @@ services:
       - PATIENT_GENERATOR_MAX_MEMORY=2048
       - DATABASE_URL=postgresql://medgen_user:medgen_password@db:5432/medgen_db
       - DB_TYPE=postgres
-      - API_KEY=${API_KEY:-your_secret_api_key_here}
+      - API_KEY=${API_KEY:-DEMO_MILMED_2025_50_PATIENTS}
       - DEBUG=${DEBUG:-True}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000}
       - REDIS_URL=redis://redis:6379/0
       - CACHE_TTL=${CACHE_TTL:-3600}
+      - ENABLE_MEDICAL_SIMULATION=true
+      - ENABLE_TREATMENT_UTILITY_MODEL=true
+      - ENABLE_MARKOV_CHAIN=true
+      - ENABLE_WARFARE_MODIFIERS=true
     depends_on:
       db:
         condition: service_healthy
@@ -33,10 +37,11 @@ services:
       retries: 3
       start_period: 15s
     restart: "on-failure"
-    # Run migrations before starting the app
+    # Run migrations and ensure demo key before starting the app
     command: >
       sh -c "
       alembic upgrade head &&
+      python scripts/ensure_demo_key.py &&
       uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
       "
 

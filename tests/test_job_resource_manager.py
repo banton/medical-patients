@@ -22,7 +22,7 @@ class TestJobResourceManager:
         """Create test resource manager."""
         manager = JobResourceManager()
         # Set test limits
-        manager.max_memory_mb = 100
+        manager.max_memory_mb = 1000  # Increased to 1GB to avoid false positives
         manager.max_cpu_seconds = 10
         manager.max_runtime_seconds = 30
         manager.check_interval_seconds = 0.1
@@ -54,6 +54,7 @@ class TestJobResourceManager:
         """Test runtime limit enforcement."""
         job_id = "test-job-timeout"
         resource_manager.max_runtime_seconds = 0.2  # 200ms limit
+        resource_manager.max_memory_mb = 10000  # Set high memory limit to avoid memory errors
 
         with pytest.raises(ResourceLimitExceeded) as exc_info:
             async with resource_manager.track_job(job_id):

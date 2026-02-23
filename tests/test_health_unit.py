@@ -3,6 +3,7 @@ Unit tests for health check functionality.
 Part of EPIC-003: Production Scalability Improvements
 """
 
+import json
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -178,7 +179,10 @@ class TestHealthEndpointRoutes:
         # Import and call the function
         from src.api.v1.routers.health import health_check
 
-        result = await health_check()
+        response = await health_check()
+
+        # JSONResponse object has a body attribute with the content
+        result = json.loads(response.body)
 
         assert result["status"] == "healthy"
         assert "timestamp" in result
@@ -200,19 +204,12 @@ class TestHealthEndpointRoutes:
         mock_disk.return_value = {"status": "healthy"}
         mock_memory.return_value = {"status": "healthy"}
 
-        from fastapi.responses import JSONResponse
-
         from src.api.v1.routers.health import health_check
 
-        result = await health_check()
+        response = await health_check()
 
-        # The function returns a JSONResponse when unhealthy
-        if isinstance(result, JSONResponse):
-            # Extract the content
-            result = result.body.decode("utf-8")
-            import json
-
-            result = json.loads(result)
+        # JSONResponse object has a body attribute with the content
+        result = json.loads(response.body)
 
         assert result["status"] == "unhealthy"
         assert result["checks"]["database"]["status"] == "unhealthy"

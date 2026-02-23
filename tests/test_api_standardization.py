@@ -5,11 +5,14 @@ Testing API-first principles with proper versioning and response validation.
 
 from datetime import datetime
 
+from fastapi.testclient import TestClient
 import pytest
-import requests
 
-BASE_URL = "http://localhost:8000"
-API_KEY = "your_secret_api_key_here"
+from src.main import app
+
+client = TestClient(app)
+# Use the demo API key which is always available
+API_KEY = "DEMO_MILMED_2025_50_PATIENTS"
 
 pytestmark = [pytest.mark.integration]
 
@@ -20,7 +23,7 @@ class TestAPIVersioningStandardization:
     def test_all_endpoints_should_use_v1_prefix(self):
         """All API endpoints should use /api/v1/ prefix for consistency."""
         # This test should FAIL initially - we expect inconsistent versioning
-        response = requests.get(f"{BASE_URL}/openapi.json")
+        response = client.get("/openapi.json")
         openapi_spec = response.json()
 
         endpoints = list(openapi_spec["paths"].keys())
@@ -38,16 +41,16 @@ class TestAPIVersioningStandardization:
     def test_generation_endpoint_should_be_versioned(self):
         """Generation endpoint should use /api/v1/generation/ instead of /api/generate."""
         # Test old endpoint is deprecated (should return 404)
-        response = requests.post(
-            f"{BASE_URL}/api/generate",
+        response = client.post(
+            "/api/generate",
             headers={"X-API-Key": API_KEY},
             json={"configuration_id": "test", "output_formats": ["json"]},
         )
         assert response.status_code == 404  # Old endpoint should be gone
 
         # Test new versioned endpoint works
-        response = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        response = client.post(
+            "/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={"configuration": {"count": 5}, "output_formats": ["json"]},
         )
@@ -60,8 +63,8 @@ class TestJobResponseModels:
     def test_job_status_should_return_structured_response(self):
         """Job status endpoint should return a proper JobResponse model."""
         # First create a job
-        response = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        response = client.post(
+            "/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={"configuration": {"count": 5}, "output_formats": ["json"]},
         )
@@ -69,7 +72,7 @@ class TestJobResponseModels:
         job_id = response.json()["job_id"]
 
         # Get job status
-        response = requests.get(f"{BASE_URL}/api/v1/jobs/{job_id}", headers={"X-API-Key": API_KEY})
+        response = client.get(f"/api/v1/jobs/{job_id}", headers={"X-API-Key": API_KEY})
         assert response.status_code == 200
 
         job_data = response.json()
@@ -101,8 +104,8 @@ class TestJobResponseModels:
 
     def test_generation_response_should_be_standardized(self):
         """Generation endpoint should return standardized GenerationResponse."""
-        response = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        response = client.post(
+            "/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={"configuration": {"count": 5}, "output_formats": ["json"]},
         )
@@ -127,8 +130,8 @@ class TestInputValidationEnhancement:
     def test_generation_request_should_validate_output_formats(self):
         """Generation request should validate output_formats field."""
         # Test invalid format (should return validation error)
-        response = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        response = client.post(
+            "/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={"configuration": {"count": 5}, "output_formats": ["invalid_format"]},
         )
@@ -140,8 +143,8 @@ class TestInputValidationEnhancement:
     def test_generation_request_should_validate_encryption_password(self):
         """Generation request should validate encryption password when encryption is enabled."""
         # Test encryption enabled without password
-        response = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        response = client.post(
+            "/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
                 "configuration": {"count": 5},
@@ -158,8 +161,8 @@ class TestInputValidationEnhancement:
     def test_generation_request_should_validate_min_password_length(self):
         """Generation request should validate minimum password length."""
         # Test password too short
-        response = requests.post(
-            f"{BASE_URL}/api/v1/generation/",
+        response = client.post(
+            "/api/v1/generation/",
             headers={"X-API-Key": API_KEY},
             json={
                 "configuration": {"count": 5},
@@ -180,7 +183,7 @@ class TestErrorResponseStandardization:
     def test_not_found_errors_should_be_standardized(self):
         """All 404 errors should return standardized ErrorResponse format."""
         # Test non-existent job
-        response = requests.get(f"{BASE_URL}/api/v1/jobs/nonexistent-job-id", headers={"X-API-Key": API_KEY})
+        response = client.get("/api/v1/jobs/nonexistent-job-id", headers={"X-API-Key": API_KEY})
         assert response.status_code == 404
 
         error_data = response.json()
@@ -200,7 +203,7 @@ class TestErrorResponseStandardization:
     def test_unauthorized_errors_should_be_standardized(self):
         """Unauthorized errors should return standardized format."""
         # Test without API key
-        response = requests.post(f"{BASE_URL}/api/v1/generation/", json={"test": "data"})
+        response = client.post("/api/v1/generation/", json={"test": "data"})
         assert response.status_code == 401
 
         error_data = response.json()
@@ -218,7 +221,7 @@ class TestAPIDocumentationConsistency:
 
     def test_all_endpoints_should_have_response_models(self):
         """All endpoints should have proper response models defined."""
-        response = requests.get(f"{BASE_URL}/openapi.json")
+        response = client.get("/openapi.json")
         openapi_spec = response.json()
 
         endpoints_without_response_models = []

@@ -138,7 +138,7 @@
                                                 <span class="accordion__status accordion__status--unknown">?</span>
                                                 <div class="flex items-center">
                                                     <i class="fas fa-clock text-slate-500 mr-2"></i>
-                                                    <span>Scenario Configuration (JSON)</span>
+                                                    <span>Scenario Configuration</span>
                                                 </div>
                                             </div>
                                             <i class="accordion__icon fas fa-chevron-down text-slate-400"></i>
@@ -146,43 +146,11 @@
                                         <div class="accordion__content">
                                             <div class="space-y-4">
                                                 <div>
-                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter scenario configuration JSON..." rows="25">
+                                                    <textarea class="accordion__editor" id="injuries-editor" placeholder="Enter scenario configuration JSON..." rows="12">
 {
   "total_patients": 1440,
   "days_of_fighting": 8,
   "base_date": "2025-06-01",
-  
-  "warfare_types": {
-    "conventional": true,
-    "artillery": true,
-    "urban": false,
-    "guerrilla": false,
-    "drone": true,
-    "naval": false,
-    "cbrn": false,
-    "peacekeeping": false
-  },
-  
-  "intensity": "high",
-  "tempo": "sustained",
-  
-  "special_events": {
-    "major_offensive": false,
-    "ambush": true,
-    "mass_casualty": true
-  },
-  
-  "environmental_conditions": {
-    "rain": false,
-    "fog": false,
-    "storm": false,
-    "extreme_heat": false,
-    "extreme_cold": false,
-    "dust_storm": false,
-    "night_operations": true,
-    "mountainous_terrain": false,
-    "urban_debris": false
-  },
   
   "injury_mix": {
     "Disease": 0.52,
@@ -196,31 +164,15 @@
                                                 <div class="text-xs text-slate-500 mt-2 mb-6">
                                                     <div class="grid grid-cols-2 gap-4 text-xs">
                                                         <div>
-                                                            <strong>Warfare Types:</strong> 8 scenarios (conventional, artillery, urban, guerrilla, drone, naval, cbrn, peacekeeping)<br />
-                                                            <strong>Special Events:</strong> major_offensive, ambush, mass_casualty
+                                                            <strong>Total Patients:</strong> Number to generate (1-10000)<br />
+                                                            <strong>Days of Fighting:</strong> Scenario duration (1-30)<br />
+                                                            <strong>Base Date:</strong> Starting date (YYYY-MM-DD)
                                                         </div>
                                                         <div>
-                                                            <strong>Environmental:</strong> Weather, terrain, and operational conditions affecting casualty patterns<br />
-                                                            <strong>Output:</strong> Realistic injury patterns and timeline events
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="text-xs text-slate-500 mt-2 mb-6">
-                                                    <div class="grid grid-cols-2 gap-4 text-xs">
-                                                        <div>
-                                                            <strong>Intensity Levels:</strong><br />
-                                                            • low = sporadic contact, minimal casualties<br />
-                                                            • medium = regular engagement, moderate casualties<br />
-                                                            • high = heavy fighting, significant casualties<br />
-                                                            • extreme = all-out war, maximum casualties
-                                                        </div>
-                                                        <div>
-                                                            <strong>Tempo Patterns:</strong><br />
-                                                            • sustained = steady consistent activity<br />
-                                                            • escalating = gradually increasing intensity<br />
-                                                            • surge = peak activity periods<br />
-                                                            • declining = winding down operations<br />
-                                                            • intermittent = on/off activity cycles
+                                                            <strong>Injury Mix:</strong> Distribution of injury types<br />
+                                                            • Disease: Illness and sickness<br />
+                                                            • Non-Battle: Accidents and non-combat injuries<br />
+                                                            • Battle: Combat-related casualties
                                                         </div>
                                                     </div>
                                                 </div>
@@ -228,23 +180,232 @@
                                         </div>
                                     </div>
 
-                                    <!-- Evacuation Timeline Configuration -->
+                                    <!-- Medical Simulation Settings -->
                                     <div class="accordion__item">
                                         <button class="accordion__header" type="button">
                                             <div class="accordion__title">
-                                                <span class="accordion__status accordion__status--unknown">?</span>
+                                                <span class="accordion__status accordion__status--valid">✓</span>
                                                 <div class="flex items-center">
-                                                    <i class="fas fa-ambulance text-slate-500 mr-2"></i>
-                                                    <span>Evacuation Timeline (JSON)</span>
+                                                    <i class="fas fa-heartbeat text-slate-500 mr-2"></i>
+                                                    <span>Medical Simulation Settings</span>
                                                 </div>
                                             </div>
                                             <i class="accordion__icon fas fa-chevron-down text-slate-400"></i>
                                         </button>
                                         <div class="accordion__content">
                                             <div class="space-y-4">
+                                                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                                    <div class="flex items-start">
+                                                        <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                                                        <div class="text-sm text-blue-800">
+                                                            <strong>Enhanced Medical Simulation Features</strong><br />
+                                                            Enable advanced medical modeling for realistic patient treatment patterns, diagnostic uncertainty, and facility routing based on military
+                                                            medical doctrine.
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Warfare Types Selection -->
+                                                <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                                                        Active Warfare Types
+                                                        <span class="text-xs text-slate-500 ml-2">Select which types apply to this scenario</span>
+                                                    </label>
+                                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-conventional" class="mr-2" checked />
+                                                            <span>Conventional</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-artillery" class="mr-2" checked />
+                                                            <span>Artillery</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-urban" class="mr-2" />
+                                                            <span>Urban Combat</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-guerrilla" class="mr-2" />
+                                                            <span>Guerrilla</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-drone" class="mr-2" checked />
+                                                            <span>Drone Warfare</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-naval" class="mr-2" />
+                                                            <span>Naval</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-cbrn" class="mr-2" />
+                                                            <span>CBRN</span>
+                                                        </label>
+                                                        <label class="flex items-center">
+                                                            <input type="checkbox" id="warfare-peacekeeping" class="mr-2" />
+                                                            <span>Peacekeeping</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="space-y-3">
+                                                    <!-- Treatment Utility Model -->
+                                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <div class="flex items-center">
+                                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                                <input type="checkbox" id="enable-treatment-utility" class="sr-only peer" checked />
+                                                                <div
+                                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"
+                                                                ></div>
+                                                            </label>
+                                                            <div class="ml-3">
+                                                                <span class="font-medium text-slate-700">Treatment Utility Model</span>
+                                                                <p class="text-xs text-slate-500 mt-1">Realistic treatment selection based on medical protocols and injury severity</p>
+                                                            </div>
+                                                        </div>
+                                                        <i class="fas fa-syringe text-cyan-600"></i>
+                                                    </div>
+
+                                                    <!-- Diagnostic Uncertainty -->
+                                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <div class="flex items-center">
+                                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                                <input type="checkbox" id="enable-diagnostic-uncertainty" class="sr-only peer" checked />
+                                                                <div
+                                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"
+                                                                ></div>
+                                                            </label>
+                                                            <div class="ml-3">
+                                                                <span class="font-medium text-slate-700">Diagnostic Uncertainty</span>
+                                                                <p class="text-xs text-slate-500 mt-1">Progressive diagnosis refinement as patients move through care levels</p>
+                                                            </div>
+                                                        </div>
+                                                        <i class="fas fa-microscope text-purple-600"></i>
+                                                    </div>
+
+                                                    <!-- Markov Chain Routing -->
+                                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <div class="flex items-center">
+                                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                                <input type="checkbox" id="enable-markov-chain" class="sr-only peer" checked />
+                                                                <div
+                                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"
+                                                                ></div>
+                                                            </label>
+                                                            <div class="ml-3">
+                                                                <span class="font-medium text-slate-700">Markov Chain Routing</span>
+                                                                <p class="text-xs text-slate-500 mt-1">Probabilistic patient flow through military medical facilities (POI → Role1-4)</p>
+                                                            </div>
+                                                        </div>
+                                                        <i class="fas fa-project-diagram text-green-600"></i>
+                                                    </div>
+
+                                                    <!-- Warfare Modifiers -->
+                                                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                                        <div class="flex items-center">
+                                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                                <input type="checkbox" id="enable-warfare-modifiers" class="sr-only peer" checked />
+                                                                <div
+                                                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"
+                                                                ></div>
+                                                            </label>
+                                                            <div class="ml-3">
+                                                                <span class="font-medium text-slate-700">Warfare Modifiers</span>
+                                                                <p class="text-xs text-slate-500 mt-1">Distinct injury patterns and polytrauma based on warfare type</p>
+                                                            </div>
+                                                        </div>
+                                                        <i class="fas fa-crosshairs text-red-600"></i>
+                                                    </div>
+                                                </div>
+
+                                                <div class="accordion__validation"></div>
+
+                                                <div class="text-xs text-slate-500 mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                                                    <i class="fas fa-lightbulb text-amber-600 mr-2"></i>
+                                                    <strong>Pro Tip:</strong> These features work together to create highly realistic medical scenarios. Enable all four for maximum realism, or select
+                                                    specific features based on your training needs.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Advanced Configuration (Optional) -->
+                                    <div class="accordion__item">
+                                        <button class="accordion__header" type="button">
+                                            <div class="accordion__title">
+                                                <span class="accordion__status accordion__status--valid">✓</span>
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-cog text-slate-500 mr-2"></i>
+                                                    <span>Advanced Configuration (Optional)</span>
+                                                    <span class="ml-2 bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-medium">Expert</span>
+                                                </div>
+                                            </div>
+                                            <i class="accordion__icon fas fa-chevron-down text-slate-400"></i>
+                                        </button>
+                                        <div class="accordion__content">
+                                            <div class="space-y-4">
+                                                <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                                                    <div class="flex items-start">
+                                                        <i class="fas fa-exclamation-triangle text-amber-600 mt-1 mr-3"></i>
+                                                        <div class="text-sm text-amber-800">
+                                                            <strong>Advanced Users Only</strong><br />
+                                                            These settings allow fine-tuning of medical simulation parameters. Default values are optimized for realistic scenarios. Only modify if you
+                                                            need specific customization.
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                                 <div>
-                                                    <textarea class="accordion__editor" id="evacuation-editor" placeholder="Enter evacuation timing configuration JSON..." rows="20">
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2">
+                                                        Custom Configuration (JSON)
+                                                        <span class="text-xs text-slate-500 ml-2">Override default medical simulation parameters</span>
+                                                    </label>
+                                                    <textarea class="accordion__editor" id="advanced-config-editor" placeholder="Enter custom configuration JSON (optional)..." rows="35">
 {
+  "scenario_modifiers": {
+    "intensity": "high",
+    "tempo": "sustained",
+    "special_events": {
+      "major_offensive": false,
+      "ambush": true,
+      "mass_casualty": true
+    },
+    "environmental_conditions": {
+      "night_operations": true,
+      "extreme_weather": false,
+      "mountainous_terrain": false,
+      "urban_environment": false
+    }
+  },
+  
+  "treatment_effectiveness": {
+    "tourniquet": 0.95,
+    "pressure_dressing": 0.85,
+    "hemostatic_gauze": 0.90,
+    "iv_fluids": 0.80,
+    "blood_transfusion": 0.95
+  },
+  
+  "diagnostic_accuracy": {
+    "POI": 0.60,
+    "Role1": 0.75,
+    "Role2": 0.85,
+    "Role3": 0.95,
+    "Role4": 0.99
+  },
+  
+  "markov_transition_overrides": {
+    "POI_to_Role1_T1": null,
+    "Role1_to_Role2_T1": null,
+    "Role2_to_Role3_T1": null
+  },
+  
+  "polytrauma_rates": {
+    "conventional": 0.15,
+    "artillery": 0.45,
+    "urban": 0.25,
+    "drone": 0.35
+  },
+  
   "evacuation_times": {
     "POI": {
       "T1": { "min_hours": 3, "max_hours": 8 },
@@ -260,18 +421,9 @@
       "T1": { "min_hours": 3, "max_hours": 8 },
       "T2": { "min_hours": 5, "max_hours": 12 },
       "T3": { "min_hours": 8, "max_hours": 12 }
-    },
-    "Role3": {
-      "T1": { "min_hours": 4, "max_hours": 12 },
-      "T2": { "min_hours": 4, "max_hours": 24 },
-      "T3": { "min_hours": 12, "max_hours": 24 }
-    },
-    "Role4": {
-      "T1": { "min_hours": 24, "max_hours": 48 },
-      "T2": { "min_hours": 24, "max_hours": 96 },
-      "T3": { "min_hours": 48, "max_hours": 96 }
     }
   },
+  
   "transit_times": {
     "POI_to_Role1": {
       "T1": { "min_hours": 1, "max_hours": 3 },
@@ -282,41 +434,39 @@
       "T1": { "min_hours": 2, "max_hours": 5 },
       "T2": { "min_hours": 4, "max_hours": 8 },
       "T3": { "min_hours": 6, "max_hours": 8 }
-    },
-    "Role2_to_Role3": {
-      "T1": { "min_hours": 2, "max_hours": 4 },
-      "T2": { "min_hours": 3, "max_hours": 6 },
-      "T3": { "min_hours": 4, "max_hours": 6 }
-    },
-    "Role3_to_Role4": {
-      "T1": { "min_hours": 1, "max_hours": 3 },
-      "T2": { "min_hours": 2, "max_hours": 4 },
-      "T3": { "min_hours": 3, "max_hours": 5 }
     }
   },
-  "kia_rate_modifiers": {
-    "T1": 1.5,
-    "T2": 1.0,
-    "T3": 0.5
-  },
-  "rtd_rate_modifiers": {
-    "T1": 0.8,
-    "T2": 1.0,
-    "T3": 1.2
+  
+  "medic_response_times": {
+    "individual_casualty": {
+      "min_minutes": 10,
+      "max_minutes": 60
+    },
+    "mass_casualty": {
+      "min_minutes": 60,
+      "max_minutes": 240
+    }
   }
 }</textarea
                                                     >
                                                 </div>
                                                 <div class="accordion__validation"></div>
+
                                                 <div class="text-xs text-slate-500 mt-2 mb-6">
                                                     <div class="grid grid-cols-2 gap-4 text-xs">
                                                         <div>
-                                                            <strong>Facilities:</strong> POI → Role1 → Role2 → Role3 → Role4<br />
-                                                            <strong>Triage:</strong> T1 (urgent), T2 (delayed), T3 (minimal)
+                                                            <strong>Scenario Modifiers:</strong><br />
+                                                            • Intensity: low, medium, high, extreme<br />
+                                                            • Tempo: sustained, escalating, surge, declining<br />
+                                                            • Special Events: major operations flags<br />
+                                                            • Environmental: operational conditions
                                                         </div>
                                                         <div>
-                                                            <strong>Evacuation:</strong> Treatment time at facility<br />
-                                                            <strong>Transit:</strong> Travel time between facilities
+                                                            <strong>Medical Parameters:</strong><br />
+                                                            • Treatment Effectiveness: 0.0-1.0 success rates<br />
+                                                            • Diagnostic Accuracy: 0.0-1.0 by facility<br />
+                                                            • Markov Transitions: null = use defaults<br />
+                                                            • Polytrauma Rates: injury complexity by warfare type
                                                         </div>
                                                     </div>
                                                 </div>
@@ -372,10 +522,12 @@
                                             </div>
                                         </div>
                                         <div class="flex justify-between items-center">
-                                            <span class="text-sm text-slate-600">Capabilities:</span>
-                                            <div class="flex space-x-1">
-                                                <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-medium">Timeline</span>
-                                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium">Environmental</span>
+                                            <span class="text-sm text-slate-600">Medical Sim:</span>
+                                            <div class="flex flex-wrap gap-1" id="medicalSimFeatures">
+                                                <span class="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium" title="Treatment Utility Model">TUM</span>
+                                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-medium" title="Diagnostic Uncertainty">DU</span>
+                                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium" title="Markov Chain Routing">MCR</span>
+                                                <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium" title="Warfare Modifiers">WM</span>
                                             </div>
                                         </div>
                                         <div class="flex justify-between items-center">
@@ -471,9 +623,15 @@
         <script src="js/components/accordion.js"></script>
         <script src="js/app.js"></script>
 
-        <!-- Development Tests (banner.test.js must be loaded first) -->
-        <script src="js/tests/banner.test.js"></script>
-        <script src="js/tests/accordion.test.js"></script>
-        <script src="js/tests/api.test.js"></script>
+        <!-- Development Tests (only in non-production) -->
+        <script>
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                ['js/tests/banner.test.js', 'js/tests/accordion.test.js', 'js/tests/api.test.js'].forEach(function (src) {
+                    var s = document.createElement('script');
+                    s.src = src;
+                    document.body.appendChild(s);
+                });
+            }
+        </script>
     </body>
 </html>

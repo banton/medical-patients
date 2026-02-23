@@ -1,0 +1,43 @@
+# USE THIS PROMPT TO START NEW SESSION
+
+Copy and paste this entire prompt into a new chat:
+
+---
+
+I'm continuing work on a military medical patient generator at `/Users/banton/Sites/medical-patients`. In the previous session, we identified that the system has sophisticated components that aren't properly integrated.
+
+## Key Problems Identified:
+1. Warfare context from `temporal_generator.py` gets lost - patients don't know what warfare type created them
+2. Rich `warfare_patterns.json` only affects timing, not injury patterns  
+3. Treatments randomly assigned without medical logic
+4. Perfect diagnosis at all facilities (unrealistic)
+5. Linear health deterioration despite having complex models in `/medical_simulation/`
+
+## Architectural Decisions Made:
+1. **Mechanism-based injuries**: Use ~50 mechanisms to generate thousands of patterns (not exhaustive lists)
+2. **Diagnostic accuracy layer**: POI=65%, Role1=75%, Role2=85%, Role3=95% accuracy
+3. **Treatment protocols**: Injury → Diagnosis → Protocol → Facility Filter → Treatment
+4. **Non-linear health**: Compensatory → Decompensation → Critical phases with cliff events
+
+## Documentation Created:
+- `/ARCHITECTURE_SUMMARY.md` - Full system design
+- `/IMPLEMENTATION_CHECKLIST.md` - Step-by-step tasks
+- `/CURRENT_VS_PROPOSED_COMPARISON.md` - Detailed comparison
+- `/patient_generator/config/injury_treatment_map.json` - Treatment protocols
+
+## Immediate Task:
+Create `warfare_context_manager.py` to maintain warfare type from `CasualtyEvent` through to individual patient creation. This is the critical missing link.
+
+The warfare context manager should:
+1. Load `warfare_patterns.json`
+2. Track which warfare type generated each patient
+3. Provide `injury_modifier` and `triage_weights` from warfare data
+4. Modify injury distributions based on warfare type
+
+Once this is working, we can build the mechanism-based injury system that uses this context to generate realistic polytrauma patterns (e.g., artillery → blast injuries → TBI + shrapnel + burns).
+
+Please review `/IMPLEMENTATION_CHECKLIST.md` for the specific integration points in `flow_simulator.py` (lines ~100, ~400, ~450).
+
+---
+
+End of prompt. The new session will have full context to continue implementation.

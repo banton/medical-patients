@@ -1,0 +1,203 @@
+{
+  "version": "2.0",
+  "deterioration_curves": {
+    "battle_trauma": {
+      "T3_to_T2": {
+        "base_hours": 4.0,
+        "variance": 2.0,
+        "curve_type": "exponential",
+        "curve_parameters": {
+          "lambda": 0.5,
+          "threshold": 0.3
+        },
+        "modifiers": {
+          "untreated_hemorrhage": 0.5,
+          "environmental_heat": 1.2,
+          "environmental_cold": 1.3,
+          "delayed_evacuation": 1.5,
+          "treatment_received": 2.0
+        }
+      },
+      "T2_to_T1": {
+        "base_hours": 2.0,
+        "variance": 1.0,
+        "curve_type": "sigmoid",
+        "curve_parameters": {
+          "midpoint": 0.7,
+          "steepness": 10
+        },
+        "modifiers": {
+          "untreated_hemorrhage": 0.3,
+          "airway_compromise": 0.2,
+          "delayed_evacuation": 1.5,
+          "treatment_received": 3.0
+        }
+      },
+      "T1_to_expectant": {
+        "base_hours": 1.0,
+        "variance": 0.5,
+        "curve_type": "exponential",
+        "curve_parameters": {
+          "lambda": 1.0,
+          "threshold": 0.5
+        },
+        "modifiers": {
+          "no_surgical_capability": 0.5,
+          "mass_casualty": 0.7,
+          "resource_exhaustion": 0.6
+        }
+      }
+    },
+    "non_battle_injury": {
+      "T3_to_T2": {
+        "base_hours": 8.0,
+        "variance": 4.0,
+        "curve_type": "linear",
+        "curve_parameters": {
+          "slope": 0.125,
+          "intercept": 0
+        },
+        "modifiers": {
+          "untreated_fracture": 0.8,
+          "infection_developing": 0.6,
+          "delayed_evacuation": 1.2
+        }
+      },
+      "T2_to_T1": {
+        "base_hours": 6.0,
+        "variance": 3.0,
+        "curve_type": "exponential",
+        "curve_parameters": {
+          "lambda": 0.3,
+          "threshold": 0.2
+        },
+        "modifiers": {
+          "compartment_syndrome": 0.3,
+          "vascular_injury": 0.4,
+          "delayed_evacuation": 1.3
+        }
+      }
+    },
+    "disease": {
+      "T3_to_T2": {
+        "base_hours": 12.0,
+        "variance": 6.0,
+        "curve_type": "linear",
+        "curve_parameters": {
+          "slope": 0.083,
+          "intercept": 0
+        },
+        "modifiers": {
+          "dehydration": 0.7,
+          "immunocompromised": 0.5,
+          "environmental_stress": 1.2
+        }
+      },
+      "T2_to_T1": {
+        "base_hours": 8.0,
+        "variance": 4.0,
+        "curve_type": "sigmoid",
+        "curve_parameters": {
+          "midpoint": 0.6,
+          "steepness": 8
+        },
+        "modifiers": {
+          "sepsis_developing": 0.3,
+          "organ_failure": 0.2,
+          "delayed_treatment": 1.4
+        }
+      }
+    }
+  },
+  "death_probability_curves": {
+    "T1": {
+      "battle_trauma": {
+        "hour_1": 0.15,
+        "hour_3": 0.40,
+        "hour_6": 0.70,
+        "hour_12": 0.90,
+        "hour_24": 0.98
+      },
+      "non_battle_injury": {
+        "hour_1": 0.10,
+        "hour_3": 0.25,
+        "hour_6": 0.45,
+        "hour_12": 0.70,
+        "hour_24": 0.90
+      },
+      "disease": {
+        "hour_1": 0.05,
+        "hour_3": 0.15,
+        "hour_6": 0.30,
+        "hour_12": 0.50,
+        "hour_24": 0.75
+      }
+    },
+    "T2": {
+      "battle_trauma": {
+        "hour_6": 0.05,
+        "hour_12": 0.15,
+        "hour_24": 0.30,
+        "hour_48": 0.50,
+        "hour_72": 0.70
+      },
+      "non_battle_injury": {
+        "hour_6": 0.02,
+        "hour_12": 0.08,
+        "hour_24": 0.20,
+        "hour_48": 0.35,
+        "hour_72": 0.50
+      },
+      "disease": {
+        "hour_6": 0.01,
+        "hour_12": 0.05,
+        "hour_24": 0.15,
+        "hour_48": 0.30,
+        "hour_72": 0.45
+      }
+    },
+    "T3": {
+      "all": {
+        "hour_24": 0.01,
+        "hour_48": 0.03,
+        "hour_72": 0.05,
+        "hour_96": 0.08,
+        "hour_120": 0.10
+      }
+    }
+  },
+  "golden_hour_effects": {
+    "treatment_within_1hr": {
+      "mortality_reduction": 0.50,
+      "deterioration_slowdown": 0.70,
+      "complication_reduction": 0.40
+    },
+    "treatment_within_3hr": {
+      "mortality_reduction": 0.30,
+      "deterioration_slowdown": 0.40,
+      "complication_reduction": 0.25
+    },
+    "treatment_within_6hr": {
+      "mortality_reduction": 0.15,
+      "deterioration_slowdown": 0.20,
+      "complication_reduction": 0.10
+    }
+  },
+  "evacuation_timeline": {
+    "point_of_injury_to_role1": {
+      "optimal_minutes": 10,
+      "standard_minutes": 30,
+      "delayed_minutes": 60
+    },
+    "role1_to_role2": {
+      "optimal_minutes": 30,
+      "standard_minutes": 60,
+      "delayed_minutes": 120
+    },
+    "role2_to_role3": {
+      "optimal_minutes": 120,
+      "standard_minutes": 240,
+      "delayed_minutes": 480
+    }
+  }
+}

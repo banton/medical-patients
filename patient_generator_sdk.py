@@ -178,7 +178,7 @@ if __name__ == "__main__":
     # It's recommended to manage API keys securely, e.g., via environment variables or a config file.
     # For this example, we'll use the development API key.
     # For a deployed instance, this key would be managed securely via environment variables.
-    API_KEY = "your_secret_api_key_here"  # Default development API key
+    API_KEY = "DEMO_MILMED_2025_50_PATIENTS"  # Demo API key for testing
     BASE_URL = "http://localhost:8000"
 
     client = PatientGeneratorClient(base_url=BASE_URL, api_key=API_KEY)

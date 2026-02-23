@@ -74,6 +74,18 @@ class APIKey(Base):
             kwargs["is_active"] = True
         if "is_demo" not in kwargs:
             kwargs["is_demo"] = False
+        if "max_patients_per_request" not in kwargs:
+            kwargs["max_patients_per_request"] = 1000
+        if "max_requests_per_minute" not in kwargs:
+            kwargs["max_requests_per_minute"] = 60
+        if "max_requests_per_hour" not in kwargs:
+            kwargs["max_requests_per_hour"] = 1000
+        if "last_reset_at" not in kwargs:
+            kwargs["last_reset_at"] = datetime.utcnow()
+        if "created_at" not in kwargs:
+            kwargs["created_at"] = datetime.utcnow()
+        if "updated_at" not in kwargs:
+            kwargs["updated_at"] = datetime.utcnow()
 
         super().__init__(**kwargs)
 
@@ -172,7 +184,6 @@ class APIKey(Base):
             },
             "metadata": self.key_metadata if self.key_metadata is not None else {},
         }
-
 
 
 # Demo key configuration - used by security module

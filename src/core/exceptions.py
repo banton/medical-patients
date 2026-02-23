@@ -47,3 +47,30 @@ class InvalidOperationError(PatientGeneratorException):
 
 class ResourceLimitExceeded(PatientGeneratorException):
     """Raised when a job exceeds resource limits."""
+
+
+class InvalidInputError(PatientGeneratorException):
+    """Raised when invalid input is provided to an API endpoint."""
+
+    def __init__(self, detail: str):
+        self.status_code = 422
+        self.detail = detail
+        super().__init__(detail)
+
+
+class NotFoundError(PatientGeneratorException):
+    """Raised when a requested resource is not found."""
+
+    def __init__(self, detail: str):
+        self.status_code = 404
+        self.detail = detail
+        super().__init__(detail)
+
+
+class UnauthorizedError(PatientGeneratorException):
+    """Raised when authentication fails or is missing."""
+
+    def __init__(self, detail: str):
+        self.status_code = 401
+        self.detail = detail
+        super().__init__(detail)

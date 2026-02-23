@@ -166,7 +166,7 @@ def test_metrics_under_load(base_url="http://localhost:8000"):
                 try:
                     value = int(float(line.split(" ")[-1]))
                     total_requests += value
-                except:
+                except (ValueError, IndexError):
                     pass
 
         print(f"  Total requests recorded: {total_requests}")

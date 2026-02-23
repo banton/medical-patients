@@ -8,12 +8,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from config import get_settings
 from patient_generator.config_manager import ConfigurationManager
 from patient_generator.database import ConfigurationRepository, Database
 from patient_generator.nationality_data import NationalityDataProvider
 from patient_generator.schemas_config import ConfigurationTemplateCreate, ConfigurationTemplateDB, FrontDefinition
 from src.api.v1.dependencies.database import get_database
-from src.core.security import verify_api_key
+from src.core.cache_utils import cache_configuration_template, get_cached_configuration, invalidate_configuration_cache
+from src.core.security_enhanced import verify_api_key
 
 # Initialize router (prefix will be added by main app)
 router = APIRouter(prefix="/configurations", tags=["configurations"], dependencies=[Depends(verify_api_key)])
@@ -45,12 +47,21 @@ async def list_configurations(request: Request, db: Database = Depends(get_datab
 async def get_configuration(
     request: Request, config_id: str, db: Database = Depends(get_database)
 ) -> ConfigurationTemplateDB:
-    """Get a specific configuration template."""
+    """Get a specific configuration template, checking cache first."""
+    # Try to get from cache first
+    cached_config = await get_cached_configuration(config_id)
+    if cached_config:
+        # Return cached configuration (already validated)
+        return ConfigurationTemplateDB(**cached_config)
+
     repo = ConfigurationRepository(db)
     config = repo.get_configuration(config_id)
 
     if not config:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {config_id} not found")
+
+    # Cache the configuration for future requests
+    await cache_configuration_template(config_id, config.dict())
 
     return config
 
@@ -60,7 +71,7 @@ async def get_configuration(
 async def update_configuration(
     request: Request, config_id: str, config_update: ConfigurationTemplateCreate, db: Database = Depends(get_database)
 ) -> ConfigurationTemplateDB:
-    """Update a configuration template."""
+    """Update a configuration template and invalidate cache."""
     repo = ConfigurationRepository(db)
 
     # Check if configuration exists
@@ -73,19 +84,29 @@ async def update_configuration(
     if not updated:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update configuration")
 
+    # Invalidate cache for this configuration
+    await invalidate_configuration_cache(config_id)
+
+    # Cache the updated configuration
+    await cache_configuration_template(config_id, updated.dict())
+
     return updated
 
 
 @router.delete("/{config_id}", status_code=status.HTTP_204_NO_CONTENT)
 @limiter.limit("10/minute")
 async def delete_configuration(request: Request, config_id: str, db: Database = Depends(get_database)) -> None:
-    """Delete a configuration template."""
+    """Delete a configuration template and invalidate cache."""
     repo = ConfigurationRepository(db)
 
     if not repo.get_configuration(config_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Configuration {config_id} not found")
 
     repo.delete_configuration(config_id)
+
+    # Invalidate cache for this configuration
+    await invalidate_configuration_cache(config_id)
+
     # Return 204 No Content with no response body
 
 
@@ -122,8 +143,6 @@ public_router = APIRouter(prefix="/config", tags=["public"])
 @public_router.get("/frontend")
 async def get_frontend_config() -> Dict[str, Any]:
     """Get frontend configuration including API key."""
-    from config import get_settings
-
     settings = get_settings()
 
     return {

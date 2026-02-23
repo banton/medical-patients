@@ -77,18 +77,18 @@ class TestEvacuationTimeManager:
 
     def test_get_evacuation_time_for_triage(self, manager):
         """Test getting randomized evacuation time for specific triage category"""
-        # Test T1 patient at POI (urgent, shorter time)
+        # Test T1 patient at POI (urgent, shorter time - config: 0.5-1.5 hours)
         time_hours = manager.get_evacuation_time("POI", "T1")
-        assert 3 <= time_hours <= 8
+        assert 0.5 <= time_hours <= 1.5
         assert isinstance(time_hours, (int, float))
 
-        # Test T2 patient at Role1 (delayed, medium time)
+        # Test T2 patient at Role1 (delayed, medium time - config: 8-16 hours)
         time_hours = manager.get_evacuation_time("Role1", "T2")
         assert 8 <= time_hours <= 16
 
-        # Test T3 patient at Role4 (minimal, longer time)
+        # Test T3 patient at Role4 (minimal, longer time - config: 12-24 hours)
         time_hours = manager.get_evacuation_time("Role4", "T3")
-        assert 48 <= time_hours <= 96
+        assert 12 <= time_hours <= 24
 
     def test_get_evacuation_time_reproducibility(self, manager):
         """Test evacuation time generation is appropriately random"""
@@ -99,23 +99,23 @@ class TestEvacuationTimeManager:
 
         # Should have some variation (not all the same)
         assert len(set(times)) > 1
-        # All should be within valid range
-        assert all(3 <= t <= 8 for t in times)
+        # All should be within valid range (config: 0.5-1.5 hours)
+        assert all(0.5 <= t <= 1.5 for t in times)
 
     def test_get_transit_time_for_route(self, manager):
         """Test getting randomized transit time for specific route and triage"""
-        # Test T1 patient POI to Role1 (urgent, faster transport)
+        # Test T1 patient POI to Role1 (urgent, faster transport - config: 0.5-2 hours)
         time_hours = manager.get_transit_time("POI", "Role1", "T1")
-        assert 1 <= time_hours <= 3
+        assert 0.5 <= time_hours <= 2
         assert isinstance(time_hours, (int, float))
 
-        # Test T2 patient Role2 to Role3 (delayed, medium transport)
+        # Test T2 patient Role2 to Role3 (delayed, medium transport - config: 3-5 hours)
         time_hours = manager.get_transit_time("Role2", "Role3", "T2")
-        assert 3 <= time_hours <= 6
+        assert 3 <= time_hours <= 5
 
-        # Test T3 patient Role1 to Role2 (minimal, slower transport)
+        # Test T3 patient Role1 to Role2 (minimal, slower transport - config: 3-5 hours)
         time_hours = manager.get_transit_time("Role1", "Role2", "T3")
-        assert 6 <= time_hours <= 8
+        assert 3 <= time_hours <= 5
 
     def test_invalid_facility_route(self, manager):
         """Test error handling for invalid facility or route"""

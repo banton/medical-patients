@@ -6,6 +6,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 import gzip
+import json
 import os
 import sys
 import tempfile
@@ -78,11 +79,14 @@ class PatientGenerationPipeline:
         # Stage 1: Generate base patients
         patient_count = 0
         async for patient in self._generate_base_patients(context):
-            # Stage 2: Add demographics
-            patient = await self._add_demographics(patient, context)
-
-            # Stage 3: Add medical conditions
+            # Stage 2: Add medical conditions FIRST (needed for flow simulation)
             patient = await self._add_medical_conditions(patient, context)
+
+            # Stage 3: Run flow simulation with medical conditions available
+            await to_thread(self.flow_simulator._simulate_patient_flow_single, patient)
+
+            # Stage 4: Add demographics (can be done after flow simulation)
+            patient = await self._add_demographics(patient, context)
 
             # Yield for streaming processing
             patient_dict = patient.to_dict()
@@ -106,8 +110,37 @@ class PatientGenerationPipeline:
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
-        # This would initialize any necessary state in the generators
-        # For now, we'll use the existing synchronous initialization
+        # Update patient count
+        if hasattr(self.flow_simulator, "total_patients_to_generate"):
+            self.flow_simulator.total_patients_to_generate = context.config.total_patients
+            print(f"🔧 Updated flow simulator patient count to: {context.config.total_patients}")
+
+        # Inject front_configs directly from the in-memory config so API-provided
+        # fronts always take precedence over the DB lookup (which may fail on cold start)
+        # and over the static fronts_config.json file.
+        if hasattr(self.flow_simulator, "front_configs") and hasattr(context.config, "front_configs"):
+            api_fronts = (
+                [fc.model_dump() for fc in context.config.front_configs]
+                if context.config.front_configs
+                else []
+            )
+            if api_fronts:
+                self.flow_simulator.front_configs = api_fronts
+                total_weight = sum(
+                    fc.get("casualty_rate", 0.0)
+                    for fc in api_fronts
+                    if fc.get("casualty_rate", 0.0) > 0
+                )
+                if total_weight > 0:
+                    self.flow_simulator.front_distribution = {
+                        fc["id"]: fc.get("casualty_rate", 0.0) / total_weight
+                        for fc in api_fronts
+                        if fc.get("casualty_rate", 0.0) > 0
+                    }
+                else:
+                    even_share = 1.0 / len(api_fronts)
+                    self.flow_simulator.front_distribution = {fc["id"]: even_share for fc in api_fronts}
+                print(f"🔧 Injected {len(api_fronts)} front(s) from API config: {[f['name'] for f in api_fronts]}")
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate base patients - check for temporal vs legacy generation."""
@@ -145,8 +178,8 @@ class PatientGenerationPipeline:
         # The flow simulator already has access to the config via config_manager
         patient = await to_thread(self.flow_simulator._create_initial_patient, patient_id)
 
-        # CRITICAL: Run the enhanced flow simulation for evacuation timeline tracking
-        await to_thread(self.flow_simulator._simulate_patient_flow_single, patient)
+        # NOTE: Flow simulation moved to after medical conditions are set
+        # so that medical bridge has conditions to work with
 
         return patient
 
@@ -228,6 +261,14 @@ class AsyncPatientGenerationService:
         self.config_manager.load_configuration(config_id)
 
         # Initialize components with config manager
+        # Enable medical simulation for enhanced realistic patient data
+        import os
+
+        os.environ["ENABLE_MEDICAL_SIMULATION"] = "true"
+        os.environ["ENABLE_TREATMENT_UTILITY_MODEL"] = "true"
+        os.environ["ENABLE_MARKOV_CHAIN"] = "true"
+        os.environ["ENABLE_WARFARE_MODIFIERS"] = "true"
+
         # Use cached services' generators
         self.pipeline = PatientGenerationPipeline(
             flow_simulator=PatientFlowSimulator(self.config_manager),
@@ -299,13 +340,10 @@ class AsyncPatientGenerationService:
                     if format == "json":
                         # Handle JSON array formatting
                         if not first_patient:
-                            stream.write(",\n")
+                            stream.write(",")
 
-                        # Use patient_data from generator (already converted to dict)
-
-                        import json
-
-                        json.dump(patient_data, stream, indent=2)
+                        # Use patient_data from generator (compact JSON, no indentation)
+                        json.dump(patient_data, stream, separators=(",", ":"))
                     elif format == "xml":
                         # Use formatter for XML
                         await to_thread(formatter.format_xml, [patient_data], stream)
