@@ -122,7 +122,10 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       {/* Primary condition and Front info */}
       <div className="flex items-center justify-between text-xs opacity-75">
         <span className="truncate">
-          {patient.primary_condition?.display || 'No condition'}
+          {patient.primary_condition?.display
+            || (patient as any).conditions?.[0]?.name
+            || (patient as any).injury_type
+            || 'No condition'}
         </span>
         {patient.front && (
           <span className="text-xs opacity-60 ml-1 truncate">
