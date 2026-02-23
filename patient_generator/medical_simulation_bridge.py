@@ -850,18 +850,25 @@ class MedicalSimulationBridge:
                 # Unknown type — skip
                 continue
 
-            # Compute scenario-relative hours_since_injury
-            hours_since = 0.5 + (event_idx * 1.5)  # fallback: 1.5h spacing
-            if injury_time and event.get("timestamp"):
-                try:
-                    raw_ts = event["timestamp"]
-                    event_time = raw_ts if isinstance(raw_ts, datetime) else datetime.fromisoformat(str(raw_ts))
-                    computed = (event_time - injury_time).total_seconds() / 3600
-                    if 0 <= computed <= 240:
-                        hours_since = computed
-                    # else keep fallback
-                except (ValueError, TypeError):
-                    pass
+            # Triage-based spacing with per-patient jitter to prevent mass teleportation.
+            # T1 (Urgent) evacuated fastest via priority MEDEVAC; T3 (Minimal) slowest.
+            triage = getattr(patient, "triage_category", "T2")
+            base_interval = {"T1": 1.2, "T2": 1.5, "T3": 2.0}.get(triage, 1.5)
+            first_offset  = {"T1": 0.3, "T2": 0.5, "T3": 0.8}.get(triage, 0.5)
+
+            # Deterministic per-patient jitter ±0.5h so same-second casualties spread out
+            _pid = getattr(patient, "id", 0)
+            try:
+                pid_int = abs(hash(str(_pid))) % 100
+            except Exception:
+                pid_int = 0
+            jitter = ((pid_int * 7 + event_idx * 3) % 11 - 5) * 0.1  # ±0.5h
+
+            hours_since = first_offset + (event_idx * base_interval) + jitter
+
+            # Ensure strictly monotonic (prevents accumulation over many events)
+            if enhanced_events:
+                hours_since = max(hours_since, enhanced_events[-1]["hours_since_injury"] + 0.1)
 
             # Build scenario-time timestamp from injury_time + hours_since
             if injury_time:
@@ -885,14 +892,23 @@ class MedicalSimulationBridge:
             enhanced_events.append(enhanced_event)
             event_idx += 1
 
-        # Back-fill to_facility on transit_start events using the next arrival's facility
+        # Back-fill to_facility and transit_duration_hours on transit_start events
+        triage = getattr(patient, "triage_category", "T2")
+        fallback_duration = {"T1": 1.2, "T2": 1.5, "T3": 2.0}.get(triage, 1.5)
         for i, ev in enumerate(enhanced_events):
-            if ev["event_type"] == "transit_start" and "to_facility" not in ev:
-                # Find the next arrival event
+            if ev["event_type"] == "transit_start":
+                found = False
                 for next_ev in enhanced_events[i + 1 :]:
                     if next_ev["event_type"] == "arrival":
                         ev["to_facility"] = next_ev["facility"]
+                        ev["transit_duration_hours"] = round(
+                            next_ev["hours_since_injury"] - ev["hours_since_injury"], 2
+                        )
+                        found = True
                         break
+                if not found:
+                    # No following arrival — use triage-based fallback to avoid teleportation
+                    ev["transit_duration_hours"] = fallback_duration
 
         # Merge with existing timeline (use movement_timeline which is what to_dict expects)
         if hasattr(patient, "movement_timeline"):

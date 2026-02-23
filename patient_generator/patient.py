@@ -341,11 +341,11 @@ class Patient:
                     final_status = "KIA"
                     last_fac = fac
                     break
-                elif ev_type == "rtd":
+                if ev_type == "rtd":
                     final_status = "RTD"
                     last_fac = fac
                     break
-                elif fac and fac not in ("in_transit",):
+                if fac and fac not in ("in_transit",):
                     # Last real-facility event: patient rests here
                     last_fac = fac
                     break

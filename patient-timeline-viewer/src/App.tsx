@@ -147,8 +147,9 @@ function App() {
 
     filteredPatients.forEach(patient => {
       if (patient.movement_timeline) {
-        const injuryTime = patient.injury_timestamp
-          ? new Date(patient.injury_timestamp)
+        const injuryTimeStr = patient.injury_timestamp || (patient as any).injury_time;
+        const injuryTime = injuryTimeStr
+          ? new Date(injuryTimeStr)
           : new Date('2024-01-01T00:00:00Z');
         const currentHours = (playbackState.currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
 
@@ -195,7 +196,7 @@ function App() {
     filteredPatients.forEach(patient => {
       // Check if patient has ever been KIA or RTD up to this point in time
       if (patient.movement_timeline) {
-        const injuryTime = patient.injury_timestamp ? new Date(patient.injury_timestamp) : new Date('2024-01-01T00:00:00Z');
+        const injuryTime = new Date((patient.injury_timestamp || (patient as any).injury_time) ?? '2024-01-01T00:00:00Z');
         const currentHours = (playbackState.currentTime.getTime() - injuryTime.getTime()) / (1000 * 60 * 60);
         
         const eventsSoFar = patient.movement_timeline.filter(event => event.hours_since_injury <= currentHours);
