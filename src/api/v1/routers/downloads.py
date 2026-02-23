@@ -3,8 +3,12 @@ API router for file downloads with v1 standardization.
 Provides endpoints for downloading patient generation results.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import StreamingResponse
+import json
+from pathlib import Path
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from src.api.v1.dependencies.services import get_job_service
 from src.api.v1.models import ErrorResponse
@@ -30,24 +34,32 @@ router = APIRouter(
     "/{job_id}",
     summary="Download Job Results",
     description="""
-    Download patient generation results as a ZIP archive.
+    Download patient generation results.
 
-    The archive contains all generated files in the requested output formats
-    (JSON, CSV, XLSX, XML, FHIR) along with any metadata files.
+    By default returns a ZIP archive containing all generated files.
+    Use `?format=json` to get raw JSON directly (only works when the job
+    was generated with JSON output format and contains a single patients.json file).
 
     If encryption was enabled during generation, the archive will be
     password-protected using the provided encryption password.
     """,
-    response_description="ZIP archive containing all generated patient data files",
+    response_description="ZIP archive or raw JSON of generated patient data",
     responses={
         200: {
-            "description": "ZIP archive download",
-            "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}},
+            "description": "ZIP archive download or raw JSON",
+            "content": {
+                "application/zip": {"schema": {"type": "string", "format": "binary"}},
+                "application/json": {},
+            },
         }
     },
 )
-async def download_job_results(job_id: str, job_service: JobService = Depends(get_job_service)) -> StreamingResponse:
-    """Download patient generation results as a ZIP archive."""
+async def download_job_results(
+    job_id: str,
+    format: Optional[str] = Query(None, description="Set to 'json' to get raw JSON instead of ZIP"),
+    job_service: JobService = Depends(get_job_service),
+) -> StreamingResponse:
+    """Download patient generation results as a ZIP archive or raw JSON."""
     try:
         # Verify job exists and is completed
         job = await job_service.get_job(job_id)
@@ -57,6 +69,22 @@ async def download_job_results(job_id: str, job_service: JobService = Depends(ge
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Job {job_id} is not completed yet. Current status: {job.status.value}",
             )
+
+        # Raw JSON mode: return patients.json directly without ZIP wrapping
+        if format == "json":
+            json_file = None
+            for output_path in job.result_files or []:
+                p = Path(output_path)
+                if p.suffix == ".json" and p.exists():
+                    json_file = p
+                    break
+            if json_file is None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No JSON output file found for this job. Was the job generated with output_formats=['json']?",
+                )
+            data = json.loads(json_file.read_text())
+            return JSONResponse(content=data)
 
         # Create ZIP archive
         zip_buffer = await job_service.create_download_archive(job_id)

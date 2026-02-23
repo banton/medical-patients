@@ -110,10 +110,37 @@ class PatientGenerationPipeline:
 
     async def _initialize_generators(self, context: GenerationContext) -> None:
         """Initialize generators with configuration."""
-        # Update the flow simulator's patient count if it was overridden
+        # Update patient count
         if hasattr(self.flow_simulator, "total_patients_to_generate"):
             self.flow_simulator.total_patients_to_generate = context.config.total_patients
             print(f"🔧 Updated flow simulator patient count to: {context.config.total_patients}")
+
+        # Inject front_configs directly from the in-memory config so API-provided
+        # fronts always take precedence over the DB lookup (which may fail on cold start)
+        # and over the static fronts_config.json file.
+        if hasattr(self.flow_simulator, "front_configs") and hasattr(context.config, "front_configs"):
+            api_fronts = (
+                [fc.model_dump() for fc in context.config.front_configs]
+                if context.config.front_configs
+                else []
+            )
+            if api_fronts:
+                self.flow_simulator.front_configs = api_fronts
+                total_weight = sum(
+                    fc.get("casualty_rate", 0.0)
+                    for fc in api_fronts
+                    if fc.get("casualty_rate", 0.0) > 0
+                )
+                if total_weight > 0:
+                    self.flow_simulator.front_distribution = {
+                        fc["id"]: fc.get("casualty_rate", 0.0) / total_weight
+                        for fc in api_fronts
+                        if fc.get("casualty_rate", 0.0) > 0
+                    }
+                else:
+                    even_share = 1.0 / len(api_fronts)
+                    self.flow_simulator.front_distribution = {fc["id"]: even_share for fc in api_fronts}
+                print(f"🔧 Injected {len(api_fronts)} front(s) from API config: {[f['name'] for f in api_fronts]}")
 
     async def _generate_base_patients(self, context: GenerationContext) -> AsyncIterator[Patient]:
         """Generate base patients - check for temporal vs legacy generation."""

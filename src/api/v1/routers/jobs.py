@@ -3,9 +3,12 @@ API router for job management with v1 standardization.
 Provides endpoints for listing, retrieving, and managing patient generation jobs.
 """
 
-from typing import List
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 
 from src.api.v1.dependencies.services import get_job_service
 from src.api.v1.models import DeleteResponse, ErrorResponse, JobResponse
@@ -65,13 +68,22 @@ async def get_job_status(job_id: str, job_service: JobService = Depends(get_job_
 
 @router.get(
     "/{job_id}/results",
-    response_model=JobResponse,
-    summary="Get Job Results",
-    description="Retrieve results and output files for a completed job",
-    response_description="Job results with output file information",
+    summary="Get Paginated Patient Results",
+    description="""
+    Retrieve the generated patient records for a completed job with pagination.
+
+    Returns a page of patient records along with pagination metadata.
+    Use `page` and `per_page` to navigate through large result sets.
+    """,
+    response_description="Paginated patient records",
 )
-async def get_job_results(job_id: str, job_service: JobService = Depends(get_job_service)) -> JobResponse:
-    """Get results and output files for a completed job."""
+async def get_job_results(
+    job_id: str,
+    page: int = Query(1, ge=1, description="Page number (1-based)"),
+    per_page: int = Query(50, ge=1, le=500, description="Number of patients per page"),
+    job_service: JobService = Depends(get_job_service),
+) -> JSONResponse:
+    """Get paginated patient records for a completed job."""
     try:
         job = await job_service.get_job(job_id)
 
@@ -81,7 +93,34 @@ async def get_job_results(job_id: str, job_service: JobService = Depends(get_job
                 detail=f"Job {job_id} is not completed yet. Current status: {job.status.value}",
             )
 
-        return _job_to_response(job)
+        # Find the JSON output file
+        json_file: Optional[Path] = None
+        for output_path in job.result_files or []:
+            p = Path(output_path)
+            if p.suffix == ".json" and p.exists():
+                json_file = p
+                break
+
+        if json_file is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No JSON results file found. Job may have been generated without JSON output format.",
+            )
+
+        patients: List[Dict[str, Any]] = json.loads(json_file.read_text())
+        total = len(patients)
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_data = patients[start:end]
+
+        return JSONResponse(content={
+            "job_id": job_id,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total + per_page - 1) // per_page,
+            "patients": page_data,
+        })
 
     except JobNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
