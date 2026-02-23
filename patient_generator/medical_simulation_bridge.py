@@ -3,7 +3,7 @@ Bridge between patient_generator and medical_simulation modules.
 Enhances patient generation with realistic medical simulation.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import random
@@ -785,74 +785,107 @@ class MedicalSimulationBridge:
             patient.medical_data = {}
         patient.medical_data["health_score"] = sim_patient.current_health
 
-        # Enhanced timeline with medical simulation events
-        enhanced_events = []
-        for event in sim_patient.timeline:
-            # Convert all datetime objects in the event to ISO strings and clean up structure
-            clean_event = {}
-            for k, v in event.items():
-                if isinstance(v, datetime):
-                    clean_event[k] = v.isoformat()
-                elif isinstance(v, float):
-                    # Round health values to nearest integer using mathematical rounding
-                    if k in ["health", "health_before", "health_after", "current_health"]:
-                        clean_event[k] = round(v)  # Proper mathematical rounding
-                    else:
-                        clean_event[k] = round(v, 1)
-                else:
-                    clean_event[k] = v
+        # Build viewer-compatible movement events from simulation timeline.
+        # Only include facility-movement events (arrivals, transits, final outcomes).
+        # Skip granular treatment/triage detail events that flood the timeline.
+        #
+        # Viewer expects event_type: 'arrival' | 'evacuation_start' | 'transit_start' | 'kia' | 'rtd'
+        # Simulation produces: arrived_at_poi, arrived_at_facility, transport_started, died, triaged, treatment_applied
 
-            # Use the event type to determine the appropriate structure
-            event_type = event.get("event", "unknown")
-
-            # For events that happen at a location (treatment, arrival, death)
-            if event_type in ["treatment_applied", "arrived_at_poi", "arrived_at_facility", "died"]:
-                enhanced_event = {
-                    "timestamp": clean_event.get("timestamp"),
-                    "event_type": event_type,
-                    "location": clean_event.get("location", clean_event.get("facility", "POI")),
-                    "details": {
-                        k: v for k, v in clean_event.items() if k not in ["timestamp", "event", "location", "facility"]
-                    },
-                }
-            # For transition events (triage, transport) that happen between locations
-            elif event_type in ["triaged", "transport_started"]:
-                enhanced_event = {
-                    "timestamp": clean_event.get("timestamp"),
-                    "event_type": event_type,
-                    "details": {k: v for k, v in clean_event.items() if k not in ["timestamp", "event"]},
-                }
+        # Resolve injury reference time for scenario-relative timestamps
+        injury_time = None
+        if hasattr(patient, "injury_timestamp") and patient.injury_timestamp:
+            if isinstance(patient.injury_timestamp, datetime):
+                injury_time = patient.injury_timestamp
             else:
-                # Generic structure for unknown events
-                enhanced_event = clean_event
-                enhanced_event["event_type"] = event_type
-
-            # Compute hours_since_injury from timestamp and patient's injury_timestamp
-            # Note: Medical simulation uses real-world timestamps, so we compute relative hours
-            if enhanced_event.get("timestamp") and hasattr(patient, "injury_timestamp") and patient.injury_timestamp:
                 try:
-                    event_time = datetime.fromisoformat(enhanced_event["timestamp"])
-                    injury_time = patient.injury_timestamp if isinstance(patient.injury_timestamp, datetime) else datetime.fromisoformat(str(patient.injury_timestamp))
-                    hours_since = (event_time - injury_time).total_seconds() / 3600
-
-                    # If computed hours is unreasonable (> 240 = 10 days), assign based on event index
-                    # This handles the case where simulation uses real-world timestamps
-                    if hours_since > 240 or hours_since < 0:
-                        # Assign incremental hours based on event position (0.5h per event)
-                        event_idx = len(enhanced_events)
-                        hours_since = 0.5 + (event_idx * 0.5)
-
-                    enhanced_event["hours_since_injury"] = round(hours_since, 2)
+                    injury_time = datetime.fromisoformat(str(patient.injury_timestamp))
                 except (ValueError, TypeError):
-                    # If timestamp parsing fails, assign based on event index
-                    event_idx = len(enhanced_events)
-                    enhanced_event["hours_since_injury"] = round(0.5 + (event_idx * 0.5), 2)
+                    injury_time = None
 
-            # Add facility field for timeline viewer compatibility
-            if "location" in enhanced_event and "facility" not in enhanced_event:
-                enhanced_event["facility"] = enhanced_event["location"]
+        enhanced_events = []
+        event_idx = 0  # index across kept events only
+        final_status_recorded = False  # only record first kia/rtd event
+        current_facility = "POI"  # track last known facility for transit events
+
+        for event in sim_patient.timeline:
+            raw_type = event.get("event", "unknown")
+
+            # Skip granular detail events — keep only movement/status events
+            if raw_type in ("treatment_applied", "triaged"):
+                continue
+
+            # Skip duplicate final-status events (simulation can emit multiple 'died' entries)
+            if raw_type in ("died", "discharged") and final_status_recorded:
+                continue
+
+            # Map simulation event types to viewer-compatible types
+            if raw_type == "arrived_at_poi":
+                viewer_type = "arrival"
+                facility = "POI"
+                current_facility = "POI"
+                # Skip if the initial POI arrival from set_injury_timestamp is already in movement_timeline
+                if hasattr(patient, "movement_timeline") and any(
+                    e.get("event_type") == "arrival" and e.get("facility") == "POI"
+                    for e in patient.movement_timeline
+                ):
+                    continue
+            elif raw_type == "arrived_at_facility":
+                viewer_type = "arrival"
+                facility = event.get("location", event.get("facility", "Role1"))
+                current_facility = facility
+            elif raw_type == "transport_started":
+                viewer_type = "transit_start"
+                # Use tracked current_facility (where the patient currently is) as start
+                facility = current_facility
+            elif raw_type == "died":
+                viewer_type = "kia"
+                facility = event.get("location", event.get("facility", current_facility))
+                final_status_recorded = True
+            elif raw_type == "discharged":
+                viewer_type = "rtd"
+                facility = event.get("location", event.get("facility", current_facility))
+                final_status_recorded = True
+            else:
+                # Unknown type — skip
+                continue
+
+            # Compute scenario-relative hours_since_injury
+            hours_since = 0.5 + (event_idx * 1.5)  # fallback: 1.5h spacing
+            if injury_time and event.get("timestamp"):
+                try:
+                    raw_ts = event["timestamp"]
+                    event_time = raw_ts if isinstance(raw_ts, datetime) else datetime.fromisoformat(str(raw_ts))
+                    computed = (event_time - injury_time).total_seconds() / 3600
+                    if 0 <= computed <= 240:
+                        hours_since = computed
+                    # else keep fallback
+                except (ValueError, TypeError):
+                    pass
+
+            # Build scenario-time timestamp from injury_time + hours_since
+            if injury_time:
+                scenario_ts = (injury_time + timedelta(hours=hours_since)).isoformat()
+            else:
+                scenario_ts = event.get("timestamp", "")
+                if isinstance(scenario_ts, datetime):
+                    scenario_ts = scenario_ts.isoformat()
+
+            enhanced_event = {
+                "event_type": viewer_type,
+                "facility": facility,
+                "timestamp": scenario_ts,
+                "hours_since_injury": round(hours_since, 2),
+            }
+
+            # Add transit destination if available
+            if viewer_type == "transit_start":
+                to_fac = event.get("to_facility") or event.get("destination")
+                if to_fac:
+                    enhanced_event["to_facility"] = to_fac
 
             enhanced_events.append(enhanced_event)
+            event_idx += 1
 
         # Merge with existing timeline (use movement_timeline which is what to_dict expects)
         if hasattr(patient, "movement_timeline"):

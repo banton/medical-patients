@@ -355,7 +355,9 @@ class PatientFlowSimulator:
 
         static_front_defs: Optional[List[FrontDefinition]] = self.config_manager.get_static_front_definitions()
 
-        if static_front_defs:
+        # API-provided front_configs take priority over the static fronts_config.json.
+        # Only use static file when no front_configs were supplied via the API request.
+        if static_front_defs and not self.front_distribution:
             # Use static fronts_config.json
             front_distribution_static = {
                 front_def.name: front_def.ratio for front_def in static_front_defs if front_def.ratio > 0
@@ -483,8 +485,10 @@ class PatientFlowSimulator:
         Now supports Markov chain for probabilistic routing (MILESTONE 3).
         """
         # Use medical simulation enhancement if enabled
-        # Use medical simulation enhancement if enabled
         if self.use_medical_simulation:
+            # Skip if already simulated (temporal patients are simulated in generate_temporal_casualties)
+            if hasattr(patient, "timeline_events") and len(patient.timeline_events) > 0:
+                return
             try:
                 from .medical_simulation_bridge import MedicalSimulationBridge
 
@@ -1072,6 +1076,10 @@ class PatientFlowSimulator:
         # Generate patients based on timeline
         logger.debug("Generated %d casualty events", len(casualty_timeline))
         patients = self._generate_patients_from_timeline(casualty_timeline, injuries_config["injury_mix"])
+        # Trim to exact requested count (temporal distribution rounding can produce extras)
+        if len(patients) > total_patients:
+            patients = patients[:total_patients]
+            logger.info("Trimmed to %d patients (exact requested count)", total_patients)
         logger.info("Generated %d patients from timeline", len(patients))
         if patients:
             logger.debug(
@@ -1267,7 +1275,7 @@ class PatientFlowSimulator:
 
         static_front_defs = self.config_manager.get_static_front_definitions()
 
-        if static_front_defs:
+        if static_front_defs and not self.front_distribution:
             # Existing static front logic...
             front_distribution_static = {
                 front_def.name: front_def.ratio for front_def in static_front_defs if front_def.ratio > 0

@@ -285,9 +285,9 @@ async def _run_generation_task(
             # Save to database
             config_template = config_repo.create_configuration(config_create)
 
-        # Override total_patients if provided in request
-        # Check both root level and inner_config for total_patients
-        override_total = inner_config.get("total_patients") or config.get("total_patients")
+        # Override total_patients: root-level config (from request.total_patients) wins
+        # over anything set inside the inline configuration object.
+        override_total = config.get("total_patients") or inner_config.get("total_patients")
         if override_total is not None:
             # Create a copy of the config template with overridden total_patients
             config_dict = (
