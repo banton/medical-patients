@@ -74,10 +74,18 @@ export function getPatientLocationAtTime(patient: Patient, currentTime: Date): P
   // Handle different event types
   switch (activeEvent.event_type) {
     case 'arrival':
-      return { 
-        facility: activeEvent.facility as FacilityName || 'POI', 
+      // If the next event is a transit_start the patient is waiting for evacuation
+      if (nextEvent && nextEvent.event_type === 'transit_start') {
+        return {
+          facility: activeEvent.facility as FacilityName || 'POI',
+          status: 'waiting' as any,
+          eventType: 'awaiting_transport'
+        };
+      }
+      return {
+        facility: activeEvent.facility as FacilityName || 'POI',
         status: 'active',
-        eventType: activeEvent.event_type 
+        eventType: activeEvent.event_type
       };
 
     case 'evacuation_start':
