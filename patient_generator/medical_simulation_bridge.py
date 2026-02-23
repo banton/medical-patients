@@ -815,9 +815,9 @@ class MedicalSimulationBridge:
             if raw_type in ("treatment_applied", "triaged"):
                 continue
 
-            # Skip duplicate final-status events (simulation can emit multiple 'died' entries)
-            if raw_type in ("died", "discharged") and final_status_recorded:
-                continue
+            # Stop processing once a final status has been recorded (KIA/RTD ends the journey)
+            if final_status_recorded:
+                break
 
             # Map simulation event types to viewer-compatible types
             if raw_type == "arrived_at_poi":
@@ -878,14 +878,21 @@ class MedicalSimulationBridge:
                 "hours_since_injury": round(hours_since, 2),
             }
 
-            # Add transit destination if available
-            if viewer_type == "transit_start":
-                to_fac = event.get("to_facility") or event.get("destination")
-                if to_fac:
-                    enhanced_event["to_facility"] = to_fac
+            # Replace invalid "in_transit" facility with last known real facility
+            if enhanced_event.get("facility") == "in_transit":
+                enhanced_event["facility"] = current_facility
 
             enhanced_events.append(enhanced_event)
             event_idx += 1
+
+        # Back-fill to_facility on transit_start events using the next arrival's facility
+        for i, ev in enumerate(enhanced_events):
+            if ev["event_type"] == "transit_start" and "to_facility" not in ev:
+                # Find the next arrival event
+                for next_ev in enhanced_events[i + 1 :]:
+                    if next_ev["event_type"] == "arrival":
+                        ev["to_facility"] = next_ev["facility"]
+                        break
 
         # Merge with existing timeline (use movement_timeline which is what to_dict expects)
         if hasattr(patient, "movement_timeline"):
@@ -895,6 +902,12 @@ class MedicalSimulationBridge:
 
         # Also set timeline_events for backward compatibility
         patient.timeline_events = enhanced_events
+
+        # Set last_facility from final event in the complete timeline
+        all_events = patient.movement_timeline
+        if all_events:
+            last = all_events[-1]
+            patient.last_facility = last.get("facility") or current_facility
 
         # Triage category is already set from warfare generation, don't override
         # patient.triage_category = sim_patient.triage_category  # REMOVED - preserve original triage

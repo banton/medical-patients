@@ -328,13 +328,40 @@ class Patient:
             "front": self.front,
         }
 
-        # Add final_status for timeline viewer compatibility
-        status_to_final = {
-            "KIA": "KIA",
-            "DOW": "KIA",
-            "RTD": "RTD",
-        }
-        result["final_status"] = status_to_final.get(self.current_status, "Remains_Role4")
+        # Derive final_status and last_facility directly from movement_timeline.
+        # This is more reliable than current_status which can be stale after bridge simulation.
+        last_fac = None
+        final_status = "Remains_Role4"  # default: patient is still in the system
+
+        if self.movement_timeline:
+            for ev in reversed(self.movement_timeline):
+                ev_type = ev.get("event_type", "")
+                fac = ev.get("facility")
+                if ev_type == "kia":
+                    final_status = "KIA"
+                    last_fac = fac
+                    break
+                elif ev_type == "rtd":
+                    final_status = "RTD"
+                    last_fac = fac
+                    break
+                elif fac and fac not in ("in_transit",):
+                    # Last real-facility event: patient rests here
+                    last_fac = fac
+                    break
+
+        # Override with explicit current_status KIA/RTD if timeline has none
+        if final_status == "Remains_Role4" and self.current_status in ("KIA", "DOW"):
+            final_status = "KIA"
+        elif final_status == "Remains_Role4" and self.current_status == "RTD":
+            final_status = "RTD"
+
+        # Fall back to stored last_facility if timeline walk found nothing
+        if not last_fac:
+            last_fac = self.last_facility
+
+        result["final_status"] = final_status
+        result["last_facility"] = last_fac
 
         # Add demographics (skip nulls)
         if self.demographics:
