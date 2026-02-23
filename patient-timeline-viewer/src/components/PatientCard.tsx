@@ -37,6 +37,13 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           icon: '🚁',
           statusText: 'Transit'
         };
+      case 'waiting' as any:
+        return {
+          bg: 'bg-orange-50 border-orange-300',
+          text: 'text-orange-800',
+          icon: '⏳',
+          statusText: 'Awaiting evac'
+        };
       default:
         return {
           bg: 'bg-white border-gray-300',
@@ -122,10 +129,14 @@ export const PatientCard: React.FC<PatientCardProps> = ({
       {/* Primary condition and Front info */}
       <div className="flex items-center justify-between text-xs opacity-75">
         <span className="truncate">
-          {patient.primary_condition?.display
-            || (patient as any).conditions?.[0]?.name
-            || (patient as any).injury_type
-            || 'No condition'}
+          {(() => {
+            const condName = patient.primary_condition?.display
+              || (patient as any).conditions?.[0]?.name
+              || (patient as any).injury_type;
+            const bodyPart = (patient as any).body_part;
+            if (!condName) return 'No condition';
+            return bodyPart ? `${condName} (${bodyPart})` : condName;
+          })()}
         </span>
         {patient.front && (
           <span className="text-xs opacity-60 ml-1 truncate">

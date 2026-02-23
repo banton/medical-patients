@@ -182,6 +182,10 @@ export const TimelineControls: React.FC<TimelineControlsProps> = ({
             <span>Active Patients</span>
           </div>
           <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
+            <span>Awaiting Evac</span>
+          </div>
+          <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
             <span>In Transit</span>
           </div>
